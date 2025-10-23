@@ -80,6 +80,7 @@
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-arms-observation</module>
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-registry</module>
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-router</module>
+        <module>auto-configurations/spring-ai-alibaba-autoconfigure-rag-elasticsearch</module>
 
         <!-- spring-boot-starters modules -->
         <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope</module>
@@ -89,6 +90,7 @@
         <module>spring-boot-starters/spring-ai-alibaba-starter-arms-observation</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-registry</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-router</module>
+        <module>spring-boot-starters/spring-ai-alibaba-starter-rag-elasticsearch</module>
 
         <!-- tool-calls modules -->
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-alitranslate</module>
@@ -142,15 +144,22 @@
         <module>vector-stores/spring-ai-alibaba-starter-tablestore-store</module>
         <module>vector-stores/spring-ai-alibaba-starter-tair-store</module>
 
+        <!-- mcp modules -->
         <module>mcp/spring-ai-alibaba-mcp-common</module>
         <module>mcp/spring-ai-alibaba-mcp-registry</module>
         <module>mcp/spring-ai-alibaba-mcp-router</module>
 
+        <!-- prompt modules -->
         <module>prompt/spring-ai-alibaba-prompt-nacos</module>
 
+        <!-- models modules -->
         <module>models/dashscope</module>
 
+        <!-- observation modules -->
         <module>observation</module>
+
+        <!-- rag modules -->
+        <module>rag/spring-ai-alibaba-rag</module>
     </modules>
 
     <scm>
