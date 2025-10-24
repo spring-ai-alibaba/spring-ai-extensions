@@ -9,7 +9,6 @@ import org.springframework.ai.document.DocumentMetadata;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.model.EmbeddingUtils;
 import org.springframework.ai.rag.Query;
-import org.springframework.ai.rag.retrieval.search.DocumentRetriever;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchAiSearchFilterExpressionConverter;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStoreOptions;
 import org.springframework.ai.vectorstore.elasticsearch.SimilarityFunction;
@@ -32,9 +31,64 @@ import java.util.stream.Collectors;
  * @author ViliamSun
  * @author benym
  */
-public class HybridElasticsearchRetriever implements DocumentRetriever {
+public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
 
+    /**
+     * BM25 field key in the query context
+     */
+    private static final String BM25_FILED = "spring_ai_alibaba_rag_bm25_field";
+
+    /**
+     * Filter expression key in the query context
+     */
     private static final String FILTER_EXPRESSION = "spring_ai_alibaba_rag_filter_expression";
+
+    /**
+     * Similarity threshold that accepts all search scores. A threshold value of 0.0 means
+     * any similarity is accepted or disable the similarity threshold filtering. A
+     * threshold value of 1.0 means an exact match is required.
+     */
+    public static final double SIMILARITY_THRESHOLD_ACCEPT_ALL = 0.0;
+
+    /**
+     * Default number of neighbors for Knn search
+     */
+    private static final int DEFAULT_NEIGHBORS_NUM = 50;
+
+    /**
+     * Default number of candidates for Knn search
+     */
+    private static final int DEFAULT_CANDIDATE_NUM = 100;
+
+    /**
+     * Default top K documents to retrieve
+     */
+    private static final int DEFAULT_TOP_K = 50;
+
+    /**
+     * Default rank constant for Reciprocal Rank Fusion
+     */
+    private static final int DEFAULT_RANK_CONSTANT = 60;
+
+    /**
+     * Default boost factor applied to BM25 text search scores
+     */
+    private static final float DEFAULT_BM25_BIAS = 1.0f;
+
+    /**
+     * Default boost factor applied to KNN vector search scores
+     */
+    private static final float DEFAULT_KNN_BIAS = 1.0f;
+
+    /**
+     * Default whether to use hybrid search (BM25 + KNN)
+     */
+    private static final boolean DEFAULT_USE_HYBRID = true;
+
+    /**
+     * Default whether to use Reciprocal Rank Fusion (RRF) scoring
+     */
+    private static final boolean DEFAULT_USE_RRF = true;
 
     /**
      * Options for configuring the Elasticsearch vector store
@@ -54,7 +108,7 @@ public class HybridElasticsearchRetriever implements DocumentRetriever {
     /**
      * Similarity threshold
      */
-    private final Float similarityThreshold;
+    private final double similarityThreshold;
 
     /**
      * Number of neighbors for Knn search
@@ -67,14 +121,15 @@ public class HybridElasticsearchRetriever implements DocumentRetriever {
     private final int candidateNum;
 
     /**
-     * Maximum number of documents to return in search results
+     * top K documents to retrieve
      */
     private final int topK;
 
     /**
-     * Constant k used in Reciprocal Rank Fusion scoring
+     * This value determines how much influence documents in individual result sets per query have over the final ranked result set.
+     * A higher value indicates that lower ranked documents have more influence.
      */
-    private final int rrfK;
+    private final int rankConstant;
 
     /**
      * Boost factor applied to BM25 text search scores
@@ -109,21 +164,21 @@ public class HybridElasticsearchRetriever implements DocumentRetriever {
     private final Supplier<Filter.Expression> filterExpression;
 
     public HybridElasticsearchRetriever(ElasticsearchVectorStoreOptions vectorStoreOptions, ElasticsearchClient elasticsearchClient,
-                                        EmbeddingModel embeddingModel,
-                                        Float similarityThreshold, int neighborsNum, int candidateNum, int topK,
-                                        int rrfK, float bm25Bias, float knnBias, boolean useHybrid, boolean useRrf,
+                                        EmbeddingModel embeddingModel, double similarityThreshold, int neighborsNum,
+                                        int candidateNum, int topK, int rankConstant, float bm25Bias, float knnBias,
+                                        boolean useHybrid, boolean useRrf,
                                         FilterExpressionConverter filterExpressionConverter,
                                         Supplier<Filter.Expression> filterExpression) {
         this.vectorStoreOptions = vectorStoreOptions;
         this.elasticsearchClient = elasticsearchClient;
         this.embeddingModel = embeddingModel;
-        this.similarityThreshold = similarityThreshold;
-        this.neighborsNum = neighborsNum;
-        this.candidateNum = candidateNum;
-        this.topK = topK;
-        this.rrfK = rrfK;
-        this.bm25Bias = bm25Bias;
-        this.knnBias = knnBias;
+        this.similarityThreshold = similarityThreshold != 0.0 ? similarityThreshold : SIMILARITY_THRESHOLD_ACCEPT_ALL;
+        this.neighborsNum = neighborsNum != 0 ? neighborsNum : DEFAULT_NEIGHBORS_NUM;
+        this.candidateNum = candidateNum != 0 ? candidateNum : DEFAULT_CANDIDATE_NUM;
+        this.topK = topK !=0 ? topK : DEFAULT_TOP_K;
+        this.rankConstant = rankConstant !=0 ? rankConstant : DEFAULT_RANK_CONSTANT;
+        this.bm25Bias = bm25Bias != 0 ? bm25Bias : DEFAULT_BM25_BIAS;
+        this.knnBias = knnBias != 0 ? knnBias : DEFAULT_KNN_BIAS;
         this.useHybrid = useHybrid;
         this.useRrf = useRrf;
         this.filterExpressionConverter = filterExpressionConverter != null ? filterExpressionConverter : new ElasticsearchAiSearchFilterExpressionConverter();
@@ -140,30 +195,115 @@ public class HybridElasticsearchRetriever implements DocumentRetriever {
         }
     }
 
+    @Override
+    public List<Document> retrieve(Query query,
+                                   co.elastic.clients.elasticsearch._types.query_dsl.Query filterQuery,
+                                   co.elastic.clients.elasticsearch._types.query_dsl.Query textQuery) {
+        Assert.notNull(query, "query cannot be null");
+        try {
+            return search(query, filterQuery, textQuery);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to execute hybrid search", e);
+        }
+    }
+
     /**
      * Execute a hybrid search using BM25 and KNN search with Reciprocal Rank Fusion.
+     *
+     * @param query       The query to search for
+     * @param filterQuery The filter query to apply
+     * @param textQuery   The text query to apply
+     * @return A list of documents matching the query
+     */
+    private List<Document> search(Query query,
+                                  co.elastic.clients.elasticsearch._types.query_dsl.Query filterQuery,
+                                  co.elastic.clients.elasticsearch._types.query_dsl.Query textQuery) throws IOException {
+        float[] vector = embeddingModel.embed(query.text());
+        // 1. Build search request
+        SearchResponse<Document> response = elasticsearchClient.search(
+                sr -> buildSearchRequest(sr, vector, filterQuery, textQuery),
+                Document.class
+        );
+        // 2. Convert search response to documents
+        return response.hits().hits().stream().map(this::toDocument).collect(Collectors.toList());
+    }
+
+    /**
+     * Builds the search request for the hybrid search.
+     *
+     * @param sr          SearchRequest.Builder
+     * @param vector      query embedding vector
+     * @param filterQuery filter query
+     * @param textQuery   text query
+     * @return SearchRequest.Builder
+     */
+    private SearchRequest.Builder buildSearchRequest(SearchRequest.Builder sr, float[] vector,
+                                                     co.elastic.clients.elasticsearch._types.query_dsl.Query filterQuery,
+                                                     co.elastic.clients.elasticsearch._types.query_dsl.Query textQuery) {
+        // 1. Knn search
+        SearchRequest.Builder builder = sr.index(vectorStoreOptions.getIndexName())
+                .knn(k -> k.queryVector(EmbeddingUtils.toList(vector))
+                        .similarity(computeSimilarityThreshold())
+                        .k(neighborsNum)
+                        .field(vectorStoreOptions.getEmbeddingFieldName())
+                        .numCandidates(candidateNum)
+                        .filter(ensureQuery(filterQuery))
+                        .boost(knnBias))
+                .size(topK);
+
+        // 2. Bm25 search
+        if (useHybrid) {
+            builder.query(q -> q.bool(b -> b
+                    .filter(ensureQuery(filterQuery))
+                    .must(ensureQuery(textQuery))
+                    .boost(bm25Bias)));
+        }
+        // 3. RRF
+        if (useRrf) {
+            builder.rank(r -> r.rrf(rrf -> rrf.rankConstant((long) rankConstant)
+                    .rankWindowSize((long) topK)));
+        }
+        return builder;
+    }
+
+    /**
+     * Execute a hybrid search using BM25 and KNN search with Reciprocal Rank Fusion.
+     * use filter expression and bm25 filed from the query context
      *
      * @param query The query to search for
      * @return A list of documents matching the query
      */
     private List<Document> search(Query query) throws IOException {
-        // 1. Compute the filter expression to use for the request
+        // 1. Compute the filter expression and bm25 filed to use for the request
         var requestFilterExpression = computeRequestFilterExpression(query);
+        var bm25Field = computeBm25Field(query);
         float[] vector = embeddingModel.embed(query.text());
         // 2. Build search request
         SearchResponse<Document> response = elasticsearchClient.search(
-                sr -> buildSearchRequest(sr, vector, requestFilterExpression, query.text()),
+                sr -> buildSearchRequest(sr, vector, requestFilterExpression, query.text(), bm25Field),
                 Document.class
         );
         // 3. Convert search response to documents
         return response.hits().hits().stream().map(this::toDocument).collect(Collectors.toList());
     }
 
-    private SearchRequest.Builder buildSearchRequest(SearchRequest.Builder sr, float[] vector, Filter.Expression filterExpression, String queryText) {
+    /**
+     * Builds the search request for the hybrid search.
+     * use filter expression and bm25 filed from the query context
+     *
+     * @param sr               SearchRequest.Builder
+     * @param vector           query embedding vector
+     * @param filterExpression filter expression
+     * @param queryText        query text
+     * @param bm25Field        bm25 field
+     * @return SearchRequest.Builder
+     */
+    private SearchRequest.Builder buildSearchRequest(SearchRequest.Builder sr, float[] vector, Filter.Expression filterExpression,
+                                                     String queryText, String bm25Field) {
         // 1. Knn search
         SearchRequest.Builder builder = sr.index(vectorStoreOptions.getIndexName())
                 .knn(k -> k.queryVector(EmbeddingUtils.toList(vector))
-                        .similarity(similarityThreshold)
+                        .similarity(computeSimilarityThreshold())
                         .k(neighborsNum)
                         .field(vectorStoreOptions.getEmbeddingFieldName())
                         .numCandidates(candidateNum)
@@ -174,13 +314,17 @@ public class HybridElasticsearchRetriever implements DocumentRetriever {
 
         // 2. Bm25 search
         if (useHybrid) {
-            builder.query(q -> q.match(m -> m.field("content")
-                    .query(escape(queryText))
-                    .boost(bm25Bias)));
+            builder.query(q -> q.bool(b -> b
+                    .filter(fl -> fl
+                            .queryString(qs -> qs.query(getElasticsearchQueryString(filterExpression))))
+                    .must(m -> m.match(
+                            mm -> mm.field(bm25Field)
+                                    .query(escape(queryText)))
+                    ).boost(bm25Bias)));
         }
         // 3. RRF
         if (useRrf) {
-            builder.rank(r -> r.rrf(rrf -> rrf.rankConstant((long) rrfK)
+            builder.rank(r -> r.rrf(rrf -> rrf.rankConstant((long) rankConstant)
                     .rankWindowSize((long) topK)));
         }
         return builder;
@@ -188,6 +332,35 @@ public class HybridElasticsearchRetriever implements DocumentRetriever {
 
     private static String escape(String text) {
         return text.replace("\"", "\\\"");
+    }
+
+    /**
+     * Ensures that the provided query is not null.
+     * If it is null, a match_all query is returned.
+     *
+     * @param query query
+     * @return non-null query
+     */
+    private co.elastic.clients.elasticsearch._types.query_dsl.Query ensureQuery(
+            co.elastic.clients.elasticsearch._types.query_dsl.Query query) {
+        return query != null ? query : co.elastic.clients.elasticsearch._types.query_dsl.Query.of(q -> q.matchAll(m -> m));
+    }
+
+    /**
+     * Computes the similarity threshold to use for the current request.
+     * <p>
+     * If the similarity function is {@link SimilarityFunction#l2_norm}, the threshold
+     * is reverted to its original value.
+     *
+     * @return the similarity threshold to use for the request
+     */
+    private float computeSimilarityThreshold() {
+        float finalThreshold = (float) similarityThreshold;
+        // reverting l2_norm distance to its original value
+        if (this.vectorStoreOptions.getSimilarity().equals(SimilarityFunction.l2_norm)) {
+            finalThreshold = 1 - finalThreshold;
+        }
+        return finalThreshold;
     }
 
     /**
@@ -213,6 +386,26 @@ public class HybridElasticsearchRetriever implements DocumentRetriever {
             }
         }
         return this.filterExpression.get();
+    }
+
+    /**
+     * Computes the BM25 field to use for the current request.
+     * <p>
+     * The BM25 field can be provided in the query context using the
+     * {@link #BM25_FILED} key. If no BM25 field is provided in the context, an empty
+     * string is returned.
+     *
+     * @param query the query containing potential context with BM25 field
+     * @return the BM25 field to use for the request
+     */
+    private String computeBm25Field(Query query) {
+        var bm25Filed = query.context().get(BM25_FILED);
+        if (bm25Filed != null) {
+            if (bm25Filed instanceof String && StringUtils.hasText((String) bm25Filed)) {
+                return (String) bm25Filed;
+            }
+        }
+        return "";
     }
 
     private String getElasticsearchQueryString(Filter.Expression filterExpression) {
@@ -266,48 +459,78 @@ public class HybridElasticsearchRetriever implements DocumentRetriever {
 
     public static final class Builder {
 
+        private ElasticsearchVectorStoreOptions vectorStoreOptions;
+
         private ElasticsearchClient elasticsearchClient;
 
         private EmbeddingModel embeddingModel;
 
-        private String indexName;
+        private double similarityThreshold = SIMILARITY_THRESHOLD_ACCEPT_ALL;
 
-        private int windowSize;
+        private int neighborsNum = DEFAULT_NEIGHBORS_NUM;
 
-        private int rrfK;
+        private int candidateNum = DEFAULT_CANDIDATE_NUM;
 
-        private float bm25Bias;
+        private int topK = DEFAULT_TOP_K;
 
-        private float knnBias;
+        private int rankConstant = DEFAULT_RANK_CONSTANT;
 
-        private boolean useHybrid;
+        private float bm25Bias = DEFAULT_BM25_BIAS;
+
+        private float knnBias = DEFAULT_KNN_BIAS;
+
+        private boolean useHybrid = DEFAULT_USE_HYBRID;
+
+        private boolean useRrf = DEFAULT_USE_RRF;
 
         private FilterExpressionConverter filterExpressionConverter = new ElasticsearchAiSearchFilterExpressionConverter();
 
         private Supplier<Filter.Expression> filterExpression;
 
+        public Builder vectorStoreOptions(ElasticsearchVectorStoreOptions vectorStoreOptions) {
+            Assert.notNull(vectorStoreOptions, "vectorStoreOptions must not be null");
+            this.vectorStoreOptions = vectorStoreOptions;
+            return this;
+        }
+
         public Builder elasticsearchClient(ElasticsearchClient elasticsearchClient) {
+            Assert.notNull(elasticsearchClient, "elasticsearchClient must not be null");
             this.elasticsearchClient = elasticsearchClient;
             return this;
         }
 
         public Builder embeddingModel(EmbeddingModel embeddingModel) {
+            Assert.notNull(embeddingModel, "embeddingModel must not be null");
             this.embeddingModel = embeddingModel;
             return this;
         }
 
-        public Builder indexName(String indexName) {
-            this.indexName = indexName;
+        public Builder similarityThreshold(Float similarityThreshold) {
+            this.similarityThreshold = similarityThreshold;
             return this;
         }
 
-        public Builder windowSize(int windowSize) {
-            this.windowSize = windowSize;
+        public Builder neighborsNum(int neighborsNum) {
+            Assert.isTrue(neighborsNum > 0, "neighborsNum must be greater than 0");
+            this.neighborsNum = neighborsNum;
             return this;
         }
 
-        public Builder rrfK(int rrfK) {
-            this.rrfK = rrfK;
+        public Builder candidateNum(int candidateNum) {
+            Assert.isTrue(candidateNum > 0, "candidateNum must be greater than 0");
+            this.candidateNum = candidateNum;
+            return this;
+        }
+
+        public Builder topK(int topK) {
+            Assert.isTrue(topK > 0, "topK must be greater than 0");
+            this.topK = topK;
+            return this;
+        }
+
+        public Builder rankConstant(int rankConstant) {
+            Assert.isTrue(rankConstant > 0, "rankConstant must be greater than 0");
+            this.rankConstant = rankConstant;
             return this;
         }
 
@@ -326,9 +549,13 @@ public class HybridElasticsearchRetriever implements DocumentRetriever {
             return this;
         }
 
-        public Builder filterExpressionConverter(FilterExpressionConverter converter) {
-            Assert.notNull(converter, "filterExpressionConverter must not be null");
-            this.filterExpressionConverter = converter;
+        public Builder useRrf(boolean useRrf) {
+            this.useRrf = useRrf;
+            return this;
+        }
+
+        public Builder filterExpressionConverter(FilterExpressionConverter filterExpressionConverter) {
+            this.filterExpressionConverter = filterExpressionConverter;
             return this;
         }
 
@@ -338,7 +565,9 @@ public class HybridElasticsearchRetriever implements DocumentRetriever {
         }
 
         public HybridElasticsearchRetriever build() {
-            return null;
+            return new HybridElasticsearchRetriever(vectorStoreOptions, elasticsearchClient, embeddingModel, similarityThreshold,
+                    neighborsNum, candidateNum, topK, rankConstant, bm25Bias, knnBias, useHybrid, useRrf,
+                    filterExpressionConverter, filterExpression);
         }
     }
 }
