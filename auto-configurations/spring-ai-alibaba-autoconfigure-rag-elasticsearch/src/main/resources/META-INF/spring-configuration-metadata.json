@@ -1,1 +1,87 @@
-// todo
+{
+  "groups": [
+    {
+      "name": "spring.ai.alibaba.rag.elasticsearch",
+      "type": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties"
+    },
+    {
+      "name": "spring.ai.alibaba.rag.elasticsearch.recall",
+      "type": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties$Recall",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties",
+      "sourceMethod": "getRecall()"
+    },
+    {
+      "name": "spring.ai.alibaba.rag.elasticsearch.rrf",
+      "type": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties$Rrf",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties",
+      "sourceMethod": "getRrf()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "spring.ai.alibaba.rag.elasticsearch.bm25-bias",
+      "type": "java.lang.Float",
+      "description": "Boost factor applied to BM25 text search scores",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties",
+      "defaultValue": 1
+    },
+    {
+      "name": "spring.ai.alibaba.rag.elasticsearch.knn-bias",
+      "type": "java.lang.Float",
+      "description": "Boost factor applied to KNN vector search scores",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties",
+      "defaultValue": 1
+    },
+    {
+      "name": "spring.ai.alibaba.rag.elasticsearch.recall.candidate-num",
+      "type": "java.lang.Integer",
+      "description": "Number of candidates for Knn search",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties$Recall",
+      "defaultValue": 100
+    },
+    {
+      "name": "spring.ai.alibaba.rag.elasticsearch.recall.neighbors-num",
+      "type": "java.lang.Integer",
+      "description": "Number of neighbors for Knn search",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties$Recall",
+      "defaultValue": 50
+    },
+    {
+      "name": "spring.ai.alibaba.rag.elasticsearch.recall.similarity-threshold",
+      "type": "java.lang.Double",
+      "description": "Similarity threshold",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties$Recall",
+      "defaultValue": 0
+    },
+    {
+      "name": "spring.ai.alibaba.rag.elasticsearch.rrf.rank-constant",
+      "type": "java.lang.Integer",
+      "description": "This value determines how much influence documents in individual result sets per query have over the final ranked result set. A higher value indicates that lower ranked documents have more influence.",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties$Rrf",
+      "defaultValue": 60
+    },
+    {
+      "name": "spring.ai.alibaba.rag.elasticsearch.top-k",
+      "type": "java.lang.Integer",
+      "description": "top K documents to retrieve",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties",
+      "defaultValue": 50
+    },
+    {
+      "name": "spring.ai.alibaba.rag.elasticsearch.use-hybrid",
+      "type": "java.lang.Boolean",
+      "description": "Whether to use hybrid search (BM25 + KNN)",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "spring.ai.alibaba.rag.elasticsearch.use-rrf",
+      "type": "java.lang.Boolean",
+      "description": "Whether to use Reciprocal Rank Fusion (RRF) scoring",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties",
+      "defaultValue": false
+    }
+  ],
+  "hints": []
+}

@@ -90,7 +90,7 @@
         <module>spring-boot-starters/spring-ai-alibaba-starter-arms-observation</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-registry</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-router</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-rag-elasticsearch</module>
+        <module>spring-boot-starters/spring-ai-alibaba-starter-rag</module>
 
         <!-- tool-calls modules -->
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-alitranslate</module>

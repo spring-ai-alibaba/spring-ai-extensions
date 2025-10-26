@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2025 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.alibaba.cloud.ai.rag.retrieval.search;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -275,8 +291,8 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
      */
     private List<Document> search(Query query) throws IOException {
         // 1. Compute the filter expression and bm25 filed to use for the request
-        var requestFilterExpression = computeRequestFilterExpression(query);
-        var bm25Field = computeBm25Field(query);
+        Filter.Expression requestFilterExpression = computeRequestFilterExpression(query);
+        String bm25Field = computeBm25Field(query);
         float[] vector = embeddingModel.embed(query.text());
         // 2. Build search request
         SearchResponse<Document> response = elasticsearchClient.search(
@@ -505,7 +521,7 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
             return this;
         }
 
-        public Builder similarityThreshold(Float similarityThreshold) {
+        public Builder similarityThreshold(Double similarityThreshold) {
             this.similarityThreshold = similarityThreshold;
             return this;
         }
