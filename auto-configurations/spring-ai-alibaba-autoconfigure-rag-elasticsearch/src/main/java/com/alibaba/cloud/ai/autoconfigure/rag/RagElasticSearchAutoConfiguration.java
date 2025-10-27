@@ -39,7 +39,7 @@ import org.springframework.util.Assert;
  */
 @AutoConfiguration
 @EnableConfigurationProperties({RagElasticSearchProperties.class})
-@ConditionalOnProperty(prefix = "spring.ai.rag.elasticsearch", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = RagElasticSearchProperties.RAG_ES_PREFIX, name = "enabled", havingValue = "true")
 public class RagElasticSearchAutoConfiguration {
 
 
