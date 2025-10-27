@@ -20,6 +20,8 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentMetadata;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -49,15 +51,17 @@ import java.util.stream.Collectors;
  */
 public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
 
+    private static final Logger logger = LoggerFactory.getLogger(HybridElasticsearchRetriever.class);
+
     /**
      * BM25 field key in the query context
      */
-    private static final String BM25_FILED = "spring_ai_alibaba_rag_bm25_field";
+    public static final String BM25_FILED = "spring_ai_alibaba_rag_bm25_field";
 
     /**
      * Filter expression key in the query context
      */
-    private static final String FILTER_EXPRESSION = "spring_ai_alibaba_rag_filter_expression";
+    public static final String FILTER_EXPRESSION = "spring_ai_alibaba_rag_filter_expression";
 
     /**
      * Similarity threshold that accepts all search scores. A threshold value of 0.0 means
@@ -95,11 +99,6 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
      * Default boost factor applied to KNN vector search scores
      */
     private static final float DEFAULT_KNN_BIAS = 1.0f;
-
-    /**
-     * Default whether to use hybrid search (BM25 + KNN)
-     */
-    private static final boolean DEFAULT_USE_HYBRID = true;
 
     /**
      * Default whether to use Reciprocal Rank Fusion (RRF) scoring
@@ -293,6 +292,7 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
             builder.rank(r -> r.rrf(rrf -> rrf.rankConstant((long) rankConstant)
                     .rankWindowSize((long) rankWindowSize)));
         }
+        logger.debug("Elasticsearch Hybrid Search Request: {}", builder);
         return builder;
     }
 
@@ -359,6 +359,7 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
             builder.rank(r -> r.rrf(rrf -> rrf.rankConstant((long) rankConstant)
                     .rankWindowSize((long) rankWindowSize)));
         }
+        logger.debug("Elasticsearch Hybrid Search Request: {}", builder);
         return builder;
     }
 

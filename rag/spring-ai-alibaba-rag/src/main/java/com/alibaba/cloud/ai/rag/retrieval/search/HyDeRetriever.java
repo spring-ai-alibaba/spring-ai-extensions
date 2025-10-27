@@ -57,9 +57,6 @@ public class HyDeRetriever implements DocumentRetriever {
                          @Nullable Integer topK, Supplier<Filter.Expression> filterExpression) {
         Assert.notNull(hyDeTransformer, "hyDeTransformer must not be null");
         Assert.notNull(vectorStore, "vectorStore cannot be null");
-        Assert.isTrue(similarityThreshold == null || similarityThreshold >= 0.0,
-                "similarityThreshold must be equal to or greater than 0.0");
-        Assert.isTrue(topK == null || topK > 0, "topK must be greater than 0");
         this.hyDeTransformer = hyDeTransformer;
         this.vectorStore = vectorStore;
         this.similarityThreshold = similarityThreshold != null ? similarityThreshold
@@ -105,5 +102,61 @@ public class HyDeRetriever implements DocumentRetriever {
             }
         }
         return this.filterExpression.get();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    public static final class Builder {
+
+        private VectorStore vectorStore;
+
+        private Double similarityThreshold = SearchRequest.SIMILARITY_THRESHOLD_ACCEPT_ALL;
+
+        private Integer topK = SearchRequest.DEFAULT_TOP_K;
+
+        private Supplier<Filter.Expression> filterExpression;
+
+        private HyDeTransformer hyDeTransformer;
+
+        private Builder() {
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public Builder vectorStore(VectorStore vectorStore) {
+            Assert.notNull(vectorStore, "vectorStore must not be null");
+            this.vectorStore = vectorStore;
+            return this;
+        }
+
+        public Builder similarityThreshold(Double similarityThreshold) {
+            this.similarityThreshold = similarityThreshold;
+            return this;
+        }
+
+        public Builder topK(Integer topK) {
+            this.topK = topK;
+            return this;
+        }
+
+        public Builder filterExpression(Supplier<Filter.Expression> filterExpression) {
+            this.filterExpression = filterExpression;
+            return this;
+        }
+
+        public Builder hyDeTransformer(HyDeTransformer hyDeTransformer) {
+            Assert.notNull(hyDeTransformer, "hyDeTransformer must not be null");
+            this.hyDeTransformer = hyDeTransformer;
+            return this;
+        }
+
+        public HyDeRetriever build() {
+            return new HyDeRetriever(hyDeTransformer, vectorStore, similarityThreshold, topK, filterExpression);
+        }
     }
 }

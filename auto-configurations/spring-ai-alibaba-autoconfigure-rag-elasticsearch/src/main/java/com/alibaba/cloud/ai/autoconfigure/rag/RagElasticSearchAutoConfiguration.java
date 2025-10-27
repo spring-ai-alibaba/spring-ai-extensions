@@ -77,13 +77,19 @@ public class RagElasticSearchAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(HyDeTransformer.class)
     public HyDeTransformer hyDeTransformer(ChatClient.Builder chatClientBuilder) {
-        return new HyDeTransformer(chatClientBuilder, null);
+        return HyDeTransformer.builder()
+                .chatClientBuilder(chatClientBuilder)
+                .build();
     }
 
     @Bean
     @ConditionalOnMissingBean(HyDeRetriever.class)
     public HyDeRetriever hyDeRetriever(HyDeTransformer hyDeTransformer, VectorStore vectorStore, RagElasticSearchProperties ragElasticSearchProperties) {
-        return new HyDeRetriever(hyDeTransformer, vectorStore, ragElasticSearchProperties.getRecall().getSimilarityThreshold(),
-                ragElasticSearchProperties.getTopK(), null);
+        return HyDeRetriever.builder()
+                .hyDeTransformer(hyDeTransformer)
+                .vectorStore(vectorStore)
+                .similarityThreshold(ragElasticSearchProperties.getRecall().getSimilarityThreshold())
+                .topK(ragElasticSearchProperties.getTopK())
+                .build();
     }
 }
