@@ -56,7 +56,7 @@ public class HyDeTransformer implements QueryTransformer {
         Assert.notNull(chatClientBuilder, "chatClientBuilder cannot be null");
         this.chatClient = chatClientBuilder.build();
         this.promptTemplate = promptTemplate != null ? promptTemplate : DEFAULT_PROMPT_TEMPLATE;
-        PromptAssert.templateHasRequiredPlaceholders(this.promptTemplate, "history", "query");
+        PromptAssert.templateHasRequiredPlaceholders(this.promptTemplate, "query");
     }
 
     @Override

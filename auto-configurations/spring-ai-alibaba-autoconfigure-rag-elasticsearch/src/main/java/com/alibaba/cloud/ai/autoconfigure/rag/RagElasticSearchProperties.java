@@ -30,6 +30,11 @@ public class RagElasticSearchProperties {
     public static final String RAG_ES_PREFIX = "spring.ai.alibaba.rag.elasticsearch";
 
     /**
+     * Whether RAG ElasticSearch integration is enabled
+     */
+    private Boolean enabled = true;
+
+    /**
      * Retrieval type: BM25, KNN, HYBRID
      */
     private RetrieverType retrieverType = RetrieverType.HYBRID;
@@ -42,12 +47,12 @@ public class RagElasticSearchProperties {
     /**
      * Configuration for recall
      */
-    private Recall recall;
+    private Recall recall = new Recall();
 
     /**
      * Configuration for Reciprocal Rank Fusion (RRF)
      */
-    private Rrf rrf;
+    private Rrf rrf = new Rrf();
 
     /**
      * Boost factor applied to BM25 text search scores
@@ -63,6 +68,14 @@ public class RagElasticSearchProperties {
      * top K documents to retrieve
      */
     private Integer topK = 50;
+
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+    }
 
     public RetrieverType getRetrieverType() {
         return retrieverType;

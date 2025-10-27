@@ -27,6 +27,13 @@
       "defaultValue": 1
     },
     {
+      "name": "spring.ai.alibaba.rag.elasticsearch.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether RAG ElasticSearch integration is enabled",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties",
+      "defaultValue": true
+    },
+    {
       "name": "spring.ai.alibaba.rag.elasticsearch.knn-bias",
       "type": "java.lang.Float",
       "description": "Boost factor applied to KNN vector search scores",

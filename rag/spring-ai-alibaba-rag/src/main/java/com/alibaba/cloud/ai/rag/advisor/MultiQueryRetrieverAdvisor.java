@@ -1,6 +1,5 @@
 package com.alibaba.cloud.ai.rag.advisor;
 
-import com.alibaba.cloud.ai.rag.retrieval.search.HybridDocumentRetriever;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.api.AdvisorChain;
@@ -10,7 +9,6 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.rag.Query;
 import org.springframework.ai.rag.generation.augmentation.ContextualQueryAugmenter;
 import org.springframework.ai.rag.generation.augmentation.QueryAugmenter;
-import org.springframework.ai.rag.postretrieval.document.DocumentPostProcessor;
 import org.springframework.ai.rag.preretrieval.query.expansion.QueryExpander;
 import org.springframework.ai.rag.retrieval.search.DocumentRetriever;
 import org.springframework.util.Assert;
