@@ -58,7 +58,8 @@
       "name": "spring.ai.alibaba.rag.elasticsearch.retriever-type",
       "type": "com.alibaba.cloud.ai.rag.retrieval.search.RetrieverType",
       "description": "Retrieval type: BM25, KNN, HYBRID",
-      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties"
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties",
+      "defaultValue": "hybrid"
     },
     {
       "name": "spring.ai.alibaba.rag.elasticsearch.rrf.rank-constant",

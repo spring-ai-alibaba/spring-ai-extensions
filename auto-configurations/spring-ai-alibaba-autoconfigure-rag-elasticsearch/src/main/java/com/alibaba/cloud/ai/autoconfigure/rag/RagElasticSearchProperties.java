@@ -32,7 +32,7 @@ public class RagElasticSearchProperties {
     /**
      * Retrieval type: BM25, KNN, HYBRID
      */
-    private RetrieverType retrieverType;
+    private RetrieverType retrieverType = RetrieverType.HYBRID;
 
     /**
      * Whether to use Reciprocal Rank Fusion (RRF) scoring
