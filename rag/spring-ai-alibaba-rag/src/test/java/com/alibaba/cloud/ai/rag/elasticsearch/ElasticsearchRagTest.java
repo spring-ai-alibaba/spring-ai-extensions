@@ -16,10 +16,45 @@
 
 package com.alibaba.cloud.ai.rag.elasticsearch;
 
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.elasticsearch.ElasticsearchContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+
 /**
  * Integration tests for Elasticsearch RAG components.
  *
  * @author benym
  */
+@SpringBootTest()
+@Testcontainers
 public class ElasticsearchRagTest {
+
+    private static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
+            .parse("docker.elastic.co/elasticsearch/elasticsearch:8.11.0");
+
+    @Container
+    private static final ElasticsearchContainer elasticsearchContainer = new ElasticsearchContainer(ELASTICSEARCH_IMAGE)
+            .withEnv("discovery.type", "single-node")
+            .withEnv("xpack.security.enabled", "false")
+            .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
+            .withStartupAttempts(3);
+
+    /**
+     * Dynamically configure Elasticsearch properties
+     */
+    @DynamicPropertySource
+    static void registerProperties(DynamicPropertyRegistry registry) {
+        // vector store properties
+        registry.add("spring.ai.vectorstore.elasticsearch.initialize-schema", () -> true);
+        registry.add("spring.ai.vectorstore.elasticsearch.index-name", () -> "spring_ai_alibaba_rag_embeddings");
+        registry.add("spring.ai.vectorstore.elasticsearch.similarity", () -> "cosine");
+        registry.add("spring.ai.vectorstore.elasticsearch.dimensions", () -> 1536);
+        // spring es properties
+        String uris = "http://" + elasticsearchContainer.getHost() + ":" + elasticsearchContainer.getMappedPort(9200);
+        registry.add("spring.elasticsearch.uris", () -> uris);
+    }
 }
