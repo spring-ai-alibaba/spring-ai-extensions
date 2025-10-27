@@ -103,7 +103,7 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
     /**
      * Default whether to use Reciprocal Rank Fusion (RRF) scoring
      */
-    private static final boolean DEFAULT_USE_RRF = true;
+    private static final boolean DEFAULT_USE_RRF = false;
 
     /**
      * Options for configuring the Elasticsearch vector store
@@ -173,6 +173,7 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
 
     /**
      * Whether to use Reciprocal Rank Fusion (RRF) scoring
+     * This feature requires a commercial license for elasticsearch
      */
     private final boolean useRrf;
 
@@ -247,9 +248,9 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
                                   co.elastic.clients.elasticsearch._types.query_dsl.Query textQuery) throws IOException {
         float[] vector = embeddingModel.embed(query.text());
         // 1. Build search request
+        SearchRequest.Builder builder = new SearchRequest.Builder();
         SearchResponse<Document> response = elasticsearchClient.search(
-                sr -> buildSearchRequest(sr, vector, filterQuery, textQuery),
-                Document.class
+                buildSearchRequest(builder, vector, filterQuery, textQuery), Document.class
         );
         // 2. Convert search response to documents
         return response.hits().hits().stream().map(this::toDocument).collect(Collectors.toList());
@@ -262,9 +263,9 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
      * @param vector      query embedding vector
      * @param filterQuery filter query
      * @param textQuery   text query
-     * @return SearchRequest.Builder
+     * @return SearchRequest
      */
-    private SearchRequest.Builder buildSearchRequest(SearchRequest.Builder sr, float[] vector,
+    private SearchRequest buildSearchRequest(SearchRequest.Builder sr, float[] vector,
                                                      co.elastic.clients.elasticsearch._types.query_dsl.Query filterQuery,
                                                      co.elastic.clients.elasticsearch._types.query_dsl.Query textQuery) {
         // 1. Knn search
@@ -285,15 +286,17 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
             builder.query(q -> q.bool(b -> b
                     .filter(ensureQuery(filterQuery))
                     .must(ensureQuery(textQuery))
-                    .boost(bm25Bias)));
+                    .boost(bm25Bias)))
+                    .size(topK);
         }
         // 3. RRF
         if (useRrf) {
             builder.rank(r -> r.rrf(rrf -> rrf.rankConstant((long) rankConstant)
                     .rankWindowSize((long) rankWindowSize)));
         }
-        logger.debug("Elasticsearch Hybrid Search Request: {}", builder);
-        return builder;
+        SearchRequest searchRequest = builder.build();
+        logger.debug("Elasticsearch Hybrid Search Request: {}", searchRequest.toString());
+        return searchRequest;
     }
 
     /**
@@ -309,9 +312,9 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
         String bm25Field = computeBm25Field(query);
         float[] vector = embeddingModel.embed(query.text());
         // 2. Build search request
+        SearchRequest.Builder builder = new SearchRequest.Builder();
         SearchResponse<Document> response = elasticsearchClient.search(
-                sr -> buildSearchRequest(sr, vector, requestFilterExpression, query.text(), bm25Field),
-                Document.class
+                buildSearchRequest(builder, vector, requestFilterExpression, query.text(), bm25Field), Document.class
         );
         // 3. Convert search response to documents
         return response.hits().hits().stream().map(this::toDocument).collect(Collectors.toList());
@@ -328,7 +331,7 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
      * @param bm25Field        bm25 field
      * @return SearchRequest.Builder
      */
-    private SearchRequest.Builder buildSearchRequest(SearchRequest.Builder sr, float[] vector, Filter.Expression filterExpression,
+    private SearchRequest buildSearchRequest(SearchRequest.Builder sr, float[] vector, Filter.Expression filterExpression,
                                                      String queryText, String bm25Field) {
         // 1. Knn search
         SearchRequest.Builder builder = new SearchRequest.Builder();
@@ -352,15 +355,17 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
                     .must(m -> m.match(
                             mm -> mm.field(bm25Field)
                                     .query(escape(queryText)))
-                    ).boost(bm25Bias)));
+                    ).boost(bm25Bias)))
+                    .size(topK);
         }
         // 3. RRF
         if (useRrf) {
             builder.rank(r -> r.rrf(rrf -> rrf.rankConstant((long) rankConstant)
                     .rankWindowSize((long) rankWindowSize)));
         }
-        logger.debug("Elasticsearch Hybrid Search Request: {}", builder);
-        return builder;
+        SearchRequest searchRequest = builder.build();
+        logger.debug("Elasticsearch Hybrid Search Request: {}", searchRequest.toString());
+        return searchRequest;
     }
 
     private static String escape(String text) {

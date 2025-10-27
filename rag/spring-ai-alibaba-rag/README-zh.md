@@ -100,15 +100,20 @@ public class TestController {
 
     @GetMapping("/retrieval")
     public List<Document> retrieval() {
-        Query query = new Query("什么是hybridSearch");
-        // (category == "技术文档" or category == "HybridSearch") and content = "什么是hybridSearch"
+        // (metadata.category == "技术文档" or metadata.category == "HybridSearch") and metadata.word = "什么是hybridSearch"
+        // expression会自动添加metadata
         FilterExpressionBuilder builder = new FilterExpressionBuilder();
         Filter.Expression expression = builder.or(
                 builder.eq("category", "技术文档"),
                 builder.eq("category", "HybridSearch")
         ).build();
-        query.context().put(HybridElasticsearchRetriever.FILTER_EXPRESSION, expression);
-        query.context().put(HybridElasticsearchRetriever.BM25_FILED, "content");
+        Map<String, Object> context = new HashMap<>();
+        context.put(HybridElasticsearchRetriever.FILTER_EXPRESSION, expression);
+        context.put(HybridElasticsearchRetriever.BM25_FILED, "metadata.word");
+        Query query = Query.builder()
+                .text("什么是hybridSearch")
+                .context(context)
+                .build();
         return hybridRetriever.retrieve(query);
     }
 }
@@ -127,19 +132,17 @@ public class TestController {
     @GetMapping("/retrieval")
     public List<Document> retrieval() {
         Query query = new Query("什么是hybridSearch");
-        // (category == "技术文档" or category == "HybridSearch") and content = "什么是hybridSearch"
+        // (metadata.category == "技术文档" or metadata.category == "其他") and metadata.word = "什么是hybridSearch"
         co.elastic.clients.elasticsearch._types.query_dsl.Query filterQuery = QueryBuilders.bool(b -> b
-                .must(
-                        QueryBuilders.bool(or -> or
-                                .should(QueryBuilders.term(t -> t.field("category.keyword").value("技术文档")))
-                                .should(QueryBuilders.term(t -> t.field("category.keyword").value("HybridSearch")))
-                        )
-                )).bool()._toQuery();
-        // for bm25 field
-        co.elastic.clients.elasticsearch._types.query_dsl.Query textQuery = QueryBuilders.match(m -> m
-                .field("content")
-                .query("什么是hybridSearch")
+                .should(QueryBuilders.term(t -> t.field("metadata.category.keyword").value("技术文档")))
+                .should(QueryBuilders.term(t -> t.field("metadata.category.keyword").value("其他")))
         ).bool()._toQuery();
+        // for bm25 field
+        co.elastic.clients.elasticsearch._types.query_dsl.Query textQuery =
+                QueryBuilders.match(m -> m
+                        .field("metadata.word")
+                        .query("什么是hybridSearch")
+                );
         return hybridRetriever.retrieve(query, filterQuery, textQuery);
     }
 }
@@ -213,14 +216,18 @@ public class TestController {
 
     @GetMapping("/retrieval")
     public List<Document> retrieval() {
-        Query query = new Query("什么是hybridSearch");
-        // (category == "技术文档" or category == "HybridSearch") 
+        // (metadata.category == "技术文档" or metadata.category == "HybridSearch") 
         FilterExpressionBuilder builder = new FilterExpressionBuilder();
         Filter.Expression expression = builder.or(
                 builder.eq("category", "技术文档"),
                 builder.eq("category", "HybridSearch")
         ).build();
-        query.context().put(HyDeRetriever.FILTER_EXPRESSION, expression);
+        Map<String, Object> context = new HashMap<>();
+        context.put(HyDeRetriever.FILTER_EXPRESSION, expression);
+        Query query = Query.builder()
+                .text("什么是hybridSearch")
+                .context(context)
+                .build();
         return hyDeRetriever.retrieve(query);
     }
 }

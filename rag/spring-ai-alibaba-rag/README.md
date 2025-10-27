@@ -106,14 +106,14 @@ public class TestController {
     @GetMapping("/retrieval")
     public List<Document> retrieval() {
         Query query = new Query("What is hybridSearch");
-        // (category == "Technical report" or category == "HybridSearch") and content = "What is hybridSearch"
+        // (metadata.category == "Technical report" or metadata.category == "HybridSearch") and metadata.word = "What is hybridSearch"
         FilterExpressionBuilder builder = new FilterExpressionBuilder();
         Filter.Expression expression = builder.or(
                 builder.eq("category", "Technical report"),
                 builder.eq("category", "HybridSearch")
         ).build();
         query.context().put(HybridElasticsearchRetriever.FILTER_EXPRESSION, expression);
-        query.context().put(HybridElasticsearchRetriever.BM25_FILED, "content");
+        query.context().put(HybridElasticsearchRetriever.BM25_FILED, "metadata.word");
         return hybridRetriever.retrieve(query);
     }
 }
@@ -132,19 +132,17 @@ public class TestController {
     @GetMapping("/retrieval")
     public List<Document> retrieval() {
         Query query = new Query("What is hybridSearch");
-        // (category == "Technical report" or category == "HybridSearch") and content = "什么是hybridSearch"
+        // (metadata.category == "Technical report" or metadata.category == "Other") and metadata.word = "What is hybridSearch"
         co.elastic.clients.elasticsearch._types.query_dsl.Query filterQuery = QueryBuilders.bool(b -> b
-                .must(
-                        QueryBuilders.bool(or -> or
-                                .should(QueryBuilders.term(t -> t.field("category.keyword").value("Technical report")))
-                                .should(QueryBuilders.term(t -> t.field("category.keyword").value("HybridSearch")))
-                        )
-                )).bool()._toQuery();
-        // for bm25 field
-        co.elastic.clients.elasticsearch._types.query_dsl.Query textQuery = QueryBuilders.match(m -> m
-                .field("content")
-                .query("What is hybridSearch")
+                .should(QueryBuilders.term(t -> t.field("metadata.category.keyword").value("Technical report")))
+                .should(QueryBuilders.term(t -> t.field("metadata.category.keyword").value("Other")))
         ).bool()._toQuery();
+        // for bm25 field
+        co.elastic.clients.elasticsearch._types.query_dsl.Query textQuery =
+                QueryBuilders.match(m -> m
+                        .field("metadata.word")
+                        .query("什么是hybridSearch")
+                );
         return hybridRetriever.retrieve(query, filterQuery, textQuery);
     }
 }
@@ -219,7 +217,7 @@ public class TestController {
     @GetMapping("/retrieval")
     public List<Document> retrieval() {
         Query query = new Query("What is hybridSearch");
-        // (category == "Technical report" or category == "HybridSearch") 
+        // (metadata.category == "Technical report" or metadata.category == "HybridSearch") 
         FilterExpressionBuilder builder = new FilterExpressionBuilder();
         Filter.Expression expression = builder.or(
                 builder.eq("category", "Technical report"),

@@ -41,6 +41,7 @@ public class RagElasticSearchProperties {
 
     /**
      * Whether to use Reciprocal Rank Fusion (RRF) scoring
+     * This feature requires a commercial license for elasticsearch
      */
     private boolean useRrf = false;
 
