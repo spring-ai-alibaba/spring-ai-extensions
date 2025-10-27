@@ -16,6 +16,7 @@
 
 package com.alibaba.cloud.ai.autoconfigure.rag;
 
+import com.alibaba.cloud.ai.rag.retrieval.search.RetrieverType;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -29,9 +30,9 @@ public class RagElasticSearchProperties {
     public static final String RAG_ES_PREFIX = "spring.ai.alibaba.rag.elasticsearch";
 
     /**
-     * Whether to use hybrid search (BM25 + KNN)
+     * Retrieval type: BM25, KNN, HYBRID
      */
-    private boolean useHybrid = true;
+    private RetrieverType retrieverType;
 
     /**
      * Whether to use Reciprocal Rank Fusion (RRF) scoring
@@ -63,12 +64,12 @@ public class RagElasticSearchProperties {
      */
     private Integer topK = 50;
 
-    public boolean isUseHybrid() {
-        return useHybrid;
+    public RetrieverType getRetrieverType() {
+        return retrieverType;
     }
 
-    public void setUseHybrid(boolean useHybrid) {
-        this.useHybrid = useHybrid;
+    public void setRetrieverType(RetrieverType retrieverType) {
+        this.retrieverType = retrieverType;
     }
 
     public boolean isUseRrf() {
@@ -173,12 +174,30 @@ public class RagElasticSearchProperties {
          */
         private Integer rankConstant = 60;
 
+        /**
+         * Rank window size for Reciprocal Rank Fusion
+         * This value determines the size of the individual result sets per query.
+         * A higher value will improve result relevance at the cost of performance.
+         * The final ranked result set is pruned down to the search request’s size.
+         * rank_window_size must be greater than or equal to topK and greater than or equal to 1.
+         * Defaults to the topK parameter.
+         */
+        private Integer rankWindowSize = 50;
+
         public Integer getRankConstant() {
             return rankConstant;
         }
 
-        public void setRankConstant(int rankConstant) {
+        public void setRankConstant(Integer rankConstant) {
             this.rankConstant = rankConstant;
+        }
+
+        public Integer getRankWindowSize() {
+            return rankWindowSize;
+        }
+
+        public void setRankWindowSize(Integer rankWindowSize) {
+            this.rankWindowSize = rankWindowSize;
         }
     }
 }

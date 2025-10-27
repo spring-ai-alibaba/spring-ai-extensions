@@ -142,6 +142,16 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
     private final int topK;
 
     /**
+     * Rank window size for Reciprocal Rank Fusion
+     * This value determines the size of the individual result sets per query.
+     * A higher value will improve result relevance at the cost of performance.
+     * The final ranked result set is pruned down to the search request’s size.
+     * rank_window_size must be greater than or equal to topK and greater than or equal to 1.
+     * Defaults to the topK parameter.
+     */
+    private final int rankWindowSize;
+
+    /**
      * This value determines how much influence documents in individual result sets per query have over the final ranked result set.
      * A higher value indicates that lower ranked documents have more influence.
      */
@@ -158,9 +168,9 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
     private final float knnBias;
 
     /**
-     * Whether to use hybrid search (BM25 + KNN)
+     * Retriever type
      */
-    private final boolean useHybrid;
+    private final RetrieverType retrieverType;
 
     /**
      * Whether to use Reciprocal Rank Fusion (RRF) scoring
@@ -181,21 +191,23 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
 
     public HybridElasticsearchRetriever(ElasticsearchVectorStoreOptions vectorStoreOptions, ElasticsearchClient elasticsearchClient,
                                         EmbeddingModel embeddingModel, double similarityThreshold, int neighborsNum,
-                                        int candidateNum, int topK, int rankConstant, float bm25Bias, float knnBias,
-                                        boolean useHybrid, boolean useRrf,
+                                        int candidateNum, int topK, int rankWindowSize, int rankConstant, float bm25Bias, float knnBias,
+                                        RetrieverType retrieverType, boolean useRrf,
                                         FilterExpressionConverter filterExpressionConverter,
                                         Supplier<Filter.Expression> filterExpression) {
         this.vectorStoreOptions = vectorStoreOptions;
         this.elasticsearchClient = elasticsearchClient;
         this.embeddingModel = embeddingModel;
-        this.similarityThreshold = similarityThreshold != 0.0 ? similarityThreshold : SIMILARITY_THRESHOLD_ACCEPT_ALL;
-        this.neighborsNum = neighborsNum != 0 ? neighborsNum : DEFAULT_NEIGHBORS_NUM;
-        this.candidateNum = candidateNum != 0 ? candidateNum : DEFAULT_CANDIDATE_NUM;
-        this.topK = topK !=0 ? topK : DEFAULT_TOP_K;
-        this.rankConstant = rankConstant !=0 ? rankConstant : DEFAULT_RANK_CONSTANT;
+        this.similarityThreshold = similarityThreshold > 0.0 ? similarityThreshold : SIMILARITY_THRESHOLD_ACCEPT_ALL;
+        this.neighborsNum = neighborsNum > 0 ? neighborsNum : DEFAULT_NEIGHBORS_NUM;
+        this.candidateNum = candidateNum > 0 ? candidateNum : DEFAULT_CANDIDATE_NUM;
+        this.topK = topK > 0 ? topK : DEFAULT_TOP_K;
+        this.rankWindowSize = rankWindowSize > 0 ? rankWindowSize : this.topK;
+        Assert.isTrue(rankWindowSize >= this.topK, "rankWindowSize must be >= topK");
+        this.rankConstant = rankConstant > 0 ? rankConstant : DEFAULT_RANK_CONSTANT;
         this.bm25Bias = bm25Bias != 0 ? bm25Bias : DEFAULT_BM25_BIAS;
         this.knnBias = knnBias != 0 ? knnBias : DEFAULT_KNN_BIAS;
-        this.useHybrid = useHybrid;
+        this.retrieverType = retrieverType != null ? retrieverType : RetrieverType.HYBRID;
         this.useRrf = useRrf;
         this.filterExpressionConverter = filterExpressionConverter != null ? filterExpressionConverter : new ElasticsearchAiSearchFilterExpressionConverter();
         this.filterExpression = filterExpression != null ? filterExpression : () -> null;
@@ -257,18 +269,20 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
                                                      co.elastic.clients.elasticsearch._types.query_dsl.Query filterQuery,
                                                      co.elastic.clients.elasticsearch._types.query_dsl.Query textQuery) {
         // 1. Knn search
-        SearchRequest.Builder builder = sr.index(vectorStoreOptions.getIndexName())
-                .knn(k -> k.queryVector(EmbeddingUtils.toList(vector))
-                        .similarity(computeSimilarityThreshold())
-                        .k(neighborsNum)
-                        .field(vectorStoreOptions.getEmbeddingFieldName())
-                        .numCandidates(candidateNum)
-                        .filter(ensureQuery(filterQuery))
-                        .boost(knnBias))
-                .size(topK);
-
+        SearchRequest.Builder builder = new SearchRequest.Builder();
+        if (RetrieverType.KNN.equals(retrieverType) || RetrieverType.HYBRID.equals(retrieverType)) {
+            builder = sr.index(vectorStoreOptions.getIndexName())
+                    .knn(k -> k.queryVector(EmbeddingUtils.toList(vector))
+                            .similarity(computeSimilarityThreshold())
+                            .k(neighborsNum)
+                            .field(vectorStoreOptions.getEmbeddingFieldName())
+                            .numCandidates(candidateNum)
+                            .filter(ensureQuery(filterQuery))
+                            .boost(knnBias))
+                    .size(topK);
+        }
         // 2. Bm25 search
-        if (useHybrid) {
+        if (RetrieverType.BM25.equals(retrieverType) || RetrieverType.HYBRID.equals(retrieverType)) {
             builder.query(q -> q.bool(b -> b
                     .filter(ensureQuery(filterQuery))
                     .must(ensureQuery(textQuery))
@@ -277,7 +291,7 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
         // 3. RRF
         if (useRrf) {
             builder.rank(r -> r.rrf(rrf -> rrf.rankConstant((long) rankConstant)
-                    .rankWindowSize((long) topK)));
+                    .rankWindowSize((long) rankWindowSize)));
         }
         return builder;
     }
@@ -317,19 +331,21 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
     private SearchRequest.Builder buildSearchRequest(SearchRequest.Builder sr, float[] vector, Filter.Expression filterExpression,
                                                      String queryText, String bm25Field) {
         // 1. Knn search
-        SearchRequest.Builder builder = sr.index(vectorStoreOptions.getIndexName())
-                .knn(k -> k.queryVector(EmbeddingUtils.toList(vector))
-                        .similarity(computeSimilarityThreshold())
-                        .k(neighborsNum)
-                        .field(vectorStoreOptions.getEmbeddingFieldName())
-                        .numCandidates(candidateNum)
-                        .filter(fl -> fl
-                                .queryString(qs -> qs.query(getElasticsearchQueryString(filterExpression))))
-                        .boost(knnBias))
-                .size(topK);
-
+        SearchRequest.Builder builder = new SearchRequest.Builder();
+        if (RetrieverType.KNN.equals(retrieverType) || RetrieverType.HYBRID.equals(retrieverType)) {
+            builder = sr.index(vectorStoreOptions.getIndexName())
+                    .knn(k -> k.queryVector(EmbeddingUtils.toList(vector))
+                            .similarity(computeSimilarityThreshold())
+                            .k(neighborsNum)
+                            .field(vectorStoreOptions.getEmbeddingFieldName())
+                            .numCandidates(candidateNum)
+                            .filter(fl -> fl
+                                    .queryString(qs -> qs.query(getElasticsearchQueryString(filterExpression))))
+                            .boost(knnBias))
+                    .size(topK);
+        }
         // 2. Bm25 search
-        if (useHybrid) {
+        if (RetrieverType.BM25.equals(retrieverType) || RetrieverType.HYBRID.equals(retrieverType)) {
             builder.query(q -> q.bool(b -> b
                     .filter(fl -> fl
                             .queryString(qs -> qs.query(getElasticsearchQueryString(filterExpression))))
@@ -341,7 +357,7 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
         // 3. RRF
         if (useRrf) {
             builder.rank(r -> r.rrf(rrf -> rrf.rankConstant((long) rankConstant)
-                    .rankWindowSize((long) topK)));
+                    .rankWindowSize((long) rankWindowSize)));
         }
         return builder;
     }
@@ -489,13 +505,15 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
 
         private int topK = DEFAULT_TOP_K;
 
+        private int rankWindowSize = DEFAULT_TOP_K;
+
         private int rankConstant = DEFAULT_RANK_CONSTANT;
 
         private float bm25Bias = DEFAULT_BM25_BIAS;
 
         private float knnBias = DEFAULT_KNN_BIAS;
 
-        private boolean useHybrid = DEFAULT_USE_HYBRID;
+        private RetrieverType retrieverType = RetrieverType.HYBRID;
 
         private boolean useRrf = DEFAULT_USE_RRF;
 
@@ -544,6 +562,13 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
             return this;
         }
 
+        public Builder rankWindowSize(int rankWindowSize) {
+            Assert.isTrue(rankWindowSize > 0, "rankWindowSize must be greater than 0");
+            Assert.isTrue(rankWindowSize >= this.topK, "rankWindowSize must be >= topK");
+            this.rankWindowSize = rankWindowSize;
+            return this;
+        }
+
         public Builder rankConstant(int rankConstant) {
             Assert.isTrue(rankConstant > 0, "rankConstant must be greater than 0");
             this.rankConstant = rankConstant;
@@ -560,8 +585,8 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
             return this;
         }
 
-        public Builder useHybrid(boolean useHybrid) {
-            this.useHybrid = useHybrid;
+        public Builder retrieverType(RetrieverType retrieverType) {
+            this.retrieverType = retrieverType;
             return this;
         }
 
@@ -582,7 +607,7 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
 
         public HybridElasticsearchRetriever build() {
             return new HybridElasticsearchRetriever(vectorStoreOptions, elasticsearchClient, embeddingModel, similarityThreshold,
-                    neighborsNum, candidateNum, topK, rankConstant, bm25Bias, knnBias, useHybrid, useRrf,
+                    neighborsNum, candidateNum, topK, rankWindowSize, rankConstant, bm25Bias, knnBias, retrieverType, useRrf,
                     filterExpressionConverter, filterExpression);
         }
     }

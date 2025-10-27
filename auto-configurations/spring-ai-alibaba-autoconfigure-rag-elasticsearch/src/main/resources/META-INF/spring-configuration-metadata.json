@@ -55,6 +55,12 @@
       "defaultValue": 0
     },
     {
+      "name": "spring.ai.alibaba.rag.elasticsearch.retriever-type",
+      "type": "com.alibaba.cloud.ai.rag.retrieval.search.RetrieverType",
+      "description": "Retrieval type: BM25, KNN, HYBRID",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties"
+    },
+    {
       "name": "spring.ai.alibaba.rag.elasticsearch.rrf.rank-constant",
       "type": "java.lang.Integer",
       "description": "This value determines how much influence documents in individual result sets per query have over the final ranked result set. A higher value indicates that lower ranked documents have more influence.",
@@ -62,18 +68,18 @@
       "defaultValue": 60
     },
     {
+      "name": "spring.ai.alibaba.rag.elasticsearch.rrf.rank-window-size",
+      "type": "java.lang.Integer",
+      "description": "Rank window size for Reciprocal Rank Fusion This value determines the size of the individual result sets per query. A higher value will improve result relevance at the cost of performance. The final ranked result set is pruned down to the search request’s size. rank_window_size must be greater than or equal to topK and greater than or equal to 1. Defaults to the topK parameter.",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties$Rrf",
+      "defaultValue": 50
+    },
+    {
       "name": "spring.ai.alibaba.rag.elasticsearch.top-k",
       "type": "java.lang.Integer",
       "description": "top K documents to retrieve",
       "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties",
       "defaultValue": 50
-    },
-    {
-      "name": "spring.ai.alibaba.rag.elasticsearch.use-hybrid",
-      "type": "java.lang.Boolean",
-      "description": "Whether to use hybrid search (BM25 + KNN)",
-      "sourceType": "com.alibaba.cloud.ai.autoconfigure.rag.RagElasticSearchProperties",
-      "defaultValue": true
     },
     {
       "name": "spring.ai.alibaba.rag.elasticsearch.use-rrf",

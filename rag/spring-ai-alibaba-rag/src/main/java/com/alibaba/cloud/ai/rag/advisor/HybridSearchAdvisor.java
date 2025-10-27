@@ -95,7 +95,7 @@ public class HybridSearchAdvisor implements BaseAdvisor {
         Query transformedQuery = originalQuery;
         if (!CollectionUtils.isEmpty(this.queryTransformers)) {
             if (hyDeTransformer != null) {
-                this.queryTransformers.addLast(hyDeTransformer);
+                this.queryTransformers.add(hyDeTransformer);
             }
             for (var queryTransformer : this.queryTransformers) {
                 transformedQuery = queryTransformer.apply(transformedQuery);
@@ -111,11 +111,13 @@ public class HybridSearchAdvisor implements BaseAdvisor {
         }
         // 4. Post-process the documents.
         List<Document> resultDocuments = new ArrayList<>();
-        if (dashScopeRerankPostProcessor != null) {
-            this.documentPostProcessors.addLast(dashScopeRerankPostProcessor);
-        }
-        for (var documentPostProcessor : this.documentPostProcessors) {
-            resultDocuments = documentPostProcessor.process(originalQuery, allRetrievedDocuments);
+        if (!CollectionUtils.isEmpty(documentPostProcessors)) {
+            if (dashScopeRerankPostProcessor != null) {
+                this.documentPostProcessors.add(dashScopeRerankPostProcessor);
+            }
+            for (var documentPostProcessor : this.documentPostProcessors) {
+                resultDocuments = documentPostProcessor.process(originalQuery, allRetrievedDocuments);
+            }
         }
         context.put(DOCUMENT_CONTEXT, resultDocuments);
         // 5. Augment user query with the document contextual data.
@@ -149,13 +151,13 @@ public class HybridSearchAdvisor implements BaseAdvisor {
 
     public static final class Builder {
 
-        private List<QueryTransformer> queryTransformers;
+        private List<QueryTransformer> queryTransformers = new ArrayList<>();
 
         private QueryExpander queryExpander;
 
         private HybridDocumentRetriever hybridDocumentRetriever;
 
-        private List<DocumentPostProcessor> documentPostProcessors;
+        private List<DocumentPostProcessor> documentPostProcessors = new ArrayList<>();
 
         private QueryAugmenter queryAugmenter;
 

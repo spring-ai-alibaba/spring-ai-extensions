@@ -65,10 +65,11 @@ public class RagElasticSearchAutoConfiguration {
                 .neighborsNum(ragElasticSearchProperties.getRecall().getNeighborsNum())
                 .candidateNum(ragElasticSearchProperties.getRecall().getCandidateNum())
                 .topK(ragElasticSearchProperties.getTopK())
+                .rankWindowSize(ragElasticSearchProperties.getRrf().getRankWindowSize())
                 .rankConstant(ragElasticSearchProperties.getRrf().getRankConstant())
                 .bm25Bias(ragElasticSearchProperties.getBm25Bias())
                 .knnBias(ragElasticSearchProperties.getKnnBias())
-                .useHybrid(ragElasticSearchProperties.isUseHybrid())
+                .retrieverType(ragElasticSearchProperties.getRetrieverType())
                 .useRrf(ragElasticSearchProperties.isUseRrf())
                 .build();
     }
