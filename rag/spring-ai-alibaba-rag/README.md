@@ -1,4 +1,4 @@
-# Spring AI Alibaba Rag 模块
+# Spring AI Alibaba Rag Module
 
 [中文版本](./README-zh.md)
 

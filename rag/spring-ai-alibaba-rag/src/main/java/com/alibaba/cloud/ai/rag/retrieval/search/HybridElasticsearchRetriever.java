@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
  * @author hupei
  * @author ViliamSun
  * @author benym
+ * @since 1.1.0.0-SNAPSHOT
  */
 public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
 

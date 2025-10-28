@@ -33,6 +33,7 @@ import org.springframework.util.StringUtils;
  * <a href="https://arxiv.org/abs/2212.10496">https://arxiv.org/abs/2212.10496</a>
  *
  * @author benym
+ * @since 1.1.0.0-SNAPSHOT
  */
 public class HyDeTransformer implements QueryTransformer {
 

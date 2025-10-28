@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
  * Re-ranking processing of the rerank model based on the dashscope api
  *
  * @author benym
+ * @since 1.1.0.0-SNAPSHOT
  */
 public class DashScopeRerankPostProcessor implements DocumentPostProcessor {
 

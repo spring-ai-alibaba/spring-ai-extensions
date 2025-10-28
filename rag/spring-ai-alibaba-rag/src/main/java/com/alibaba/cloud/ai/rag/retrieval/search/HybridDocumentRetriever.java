@@ -26,6 +26,7 @@ import java.util.List;
  * Hybrid Document Retriever interface that extends the basic DocumentRetriever.
  *
  * @author benym
+ * @since 1.1.0.0-SNAPSHOT
  */
 public interface HybridDocumentRetriever extends DocumentRetriever {
 

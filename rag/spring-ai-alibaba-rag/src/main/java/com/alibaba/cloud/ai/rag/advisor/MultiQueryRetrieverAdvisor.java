@@ -22,6 +22,7 @@ import java.util.Map;
  * Expand the original query into multiple queries for Retrieval
  *
  * @author benym
+ * @since 1.1.0.0-SNAPSHOT
  */
 public class MultiQueryRetrieverAdvisor implements BaseAdvisor {
 

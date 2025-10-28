@@ -23,6 +23,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * Configuration properties for RAG ElasticSearch integration.
  *
  * @author benym
+ * @since 1.1.0.0-SNAPSHOT
  */
 @ConfigurationProperties(prefix = RagElasticSearchProperties.RAG_ES_PREFIX)
 public class RagElasticSearchProperties {

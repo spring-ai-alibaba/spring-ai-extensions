@@ -4,7 +4,7 @@
 
 ## 简介
 
-基于 Spring AI Rag 框架，集成阿里云DashScope AI 服务，提供开箱即用的 RAG（Retrieval-Augmented Generation）能力
+基于Spring AI Rag框架，集成阿里云DashScope AI服务，提供开箱即用的RAG（Retrieval-Augmented Generation）能力
 
 ## 功能特性
 - **Hybrid Search**：结合BM25和KNN向量搜索, 支持Reciprocal Rank Fusion (RRF) 排序

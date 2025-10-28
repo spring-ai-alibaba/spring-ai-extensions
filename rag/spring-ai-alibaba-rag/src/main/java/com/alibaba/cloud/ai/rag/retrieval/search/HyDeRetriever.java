@@ -35,6 +35,7 @@ import java.util.function.Supplier;
  * Hypothetical Document Embeddings Retriever implementation.
  *
  * @author benym
+ * @since 1.1.0.0-SNAPSHOT
  */
 public class HyDeRetriever implements DocumentRetriever {
 
@@ -135,11 +136,13 @@ public class HyDeRetriever implements DocumentRetriever {
         }
 
         public Builder similarityThreshold(Double similarityThreshold) {
+            Assert.isTrue(similarityThreshold >= 0, "similarityThreshold must not be negative");
             this.similarityThreshold = similarityThreshold;
             return this;
         }
 
         public Builder topK(Integer topK) {
+            Assert.isTrue(topK >= 0, "topK must not be negative");
             this.topK = topK;
             return this;
         }

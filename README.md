@@ -92,6 +92,7 @@ For more examples, please refer to our official example repository: [https://git
 * ToolCallback
 * VectorStore
 * ChatMemory
+* RAG
 * DocumentParser & DocumentReader
 * Prompt Management
 * Observation
@@ -224,6 +225,21 @@ Available starters:
 - `spring-ai-alibaba-starter-memory` (short-term memory)
 - `spring-ai-alibaba-starter-memory-long` (long-term memory)
 - Individual storage backend starters (e.g., `spring-ai-alibaba-starter-memory-redis`)
+
+### RAG
+
+Popular RAG architecture and a variety of reusable components:
+
+- **Hybrid Search**: Hybrid retriever using BM25 and KNN search with Reciprocal Rank Fusion (RRF). Now Support Elasticsearch.
+- **[HyDE Search](https://arxiv.org/abs/2212.10496)**: Hypothetical Document Embeddings RAG, using hypothetical document embeddings to improve retrieval recall and accuracy
+
+Available starters:
+```xml
+<dependency>
+    <groupId>com.alibaba.cloud.ai</groupId>
+    <artifactId>spring-ai-alibaba-starter-rag</artifactId>
+</dependency>
+```
 
 ### Prompt
 

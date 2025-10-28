@@ -4,6 +4,7 @@ package com.alibaba.cloud.ai.rag.retrieval.search;
  * Enumeration of retriever types.
  *
  * @author benym
+ * @since 1.1.0.0-SNAPSHOT
  */
 public enum RetrieverType {
 

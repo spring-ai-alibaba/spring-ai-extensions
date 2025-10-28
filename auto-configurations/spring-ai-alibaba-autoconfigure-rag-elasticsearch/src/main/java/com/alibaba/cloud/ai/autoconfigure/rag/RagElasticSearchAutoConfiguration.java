@@ -36,6 +36,7 @@ import org.springframework.util.Assert;
  * Autoconfiguration class for integrating ElasticSearch as a retrieval backend in
  *
  * @author benym
+ * @since 1.1.0.0-SNAPSHOT
  */
 @AutoConfiguration
 @EnableConfigurationProperties({RagElasticSearchProperties.class})

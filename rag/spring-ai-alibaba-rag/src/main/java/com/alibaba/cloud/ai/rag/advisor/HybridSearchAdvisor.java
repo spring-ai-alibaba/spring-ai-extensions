@@ -45,6 +45,7 @@ import java.util.Map;
  * Adopt the architecture of hybrid search combined with the rerank model
  *
  * @author benym
+ * @since 1.1.0.0-SNAPSHOT
  */
 public class HybridSearchAdvisor implements BaseAdvisor {
 
