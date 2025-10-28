@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.model.chat.client.autoconfigure.ChatClientAutoConfiguration;
 import org.springframework.ai.rag.Query;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStore;
 import org.springframework.ai.vectorstore.elasticsearch.autoconfigure.ElasticsearchVectorStoreAutoConfiguration;
@@ -44,10 +45,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Integration test for HyDe RAG.
@@ -59,7 +57,8 @@ import java.util.Map;
         ElasticsearchClientAutoConfiguration.class,
         DashScopeChatAutoConfiguration.class,
         ElasticsearchRestClientAutoConfiguration.class,
-        DashScopeEmbeddingAutoConfiguration.class
+        DashScopeEmbeddingAutoConfiguration.class,
+        ChatClientAutoConfiguration.class
 })
 @SpringBootTest(classes = HyDeRagTest.class)
 @Testcontainers
@@ -92,8 +91,9 @@ public class HyDeRagTest {
         registry.add("spring.elasticsearch.uris", () -> uris);
         // dashscope
         registry.add("spring.ai.dashscope.api-key", () -> System.getenv("AI_DASHSCOPE_API_KEY"));
-        registry.add("spring.ai.dashscope.chat.options.model", () -> "qwen3-235b-a22b");
+        registry.add("spring.ai.dashscope.chat.options.model", () -> "qwen-plus-2025-07-28");
         registry.add("spring.ai.dashscope.embedding.options.model", () -> "text-embedding-v1");
+        registry.add("spring.ai.dashscope.chat.options.incremental-output", () -> false);
     }
 
     @Resource
@@ -152,6 +152,18 @@ public class HyDeRagTest {
         Query query = new Query("什么是hybridSearch");
         List<Document> retrieveList = hyDeRetriever.retrieve(query);
         Assertions.assertNotNull(retrieveList);
+        // sort by id
+        retrieveList.sort(Comparator.comparing(doc -> Integer.valueOf(doc.getId())));
+        Document document = retrieveList.get(0);
+        Map<String, Object> meta = document.getMetadata();
+        Assertions.assertTrue(meta.containsKey("word"));
+        String expectedContent = "什么是hybridSearch？它是一种混合检索技术";
+        Assertions.assertEquals(expectedContent, meta.get("word"));
+        Document document1 = retrieveList.get(1);
+        Map<String, Object> meta2 = document1.getMetadata();
+        Assertions.assertTrue(meta2.containsKey("word"));
+        String expectedContent2 = "HybridSearch结合了向量搜索和传统文本检索的优势";
+        Assertions.assertEquals(expectedContent2, meta2.get("word"));
     }
 
     @Test
@@ -160,10 +172,9 @@ public class HyDeRagTest {
                 .chatClientBuilder(chatClientBuilder)
                 .build();
         FilterExpressionBuilder builder = new FilterExpressionBuilder();
-        Filter.Expression expression = builder.or(
-                builder.eq("category", "技术文档"),
-                builder.eq("category", "HybridSearch")
-        ).build();
+        Filter.Expression expression = builder
+                .eq("category", "HybridSearch")
+                .build();
         Map<String, Object> context = new HashMap<>();
         context.put(HyDeRetriever.FILTER_EXPRESSION, expression);
         Query query = Query.builder()
@@ -178,5 +189,10 @@ public class HyDeRagTest {
                 .build();
         List<Document> retrieveList = hyDeRetriever.retrieve(query);
         Assertions.assertNotNull(retrieveList);
+        Document document = retrieveList.get(0);
+        Map<String, Object> meta = document.getMetadata();
+        Assertions.assertTrue(meta.containsKey("word"));
+        String expectedContent2 = "HybridSearch结合了向量搜索和传统文本检索的优势";
+        Assertions.assertEquals(expectedContent2, meta.get("word"));
     }
 }

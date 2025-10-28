@@ -71,6 +71,7 @@ public class HyDeTransformer implements QueryTransformer {
             logger.warn("Query generate hyDe document result is null/empty. Returning the input query unchanged.");
             return query;
         }
+        logger.debug("Query generate hyDe document result: {}", hyDeQueryText);
         return query.mutate().text(hyDeQueryText).build();
     }
 
