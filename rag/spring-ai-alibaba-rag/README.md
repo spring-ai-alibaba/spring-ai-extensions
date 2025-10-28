@@ -14,9 +14,9 @@ Based on the Spring AI Rag framework and integrated with Alibaba Cloud DashScope
 
 - Multiple mainstream RAG modes are supported by advisor
 
-- Built-in reordering post-retrieval processing based on the DashScope platform
+- Built-in rerank post-retrieval processing based on the DashScope platform
 
-- Built-in front retrieval converter
+- Built-in pre-retrieval converter
 
 ## Quick Start
 
