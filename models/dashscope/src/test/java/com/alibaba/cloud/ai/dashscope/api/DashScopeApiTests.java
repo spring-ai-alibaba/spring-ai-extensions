@@ -15,12 +15,12 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatModel;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.EmbeddingModel;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.EmbeddingRequest;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.EmbeddingRequestInput;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.EmbeddingRequestInputParameters;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.EmbeddingTextType;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ChatModel;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.EmbeddingModel;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.EmbeddingRequest;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.EmbeddingRequestInput;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.EmbeddingRequestInputParameters;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.EmbeddingTextType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

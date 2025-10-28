@@ -25,6 +25,7 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.common.ErrorCodeEnum;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,22 +67,22 @@ public class DashScopeDocumentCloudReader implements DocumentReader {
 		String fileMD5;
 		try (FileInputStream fileInputStream = new FileInputStream(file)) {
 			fileMD5 = DigestUtils.md5Hex(fileInputStream);
-			DashScopeApi.UploadRequest uploadRequest = new DashScopeApi.UploadRequest(readerConfig.getCategoryId(),
+            DashScopeAPISpec.UploadRequest uploadRequest = new DashScopeAPISpec.UploadRequest(readerConfig.getCategoryId(),
 					file.getName(), file.length(), fileMD5);
 			String fileId = dashScopeApi.upload(file, uploadRequest);
 			// Polling for results
 			int tryCount = 0;
 			while (tryCount < DashScopeApiConstants.MAX_TRY_COUNT) {
-				ResponseEntity<DashScopeApi.CommonResponse<DashScopeApi.QueryFileResponseData>> response = dashScopeApi
+				ResponseEntity<DashScopeAPISpec.CommonResponse<DashScopeAPISpec.QueryFileResponseData>> response = dashScopeApi
 					.queryFileInfo(readerConfig.getCategoryId(),
-							new DashScopeApi.UploadRequest.QueryFileRequest(fileId));
+							new DashScopeAPISpec.UploadRequest.QueryFileRequest(fileId));
 				if (response != null && response.getBody() != null) {
-					DashScopeApi.QueryFileResponseData queryFileResponseData = response.getBody().data();
+                    DashScopeAPISpec.QueryFileResponseData queryFileResponseData = response.getBody().data();
 					String fileStatus = queryFileResponseData.status();
 					if ("PARSE_SUCCESS".equals(fileStatus)) {
 						// download files
 						String parseResult = dashScopeApi.getFileParseResult(readerConfig.getCategoryId(),
-								new DashScopeApi.UploadRequest.QueryFileRequest(fileId));
+								new DashScopeAPISpec.UploadRequest.QueryFileRequest(fileId));
 						return List.of(toDocument(fileId, parseResult));
 					}
 					else if ("PARSE_FAILED".equals(fileStatus)) {

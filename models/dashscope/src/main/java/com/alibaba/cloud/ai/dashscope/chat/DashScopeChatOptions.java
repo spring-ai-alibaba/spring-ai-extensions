@@ -16,7 +16,7 @@
 
 package com.alibaba.cloud.ai.dashscope.chat;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeResponseFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -132,12 +132,12 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
   /**
    * A list of optional tools that the model can call. Currently, only functions are supported. Even if multiple functions are input, the model will only select one of them to generate results. The model can generate function call parameters based on the content of the tools parameter.
    */
-  private @JsonProperty("tools") List<DashScopeApi.FunctionTool> tools;
+  private @JsonProperty("tools") List<DashScopeAPISpec.FunctionTool> tools;
 
   /**
    * Strategies for networked search. Takes effect only if the enable_search is true.
    */
-  private @JsonProperty("search_options") DashScopeApi.SearchOptions searchOptions;
+  private @JsonProperty("search_options") DashScopeAPISpec.SearchOptions searchOptions;
 
   /**
    * Whether to enable parallel tool calling。
@@ -200,10 +200,95 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
    */
   private @JsonProperty("multi_model") Boolean multiModel = false;
 
+  private Boolean vlEnableImageHwOutput = false;
+
+  private @JsonProperty("audio") Object audio = null;
+
+  private @JsonProperty("stream_options") Object streamOptions = null;
+
+  private @JsonProperty("asr_options") Object asrOptions;
+
+  private @JsonProperty("max_input_tokens") Integer maxInputTokens;
+
+  private @JsonProperty("modalities") List<String> modalities;
+
+  private @JsonProperty("ocr_options") DashScopeAPISpec.OCROption ocrOptions;
+
+  private @JsonProperty("top_logprobs") Integer topLogProbs;
+
+  private @JsonProperty("logprobs") Boolean logprobs;
+
+    private @JsonProperty("translation_options") DashScopeAPISpec.TranslationOptions translationOptions;
+
+
   @JsonIgnore
   private Map<String, Object> toolContext = new HashMap<>();;
 
-  @Override
+  public DashScopeAPISpec.TranslationOptions getTranslationOptions() {
+    return translationOptions;
+}public void setTranslationOptions(DashScopeAPISpec.TranslationOptions translationOptions) {
+    this.translationOptions = translationOptions;
+}public Integer getTopLogProbs() {
+    return topLogProbs;
+}public void setTopLogProbs(Integer topLogProbs) {
+    this.topLogProbs = topLogProbs;
+}public Boolean getLogprobs() {
+    return logprobs;
+}public void setLogprobs(Boolean logprobs) {
+    this.logprobs = logprobs;
+}public DashScopeAPISpec.OCROption getOcrOptions() {
+    return ocrOptions;
+}public void setOcrOptions(DashScopeAPISpec.OCROption ocrOptions) {
+    this.ocrOptions = ocrOptions;
+}public Boolean getVlEnableImageHwOutput() {
+    return vlEnableImageHwOutput;
+    }
+
+    public void setVlEnableImageHwOutput(Boolean vlEnableImageHwOutput) {
+        this.vlEnableImageHwOutput = vlEnableImageHwOutput;
+    }
+
+    public Object getAudio() {
+        return audio;
+    }
+
+    public void setAudio(Object audio) {
+        this.audio = audio;
+    }
+
+    public Object getStreamOptions() {
+        return streamOptions;
+    }
+
+    public void setStreamOptions(Object streamOptions) {
+        this.streamOptions = streamOptions;
+    }
+
+    public Object getAsrOptions() {
+        return asrOptions;
+    }
+
+    public void setAsrOptions(Object asrOptions) {
+        this.asrOptions = asrOptions;
+    }
+
+    public Integer getMaxInputTokens() {
+        return maxInputTokens;
+    }
+
+    public void setMaxInputTokens(Integer maxInputTokens) {
+        this.maxInputTokens = maxInputTokens;
+    }
+
+    public List<String> getModalities() {
+        return modalities;
+    }
+
+    public void setModalities(List<String> modalities) {
+        this.modalities = modalities;
+    }
+
+    @Override
   public String getModel() {
     return model;
   }
@@ -253,11 +338,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
     this.temperature = temperature;
   }
 
-  public void setSearchOptions(DashScopeApi.SearchOptions searchOptions) {
+  public void setSearchOptions(DashScopeAPISpec.SearchOptions searchOptions) {
     this.searchOptions = searchOptions;
   }
 
-  public DashScopeApi.SearchOptions getSearchOptions() {
+  public DashScopeAPISpec.SearchOptions getSearchOptions() {
     return searchOptions;
   }
 
@@ -340,11 +425,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
     this.repetitionPenalty = repetitionPenalty;
   }
 
-  public List<DashScopeApi.FunctionTool> getTools() {
+  public List<DashScopeAPISpec.FunctionTool> getTools() {
     return tools;
   }
 
-  public void setTools(List<DashScopeApi.FunctionTool> tools) {
+  public void setTools(List<DashScopeAPISpec.FunctionTool> tools) {
     this.tools = tools;
   }
 
@@ -464,7 +549,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
       return this;
     }
 
-    public DashscopeChatOptionsBuilder withSearchOptions(DashScopeApi.SearchOptions searchOptions) {
+    public DashscopeChatOptionsBuilder withSearchOptions(DashScopeAPISpec.SearchOptions searchOptions) {
       this.options.searchOptions = searchOptions;
       return this;
     }
@@ -519,7 +604,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
       return this;
     }
 
-    public DashscopeChatOptionsBuilder withTools(List<DashScopeApi.FunctionTool> tools) {
+    public DashscopeChatOptionsBuilder withTools(List<DashScopeAPISpec.FunctionTool> tools) {
       this.options.tools = tools;
       return this;
     }

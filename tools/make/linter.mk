@@ -76,4 +76,4 @@ newline-fix: ## Fix the newline
 .PHONY: secrets-check
 secrets-check: ## Check the secrets
 	@$(LOG_TARGET)
-	gitleaks dir -v .
+	gitleaks --config ./tools/linter/leak/.gitleak.toml dir -v .

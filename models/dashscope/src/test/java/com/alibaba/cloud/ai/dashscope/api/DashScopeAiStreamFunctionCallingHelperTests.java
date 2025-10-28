@@ -15,15 +15,15 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionChunk;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionFinishReason;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage.ChatCompletionFunction;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage.Role;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage.ToolCall;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionOutput;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionOutput.Choice;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionChunk;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionFinishReason;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.ChatCompletionFunction;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.Role;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.ToolCall;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionOutput;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionOutput.Choice;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.TokenUsage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -218,8 +218,8 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 		ChatCompletionMessage message = new ChatCompletionMessage(content, role);
 		Choice choice = new Choice(finishReason, message, null);
 		ChatCompletionOutput output = new ChatCompletionOutput(null, List.of(choice), null);
-		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null);
-		return new ChatCompletionChunk(requestId, output, usage);
+		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+		return new ChatCompletionChunk(requestId, output, usage, null);
 	}
 
 	// Helper method: Create a ChatCompletionChunk with tool call
@@ -232,43 +232,43 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 	private ChatCompletionChunk createChunkWithToolCall(String requestId, String toolId, String functionName,
 			String arguments, ChatCompletionFinishReason finishReason) {
 		ChatCompletionFunction function = new ChatCompletionFunction(functionName, arguments);
-		ToolCall toolCall = new ToolCall(toolId, "function", function);
+		ToolCall toolCall = new ToolCall(toolId, "function", function, null);
 		ChatCompletionMessage message = new ChatCompletionMessage("", Role.ASSISTANT, null, null, List.of(toolCall),
-				null, null);
+				null, null, null, null, null);
 		Choice choice = new Choice(finishReason, message, null);
 		ChatCompletionOutput output = new ChatCompletionOutput(null, List.of(choice), null);
-		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null);
-		return new ChatCompletionChunk(requestId, output, usage);
+		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+		return new ChatCompletionChunk(requestId, output, usage, null);
 	}
 
 	// Helper method: Create a ChatCompletionChunk with multiple tool calls
 	private ChatCompletionChunk createChunkWithMultipleToolCalls(String requestId) {
 		ChatCompletionFunction function1 = new ChatCompletionFunction("function-1", "{\"param1\":\"value1\"}");
-		ToolCall toolCall1 = new ToolCall("tool-1", "function", function1);
+		ToolCall toolCall1 = new ToolCall("tool-1", "function", function1, null);
 		ChatCompletionFunction function2 = new ChatCompletionFunction("function-2", "{\"param2\":\"value2\"}");
-		ToolCall toolCall2 = new ToolCall("tool-2", "function", function2);
+		ToolCall toolCall2 = new ToolCall("tool-2", "function", function2, null);
 		ChatCompletionMessage message = new ChatCompletionMessage("", Role.ASSISTANT, null, null,
-				List.of(toolCall1, toolCall2), null, null);
+				List.of(toolCall1, toolCall2), null, null, null, null, null);
 		Choice choice = new Choice(null, message, null);
 		ChatCompletionOutput output = new ChatCompletionOutput(null, List.of(choice), null);
-		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null);
-		return new ChatCompletionChunk(requestId, output, usage);
+		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+		return new ChatCompletionChunk(requestId, output, usage, null);
 	}
 
 	@Test
 	void testMergeWithPartialFlag() {
 		// Test merging of partial flag in streaming scenario
 		ChatCompletionMessage previousMessage = new ChatCompletionMessage("def fibonacci(n):\n", Role.ASSISTANT,
-				null, null, null, null, true);
+				null, null, null, null, true, null, null, null);
 		Choice previousChoice = new Choice(null, previousMessage, null);
 		ChatCompletionOutput previousOutput = new ChatCompletionOutput(null, List.of(previousChoice), null);
-		ChatCompletionChunk previous = new ChatCompletionChunk("request-1", previousOutput, null);
+		ChatCompletionChunk previous = new ChatCompletionChunk("request-1", previousOutput, null, null);
 
 		ChatCompletionMessage currentMessage = new ChatCompletionMessage("    if n <= 1:\n", Role.ASSISTANT,
-				null, null, null, null, null);
+				null, null, null, null, null, null, null, null);
 		Choice currentChoice = new Choice(null, currentMessage, null);
 		ChatCompletionOutput currentOutput = new ChatCompletionOutput(null, List.of(currentChoice), null);
-		ChatCompletionChunk current = new ChatCompletionChunk("request-1", currentOutput, null);
+		ChatCompletionChunk current = new ChatCompletionChunk("request-1", currentOutput, null, null);
 
 		ChatCompletionChunk result = helperWithIncrementalOutput.merge(previous, current);
 
@@ -283,16 +283,16 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 	void testMergeWithPartialFlagInCurrent() {
 		// Test when current chunk has partial flag (current takes precedence)
 		ChatCompletionMessage previousMessage = new ChatCompletionMessage("def fibonacci(n):\n", Role.ASSISTANT,
-				null, null, null, null, null);
+				null, null, null, null, null, null, null, null);
 		Choice previousChoice = new Choice(null, previousMessage, null);
 		ChatCompletionOutput previousOutput = new ChatCompletionOutput(null, List.of(previousChoice), null);
-		ChatCompletionChunk previous = new ChatCompletionChunk("request-1", previousOutput, null);
+		ChatCompletionChunk previous = new ChatCompletionChunk("request-1", previousOutput, null, null);
 
 		ChatCompletionMessage currentMessage = new ChatCompletionMessage("    if n <= 1:\n", Role.ASSISTANT,
-				null, null, null, null, true);
+				null, null, null, null, true, null, null, null);
 		Choice currentChoice = new Choice(null, currentMessage, null);
 		ChatCompletionOutput currentOutput = new ChatCompletionOutput(null, List.of(currentChoice), null);
-		ChatCompletionChunk current = new ChatCompletionChunk("request-1", currentOutput, null);
+		ChatCompletionChunk current = new ChatCompletionChunk("request-1", currentOutput, null, null);
 
 		ChatCompletionChunk result = helperWithIncrementalOutput.merge(previous, current);
 

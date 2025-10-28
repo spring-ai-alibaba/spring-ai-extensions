@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.rag;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -117,38 +118,38 @@ class DashScopeDocumentCloudReaderTests {
 	}
 
 	private void mockSuccessfulUpload() {
-		DashScopeApi.UploadRequest request = new DashScopeApi.UploadRequest(TEST_CATEGORY_ID, TEST_FILE_NAME,
+        DashScopeAPISpec.UploadRequest request = new DashScopeAPISpec.UploadRequest(TEST_CATEGORY_ID, TEST_FILE_NAME,
 				TEST_FILE_SIZE, "md5");
-		when(dashScopeApi.upload(any(File.class), any(DashScopeApi.UploadRequest.class))).thenReturn(TEST_FILE_ID);
+		when(dashScopeApi.upload(any(File.class), any(DashScopeAPISpec.UploadRequest.class))).thenReturn(TEST_FILE_ID);
 	}
 
 	private void mockSuccessfulParsing() {
-		DashScopeApi.QueryFileResponseData successResponse = new DashScopeApi.QueryFileResponseData(TEST_CATEGORY_ID,
+        DashScopeAPISpec.QueryFileResponseData successResponse = new DashScopeAPISpec.QueryFileResponseData(TEST_CATEGORY_ID,
 				TEST_FILE_ID, TEST_FILE_NAME, TEST_FILE_TYPE, TEST_FILE_SIZE, "PARSE_SUCCESS", TEST_UPLOAD_TIME);
-		DashScopeApi.CommonResponse<DashScopeApi.QueryFileResponseData> response = new DashScopeApi.CommonResponse<>(
+        DashScopeAPISpec.CommonResponse<DashScopeAPISpec.QueryFileResponseData> response = new DashScopeAPISpec.CommonResponse<>(
 				"SUCCESS", "OK", successResponse);
-		when(dashScopeApi.queryFileInfo(eq(TEST_CATEGORY_ID), any(DashScopeApi.UploadRequest.QueryFileRequest.class)))
+		when(dashScopeApi.queryFileInfo(eq(TEST_CATEGORY_ID), any(DashScopeAPISpec.UploadRequest.QueryFileRequest.class)))
 			.thenReturn(ResponseEntity.ok(response));
 		when(dashScopeApi.getFileParseResult(eq(TEST_CATEGORY_ID),
-				any(DashScopeApi.UploadRequest.QueryFileRequest.class)))
+				any(DashScopeAPISpec.UploadRequest.QueryFileRequest.class)))
 			.thenReturn(TEST_CONTENT);
 	}
 
 	private void mockFailedParsing() {
-		DashScopeApi.QueryFileResponseData failedResponse = new DashScopeApi.QueryFileResponseData(TEST_CATEGORY_ID,
+        DashScopeAPISpec.QueryFileResponseData failedResponse = new DashScopeAPISpec.QueryFileResponseData(TEST_CATEGORY_ID,
 				TEST_FILE_ID, TEST_FILE_NAME, TEST_FILE_TYPE, TEST_FILE_SIZE, "PARSE_FAILED", TEST_UPLOAD_TIME);
-		DashScopeApi.CommonResponse<DashScopeApi.QueryFileResponseData> response = new DashScopeApi.CommonResponse<>(
+        DashScopeAPISpec.CommonResponse<DashScopeAPISpec.QueryFileResponseData> response = new DashScopeAPISpec.CommonResponse<>(
 				"FAILED", "Parse failed", failedResponse);
-		when(dashScopeApi.queryFileInfo(eq(TEST_CATEGORY_ID), any(DashScopeApi.UploadRequest.QueryFileRequest.class)))
+		when(dashScopeApi.queryFileInfo(eq(TEST_CATEGORY_ID), any(DashScopeAPISpec.UploadRequest.QueryFileRequest.class)))
 			.thenReturn(ResponseEntity.ok(response));
 	}
 
 	private void mockPollingTimeout() {
-		DashScopeApi.QueryFileResponseData processingResponse = new DashScopeApi.QueryFileResponseData(TEST_CATEGORY_ID,
+        DashScopeAPISpec.QueryFileResponseData processingResponse = new DashScopeAPISpec.QueryFileResponseData(TEST_CATEGORY_ID,
 				TEST_FILE_ID, TEST_FILE_NAME, TEST_FILE_TYPE, TEST_FILE_SIZE, "PROCESSING", TEST_UPLOAD_TIME);
-		DashScopeApi.CommonResponse<DashScopeApi.QueryFileResponseData> response = new DashScopeApi.CommonResponse<>(
+        DashScopeAPISpec.CommonResponse<DashScopeAPISpec.QueryFileResponseData> response = new DashScopeAPISpec.CommonResponse<>(
 				"SUCCESS", "Processing", processingResponse);
-		when(dashScopeApi.queryFileInfo(eq(TEST_CATEGORY_ID), any(DashScopeApi.UploadRequest.QueryFileRequest.class)))
+		when(dashScopeApi.queryFileInfo(eq(TEST_CATEGORY_ID), any(DashScopeAPISpec.UploadRequest.QueryFileRequest.class)))
 			.thenReturn(ResponseEntity.ok(response));
 	}
 

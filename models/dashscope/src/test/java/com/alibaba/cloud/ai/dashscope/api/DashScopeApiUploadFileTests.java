@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -54,9 +55,9 @@ class DashScopeApiUploadFileTests {
 
 	private File mockFile;
 
-	private DashScopeApi.UploadLeaseResponse mockUploadLeaseResponse;
+	private DashScopeAPISpec.UploadLeaseResponse mockUploadLeaseResponse;
 
-	private DashScopeApi.UploadLeaseResponse.UploadLeaseParamData mockParamData;
+	private DashScopeAPISpec.UploadLeaseParamData mockParamData;
 
 	private Call mockCall;
 
@@ -80,12 +81,12 @@ class DashScopeApiUploadFileTests {
 		Map<String, String> headers = new HashMap<>();
 		headers.put("X-bailian-extra", "test-extra-key");
 
-		mockParamData = new DashScopeApi.UploadLeaseResponse.UploadLeaseParamData(TEST_URL, "PUT", headers);
+		mockParamData = new DashScopeAPISpec.UploadLeaseParamData(TEST_URL, "PUT", headers);
 
-		DashScopeApi.UploadLeaseResponse.UploadLeaseResponseData responseData = new DashScopeApi.UploadLeaseResponse.UploadLeaseResponseData(
+        DashScopeAPISpec.UploadLeaseResponseData responseData = new DashScopeAPISpec.UploadLeaseResponseData(
 				"test-lease-id", "test-type", mockParamData);
 
-		mockUploadLeaseResponse = new DashScopeApi.UploadLeaseResponse("SUCCESS", "success", responseData);
+		mockUploadLeaseResponse = new DashScopeAPISpec.UploadLeaseResponse("SUCCESS", "success", responseData);
 
 		dashScopeApi = DashScopeApi.builder().apiKey("test-api-key").build();
 
@@ -109,7 +110,7 @@ class DashScopeApiUploadFileTests {
 			ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
 
 			Method uploadFileMethod = DashScopeApi.class.getDeclaredMethod("uploadFile", File.class,
-					DashScopeApi.UploadLeaseResponse.class);
+                    DashScopeAPISpec.UploadLeaseResponse.class);
 			uploadFileMethod.setAccessible(true);
 
 			mockParamData.header().put("Content-Type", "application/pdf");
@@ -146,7 +147,7 @@ class DashScopeApiUploadFileTests {
 			ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
 
 			Method uploadFileMethod = DashScopeApi.class.getDeclaredMethod("uploadFile", File.class,
-					DashScopeApi.UploadLeaseResponse.class);
+                    DashScopeAPISpec.UploadLeaseResponse.class);
 			uploadFileMethod.setAccessible(true);
 
 			uploadFileMethod.invoke(dashScopeApi, mockFile, mockUploadLeaseResponse);

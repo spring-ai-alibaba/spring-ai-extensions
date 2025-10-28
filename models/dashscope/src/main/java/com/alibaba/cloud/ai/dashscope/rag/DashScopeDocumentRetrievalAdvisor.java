@@ -15,7 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.rag;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionFinishReason;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionFinishReason;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;

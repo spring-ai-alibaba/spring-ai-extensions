@@ -16,10 +16,10 @@
 package com.alibaba.cloud.ai.dashscope.rerank;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.RerankResponse;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.RerankResponseOutput;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.RerankResponseOutputResult;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.RerankResponse;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.RerankResponseOutput;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.RerankResponseOutputResult;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.TokenUsage;
 import com.alibaba.cloud.ai.document.DocumentWithScore;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -142,7 +142,7 @@ class DashScopeRerankModelTests {
 		RerankResponseOutputResult result1 = new RerankResponseOutputResult(0, 0.9, new HashMap<>());
 		RerankResponseOutputResult result2 = new RerankResponseOutputResult(1, 0.7, new HashMap<>());
 		RerankResponseOutput output = new RerankResponseOutput(Arrays.asList(result1, result2));
-		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null);
+		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
 		RerankResponse apiResponse = new RerankResponse(output, usage, "test-request-id");
 
 		when(dashScopeApi.rerankEntity(any())).thenReturn(ResponseEntity.ok(apiResponse));
@@ -202,7 +202,7 @@ class DashScopeRerankModelTests {
 		RerankResponseOutputResult result = new RerankResponseOutputResult(0, TEST_SCORE, new HashMap<>());
 		RerankResponseOutput output = new RerankResponseOutput(Collections.singletonList(result));
 		RerankResponse apiResponse = new RerankResponse(output,
-				new TokenUsage(10, 5, 15, null, null, null, null, null, null), "test-request-id");
+				new TokenUsage(10, 5, 15, null, null, null, null, null, null, null), "test-request-id");
 
 		when(dashScopeApi.rerankEntity(any())).thenReturn(ResponseEntity.ok(apiResponse));
 

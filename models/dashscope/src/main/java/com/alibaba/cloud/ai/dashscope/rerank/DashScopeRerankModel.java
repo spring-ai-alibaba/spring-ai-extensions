@@ -21,6 +21,7 @@ import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
 import com.alibaba.cloud.ai.document.DocumentWithScore;
 import com.alibaba.cloud.ai.model.RerankModel;
 import com.alibaba.cloud.ai.model.RerankOptions;
@@ -84,9 +85,9 @@ public class DashScopeRerankModel implements RerankModel {
 		Assert.notNull(request.getInstructions(), "documents must not be null");
 
 		DashScopeRerankOptions requestOptions = mergeOptions(request.getOptions(), this.defaultOptions);
-		DashScopeApi.RerankRequest rerankRequest = createRequest(request, requestOptions);
+        DashScopeAPISpec.RerankRequest rerankRequest = createRequest(request, requestOptions);
 
-		ResponseEntity<DashScopeApi.RerankResponse> responseEntity = this.retryTemplate
+		ResponseEntity<DashScopeAPISpec.RerankResponse> responseEntity = this.retryTemplate
 			.execute(ctx -> this.dashscopeApi.rerankEntity(rerankRequest));
 
 		var response = responseEntity.getBody();
@@ -109,13 +110,13 @@ public class DashScopeRerankModel implements RerankModel {
 		return new RerankResponse(documentWithScores, metadata);
 	}
 
-	private DashScopeApi.RerankRequest createRequest(RerankRequest request, DashScopeRerankOptions requestOptions) {
+	private DashScopeAPISpec.RerankRequest createRequest(RerankRequest request, DashScopeRerankOptions requestOptions) {
 		List<String> docs = request.getInstructions().stream().map(Document::getText).toList();
 
-		DashScopeApi.RerankRequestParameter parameter = new DashScopeApi.RerankRequestParameter(
+        DashScopeAPISpec.RerankRequestParameter parameter = new DashScopeAPISpec.RerankRequestParameter(
 				requestOptions.getTopN(), requestOptions.getReturnDocuments());
-		var input = new DashScopeApi.RerankRequestInput(request.getQuery(), docs);
-		return new DashScopeApi.RerankRequest(requestOptions.getModel(), input, parameter);
+		var input = new DashScopeAPISpec.RerankRequestInput(request.getQuery(), docs);
+		return new DashScopeAPISpec.RerankRequest(requestOptions.getModel(), input, parameter);
 	}
 
 	/**

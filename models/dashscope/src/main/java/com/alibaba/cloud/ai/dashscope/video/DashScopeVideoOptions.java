@@ -16,7 +16,8 @@
 
 package com.alibaba.cloud.ai.dashscope.video;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -32,7 +33,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 	/**
 	 * Default video model.
 	 */
-	public static final String DEFAULT_MODEL = DashScopeVideoApi.VideoModel.WANX2_1_T2V_TURBO.getValue();
+	public static final String DEFAULT_MODEL = DashScopeModel.VideoModel.WANX2_1_T2V_TURBO.getValue();
 
 	@JsonProperty("model")
 	private String model;
@@ -78,7 +79,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 	private String negativePrompt;
 
 	@JsonProperty("template")
-	private DashScopeVideoApi.VideoTemplate template;
+	private DashScopeAPISpec.VideoTemplate template;
 
 	@JsonProperty("first_frame_url")
 	private String firstFrameUrl;
@@ -88,7 +89,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 
 	public DashScopeVideoOptions(String imageUrl, Long seed, String prompt, String firstFrameUrl, String lastFrameUrl,
 			String resolution, String model, String size, Boolean promptExtend, String negativePrompt,
-			DashScopeVideoApi.VideoTemplate template) {
+                                 DashScopeAPISpec.VideoTemplate template) {
 
 		this.imageUrl = imageUrl;
 		this.prompt = prompt;
@@ -160,11 +161,11 @@ public class DashScopeVideoOptions implements VideoOptions {
 		this.negativePrompt = negativePrompt;
 	}
 
-	public DashScopeVideoApi.VideoTemplate getTemplate() {
+	public DashScopeAPISpec.VideoTemplate getTemplate() {
 		return this.template;
 	}
 
-	public void setTemplate(DashScopeVideoApi.VideoTemplate template) {
+	public void setTemplate(DashScopeAPISpec.VideoTemplate template) {
 		this.template = template;
 	}
 
@@ -248,7 +249,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 
 		private String lastFrameUrl;
 
-		private DashScopeVideoApi.VideoTemplate template;
+		private DashScopeAPISpec.VideoTemplate template;
 
 		public Builder() {
 		}
@@ -308,7 +309,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 			return this;
 		}
 
-		public Builder template(DashScopeVideoApi.VideoTemplate template) {
+		public Builder template(DashScopeAPISpec.VideoTemplate template) {
 			this.template = template;
 			return this;
 		}

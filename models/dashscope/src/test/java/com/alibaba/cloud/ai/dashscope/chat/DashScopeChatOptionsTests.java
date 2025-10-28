@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeResponseFormat;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -146,10 +146,10 @@ class DashScopeChatOptionsTests {
 	@Test
 	void testToolsAndToolChoice() {
 		// Test tools and tool choice related methods
-		DashScopeApi.FunctionTool.Function function = new DashScopeApi.FunctionTool.Function("Test function", "test",
+        DashScopeAPISpec.FunctionTool.Function function = new DashScopeAPISpec.FunctionTool.Function("Test function", "test",
 				"{}");
-		DashScopeApi.FunctionTool tool = new DashScopeApi.FunctionTool(function);
-		List<DashScopeApi.FunctionTool> tools = Collections.singletonList(tool);
+        DashScopeAPISpec.FunctionTool tool = new DashScopeAPISpec.FunctionTool(function);
+		List<DashScopeAPISpec.FunctionTool> tools = Collections.singletonList(tool);
 		Map<String, String> toolChoice = Map.of("type", "function", "name", "test");
 
 		DashScopeChatOptions options = DashScopeChatOptions.builder()

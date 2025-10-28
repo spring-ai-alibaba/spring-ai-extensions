@@ -1,0 +1,5 @@
+[[allowlists]]
+description = "Skip for unit test"
+paths = [
+    '''memories/spring-ai-alibaba-starter-memory-redis/src/test/resources/ssl/key.pem''',
+]

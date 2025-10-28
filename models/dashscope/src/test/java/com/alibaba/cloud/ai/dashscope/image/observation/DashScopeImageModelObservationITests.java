@@ -18,10 +18,10 @@ package com.alibaba.cloud.ai.dashscope.image.observation;
 import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi.DashScopeImageAsyncResponse;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi.DashScopeImageRequest;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.DashScopeImageAsyncResponse;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.DashScopeImageRequest;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageOptions;
 import com.alibaba.cloud.ai.dashscope.observation.conventions.AiProvider;

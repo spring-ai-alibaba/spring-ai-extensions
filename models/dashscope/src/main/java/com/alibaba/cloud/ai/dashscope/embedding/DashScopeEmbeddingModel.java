@@ -18,8 +18,10 @@ package com.alibaba.cloud.ai.dashscope.embedding;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
@@ -129,58 +131,57 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 		// merging runtime and default options.
 		EmbeddingRequest embeddingRequest = buildEmbeddingRequest(request);
 
-		DashScopeApi.EmbeddingRequest apiRequest = createRequest(embeddingRequest);
+        DashScopeAPISpec.EmbeddingRequest apiRequest = createRequest(embeddingRequest);
 
 		var observationContext = EmbeddingModelObservationContext.builder()
 			.embeddingRequest(embeddingRequest)
 			.provider(DashScopeApiConstants.PROVIDER_NAME)
 			.build();
 
-		return EmbeddingModelObservationDocumentation.EMBEDDING_MODEL_OPERATION
-			.observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
-					this.observationRegistry)
-			.observe(() -> {
-				DashScopeApi.EmbeddingList apiEmbeddingResponse = this.retryTemplate.execute(ctx -> {
-					try {
-						return this.dashScopeApi.embeddings(apiRequest).getBody();
-					}
-					catch (Exception e) {
-						logger.error("Error embedding request: {}", request.getInstructions(), e);
-						throw e;
-					}
-				});
+		return Objects.requireNonNull(EmbeddingModelObservationDocumentation.EMBEDDING_MODEL_OPERATION
+                .observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
+                        this.observationRegistry)
+                .observe(() -> {
+                    DashScopeAPISpec.EmbeddingList apiEmbeddingResponse = this.retryTemplate.execute(ctx -> {
+                        try {
+                            return this.dashScopeApi.embeddings(apiRequest).getBody();
+                        } catch (Exception e) {
+                            logger.error("Error embedding request: {}", request.getInstructions(), e);
+                            throw e;
+                        }
+                    });
 
-				if (apiEmbeddingResponse == null) {
-					logger.warn("No embeddings returned for request: {}", request);
-					return new EmbeddingResponse(List.of());
-				}
+                    if (apiEmbeddingResponse == null) {
+                        logger.warn("No embeddings returned for request: {}", request);
+                        return new EmbeddingResponse(List.of());
+                    }
 
-				if (apiEmbeddingResponse.message() != null) {
-					logger.error("Error message returned for request: {}", apiEmbeddingResponse.message());
-					throw new RuntimeException("Embedding failed: error code:" + apiEmbeddingResponse.code()
-							+ ", message:" + apiEmbeddingResponse.message());
-				}
+                    if (apiEmbeddingResponse.message() != null) {
+                        logger.error("Error message returned for request: {}", apiEmbeddingResponse.message());
+                        throw new RuntimeException("Embedding failed: error code:" + apiEmbeddingResponse.code()
+                                + ", message:" + apiEmbeddingResponse.message());
+                    }
 
-				DashScopeApi.EmbeddingUsage usage = apiEmbeddingResponse.usage();
+                    DashScopeAPISpec.EmbeddingUsage usage = apiEmbeddingResponse.usage();
 
-				Usage embeddingUsage = usage != null ? this.getDefaultUsage(usage) : new EmptyUsage();
+                    Usage embeddingUsage = usage != null ? this.getDefaultUsage(usage) : new EmptyUsage();
 
-				var metadata = generateResponseMetadata(apiRequest.model(), embeddingUsage);
-				List<Embedding> embeddings = apiEmbeddingResponse.output()
-					.embeddings()
-					.stream()
-					.map(e -> new Embedding(e.embedding(), e.textIndex()))
-					.toList();
+                    var metadata = generateResponseMetadata(apiRequest.model(), embeddingUsage);
+                    List<Embedding> embeddings = apiEmbeddingResponse.output()
+                            .embeddings()
+                            .stream()
+                            .map(e -> new Embedding(e.embedding(), e.textIndex()))
+                            .toList();
 
-				EmbeddingResponse embeddingResponse = new EmbeddingResponse(embeddings, metadata);
+                    EmbeddingResponse embeddingResponse = new EmbeddingResponse(embeddings, metadata);
 
-				observationContext.setResponse(embeddingResponse);
+                    observationContext.setResponse(embeddingResponse);
 
-				return embeddingResponse;
-			});
+                    return embeddingResponse;
+                }));
 	}
 
-	private DefaultUsage getDefaultUsage(DashScopeApi.EmbeddingUsage usage) {
+	private DefaultUsage getDefaultUsage(DashScopeAPISpec.EmbeddingUsage usage) {
 		return new DefaultUsage(usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens(), usage);
 	}
 
@@ -207,9 +208,9 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 		return new EmbeddingRequest(embeddingRequest.getInstructions(), requestOptions);
 	}
 
-	private DashScopeApi.EmbeddingRequest createRequest(EmbeddingRequest request) {
+	private DashScopeAPISpec.EmbeddingRequest createRequest(EmbeddingRequest request) {
 		DashScopeEmbeddingOptions requestOptions = (DashScopeEmbeddingOptions) request.getOptions();
-		return DashScopeApi.EmbeddingRequest.builder()
+		return DashScopeAPISpec.EmbeddingRequest.builder()
 			.model(requestOptions.getModel())
 			.texts(request.getInstructions())
 			.textType(requestOptions.getTextType())

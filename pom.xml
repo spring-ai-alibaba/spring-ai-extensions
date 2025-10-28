@@ -144,28 +144,26 @@
         <module>vector-stores/spring-ai-alibaba-starter-tablestore-store</module>
         <module>vector-stores/spring-ai-alibaba-starter-tair-store</module>
 
-        <!-- mcp modules -->
         <module>mcp/spring-ai-alibaba-mcp-common</module>
         <module>mcp/spring-ai-alibaba-mcp-registry</module>
         <module>mcp/spring-ai-alibaba-mcp-router</module>
 
-        <!-- prompt modules -->
         <module>prompt/spring-ai-alibaba-prompt-nacos</module>
 
-        <!-- models modules -->
         <module>models/dashscope</module>
 
-        <!-- observation modules -->
-        <module>observation</module>
-
-        <!-- rag modules -->
         <module>rag/spring-ai-alibaba-rag</module>
+
+        <module>observation</module>
+        <module>mcp/spring-ai-alibaba-mcp-distributed</module>
+        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-distributed</module>
+        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-distributed</module>
     </modules>
 
     <scm>
-        <connection>git://github.com/alibaba/spring-ai-alibaba.git</connection>
-        <developerConnection>git@github.com:alibaba/spring-ai-alibaba.git</developerConnection>
-        <url>https://github.com/alibaba/spring-ai-alibaba</url>
+        <connection>git://github.com/spring-ai-alibaba/spring-ai-extensions.git</connection>
+        <developerConnection>git@github.com:spring-ai-alibaba/spring-ai-extensions.git</developerConnection>
+        <url>https://github.com/spring-ai-alibaba/spring-ai-extensions</url>
     </scm>
 
     <properties>
@@ -181,7 +179,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <!-- Spring version -->
-        <spring-ai.version>1.0.1</spring-ai.version>
+        <spring-ai.version>1.1.0-M3</spring-ai.version>
         <spring-boot.version>3.4.8</spring-boot.version>
         <springdoc-openapi.version>2.8.8</springdoc-openapi.version>
 

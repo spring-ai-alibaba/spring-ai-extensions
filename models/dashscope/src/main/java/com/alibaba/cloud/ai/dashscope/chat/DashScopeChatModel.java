@@ -16,18 +16,19 @@
 package com.alibaba.cloud.ai.dashscope.chat;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletion;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionChunk;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage.ChatCompletionFunction;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage.MediaContent;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage.ToolCall;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionOutput;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionOutput.Choice;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionRequest;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionRequestInput;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionRequestParameter;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.FunctionTool;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletion;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionChunk;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.ChatCompletionFunction;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.MediaContent;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.ToolCall;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionOutput;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionOutput.Choice;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionRequest;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionRequestInput;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionRequestParameter;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.FunctionTool;
 import com.alibaba.cloud.ai.dashscope.chat.observation.DashScopeChatModelObservationConvention;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.tool.observation.inner.ToolCallReactiveContextHolder;
@@ -295,8 +296,8 @@ public class DashScopeChatModel implements ChatModel {
 		});
 	}
 
-	private static String finishReasonToMetadataValue(DashScopeApi.ChatCompletionFinishReason finishReason) {
-		if (finishReason == null || finishReason == DashScopeApi.ChatCompletionFinishReason.NULL) {
+	private static String finishReasonToMetadataValue(DashScopeAPISpec.ChatCompletionFinishReason finishReason) {
+		if (finishReason == null || finishReason == DashScopeAPISpec.ChatCompletionFinishReason.NULL) {
 			return "";
 		}
 		return finishReason.name();
@@ -317,7 +318,7 @@ public class DashScopeChatModel implements ChatModel {
 		}
 
 		// Dashscope searchInfos
-		DashScopeApi.SearchInfo searchInfo = chatCompletion.output().searchInfo();
+        DashScopeAPISpec.SearchInfo searchInfo = chatCompletion.output().searchInfo();
 
 		ConcurrentHashMap<String, String> finalRoleMap = roleMap == null ? new ConcurrentHashMap<>() : roleMap;
 
@@ -339,7 +340,7 @@ public class DashScopeChatModel implements ChatModel {
 			return buildGeneration(choice, metadata, request);
 		}).toList();
 
-		DashScopeApi.TokenUsage usage = chatCompletion.usage();
+        DashScopeAPISpec.TokenUsage usage = chatCompletion.usage();
 		Usage currentChatResponseUsage = usage != null ? this.getDefaultUsage(usage) : new EmptyUsage();
 		Usage accumulatedUsage = UsageCalculator.getCumulativeUsage(currentChatResponseUsage, previousChatResponse);
 
@@ -401,7 +402,7 @@ public class DashScopeChatModel implements ChatModel {
 		return ChatResponseMetadata.builder().id(result.requestId()).usage(usage).model("").build();
 	}
 
-    private DefaultUsage getDefaultUsage(DashScopeApi.TokenUsage usage) {
+    private DefaultUsage getDefaultUsage(DashScopeAPISpec.TokenUsage usage) {
         if (usage == null) {
             return new DefaultUsage(0, 0, 0);
         }
@@ -487,7 +488,8 @@ public class DashScopeChatModel implements ChatModel {
 				if (!CollectionUtils.isEmpty(assistantMessage.getToolCalls())) {
 					toolCalls = assistantMessage.getToolCalls().stream().map(toolCall -> {
 						var function = new ChatCompletionFunction(toolCall.name(), toolCall.arguments());
-						return new ToolCall(toolCall.id(), toolCall.type(), function);
+                        // todo: set index null.
+						return new ToolCall(toolCall.id(), toolCall.type(), function, null);
 					}).toList();
 				}
 
@@ -502,8 +504,8 @@ public class DashScopeChatModel implements ChatModel {
 					}
 				}
 
-				return List.of(new ChatCompletionMessage(assistantMessage.getText(),
-						ChatCompletionMessage.Role.ASSISTANT, null, null, toolCalls, null, partial));
+				return List.of(new DashScopeAPISpec.ChatCompletionMessage(assistantMessage.getText(),
+						ChatCompletionMessage.Role.ASSISTANT, null, null, toolCalls, null, partial, null, null, null));
 			}
 			else if (message.getMessageType() == MessageType.TOOL) {
 				ToolResponseMessage toolMessage = (ToolResponseMessage) message;
@@ -516,7 +518,7 @@ public class DashScopeChatModel implements ChatModel {
 				return toolMessage.getResponses()
 					.stream()
 					.map(tr -> new ChatCompletionMessage(tr.responseData(), ChatCompletionMessage.Role.TOOL, tr.name(),
-							tr.id(), null, null, null))
+							tr.id(), null, null, null, null, null, null))
 					.toList();
 			}
 			else {
@@ -621,15 +623,58 @@ public class DashScopeChatModel implements ChatModel {
 			return new ChatCompletionRequestParameter();
 		}
 
+        // formatter:off
 		// todo: sync modify by {@link ChatCompletionRequestParameter} new params.
 		Boolean incrementalOutput = stream && options.getIncrementalOutput();
-		return new ChatCompletionRequestParameter("message", options.getSeed(), options.getMaxTokens(),
-				options.getTopP(), options.getTopK(), options.getRepetitionPenalty(), options.getPresencePenalty(),
-				options.getTemperature(), options.getStop(), options.getEnableSearch(), options.getResponseFormat(),
-				incrementalOutput, options.getTools(), options.getToolChoice(), stream,
-				options.getVlHighResolutionImages(), options.getEnableThinking(), options.getSearchOptions(),
-				options.getParallelToolCalls(), options.getThinkingBudget(), null, null, null, null, null);
-	}
+		return new ChatCompletionRequestParameter(
+                "message",
+                options.getSeed(),
+
+                options.getTopP(),
+                options.getTopK(),
+
+                options.getRepetitionPenalty(),
+                options.getPresencePenalty(),
+                options.getTemperature(),
+                options.getStop(),
+
+                options.getEnableSearch(),
+                options.getSearchOptions(),
+
+                options.getResponseFormat(),
+                options.getIncrementalOutput(),
+
+                options.getTools(),
+                options.getToolChoice(),
+                options.getParallelToolCalls(),
+
+                options.getEnableThinking(),
+                options.getThinkingBudget(),
+
+                options.getVlHighResolutionImages(),
+                options.getVlEnableImageHwOutput(),
+
+                options.getOcrOptions(),
+
+                options.getLogprobs(),
+                options.getTopLogProbs(),
+
+                options.getTranslationOptions(),
+
+                options.getStream(),
+                options.getStreamOptions(),
+
+                options.getModalities(),
+                options.getAudio(),
+
+                options.getMaxTokens(),
+                options.getMaxInputTokens(),
+
+                options.getAsrOptions()
+        );
+        // formatter:off
+    }
+
 
 	/**
 	 * Use the provided convention for reporting observation data

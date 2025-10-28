@@ -14,8 +14,8 @@
     },
     {
       "name": "spring.ai.alibaba.mcp.nacos.client.sse",
-      "type": "com.alibaba.cloud.ai.autoconfigure.mcp.client.NacosMcpSseClientProperties",
-      "sourceType": "com.alibaba.cloud.ai.autoconfigure.mcp.client.NacosMcpSseClientProperties",
+      "type": "com.alibaba.cloud.ai.mcp.nacos.sse.NacosMcpSseClientProperties",
+      "sourceType": "com.alibaba.cloud.ai.mcp.nacos.sse.NacosMcpSseClientProperties",
       "description": "Configuration properties for Nacos MCP SSE client connections."
     }
   ],
@@ -104,6 +104,20 @@
       "defaultValue": "/mcp"
     },
     {
+      "name": "spring.ai.alibaba.mcp.nacos.register.service-register",
+      "type": "java.lang.Boolean",
+      "description": "Whether to register MCP server service to Nacos.",
+      "sourceType": "com.alibaba.cloud.ai.mcp.register.NacosMcpRegisterProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "spring.ai.alibaba.mcp.nacos.register.service-ephemeral",
+      "type": "java.lang.Boolean",
+      "description": "Whether the MCP server service should be ephemeral.",
+      "sourceType": "com.alibaba.cloud.ai.mcp.register.NacosMcpRegisterProperties",
+      "defaultValue": true
+    },
+    {
       "name": "spring.ai.alibaba.mcp.nacos.client.enabled",
       "type": "java.lang.Boolean",
       "description": "Whether to enable Nacos MCP client functionality.",
@@ -111,21 +125,9 @@
     },
     {
       "name": "spring.ai.alibaba.mcp.nacos.client.sse.connections",
-      "type": "java.util.Map<java.lang.String,com.alibaba.cloud.ai.autoconfigure.mcp.client.NacosMcpSseClientProperties$NacosSseParameters>",
+      "type": "java.util.Map<java.lang.String,com.alibaba.cloud.ai.mcp.nacos.sse.NacosMcpSseClientProperties$NacosSseParameters>",
       "description": "SSE client connections configuration for Nacos MCP services.",
-      "sourceType": "com.alibaba.cloud.ai.autoconfigure.mcp.client.NacosMcpSseClientProperties"
-    },
-    {
-      "name": "spring.ai.mcp.server.enabled",
-      "type": "java.lang.Boolean",
-      "description": "Whether to enable MCP server.",
-      "defaultValue": true
-    },
-    {
-      "name": "spring.ai.mcp.client.type",
-      "type": "java.lang.String",
-      "description": "MCP client type (SYNC or ASYNC).",
-      "defaultValue": "SYNC"
+      "sourceType": "com.alibaba.cloud.ai.mcp.nacos.sse.NacosMcpSseClientProperties"
     }
   ],
   "hints": []

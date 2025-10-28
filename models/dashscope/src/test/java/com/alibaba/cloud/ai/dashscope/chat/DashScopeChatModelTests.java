@@ -16,16 +16,16 @@
 package com.alibaba.cloud.ai.dashscope.chat;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletion;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionChunk;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionFinishReason;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage.ChatCompletionFunction;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage.ToolCall;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionOutput;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionOutput.Choice;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionRequest;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletion;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionChunk;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionFinishReason;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.ChatCompletionFunction;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.ToolCall;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionOutput;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionOutput.Choice;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionRequest;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.TokenUsage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -106,7 +106,7 @@ class DashScopeChatModelTests {
 				ChatCompletionMessage.Role.ASSISTANT);
 		Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
 		ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
-		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null);
+		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
 		ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
 		ResponseEntity<ChatCompletion> responseEntity = ResponseEntity.ok(chatCompletion);
 
@@ -142,10 +142,12 @@ class DashScopeChatModelTests {
 		ChatCompletionOutput output2 = new ChatCompletionOutput("doing ", List.of(choice2), null);
 		ChatCompletionOutput output3 = new ChatCompletionOutput("well!", List.of(choice3), null);
 
-		ChatCompletionChunk chunk1 = new ChatCompletionChunk(TEST_REQUEST_ID, output1, null);
-		ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2, null);
+		ChatCompletionChunk chunk1 = new ChatCompletionChunk(TEST_REQUEST_ID, output1, null, null);
+		ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2, null, null);
 		ChatCompletionChunk chunk3 = new ChatCompletionChunk(TEST_REQUEST_ID, output3,
-				new TokenUsage(10, 5, 15, null, null, null, null, null, null));
+				new TokenUsage(10, 5, 15, null, null, null, null, null, null, null),
+            null
+        );
 
 		when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any()))
 			.thenReturn(Flux.just(chunk1, chunk2, chunk3));
@@ -178,7 +180,7 @@ class DashScopeChatModelTests {
 		ChatCompletionOutput output = new ChatCompletionOutput(response, List.of(choice), null);
 
 		// Add non-null TokenUsage with zero values
-		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null);
+		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
 
 		ChatCompletion completion = new ChatCompletion("test-id", output, usage);
 
@@ -220,7 +222,7 @@ class DashScopeChatModelTests {
 		Choice toolChoice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, toolMessage, null);
 
 		// Add non-null TokenUsage with zero values
-		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null);
+		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
 
 		ChatCompletionOutput toolOutput = new ChatCompletionOutput(toolCallResponse, List.of(toolChoice), null);
 		ChatCompletion toolCompletion = new ChatCompletion("test-id", toolOutput, usage);
@@ -271,12 +273,14 @@ class DashScopeChatModelTests {
 		Choice choice3 = new Choice(ChatCompletionFinishReason.TOOL_CALLS, message3, null);
 
 		ChatCompletionChunk chunk1Response = new ChatCompletionChunk("test-id",
-				new ChatCompletionOutput(chunk1, List.of(choice1), null), null);
+				new ChatCompletionOutput(chunk1, List.of(choice1), null), null, null);
 		ChatCompletionChunk chunk2Response = new ChatCompletionChunk("test-id",
-				new ChatCompletionOutput(chunk2, List.of(choice2), null), null);
+				new ChatCompletionOutput(chunk2, List.of(choice2), null), null, null);
 		ChatCompletionChunk chunk3Response = new ChatCompletionChunk("test-id",
 				new ChatCompletionOutput(chunk3, List.of(choice3), null),
-				new TokenUsage(10, 5, 15, null, null, null, null, null, null));
+				new TokenUsage(10, 5, 15, null, null, null, null, null, null, null),
+                null
+        );
 
 		when(dashScopeApi.chatCompletionStream(any(), any()))
 			.thenReturn(Flux.just(chunk1Response, chunk2Response, chunk3Response));
@@ -308,7 +312,7 @@ class DashScopeChatModelTests {
 		// Test handling of empty response
 		ChatCompletionOutput output = new ChatCompletionOutput("", Collections.emptyList(), null);
 		// Add non-null TokenUsage with zero values
-		TokenUsage usage = new TokenUsage(0, 0, 0, null, null, null, null, null, null);
+		TokenUsage usage = new TokenUsage(0, 0, 0, null, null, null, null, null, null, null);
 		ChatCompletion completion = new ChatCompletion("test-id", output, usage);
 
 		when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(ResponseEntity.ok(completion));
@@ -353,7 +357,7 @@ class DashScopeChatModelTests {
 				ChatCompletionMessage.Role.ASSISTANT);
 		Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
 		ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
-		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null);
+		TokenUsage usage = new TokenUsage(10, 5, 15, null, null,null, null, null, null, null);
 		ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
 		ResponseEntity<ChatCompletion> responseEntity = ResponseEntity.ok(chatCompletion);
 
@@ -400,7 +404,7 @@ class DashScopeChatModelTests {
 		Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
 		ChatCompletionOutput output = new ChatCompletionOutput("It's sunny today!", List.of(choice), null);
 		// Add non-null TokenUsage with zero values
-		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null);
+		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
 		ChatCompletion completion = new ChatCompletion("test-id", output, usage);
 
 		when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(ResponseEntity.ok(completion));
@@ -488,14 +492,14 @@ class DashScopeChatModelTests {
 
 		// Create tool call with null function name
 		ChatCompletionFunction nullNameFunction = new ChatCompletionFunction(null, "{\"location\": \"Beijing\"}");
-		ToolCall nullNameToolCall = new ToolCall("tool-call-id", "function", nullNameFunction);
+		ToolCall nullNameToolCall = new ToolCall("tool-call-id", "function", nullNameFunction, null);
 
 		ChatCompletionMessage nullNameToolMessage = new ChatCompletionMessage("", ChatCompletionMessage.Role.ASSISTANT,
-				null, null, List.of(nullNameToolCall), null, null);
+				null, null, List.of(nullNameToolCall), null, null, null, null, null);
 		Choice nullNameChoice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, nullNameToolMessage, null);
 
 		// Add non-null TokenUsage with correct parameters - 9 parameters total
-		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null);
+		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
 
 		ChatCompletionOutput nullNameOutput = new ChatCompletionOutput("", List.of(nullNameChoice), null);
 		ChatCompletion nullNameCompletion = new ChatCompletion("test-id", nullNameOutput, usage);

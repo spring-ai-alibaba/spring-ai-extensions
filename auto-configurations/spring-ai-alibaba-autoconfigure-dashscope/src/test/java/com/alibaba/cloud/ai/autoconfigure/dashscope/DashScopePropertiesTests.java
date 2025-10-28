@@ -17,7 +17,6 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import java.util.List;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionModel;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionOptions;
@@ -25,6 +24,7 @@ import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechModel;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
@@ -327,7 +327,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.chat.options.topP=0.56",
 
 						// "spring.ai.dashscope.chat.options.toolChoice.functionName=toolChoiceFunctionName",
-						"spring.ai.dashscope.chat.options.toolChoice=" + ModelOptionsUtils.toJsonString(DashScopeApi.ChatCompletionRequestParameter.ToolChoiceBuilder.function("toolChoiceFunctionName"))
+						"spring.ai.dashscope.chat.options.toolChoice=" + ModelOptionsUtils.toJsonString(DashScopeAPISpec.ChatCompletionRequestParameter.ToolChoiceBuilder.function("toolChoiceFunctionName"))
 				)
 				// @formatter:on
 			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))

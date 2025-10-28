@@ -17,8 +17,8 @@
 package com.alibaba.cloud.ai.mcp.register;
 
 import com.alibaba.cloud.ai.mcp.nacos.NacosMcpProperties;
-import com.alibaba.cloud.ai.mcp.register.utils.JsonSchemaUtils;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
+import com.alibaba.cloud.ai.mcp.register.utils.JsonSchemaUtil;
 import com.alibaba.nacos.api.ai.constant.AiConstants;
 import com.alibaba.nacos.api.ai.model.mcp.McpEndpointSpec;
 import com.alibaba.nacos.api.ai.model.mcp.McpServerBasicInfo;
@@ -33,14 +33,14 @@ import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.alibaba.nacos.common.utils.JacksonUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.mcp.server.autoconfigure.McpServerProperties;
+import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerProperties;
+import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerSseProperties;
 import org.springframework.boot.web.context.ConfigurableWebServerApplicationContext;
 import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
@@ -79,6 +79,8 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 
 	private McpServerProperties mcpServerProperties;
 
+	private McpServerSseProperties mcpServerSseProperties;
+
 	private NacosMcpOperationService nacosMcpOperationService;
 
 	private McpServerDetailInfo serverDetailInfo;
@@ -86,8 +88,9 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 	private boolean success = false;
 
 	public NacosMcpRegister(NacosMcpOperationService nacosMcpOperationService, McpAsyncServer mcpAsyncServer,
-			NacosMcpProperties nacosMcpProperties, NacosMcpRegisterProperties nacosMcpRegistryProperties,
-			McpServerProperties mcpServerProperties, String type) {
+							NacosMcpProperties nacosMcpProperties, NacosMcpRegisterProperties nacosMcpRegistryProperties,
+							McpServerProperties mcpServerProperties, McpServerSseProperties mcpServerSseProperties,
+							String type) {
 		this.mcpAsyncServer = mcpAsyncServer;
 		log.info("Mcp server type: {}", type);
 		this.type = type;
@@ -95,6 +98,7 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 		this.nacosMcpRegistryProperties = nacosMcpRegistryProperties;
 		this.nacosMcpOperationService = nacosMcpOperationService;
 		this.mcpServerProperties = mcpServerProperties;
+		this.mcpServerSseProperties = mcpServerSseProperties;
 
 		try {
 			if (StringUtils.isBlank(this.mcpServerProperties.getVersion())) {
@@ -108,7 +112,7 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 			Field toolsField = McpAsyncServer.class.getDeclaredField("tools");
 			toolsField.setAccessible(true);
 			this.tools = (CopyOnWriteArrayList<McpServerFeatures.AsyncToolSpecification>) toolsField
-				.get(mcpAsyncServer);
+					.get(mcpAsyncServer);
 			this.toolsMeta = new HashMap<>();
 
 			McpServerDetailInfo serverDetailInfo = null;
@@ -148,8 +152,8 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 			McpToolSpecification mcpToolSpec = new McpToolSpecification();
 			if (this.serverCapabilities.tools() != null) {
 				List<McpSchema.Tool> toolsNeedtoRegister = this.tools.stream()
-					.map(McpServerFeatures.AsyncToolSpecification::tool)
-					.toList();
+						.map(McpServerFeatures.AsyncToolSpecification::tool)
+						.toList();
 				String toolsStr = JacksonUtils.toJson(toolsNeedtoRegister);
 				List<McpTool> toolsToNacosList = JacksonUtils.toObj(toolsStr, new TypeReference<>() {
 				});
@@ -185,7 +189,7 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 				if (StringUtils.isBlank(contextPath)) {
 					contextPath = "";
 				}
-				remoteServerConfigInfo.setExportPath(contextPath + this.mcpServerProperties.getSseEndpoint());
+				remoteServerConfigInfo.setExportPath(contextPath + this.mcpServerSseProperties.getSseEndpoint());
 				serverBasicInfo.setRemoteServerConfig(remoteServerConfigInfo);
 				serverBasicInfo.setProtocol(AiConstants.Mcp.MCP_PROTOCOL_SSE);
 				serverBasicInfo.setFrontProtocol(AiConstants.Mcp.MCP_PROTOCOL_SSE);
@@ -240,8 +244,7 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 	}
 
 	private void updateToolDescription(McpServerFeatures.AsyncToolSpecification localToolRegistration,
-			McpSchema.Tool toolInNacos, List<McpServerFeatures.AsyncToolSpecification> toolsRegistrationNeedToUpdate)
-			throws JsonProcessingException {
+									   McpSchema.Tool toolInNacos, List<McpServerFeatures.AsyncToolSpecification> toolsRegistrationNeedToUpdate) {
 		Boolean changed = false;
 		if (localToolRegistration.tool().description() != null
 				&& !localToolRegistration.tool().description().equals(toolInNacos.description())) {
@@ -270,11 +273,15 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 			}
 		}
 
+		McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema(type, localInputSchemaMap, null, null, null, null);
 		if (changed) {
-			McpSchema.Tool toolNeededUpdate = new McpSchema.Tool(localToolRegistration.tool().name(),
-					toolInNacos.description(), JacksonUtils.toJson(localInputSchemaMap));
+			McpSchema.Tool toolNeededUpdate = new McpSchema.Tool.Builder()
+					.name(localToolRegistration.tool().name())
+					.description(toolInNacos.description())
+					.inputSchema(inputSchema)
+					.build();
 			toolsRegistrationNeedToUpdate
-				.add(new McpServerFeatures.AsyncToolSpecification(toolNeededUpdate, localToolRegistration.call()));
+					.add(new McpServerFeatures.AsyncToolSpecification(toolNeededUpdate, localToolRegistration.call()));
 		}
 
 	}
@@ -294,7 +301,7 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 			this.toolsMeta = toolSpec.getToolsMeta();
 			List<McpServerFeatures.AsyncToolSpecification> toolsRegistrationNeedToUpdate = new ArrayList<>();
 			Map<String, McpSchema.Tool> toolsInNacosMap = toolsInNacos.stream()
-				.collect(Collectors.toMap(McpSchema.Tool::name, tool -> tool));
+					.collect(Collectors.toMap(McpSchema.Tool::name, tool -> tool));
 			for (McpServerFeatures.AsyncToolSpecification toolRegistration : this.tools) {
 				String name = toolRegistration.tool().name();
 				if (!toolsInNacosMap.containsKey(name)) {
@@ -371,18 +378,18 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 		}
 		McpToolSpecification toolSpec = serverDetailInfo.getToolSpec();
 		Map<String, McpTool> toolsInNacos = toolSpec.getTools()
-			.stream()
-			.collect(Collectors.toMap(McpTool::getName, tool -> tool, (existing, replacement) -> replacement));
+				.stream()
+				.collect(Collectors.toMap(McpTool::getName, tool -> tool, (existing, replacement) -> replacement));
 		Map<String, McpSchema.Tool> toolsInLocal = this.tools.stream()
-			.collect(Collectors.toMap(tool -> tool.tool().name(), McpServerFeatures.AsyncToolSpecification::tool,
-					(existing, replacement) -> replacement));
+				.collect(Collectors.toMap(tool -> tool.tool().name(), McpServerFeatures.AsyncToolSpecification::tool,
+						(existing, replacement) -> replacement));
 		if (!toolsInNacos.keySet().equals(toolsInLocal.keySet())) {
 			return new CheckCompatibleResult(false, "Local tools list is not compatible with tools list in Nacos");
 		}
 		for (String toolName : toolsInNacos.keySet()) {
 			String jsonSchemaStringInNacos = JacksonUtils.toJson(toolsInNacos.get(toolName).getInputSchema());
 			String jsonSchemaStringInLocal = JacksonUtils.toJson(toolsInLocal.get(toolName).inputSchema());
-			if (!JsonSchemaUtils.compare(jsonSchemaStringInNacos, jsonSchemaStringInLocal)) {
+			if (!JsonSchemaUtil.compare(jsonSchemaStringInNacos, jsonSchemaStringInLocal)) {
 				String message = String.format("Input Schema of local tool %s is not compatible with tool in Nacos",
 						toolName);
 				return new CheckCompatibleResult(false, message);

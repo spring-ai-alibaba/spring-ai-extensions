@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.retry.RetryUtils;
@@ -101,23 +102,23 @@ class DashScopeImageApiTests {
 	@Test
 	void testDefaultImageModel() {
 		// Test the default image model constant
-		assertEquals("wanx-v1", DashScopeImageApi.DEFAULT_IMAGE_MODEL, "Default image model should be 'wanx-v1'");
+		assertEquals("qwen-image", DashScopeImageApi.DEFAULT_IMAGE_MODEL, "Default image model should be 'qwen-image'");
 	}
 
 	@Test
 	void testImageRequestClasses() {
 		// Test creating image request objects
-		DashScopeImageApi.DashScopeImageRequest.DashScopeImageRequestInput input = new DashScopeImageApi.DashScopeImageRequest.DashScopeImageRequestInput(
+        DashScopeAPISpec.DashScopeImageRequest.DashScopeImageRequestInput input = new DashScopeAPISpec.DashScopeImageRequest.DashScopeImageRequestInput(
 				"Test prompt", null, null, "stylization_all",
 				"https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8649386271/p848790.png",
 				"https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8649386271/p848791.png",
 				"https://huarong123.oss-cn-hangzhou.aliyuncs.com/image/%E6%B6%82%E9%B8%A6%E8%8D%89%E5%9B%BE.png");
 		Integer[][] colorArray = { { 0, 0, 0 }, { 134, 134, 134 } };
 
-		DashScopeImageApi.DashScopeImageRequest.DashScopeImageRequestParameter parameter = new DashScopeImageApi.DashScopeImageRequest.DashScopeImageRequestParameter(
+        DashScopeAPISpec.DashScopeImageRequest.DashScopeImageRequestParameter parameter = new DashScopeAPISpec.DashScopeImageRequest.DashScopeImageRequestParameter(
 				"anime", "1024*1024", 1, 123456, 0.5f, "canny", true, true, 5, true, colorArray, colorArray);
 
-		DashScopeImageApi.DashScopeImageRequest request = new DashScopeImageApi.DashScopeImageRequest(
+        DashScopeAPISpec.DashScopeImageRequest request = new DashScopeAPISpec.DashScopeImageRequest(
 				"stable-diffusion-xl", input, parameter);
 
 		// Verify request properties
@@ -137,22 +138,22 @@ class DashScopeImageApiTests {
 	@Test
 	void testImageResponseClasses() {
 		// Test creating image response objects
-		DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult result = new DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult(
+        DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult result = new DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult(
 				"https://example.com/image.png");
 
-		List<DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult> results = Collections
+		List<DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult> results = Collections
 			.singletonList(result);
 
-		DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseTaskMetrics metrics = new DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseTaskMetrics(
+        DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseTaskMetrics metrics = new DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseTaskMetrics(
 				1, 1, 0);
 
-		DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput output = new DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput(
+        DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput output = new DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput(
 				"task-id", "completed", results, metrics, "200", "success");
 
-		DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage usage = new DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage(
+        DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage usage = new DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage(
 				1);
 
-		DashScopeImageApi.DashScopeImageAsyncResponse response = new DashScopeImageApi.DashScopeImageAsyncResponse(
+        DashScopeAPISpec.DashScopeImageAsyncResponse response = new DashScopeAPISpec.DashScopeImageAsyncResponse(
 				"request-id", output, usage);
 
 		// Verify response properties

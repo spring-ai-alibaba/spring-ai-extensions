@@ -17,7 +17,7 @@
 package com.alibaba.cloud.ai.dashscope.video;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi.VideoGenerationResponse;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ModelOptionsUtils;
@@ -113,10 +113,10 @@ public class DashScopeVideoModel implements VideoModel {
 	 */
 	public String submitGenTask(VideoPrompt prompt) {
 
-		DashScopeVideoApi.VideoGenerationRequest request = buildDashScopeVideoRequest(prompt);
+		DashScopeAPISpec.VideoGenerationRequest request = buildDashScopeVideoRequest(prompt);
 
 		// send request to DashScope Video API
-		VideoGenerationResponse response = this.dashScopeVideoApi.submitVideoGenTask(request).getBody();
+        DashScopeAPISpec.VideoGenerationResponse response = this.dashScopeVideoApi.submitVideoGenTask(request).getBody();
 
 		if (Objects.isNull(response) || Objects.isNull(response.getOutput().getTaskId())) {
 			logger.warn("Failed to submit video generation task: {}", response);
@@ -126,9 +126,9 @@ public class DashScopeVideoModel implements VideoModel {
 		return response.getOutput().getTaskId();
 	}
 
-	private DashScopeVideoApi.VideoGenerationResponse getVideoTask(String taskId) {
+	private DashScopeAPISpec.VideoGenerationResponse getVideoTask(String taskId) {
 
-		ResponseEntity<VideoGenerationResponse> videoGenerationResponseResponseEntity = this.dashScopeVideoApi
+		ResponseEntity<DashScopeAPISpec.VideoGenerationResponse> videoGenerationResponseResponseEntity = this.dashScopeVideoApi
 			.queryVideoGenTask(taskId);
 		if (videoGenerationResponseResponseEntity.getStatusCode().is2xxSuccessful()) {
 			return videoGenerationResponseResponseEntity.getBody();
@@ -139,7 +139,7 @@ public class DashScopeVideoModel implements VideoModel {
 		}
 	}
 
-	private VideoResponse toVideoResponse(DashScopeVideoApi.VideoGenerationResponse asyncResp) {
+	private VideoResponse toVideoResponse(DashScopeAPISpec.VideoGenerationResponse asyncResp) {
 
 		// var output = asyncResp.getOutput();
 		// var usage = asyncResp.getUsage();
@@ -149,14 +149,14 @@ public class DashScopeVideoModel implements VideoModel {
 		return new VideoResponse(asyncResp);
 	}
 
-	private DashScopeVideoApi.VideoGenerationRequest buildDashScopeVideoRequest(VideoPrompt prompt) {
+	private DashScopeAPISpec.VideoGenerationRequest buildDashScopeVideoRequest(VideoPrompt prompt) {
 
 		DashScopeVideoOptions options = toVideoOptions(prompt.getOptions());
 		logger.debug("Submitting video generation task with options: {}", options);
 
-		return DashScopeVideoApi.VideoGenerationRequest.builder()
+		return DashScopeAPISpec.VideoGenerationRequest.builder()
 			.model(options.getModel())
-			.input(DashScopeVideoApi.VideoGenerationRequest.VideoInput.builder()
+			.input(DashScopeAPISpec.VideoGenerationRequest.VideoInput.builder()
 				.prompt(prompt.getInstructions().get(0).getText())
 				.negativePrompt(options.getNegativePrompt())
 				.imageUrl(options.getImageUrl())
@@ -164,7 +164,7 @@ public class DashScopeVideoModel implements VideoModel {
 				.lastFrameUrl(options.getLastFrameUrl())
 				.template(options.getTemplate())
 				.build())
-			.parameters(DashScopeVideoApi.VideoGenerationRequest.VideoParameters.builder()
+			.parameters(DashScopeAPISpec.VideoGenerationRequest.VideoParameters.builder()
 				.duration(options.getDuration())
 				.size(options.getSize())
 				.seed(options.getSeed())

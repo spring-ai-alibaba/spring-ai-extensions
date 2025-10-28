@@ -16,10 +16,10 @@
 package com.alibaba.cloud.ai.dashscope.image;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi.DashScopeImageAsyncResponse;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.DashScopeImageAsyncResponse;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

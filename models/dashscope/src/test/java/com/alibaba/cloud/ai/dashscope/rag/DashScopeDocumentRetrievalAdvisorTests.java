@@ -16,7 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.rag;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionFinishReason;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionFinishReason;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

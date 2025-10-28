@@ -52,6 +52,13 @@
             <version>1.6.2</version>
         </dependency>
 
+        <!-- Dashscope SDK -->
+        <dependency>
+            <groupId>com.alibaba.cloud.ai</groupId>
+            <artifactId>spring-ai-alibaba-dashscope</artifactId>
+            <version>${project.parent.version}</version>
+            <optional>true</optional>
+        </dependency>
         <!-- BsHtml Document Parser -->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>

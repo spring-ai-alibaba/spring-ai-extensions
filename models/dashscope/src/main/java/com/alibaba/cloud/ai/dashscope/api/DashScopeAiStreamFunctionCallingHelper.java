@@ -15,16 +15,17 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletion;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionChunk;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionFinishReason;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage.ChatCompletionFunction;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage.Role;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionMessage.ToolCall;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionOutput;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.ChatCompletionOutput.Choice;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletion;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionChunk;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionFinishReason;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.ChatCompletionFunction;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.Role;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.ToolCall;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionOutput;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionOutput.Choice;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.TokenUsage;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -70,17 +71,17 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		// compatibility of incremental_output false for streaming function call
 		if (!incrementalOutput && isStreamingToolFunctionCall(current)) {
 			if (!isStreamingToolFunctionCallFinish(current)) {
-				return new ChatCompletionChunk(id, new ChatCompletionOutput(null, List.of(), null), usage);
+				return new ChatCompletionChunk(id, new ChatCompletionOutput(null, List.of(), null), usage, null);
 			}
 			else {
 				List<Choice> choices = currentChoice0 == null ? List.of() : List.of(currentChoice0);
-				return new ChatCompletionChunk(id, new ChatCompletionOutput(null, choices, null), usage);
+				return new ChatCompletionChunk(id, new ChatCompletionOutput(null, choices, null), usage, null);
 			}
 		}
 
 		Choice choice = merge(previousChoice0, currentChoice0);
 		List<Choice> chunkChoices = choice == null ? List.of() : List.of(choice);
-		return new ChatCompletionChunk(id, new ChatCompletionOutput(null, chunkChoices, null), usage);
+		return new ChatCompletionChunk(id, new ChatCompletionOutput(null, chunkChoices, null), usage, null);
 	}
 
 	private Choice merge(Choice previous, Choice current) {
@@ -94,7 +95,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		ChatCompletionFinishReason finishReason = (current.finishReason() != null ? current.finishReason()
 				: previous.finishReason());
 		ChatCompletionMessage message = merge(previous.message(), current.message());
-		DashScopeApi.ChatCompletionLogprobs logprobs = (current.logprobs() != null ? current.logprobs()
+		DashScopeAPISpec.ChatCompletionLogprobs logprobs = (current.logprobs() != null ? current.logprobs()
 				: previous.logprobs());
 
 		return new Choice(finishReason, message, logprobs);
@@ -102,7 +103,8 @@ public class DashScopeAiStreamFunctionCallingHelper {
 
 	private ChatCompletionMessage merge(ChatCompletionMessage previous, ChatCompletionMessage current) {
 
-		String content = (current.content() != null ? current.content()
+        // response
+		Object content = (current.content() != null ? current.content()
 				: (previous.content() != null) ? previous.content() : "");
 		Role role = (current.role() != null ? current.role() : previous.role());
 		role = (role != null ? role : Role.ASSISTANT); // default to ASSISTANT (if null
@@ -111,6 +113,9 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		String reasoningContent = (current.reasoningContent() != null ? current.reasoningContent()
 				: previous.reasoningContent());
 		Boolean partial = (current.partial() != null ? current.partial() : previous.partial());
+        List<DashScopeAPISpec.ChatCompletionAnnotations> annotations = (current.annotations() != null ? current.annotations() : previous.annotations());
+        String status = (current.status() != null ? current.status() : previous.status());
+        String phase = (current.phase() != null ? current.phase() : previous.phase());
 
 		List<ToolCall> toolCalls = new ArrayList<>();
 		ToolCall lastPreviousTooCall = null;
@@ -140,17 +145,22 @@ public class DashScopeAiStreamFunctionCallingHelper {
 				toolCalls.add(lastPreviousTooCall);
 			}
 		}
-		return new ChatCompletionMessage(content, role, name, toolCallId, toolCalls, reasoningContent, partial);
+		return new ChatCompletionMessage(content, role, name, toolCallId, toolCalls, reasoningContent, partial, phase, annotations, status);
 	}
 
 	private ToolCall merge(ToolCall previous, ToolCall current) {
-		if (previous == null) {
-			return current;
+
+        if (previous == null) {
+            return current;
 		}
-		String id = (StringUtils.hasText(current.id()) ? current.id() : previous.id());
+
+        String id = (StringUtils.hasText(current.id()) ? current.id() : previous.id());
 		String type = (StringUtils.hasText(current.type()) ? current.type() : previous.type());
+		Integer index = (current.index() != 0 ? current.index() : previous.index());
+
+
 		ChatCompletionFunction function = merge(previous.function(), current.function());
-		return new ToolCall(id, type, function);
+		return new ToolCall(id, type, function, index);
 	}
 
 	private ChatCompletionFunction merge(ChatCompletionFunction previous, ChatCompletionFunction current) {

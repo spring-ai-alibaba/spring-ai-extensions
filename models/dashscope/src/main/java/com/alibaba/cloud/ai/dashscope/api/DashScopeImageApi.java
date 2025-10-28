@@ -15,9 +15,10 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.retry.RetryUtils;
@@ -27,10 +28,15 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 
-import java.util.List;
-
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ENABLED;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_ASYNC;
+import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_IMAGE;
+import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_IMAGE_EDIT;
+import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_MT_IMAGE;
+import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.WANX_2_1_IMAGEEDIT;
+import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.WAN_2_2_T_2_I_FLASH;
+import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.WAN_2_2_T_2_I_PLUS;
+import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.WAN_2_5_I_2_I_PREVIEW;
 
 /**
  * @author nuocheng.lxm
@@ -40,11 +46,13 @@ import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER
 
 public class DashScopeImageApi {
 
+    private static final Logger logger = LoggerFactory.getLogger(DashScopeImageApi.class);
+
 	private final String baseUrl;
 
 	private final ApiKey apiKey;
 
-	public static final String DEFAULT_IMAGE_MODEL = ImageModel.WANX_V1.getValue();
+	public static final String DEFAULT_IMAGE_MODEL = QWEN_IMAGE.getValue();
 
 	private final RestClient restClient;
 
@@ -79,16 +87,26 @@ public class DashScopeImageApi {
 			.build();
 	}
 
-	public ResponseEntity<DashScopeImageAsyncResponse> submitImageGenTask(DashScopeImageRequest request) {
+	public ResponseEntity<DashScopeAPISpec.DashScopeImageAsyncResponse> submitImageGenTask(DashScopeAPISpec.DashScopeImageRequest request) {
 
-		String baseUrl = "/api/v1/services/aigc/";
 		String model = request.model();
-		String endpoint = model.equals(ImageModel.WANX2_1_IMAGE_EDIT.getValue())
-				|| model.equals(ImageModel.WANX_X_PAINTING.getValue())
-				|| model.equals(ImageModel.WANX_SKETCH_TO_IMAGE_LITE.getValue())
-				|| model.equals(ImageModel.IMAGE_OUT_PAINTING.getValue()) ? "image2image" : "text2image";
+        String url = "/api/v1/services/aigc/";
 
-		String url = baseUrl + endpoint + "/image-synthesis";
+        if (model.equals(DEFAULT_IMAGE_MODEL) || model.equals(QWEN_IMAGE.getValue()) || model.equals(QWEN_IMAGE_EDIT.value)) {
+            url += "multimodal-generation/generation";
+        } else if (model.equals(QWEN_MT_IMAGE.getValue()) || model.equals(WANX_2_1_IMAGEEDIT.getValue())) {
+            url += "image2image/image-synthesis";
+        } else if (model.equals(WAN_2_2_T_2_I_PLUS.getValue()) || model.equals(WAN_2_2_T_2_I_FLASH.getValue()) || model.equals(WAN_2_5_I_2_I_PREVIEW.getValue())) {
+            url += "text2image/image-synthesis";
+        } else {
+            logger.info("not match model, use default url");
+            if (model.contains("edit")) {
+                url += "image2image/image-synthesis";
+            } else {
+                url += "text2image/image-synthesis";
+            }
+            url += "";
+        }
 
 		return this.restClient.post()
 			.uri(url)
@@ -96,47 +114,14 @@ public class DashScopeImageApi {
 			.header(HEADER_ASYNC, ENABLED)
 			.body(request)
 			.retrieve()
-			.toEntity(DashScopeImageAsyncResponse.class);
+			.toEntity(DashScopeAPISpec.DashScopeImageAsyncResponse.class);
 	}
 
-	public ResponseEntity<DashScopeImageAsyncResponse> getImageGenTaskResult(String taskId) {
+	public ResponseEntity<DashScopeAPISpec.DashScopeImageAsyncResponse> getImageGenTaskResult(String taskId) {
 		return this.restClient.get()
 			.uri("/api/v1/tasks/{task_id}", taskId)
 			.retrieve()
-			.toEntity(DashScopeImageAsyncResponse.class);
-	}
-
-	public enum ImageModel {
-
-		// WANX V1 models.
-		WANX_V1("wanx-v1"),
-
-		// WANX V2 models.
-		WANX2_1_T2I_TURBO("wanx2.1-t2i-turbo"), WANX2_1_T2I_PLUS("wanx2.1-t2i-plus"),
-		WANX2_0_T2I_TURBO("wanx2.0-t2i-turbo"),
-
-		// WANX Image edit model.
-		WANX2_1_IMAGE_EDIT("wanx2.1-imageedit"),
-
-		// Images doodle painting
-		WANX_SKETCH_TO_IMAGE_LITE("wanx-sketch-to-image-lite"),
-
-		// Image partial repainting
-		WANX_X_PAINTING("wanx-x-painting"),
-
-		// Image screen expansion.
-		IMAGE_OUT_PAINTING("image-out-painting");
-
-		public final String value;
-
-		ImageModel(String value) {
-			this.value = value;
-		}
-
-		public String getValue() {
-			return value;
-		}
-
+			.toEntity(DashScopeAPISpec.DashScopeImageAsyncResponse.class);
 	}
 
 	String getBaseUrl() {
@@ -154,61 +139,6 @@ public class DashScopeImageApi {
 	ResponseErrorHandler getResponseErrorHandler() {
 		return this.responseErrorHandler;
 	}
-
-	@JsonInclude(JsonInclude.Include.NON_NULL)
-	public record DashScopeImageRequest(@JsonProperty("model") String model,
-			@JsonProperty("input") DashScopeImageRequestInput input,
-			@JsonProperty("parameters") DashScopeImageRequestParameter parameters
-
-	) {
-		@JsonInclude(JsonInclude.Include.NON_NULL)
-		public record DashScopeImageRequestInput(@JsonProperty("prompt") String prompt,
-				@JsonProperty("negative_prompt") String negativePrompt, @JsonProperty("ref_img") String refImg,
-				@JsonProperty("function") String function, @JsonProperty("base_image_url") String baseImageUrl,
-				@JsonProperty("mask_image_url") String maskImageUrl,
-				@JsonProperty("sketch_image_url") String sketchImageUrl) {
-		}
-
-		@JsonInclude(JsonInclude.Include.NON_NULL)
-		public record DashScopeImageRequestParameter(@JsonProperty("style") String style,
-				@JsonProperty("size") String size, @JsonProperty("n") Integer n, @JsonProperty("seed") Integer seed,
-				@JsonProperty("ref_strength") Float refStrength, @JsonProperty("ref_mode") String refMode,
-				@JsonProperty("prompt_extend") Boolean promptExtend, @JsonProperty("watermark") Boolean watermark,
-
-				@JsonProperty("sketch_weight") Integer sketchWeight,
-				@JsonProperty("sketch_extraction") Boolean sketchExtraction,
-				@JsonProperty("sketch_color") Integer[][] sketchColor,
-				@JsonProperty("mask_color") Integer[][] maskColor) {
-		}
-	}
-
-	@JsonInclude(JsonInclude.Include.NON_NULL)
-	public record DashScopeImageAsyncResponse(@JsonProperty("request_id") String requestId,
-			@JsonProperty("output") DashScopeImageAsyncResponseOutput output,
-			@JsonProperty("usage") DashScopeImageAsyncResponseUsage usage) {
-
-		@JsonInclude(JsonInclude.Include.NON_NULL)
-		public record DashScopeImageAsyncResponseOutput(@JsonProperty("task_id") String taskId,
-				@JsonProperty("task_status") String taskStatus,
-				@JsonProperty("results") List<DashScopeImageAsyncResponseResult> results,
-				@JsonProperty("task_metrics") DashScopeImageAsyncResponseTaskMetrics taskMetrics,
-				@JsonProperty("code") String code, @JsonProperty("message") String message) {
-		}
-
-		@JsonInclude(JsonInclude.Include.NON_NULL)
-		public record DashScopeImageAsyncResponseTaskMetrics(@JsonProperty("TOTAL") Integer total,
-				@JsonProperty("SUCCEEDED") Integer SUCCEEDED, @JsonProperty("FAILED") Integer FAILED) {
-		}
-
-		@JsonInclude(JsonInclude.Include.NON_NULL)
-		public record DashScopeImageAsyncResponseUsage(@JsonProperty("image_count") Integer imageCount) {
-		}
-
-		@JsonInclude(JsonInclude.Include.NON_NULL)
-		public record DashScopeImageAsyncResponseResult(@JsonProperty("url") String url) {
-		}
-	}
-	// format: on
 
 	public static class Builder {
 
