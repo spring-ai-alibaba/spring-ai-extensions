@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.mcp.register;
 
 import com.alibaba.cloud.ai.mcp.nacos.NacosMcpProperties;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
+import com.alibaba.cloud.ai.mcp.register.utils.CheckCompatibleResult;
 import com.alibaba.cloud.ai.mcp.register.utils.JsonSchemaUtil;
 import com.alibaba.nacos.api.ai.constant.AiConstants;
 import com.alibaba.nacos.api.ai.model.mcp.McpEndpointSpec;
@@ -41,9 +42,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerProperties;
 import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerSseProperties;
+import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerStreamableHttpProperties;
 import org.springframework.boot.web.context.ConfigurableWebServerApplicationContext;
 import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 
 import java.lang.reflect.Field;
@@ -80,6 +83,10 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 	private McpServerProperties mcpServerProperties;
 
 	private McpServerSseProperties mcpServerSseProperties;
+	
+	private ApplicationContext applicationContext;
+	
+	private McpServerStreamableHttpProperties mcpServerStreamableHttpProperties;
 
 	private NacosMcpOperationService nacosMcpOperationService;
 
@@ -90,6 +97,7 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 	public NacosMcpRegister(NacosMcpOperationService nacosMcpOperationService, McpAsyncServer mcpAsyncServer,
 							NacosMcpProperties nacosMcpProperties, NacosMcpRegisterProperties nacosMcpRegistryProperties,
 							McpServerProperties mcpServerProperties, McpServerSseProperties mcpServerSseProperties,
+							ApplicationContext applicationContext,
 							String type) {
 		this.mcpAsyncServer = mcpAsyncServer;
 		log.info("Mcp server type: {}", type);
@@ -99,6 +107,8 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 		this.nacosMcpOperationService = nacosMcpOperationService;
 		this.mcpServerProperties = mcpServerProperties;
 		this.mcpServerSseProperties = mcpServerSseProperties;
+		this.applicationContext = applicationContext;
+		this.mcpServerStreamableHttpProperties = this.applicationContext.getBean(McpServerStreamableHttpProperties.class);
 
 		try {
 			if (StringUtils.isBlank(this.mcpServerProperties.getVersion())) {
@@ -189,10 +199,23 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 				if (StringUtils.isBlank(contextPath)) {
 					contextPath = "";
 				}
-				remoteServerConfigInfo.setExportPath(contextPath + this.mcpServerSseProperties.getSseEndpoint());
-				serverBasicInfo.setRemoteServerConfig(remoteServerConfigInfo);
-				serverBasicInfo.setProtocol(AiConstants.Mcp.MCP_PROTOCOL_SSE);
-				serverBasicInfo.setFrontProtocol(AiConstants.Mcp.MCP_PROTOCOL_SSE);
+				
+				if (StringUtils.equals(this.type, AiConstants.Mcp.MCP_PROTOCOL_SSE)) {
+					remoteServerConfigInfo.setExportPath(contextPath + this.mcpServerSseProperties.getBaseUrl()
+							+ this.mcpServerSseProperties.getSseEndpoint());
+					serverBasicInfo.setRemoteServerConfig(remoteServerConfigInfo);
+					serverBasicInfo.setProtocol(AiConstants.Mcp.MCP_PROTOCOL_SSE);
+					serverBasicInfo.setFrontProtocol(AiConstants.Mcp.MCP_PROTOCOL_SSE);
+				} else {
+					if (this.mcpServerStreamableHttpProperties != null){
+						remoteServerConfigInfo.setExportPath(contextPath + this.mcpServerStreamableHttpProperties.getMcpEndpoint());
+					} else {
+						remoteServerConfigInfo.setExportPath(contextPath + "/mcp");
+					}
+					serverBasicInfo.setRemoteServerConfig(remoteServerConfigInfo);
+					serverBasicInfo.setProtocol(AiConstants.Mcp.MCP_PROTOCOL_STREAMABLE);
+					serverBasicInfo.setFrontProtocol(AiConstants.Mcp.MCP_PROTOCOL_STREAMABLE);
+				}
 			}
 			try {
 				this.nacosMcpOperationService.createMcpServer(this.serverInfo.name(), serverBasicInfo, mcpToolSpec,
@@ -272,13 +295,16 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 				}
 			}
 		}
-
-		McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema(type, localInputSchemaMap, null, null, null, null);
+		McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema("object", localInputSchemaMap, localToolRegistration.tool().inputSchema()
+				.required(), localToolRegistration.tool().inputSchema().additionalProperties(), localToolRegistration.tool().inputSchema().defs(),
+				localToolRegistration.tool().inputSchema().definitions());
 		if (changed) {
-			McpSchema.Tool toolNeededUpdate = new McpSchema.Tool.Builder()
-					.name(localToolRegistration.tool().name())
-					.description(toolInNacos.description())
-					.inputSchema(inputSchema)
+			McpSchema.Tool toolNeededUpdate = new McpSchema.Tool.Builder().name(localToolRegistration.tool().name())
+					.description(toolInNacos.description()).inputSchema(inputSchema)
+					.outputSchema(localToolRegistration.tool().outputSchema())
+					.title(localToolRegistration.tool().title())
+					.annotations(localToolRegistration.tool().annotations())
+					.meta(localToolRegistration.tool().meta())
 					.build();
 			toolsRegistrationNeedToUpdate
 					.add(new McpServerFeatures.AsyncToolSpecification(toolNeededUpdate, localToolRegistration.call()));
@@ -456,30 +482,6 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 		}
 		return changed;
 	}
-
-	private static class CheckCompatibleResult {
-
-		private final boolean compatible;
-
-		private String message;
-
-		public CheckCompatibleResult(boolean compatible, String message) {
-			this.compatible = compatible;
-			this.message = message;
-		}
-
-		public CheckCompatibleResult(boolean compatible) {
-			this.compatible = compatible;
-		}
-
-		public boolean isCompatible() {
-			return compatible;
-		}
-
-		public String getMessage() {
-			return message;
-		}
-
-	}
+	
 
 }

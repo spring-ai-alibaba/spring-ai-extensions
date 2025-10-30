@@ -25,16 +25,18 @@ import com.alibaba.nacos.api.exception.NacosException;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
-import io.modelcontextprotocol.spec.McpServerTransportProvider;
+import io.modelcontextprotocol.spec.McpServerTransportProviderBase;
 import org.springframework.ai.mcp.server.common.autoconfigure.McpServerAutoConfiguration;
 import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerProperties;
 import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerSseProperties;
+import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerStreamableHttpProperties;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 
 import java.util.Properties;
 
@@ -42,10 +44,11 @@ import java.util.Properties;
  * @author Sunrisea
  */
 @EnableConfigurationProperties({ NacosMcpRegisterProperties.class, NacosMcpProperties.class,
-		McpServerProperties.class, McpServerSseProperties.class})
+		McpServerProperties.class, McpServerSseProperties.class, McpServerStreamableHttpProperties.class})
 @AutoConfiguration(after = McpServerAutoConfiguration.class)
 @ConditionalOnProperty(prefix = NacosMcpRegisterProperties.CONFIG_PREFIX, name = "enabled", havingValue = "true",
 		matchIfMissing = false)
+@Conditional(McpServerAutoConfiguration.NonStatelessServerCondition.class)
 public class NacosMcpRegisterAutoConfiguration {
 
 	@Bean
@@ -61,41 +64,40 @@ public class NacosMcpRegisterAutoConfiguration {
 	}
 
 	@Bean
-	@ConditionalOnBean(McpSyncServer.class)
-	@ConditionalOnProperty(prefix = NacosMcpRegisterProperties.CONFIG_PREFIX, name = "enabled", havingValue = "true",
-			matchIfMissing = false)
+	@ConditionalOnProperty(prefix = McpServerProperties.CONFIG_PREFIX, name = "type", havingValue = "SYNC",
+			matchIfMissing = true)
 	public NacosMcpRegister nacosMcpRegisterSync(NacosMcpOperationService nacosMcpOperationService,
 												 McpSyncServer mcpSyncServer, NacosMcpProperties nacosMcpProperties,
 												 NacosMcpRegisterProperties nacosMcpRegistryProperties, McpServerProperties mcpServerProperties, McpServerSseProperties mcpServerSseProperties,
-												 McpServerTransportProvider mcpServerTransport) {
+												 ApplicationContext applicationContext, McpServerTransportProviderBase mcpServerTransportBase) {
 		McpAsyncServer mcpAsyncServer = mcpSyncServer.getAsyncServer();
 		return getNacosMcpRegister(nacosMcpOperationService, mcpAsyncServer, nacosMcpProperties,
-				nacosMcpRegistryProperties, mcpServerProperties, mcpServerSseProperties, mcpServerTransport);
+				nacosMcpRegistryProperties, mcpServerProperties, mcpServerSseProperties, applicationContext, mcpServerTransportBase);
 	}
 
 	@Bean
-	@ConditionalOnBean(McpAsyncServer.class)
-	@ConditionalOnProperty(prefix = NacosMcpRegisterProperties.CONFIG_PREFIX, name = "enabled", havingValue = "true",
-			matchIfMissing = false)
+	@ConditionalOnProperty(prefix = McpServerProperties.CONFIG_PREFIX, name = "type", havingValue = "ASYNC")
 	public NacosMcpRegister nacosMcpRegisterAsync(NacosMcpOperationService nacosMcpOperationService,
 												  McpAsyncServer mcpAsyncServer, NacosMcpProperties nacosMcpProperties,
 												  NacosMcpRegisterProperties nacosMcpRegistryProperties, McpServerProperties mcpServerProperties,McpServerSseProperties mcpServerSseProperties,
-												  McpServerTransportProvider mcpServerTransport) {
+												  ApplicationContext applicationContext,McpServerTransportProviderBase mcpServerTransportBase) {
 		return getNacosMcpRegister(nacosMcpOperationService, mcpAsyncServer, nacosMcpProperties,
-				nacosMcpRegistryProperties, mcpServerProperties, mcpServerSseProperties, mcpServerTransport);
+				nacosMcpRegistryProperties, mcpServerProperties, mcpServerSseProperties, applicationContext,mcpServerTransportBase);
 	}
 
 	private NacosMcpRegister getNacosMcpRegister(NacosMcpOperationService nacosMcpOperationService,
 												 McpAsyncServer mcpAsyncServer, NacosMcpProperties nacosMcpProperties,
 												 NacosMcpRegisterProperties nacosMcpRegistryProperties, McpServerProperties mcpServerProperties, McpServerSseProperties mcpServerSseProperties,
-												 McpServerTransportProvider mcpServerTransport) {
-		if (mcpServerTransport instanceof StdioServerTransportProvider) {
+												 ApplicationContext applicationContext,McpServerTransportProviderBase mcpServerTransportBase) {
+		if (mcpServerTransportBase instanceof StdioServerTransportProvider) {
 			return new NacosMcpRegister(nacosMcpOperationService, mcpAsyncServer, nacosMcpProperties,
-					nacosMcpRegistryProperties, mcpServerProperties, mcpServerSseProperties, AiConstants.Mcp.MCP_PROTOCOL_STDIO);
-		}
-		else {
+					nacosMcpRegistryProperties, mcpServerProperties, mcpServerSseProperties, applicationContext,AiConstants.Mcp.MCP_PROTOCOL_STDIO);
+		} else if (mcpServerProperties.getProtocol() == McpServerProperties.ServerProtocol.SSE){
 			return new NacosMcpRegister(nacosMcpOperationService, mcpAsyncServer, nacosMcpProperties,
-					nacosMcpRegistryProperties, mcpServerProperties, mcpServerSseProperties, AiConstants.Mcp.MCP_PROTOCOL_SSE);
+					nacosMcpRegistryProperties, mcpServerProperties, mcpServerSseProperties, applicationContext,AiConstants.Mcp.MCP_PROTOCOL_SSE);
+		} else {
+			return new NacosMcpRegister(nacosMcpOperationService, mcpAsyncServer, nacosMcpProperties,
+					nacosMcpRegistryProperties, mcpServerProperties, mcpServerSseProperties, applicationContext,AiConstants.Mcp.MCP_PROTOCOL_STREAMABLE);
 		}
 	}
 

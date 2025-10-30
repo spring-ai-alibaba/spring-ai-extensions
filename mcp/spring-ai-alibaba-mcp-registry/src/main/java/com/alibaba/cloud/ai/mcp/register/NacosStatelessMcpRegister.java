@@ -1,0 +1,460 @@
+package com.alibaba.cloud.ai.mcp.register;
+
+import com.alibaba.cloud.ai.mcp.nacos.NacosMcpProperties;
+import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
+import com.alibaba.cloud.ai.mcp.register.utils.CheckCompatibleResult;
+import com.alibaba.cloud.ai.mcp.register.utils.JsonSchemaUtil;
+import com.alibaba.nacos.api.ai.constant.AiConstants;
+import com.alibaba.nacos.api.ai.model.mcp.McpEndpointSpec;
+import com.alibaba.nacos.api.ai.model.mcp.McpServerBasicInfo;
+import com.alibaba.nacos.api.ai.model.mcp.McpServerDetailInfo;
+import com.alibaba.nacos.api.ai.model.mcp.McpServerRemoteServiceConfig;
+import com.alibaba.nacos.api.ai.model.mcp.McpServiceRef;
+import com.alibaba.nacos.api.ai.model.mcp.McpTool;
+import com.alibaba.nacos.api.ai.model.mcp.McpToolMeta;
+import com.alibaba.nacos.api.ai.model.mcp.McpToolSpecification;
+import com.alibaba.nacos.api.ai.model.mcp.registry.ServerVersionDetail;
+import com.alibaba.nacos.api.exception.NacosException;
+import com.alibaba.nacos.api.naming.pojo.Instance;
+import com.alibaba.nacos.api.utils.StringUtils;
+import com.alibaba.nacos.common.utils.JacksonUtils;
+import com.fasterxml.jackson.core.type.TypeReference;
+import io.modelcontextprotocol.server.McpStatelessAsyncServer;
+import io.modelcontextprotocol.server.McpStatelessServerFeatures;
+import io.modelcontextprotocol.spec.McpSchema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerProperties;
+import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerSseProperties;
+import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerStreamableHttpProperties;
+import org.springframework.boot.web.context.ConfigurableWebServerApplicationContext;
+import org.springframework.boot.web.context.WebServerApplicationContext;
+import org.springframework.boot.web.context.WebServerInitializedEvent;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+
+public class NacosStatelessMcpRegister implements ApplicationListener<WebServerInitializedEvent> {
+    
+    private static final Logger log = LoggerFactory.getLogger(NacosMcpRegister.class);
+    
+    private String type;
+    
+    private NacosMcpRegisterProperties nacosMcpRegistryProperties;
+    
+    private NacosMcpProperties nacosMcpProperties;
+    
+    private McpSchema.Implementation serverInfo;
+    
+    private McpStatelessAsyncServer mcpStatelessAsyncServer;
+    
+    private CopyOnWriteArrayList<McpStatelessServerFeatures.AsyncToolSpecification> tools;
+    
+    private Map<String, McpToolMeta> toolsMeta;
+    
+    private McpSchema.ServerCapabilities serverCapabilities;
+    
+    private McpServerProperties mcpServerProperties;
+    
+    private McpServerSseProperties mcpServerSseProperties;
+    
+    private ApplicationContext applicationContext;
+    
+    private McpServerStreamableHttpProperties mcpServerStreamableHttpProperties;
+    
+    private NacosMcpOperationService nacosMcpOperationService;
+    
+    private McpServerDetailInfo serverDetailInfo;
+    
+    private boolean success = false;
+    
+    public NacosStatelessMcpRegister(NacosMcpOperationService nacosMcpOperationService,
+            McpStatelessAsyncServer mcpStatelessAsyncServer, NacosMcpProperties nacosMcpProperties,
+            NacosMcpRegisterProperties nacosMcpRegistryProperties, McpServerProperties mcpServerProperties,
+            McpServerSseProperties mcpServerSseProperties, ApplicationContext applicationContext, String type) {
+        this.mcpStatelessAsyncServer = mcpStatelessAsyncServer;
+        log.info("Mcp server type: {}", type);
+        this.type = type;
+        this.nacosMcpProperties = nacosMcpProperties;
+        this.nacosMcpRegistryProperties = nacosMcpRegistryProperties;
+        this.nacosMcpOperationService = nacosMcpOperationService;
+        this.mcpServerProperties = mcpServerProperties;
+        this.mcpServerSseProperties = mcpServerSseProperties;
+        this.applicationContext = applicationContext;
+        this.mcpServerStreamableHttpProperties = this.applicationContext.getBean(
+                McpServerStreamableHttpProperties.class);
+        
+        try {
+            if (StringUtils.isBlank(this.mcpServerProperties.getVersion())) {
+                throw new IllegalArgumentException(
+                        "[Nacos MCP Register] The version number of Mcp Server is empty; you need to specify a version number.");
+            }
+            
+            this.serverInfo = mcpStatelessAsyncServer.getServerInfo();
+            this.serverCapabilities = mcpStatelessAsyncServer.getServerCapabilities();
+            
+            Field toolsField = McpStatelessAsyncServer.class.getDeclaredField("tools");
+            toolsField.setAccessible(true);
+            this.tools = (CopyOnWriteArrayList<McpStatelessServerFeatures.AsyncToolSpecification>) toolsField.get(
+                    this.mcpStatelessAsyncServer);
+            this.toolsMeta = new HashMap<>();
+            
+            McpServerDetailInfo serverDetailInfo = null;
+            try {
+                serverDetailInfo = this.nacosMcpOperationService.getServerDetail(this.serverInfo.name(),
+                        this.serverInfo.version());
+            } catch (NacosException e) {
+                log.info("[Nacos MCP Register] Can not found McpServer {} info from nacos, "
+                                + "try to register info of local MCP Server {}, version:{} to Nacos", this.serverInfo.name(),
+                        this.serverInfo.name(), this.mcpServerProperties.getVersion());
+            }
+            if (serverDetailInfo != null) {
+                try {
+                    CheckCompatibleResult checkResult = checkCompatible(serverDetailInfo);
+                    if (!checkResult.isCompatible()) {
+                        log.error("[Nacos MCP Register] Check mcp server compatible false, caused by:{}",
+                                checkResult.getMessage());
+                        throw new Exception("[Nacos MCP Register] Check mcp server compatible false, caused by:"
+                                + checkResult.getMessage());
+                    }
+                } catch (Exception e) {
+                    log.error("[Nacos MCP Register] Check mcp server compatible failed", e);
+                    throw e;
+                }
+                this.serverDetailInfo = serverDetailInfo;
+                if (this.serverCapabilities.tools() != null) {
+                    updateTools(serverDetailInfo);
+                }
+                subscribe();
+                this.success = true;
+                return;
+            }
+            
+            McpToolSpecification mcpToolSpec = new McpToolSpecification();
+            if (this.serverCapabilities.tools() != null) {
+                List<McpSchema.Tool> toolsNeedtoRegister = this.tools.stream()
+                        .map(McpStatelessServerFeatures.AsyncToolSpecification::tool).toList();
+                String toolsStr = JacksonUtils.toJson(toolsNeedtoRegister);
+                List<McpTool> toolsToNacosList = JacksonUtils.toObj(toolsStr, new TypeReference<>() {
+                });
+                mcpToolSpec.setTools(toolsToNacosList);
+            }
+            ServerVersionDetail serverVersionDetail = new ServerVersionDetail();
+            serverVersionDetail.setVersion(this.serverInfo.version());
+            McpServerBasicInfo serverBasicInfo = new McpServerBasicInfo();
+            serverBasicInfo.setName(this.serverInfo.name());
+            serverBasicInfo.setVersionDetail(serverVersionDetail);
+            String description = this.mcpServerProperties.getInstructions();
+            if (StringUtils.isBlank(description)) {
+                description = this.serverInfo.name();
+            }
+            serverBasicInfo.setDescription(description);
+            
+            McpEndpointSpec endpointSpec = new McpEndpointSpec();
+            if (StringUtils.equals(this.type, AiConstants.Mcp.MCP_PROTOCOL_STDIO)) {
+                serverBasicInfo.setProtocol(AiConstants.Mcp.MCP_PROTOCOL_STDIO);
+                serverBasicInfo.setFrontProtocol(AiConstants.Mcp.MCP_PROTOCOL_STDIO);
+            } else {
+                endpointSpec.setType(AiConstants.Mcp.MCP_ENDPOINT_TYPE_REF);
+                Map<String, String> endpointSpecData = new HashMap<>();
+                endpointSpecData.put("serviceName", getRegisterServiceName());
+                String groupName =
+                        StringUtils.isBlank(this.nacosMcpRegistryProperties.getServiceGroup()) ? "DEFAULT_GROUP"
+                                : this.nacosMcpRegistryProperties.getServiceGroup();
+                endpointSpecData.put("groupName", groupName);
+                endpointSpec.setData(endpointSpecData);
+                
+                McpServerRemoteServiceConfig remoteServerConfigInfo = new McpServerRemoteServiceConfig();
+                String contextPath = this.nacosMcpRegistryProperties.getSseExportContextPath();
+                if (StringUtils.isBlank(contextPath)) {
+                    contextPath = "";
+                }
+                
+                if (StringUtils.equals(this.type, AiConstants.Mcp.MCP_PROTOCOL_SSE)) {
+                    remoteServerConfigInfo.setExportPath(contextPath + this.mcpServerSseProperties.getSseEndpoint());
+                    serverBasicInfo.setRemoteServerConfig(remoteServerConfigInfo);
+                    serverBasicInfo.setProtocol(AiConstants.Mcp.MCP_PROTOCOL_SSE);
+                    serverBasicInfo.setFrontProtocol(AiConstants.Mcp.MCP_PROTOCOL_SSE);
+                } else {
+                    if (this.mcpServerStreamableHttpProperties != null) {
+                        remoteServerConfigInfo.setExportPath(
+                                contextPath + this.mcpServerStreamableHttpProperties.getMcpEndpoint());
+                    } else {
+                        remoteServerConfigInfo.setExportPath(contextPath + "/mcp");
+                    }
+                    serverBasicInfo.setRemoteServerConfig(remoteServerConfigInfo);
+                    serverBasicInfo.setProtocol(AiConstants.Mcp.MCP_PROTOCOL_STREAMABLE);
+                    serverBasicInfo.setFrontProtocol(AiConstants.Mcp.MCP_PROTOCOL_STREAMABLE);
+                }
+            }
+            try {
+                this.nacosMcpOperationService.createMcpServer(this.serverInfo.name(), serverBasicInfo, mcpToolSpec,
+                        endpointSpec);
+            } catch (NacosException e) {
+                McpServerDetailInfo recheckServerDetailInfo = null;
+                try {
+                    recheckServerDetailInfo = this.nacosMcpOperationService.getServerDetail(this.serverInfo.name(),
+                            this.serverInfo.version());
+                } catch (NacosException ignored) {
+                }
+                if (recheckServerDetailInfo == null) {
+                    log.info("Mcp server " + this.serverInfo.name() + "exist ,try to update");
+                    this.nacosMcpOperationService.updateMcpServer(this.serverInfo.name(), serverBasicInfo, mcpToolSpec,
+                            endpointSpec);
+                } else {
+                    CheckCompatibleResult checkResult = checkCompatible(recheckServerDetailInfo);
+                    if (!checkResult.isCompatible()) {
+                        log.error("[Nacos MCP Register] Check mcp server compatible false, caused by:{}",
+                                checkResult.getMessage());
+                        throw new Exception("[Nacos MCP Register] Check mcp server compatible false, caused by:"
+                                + checkResult.getMessage());
+                    }
+                }
+            }
+            subscribe();
+            this.success = true;
+        } catch (Exception e) {
+            log.error("[Nacos MCP Register] Failed to register mcp server to nacos", e);
+        }
+    }
+    
+    private void subscribe() {
+        nacosMcpOperationService.subscribeNacosMcpServer(this.serverInfo.name() + "::" + this.serverInfo.version(),
+                (mcpServerDetailInfo) -> {
+                    log.info("[Nacos MCP Register] Received mcp server detail info update event, "
+                                    + "mcp server name:{}, mcp server version:{}", this.serverInfo.name(),
+                            this.serverInfo.version());
+                    if (this.serverCapabilities.tools() != null) {
+                        this.serverDetailInfo = mcpServerDetailInfo;
+                        updateTools(mcpServerDetailInfo);
+                    }
+                });
+    }
+    
+    private void updateToolDescription(McpStatelessServerFeatures.AsyncToolSpecification localToolRegistration,
+            McpSchema.Tool toolInNacos,
+            List<McpStatelessServerFeatures.AsyncToolSpecification> toolsRegistrationNeedToUpdate) {
+        Boolean changed = false;
+        if (localToolRegistration.tool().description() != null && !localToolRegistration.tool().description()
+                .equals(toolInNacos.description())) {
+            changed = true;
+        }
+        String localInputSchemaString = JacksonUtils.toJson(localToolRegistration.tool().inputSchema());
+        Map<String, Object> localInputSchemaMap = JacksonUtils.toObj(localInputSchemaString, new TypeReference<>() {
+        });
+        Map<String, Object> localProperties = (Map<String, Object>) localInputSchemaMap.get("properties");
+        
+        String nacosInputSchemaString = JacksonUtils.toJson(toolInNacos.inputSchema());
+        Map<Object, Object> nacosInputSchemaMap = JacksonUtils.toObj(nacosInputSchemaString, new TypeReference<>() {
+        });
+        Map<String, Object> nacosProperties = (Map<String, Object>) nacosInputSchemaMap.get("properties");
+        
+        for (String key : localProperties.keySet()) {
+            if (nacosProperties.containsKey(key)) {
+                Map<String, Object> localProperty = (Map<String, Object>) localProperties.get(key);
+                Map<String, Object> nacosProperty = (Map<String, Object>) nacosProperties.get(key);
+                String localDescription = (String) localProperty.get("description");
+                String nacosDescription = (String) nacosProperty.get("description");
+                if (nacosDescription != null && !nacosDescription.equals(localDescription)) {
+                    localProperty.put("description", nacosDescription);
+                    changed = true;
+                }
+            }
+        }
+        
+        McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema("object", localInputSchemaMap, localToolRegistration.tool().inputSchema()
+                .required(), localToolRegistration.tool().inputSchema().additionalProperties(), localToolRegistration.tool().inputSchema().defs(),
+                localToolRegistration.tool().inputSchema().definitions());
+        if (changed) {
+            McpSchema.Tool toolNeededUpdate = new McpSchema.Tool.Builder().name(localToolRegistration.tool().name())
+                    .description(toolInNacos.description()).inputSchema(inputSchema)
+                    .outputSchema(localToolRegistration.tool().outputSchema())
+                    .title(localToolRegistration.tool().title())
+                    .annotations(localToolRegistration.tool().annotations())
+                    .meta(localToolRegistration.tool().meta())
+                    .build();
+            toolsRegistrationNeedToUpdate.add(new McpStatelessServerFeatures.AsyncToolSpecification(toolNeededUpdate,
+                    localToolRegistration.callHandler()));
+        }
+        
+    }
+    
+    private void updateTools(McpServerDetailInfo mcpServerDetailInfo) {
+        try {
+            boolean changed = false;
+            McpToolSpecification toolSpec = mcpServerDetailInfo.getToolSpec();
+            if (toolSpec == null) {
+                log.info("[Nacos MCP Register] Mcp server tools in nacos is null, skip local mcp server tools update");
+                return;
+            }
+            String toolsInNacosStr = JacksonUtils.toJson(toolSpec.getTools());
+            List<McpSchema.Tool> toolsInNacos = JacksonUtils.toObj(toolsInNacosStr, new TypeReference<>() {
+            });
+            changed = compareToolsMeta(toolSpec.getToolsMeta());
+            this.toolsMeta = toolSpec.getToolsMeta();
+            List<McpStatelessServerFeatures.AsyncToolSpecification> toolsRegistrationNeedToUpdate = new ArrayList<>();
+            Map<String, McpSchema.Tool> toolsInNacosMap = toolsInNacos.stream()
+                    .collect(Collectors.toMap(McpSchema.Tool::name, tool -> tool));
+            for (McpStatelessServerFeatures.AsyncToolSpecification toolRegistration : this.tools) {
+                String name = toolRegistration.tool().name();
+                if (!toolsInNacosMap.containsKey(name)) {
+                    continue;
+                }
+                McpSchema.Tool toolInNacos = toolsInNacosMap.get(name);
+                updateToolDescription(toolRegistration, toolInNacos, toolsRegistrationNeedToUpdate);
+            }
+            if (toolsRegistrationNeedToUpdate.size() > 0) {
+                log.info("[Nacos MCP Register] Update tool description for {} tools",
+                        toolsRegistrationNeedToUpdate.size());
+            }
+            for (McpStatelessServerFeatures.AsyncToolSpecification toolRegistration : toolsRegistrationNeedToUpdate) {
+                for (int i = 0; i < this.tools.size(); i++) {
+                    if (this.tools.get(i).tool().name().equals(toolRegistration.tool().name())) {
+                        this.tools.set(i, toolRegistration);
+                        log.info("[Nacos MCP Register] Update tool description for tool {}",
+                                toolRegistration.tool().name());
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+            if (changed) {
+                log.info("[Nacos MCP Register] Update tool description finished");
+            }
+            if (changed && this.serverCapabilities.tools().listChanged()) {
+                this.notifyToolsChanged();
+            }
+        } catch (Exception e) {
+            log.error("[Nacos MCP Register] Failed to update local tools according to nacos", e);
+        }
+    }
+    
+    public void notifyToolsChanged() {
+        return;
+    }
+    
+    
+    @Override
+    public void onApplicationEvent(WebServerInitializedEvent event) {
+        if ("stdio".equals(this.type) || !nacosMcpRegistryProperties.isServiceRegister() || !this.success) {
+            log.info("[Nacos MCP Register] Stdio mcp server , no need to register mcp server endpoint to nacos");
+            return;
+        }
+        try {
+            WebServerApplicationContext context = event.getApplicationContext();
+            if (context instanceof ConfigurableWebServerApplicationContext) {
+                if ("management".equals(context.getServerNamespace())) {
+                    return;
+                }
+            }
+            int port = event.getWebServer().getPort();
+            Instance instance = new Instance();
+            instance.setIp(this.nacosMcpProperties.getIp());
+            instance.setPort(port);
+            instance.setEphemeral(this.nacosMcpRegistryProperties.isServiceEphemeral());
+            String groupName = StringUtils.isBlank(this.nacosMcpRegistryProperties.getServiceGroup()) ? "DEFAULT_GROUP"
+                    : this.nacosMcpRegistryProperties.getServiceGroup();
+            String serviceName = this.getRegisterServiceName();
+            if (this.serverDetailInfo != null) {
+                serviceName = this.serverDetailInfo.getRemoteServerConfig().getServiceRef().getServiceName();
+                groupName = this.serverDetailInfo.getRemoteServerConfig().getServiceRef().getGroupName();
+            }
+            nacosMcpOperationService.registerService(serviceName, groupName, instance);
+            log.info("[Nacos MCP Register] Register mcp server endpoint to nacos successfully");
+        } catch (NacosException e) {
+            log.error("[Nacos MCP Register] Failed to register mcp server endpoint to nacos", e);
+        }
+        
+    }
+    
+    private CheckCompatibleResult checkToolsCompatible(McpServerDetailInfo serverDetailInfo) {
+        if (serverDetailInfo.getToolSpec() == null || serverDetailInfo.getToolSpec().getTools() == null
+                || serverDetailInfo.getToolSpec().getTools().isEmpty()) {
+            return new CheckCompatibleResult(true);
+        }
+        McpToolSpecification toolSpec = serverDetailInfo.getToolSpec();
+        Map<String, McpTool> toolsInNacos = toolSpec.getTools().stream()
+                .collect(Collectors.toMap(McpTool::getName, tool -> tool, (existing, replacement) -> replacement));
+        Map<String, McpSchema.Tool> toolsInLocal = this.tools.stream().collect(
+                Collectors.toMap(tool -> tool.tool().name(), McpStatelessServerFeatures.AsyncToolSpecification::tool,
+                        (existing, replacement) -> replacement));
+        if (!toolsInNacos.keySet().equals(toolsInLocal.keySet())) {
+            return new CheckCompatibleResult(false, "Local tools list is not compatible with tools list in Nacos");
+        }
+        for (String toolName : toolsInNacos.keySet()) {
+            String jsonSchemaStringInNacos = JacksonUtils.toJson(toolsInNacos.get(toolName).getInputSchema());
+            String jsonSchemaStringInLocal = JacksonUtils.toJson(toolsInLocal.get(toolName).inputSchema());
+            if (!JsonSchemaUtil.compare(jsonSchemaStringInNacos, jsonSchemaStringInLocal)) {
+                String message = String.format("Input Schema of local tool %s is not compatible with tool in Nacos",
+                        toolName);
+                return new CheckCompatibleResult(false, message);
+            }
+        }
+        return new CheckCompatibleResult(true);
+    }
+    
+    private CheckCompatibleResult checkCompatible(McpServerDetailInfo serverDetailInfo) {
+        log.info("[Nacos MCP Register] Checking compatible for mcp server");
+        if (!StringUtils.equals(this.serverInfo.version(), serverDetailInfo.getVersionDetail().getVersion())) {
+            return new CheckCompatibleResult(false, "Local version is not compatible with version in Nacos");
+        }
+        if (!StringUtils.equals(this.type, serverDetailInfo.getProtocol())) {
+            return new CheckCompatibleResult(false, "Local protocol is not compatible with protocol in Nacos");
+        }
+        if (StringUtils.equals(this.type, AiConstants.Mcp.MCP_PROTOCOL_STDIO)) {
+            return new CheckCompatibleResult(true);
+        }
+        McpServiceRef mcpServiceRef = serverDetailInfo.getRemoteServerConfig().getServiceRef();
+        if (!isServiceRefSame(mcpServiceRef)) {
+            return new CheckCompatibleResult(false, "Local service ref is not compatible with service ref in Nacos");
+        }
+        if (this.serverCapabilities.tools() != null) {
+            return checkToolsCompatible(serverDetailInfo);
+        }
+        return new CheckCompatibleResult(true);
+    }
+    
+    private boolean isServiceRefSame(McpServiceRef serviceRef) {
+        if (!StringUtils.isBlank(this.nacosMcpRegistryProperties.getServiceName()) && !StringUtils.equals(
+                serviceRef.getServiceName(), this.nacosMcpRegistryProperties.getServiceName())) {
+            return false;
+        }
+        if (!StringUtils.isBlank(this.nacosMcpRegistryProperties.getServiceGroup()) && !StringUtils.equals(
+                serviceRef.getGroupName(), this.nacosMcpRegistryProperties.getServiceGroup())) {
+            return false;
+        }
+        return StringUtils.equals(serviceRef.getNamespaceId(), this.nacosMcpProperties.getNamespace());
+    }
+    
+    private String getRegisterServiceName() {
+        return StringUtils.isBlank(this.nacosMcpRegistryProperties.getServiceName()) ? this.serverInfo.name() + "::"
+                + this.serverInfo.version() : this.nacosMcpRegistryProperties.getServiceName();
+    }
+    
+    private boolean compareToolsMeta(Map<String, McpToolMeta> toolsMeta) {
+        boolean changed = false;
+        if (this.toolsMeta == null && toolsMeta != null || this.toolsMeta != null && toolsMeta == null) {
+            return true;
+        } else if (this.toolsMeta == null) {
+            return false;
+        }
+        if (!this.toolsMeta.keySet().equals(toolsMeta.keySet())) {
+            return true;
+        }
+        for (String toolName : toolsMeta.keySet()) {
+            if (this.toolsMeta.get(toolName).isEnabled() != toolsMeta.get(toolName).isEnabled()) {
+                changed = true;
+                break;
+            }
+        }
+        return changed;
+    }
+    
+}
