@@ -24,7 +24,7 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>spring-ai-alibaba-starter-tool-calling-bom</artifactId>
+    <artifactId>spring-ai-alibaba-tool-calling-bom</artifactId>
     <name>Spring AI Alibaba Starter Tool Calling AliTranslate</name>
     <description>Translate tool for Spring AI Alibaba</description>
     <url>https://github.com/alibaba/spring-ai-alibaba</url>
