@@ -26,6 +26,24 @@
     <description>Extensions of Spring AI core concepts and components.</description>
     <url>https://github.com/alibaba/spring-ai-alibaba</url>
 
+    <licenses>
+        <license>
+            <name>Apache 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>chickenlj</id>
+            <name>Jun Liu</name>
+            <email>ken.lj.hz@gmail.com</email>
+            <organization>Alibaba Cloud</organization>
+            <organizationUrl>https://aliyun.com</organizationUrl>
+        </developer>
+    </developers>
+
     <modules>
         <!-- document-parsers modules -->
         <module>document-parsers/spring-ai-alibaba-starter-document-parser-apache-pdfbox</module>
@@ -165,7 +183,7 @@
     <properties>
 
         <!-- Spring AI Alibaba Version -->
-        <revision>1.1.0.0-SNAPSHOT</revision>
+        <revision>1.1.0.0-M3</revision>
 
         <!-- Maven project basic config -->
         <java.version>17</java.version>
