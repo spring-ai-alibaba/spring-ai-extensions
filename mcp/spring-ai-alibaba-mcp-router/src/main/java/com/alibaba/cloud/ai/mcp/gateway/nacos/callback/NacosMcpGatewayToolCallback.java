@@ -163,7 +163,7 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
             }
             
             JsonNode requestTemplate = toolConfig.path("requestTemplate");
-            JsonNode argsPosition = requestTemplate.path("argsPosition");
+            JsonNode argsPosition = toolConfig.path("argsPosition");
             String url = requestTemplate.path("url").asText();
             String method = requestTemplate.path("method").asText();
             logger.info("[processToolRequest] requestTemplate: {} url: {} method: {}", requestTemplate, url, method);
