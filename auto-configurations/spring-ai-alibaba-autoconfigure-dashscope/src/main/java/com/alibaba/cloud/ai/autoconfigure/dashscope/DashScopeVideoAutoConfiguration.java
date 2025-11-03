@@ -63,7 +63,7 @@ public class DashScopeVideoAutoConfiguration {
 		var videoApi = DashScopeVideoApi.builder()
 			.apiKey(resolved.apiKey())
 			.baseUrl(resolved.baseUrl())
-			.restClientBuilder(restClientBuilderProvider.getIfAvailable())
+			.restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
 			.responseErrorHandler(responseErrorHandler)
 			.build();
 

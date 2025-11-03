@@ -69,7 +69,7 @@ public class DashScopeImageAutoConfiguration {
 			.apiKey(resolved.apiKey())
 			.baseUrl(resolved.baseUrl())
 			.workSpaceId(resolved.workspaceId())
-			.restClientBuilder(restClientBuilderProvider.getIfAvailable())
+			.restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
 			.responseErrorHandler(responseErrorHandler)
 			.build();
 
