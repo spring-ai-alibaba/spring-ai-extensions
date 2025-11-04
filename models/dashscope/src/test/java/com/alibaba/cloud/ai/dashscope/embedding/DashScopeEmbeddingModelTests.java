@@ -16,10 +16,10 @@
 package com.alibaba.cloud.ai.dashscope.embedding;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.EmbeddingList;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.EmbeddingUsage;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.Embeddings;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.Embedding;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.EmbeddingList;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.EmbeddingUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.Embeddings;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.Embedding;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

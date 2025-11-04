@@ -15,17 +15,17 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletion;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionChunk;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionFinishReason;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.ChatCompletionFunction;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.Role;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionMessage.ToolCall;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionOutput;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.ChatCompletionOutput.Choice;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletion;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionChunk;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionFinishReason;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ChatCompletionFunction;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.Role;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ToolCall;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput.Choice;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -95,7 +95,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		ChatCompletionFinishReason finishReason = (current.finishReason() != null ? current.finishReason()
 				: previous.finishReason());
 		ChatCompletionMessage message = merge(previous.message(), current.message());
-		DashScopeAPISpec.ChatCompletionLogprobs logprobs = (current.logprobs() != null ? current.logprobs()
+		DashScopeApiSpec.ChatCompletionLogprobs logprobs = (current.logprobs() != null ? current.logprobs()
 				: previous.logprobs());
 
 		return new Choice(finishReason, message, logprobs);
@@ -113,7 +113,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		String reasoningContent = (current.reasoningContent() != null ? current.reasoningContent()
 				: previous.reasoningContent());
 		Boolean partial = (current.partial() != null ? current.partial() : previous.partial());
-        List<DashScopeAPISpec.ChatCompletionAnnotations> annotations = (current.annotations() != null ? current.annotations() : previous.annotations());
+        List<DashScopeApiSpec.ChatCompletionAnnotations> annotations = (current.annotations() != null ? current.annotations() : previous.annotations());
         String status = (current.status() != null ? current.status() : previous.status());
         String phase = (current.phase() != null ? current.phase() : previous.phase());
 

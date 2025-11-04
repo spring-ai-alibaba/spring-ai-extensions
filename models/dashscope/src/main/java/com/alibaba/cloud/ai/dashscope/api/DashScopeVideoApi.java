@@ -17,7 +17,7 @@
 package com.alibaba.cloud.ai.dashscope.api;
 
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +92,7 @@ public class DashScopeVideoApi {
 	/**
 	 * Submit video generation task.
 	 */
-	public ResponseEntity<DashScopeAPISpec.VideoGenerationResponse> submitVideoGenTask(DashScopeAPISpec.VideoGenerationRequest request) {
+	public ResponseEntity<DashScopeApiSpec.VideoGenerationResponse> submitVideoGenTask(DashScopeApiSpec.VideoGenerationRequest request) {
 
 		logger.debug("Submitting video generation task with options: {}", request);
 
@@ -113,17 +113,17 @@ public class DashScopeVideoApi {
 			.body(request)
 			.header(HEADER_ASYNC, ENABLED)
 			.retrieve()
-			.toEntity(DashScopeAPISpec.VideoGenerationResponse.class);
+			.toEntity(DashScopeApiSpec.VideoGenerationResponse.class);
 	}
 
 	/**
 	 * Query video generation task status.
 	 */
-	public ResponseEntity<DashScopeAPISpec.VideoGenerationResponse> queryVideoGenTask(String taskId) {
+	public ResponseEntity<DashScopeApiSpec.VideoGenerationResponse> queryVideoGenTask(String taskId) {
 		return this.restClient.get()
 			.uri("/api/v1/tasks/{taskId}", taskId)
 			.retrieve()
-			.toEntity(DashScopeAPISpec.VideoGenerationResponse.class);
+			.toEntity(DashScopeApiSpec.VideoGenerationResponse.class);
 	}
 
 	String getBaseUrl() {

@@ -19,7 +19,7 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.image.observation.DashScopeImageModelObservationConvention;
 import com.alibaba.cloud.ai.dashscope.image.observation.DashScopeImagePromptContentObservationHandler;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
@@ -156,7 +156,7 @@ public class DashScopeImageModel implements ImageModel {
                 retryTemplate.execute(ctx -> {
                     observation.lowCardinalityKeyValue("retry.attempt", String.valueOf(ctx.getRetryCount()));
 
-                    DashScopeAPISpec.DashScopeImageAsyncResponse resp = getImageGenTask(taskId);
+                    DashScopeApiSpec.DashScopeImageAsyncResponse resp = getImageGenTask(taskId);
                     if (resp != null) {
                         String status = resp.output().taskStatus();
                         observation.lowCardinalityKeyValue("task.status", status);
@@ -182,9 +182,9 @@ public class DashScopeImageModel implements ImageModel {
 		DashScopeImageOptions imageOptions = toImageOptions(request.getOptions());
 		logger.debug("Image options: {}", imageOptions);
 
-        DashScopeAPISpec.DashScopeImageRequest dashScopeImageRequest = constructImageRequest(request, imageOptions);
+        DashScopeApiSpec.DashScopeImageRequest dashScopeImageRequest = constructImageRequest(request, imageOptions);
 
-		ResponseEntity<DashScopeAPISpec.DashScopeImageAsyncResponse> submitResponse = dashScopeImageApi
+		ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> submitResponse = dashScopeImageApi
 			.submitImageGenTask(dashScopeImageRequest);
 
 		if (submitResponse == null || submitResponse.getBody() == null) {
@@ -214,8 +214,8 @@ public class DashScopeImageModel implements ImageModel {
 		return currentOptions;
 	}
 
-	public DashScopeAPISpec.DashScopeImageAsyncResponse getImageGenTask(String taskId) {
-		ResponseEntity<DashScopeAPISpec.DashScopeImageAsyncResponse> getImageGenResponse = dashScopeImageApi
+	public DashScopeApiSpec.DashScopeImageAsyncResponse getImageGenTask(String taskId) {
+		ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> getImageGenResponse = dashScopeImageApi
 			.getImageGenTaskResult(taskId);
 		if (getImageGenResponse == null || getImageGenResponse.getBody() == null) {
 			logger.warn("No image response returned for taskId: {}", taskId);
@@ -228,7 +228,7 @@ public class DashScopeImageModel implements ImageModel {
 		return this.defaultOptions;
 	}
 
-	private ImageResponse toImageResponse(DashScopeAPISpec.DashScopeImageAsyncResponse asyncResp) {
+	private ImageResponse toImageResponse(DashScopeApiSpec.DashScopeImageAsyncResponse asyncResp) {
 		var output = asyncResp.output();
 		var results = output.results();
 		ImageResponseMetadata md = toMetadata(asyncResp);
@@ -238,22 +238,22 @@ public class DashScopeImageModel implements ImageModel {
 		return new ImageResponse(gens, md);
 	}
 
-	private DashScopeAPISpec.DashScopeImageRequest constructImageRequest(ImagePrompt imagePrompt,
-			DashScopeImageOptions options) {
+	private DashScopeApiSpec.DashScopeImageRequest constructImageRequest(ImagePrompt imagePrompt,
+																		 DashScopeImageOptions options) {
 
-		return new DashScopeAPISpec.DashScopeImageRequest(options.getModel(),
-				new DashScopeAPISpec.DashScopeImageRequest.DashScopeImageRequestInput(
+		return new DashScopeApiSpec.DashScopeImageRequest(options.getModel(),
+				new DashScopeApiSpec.DashScopeImageRequest.DashScopeImageRequestInput(
 						imagePrompt.getInstructions().get(0).getText(), options.getNegativePrompt(),
 						options.getRefImg(), options.getFunction(), options.getBaseImageUrl(),
 						options.getMaskImageUrl(), options.getSketchImageUrl()),
-				new DashScopeAPISpec.DashScopeImageRequest.DashScopeImageRequestParameter(options.getStyle(),
+				new DashScopeApiSpec.DashScopeImageRequest.DashScopeImageRequestParameter(options.getStyle(),
 						options.getSize(), options.getN(), options.getSeed(), options.getRefStrength(),
 						options.getRefMode(), options.getPromptExtend(), options.getWatermark(),
 						options.getSketchWeight(), options.getSketchExtraction(), options.getSketchColor(),
 						options.getMaskColor()));
 	}
 
-	private ImageResponseMetadata toMetadata(DashScopeAPISpec.DashScopeImageAsyncResponse re) {
+	private ImageResponseMetadata toMetadata(DashScopeApiSpec.DashScopeImageAsyncResponse re) {
 		var out = re.output();
 		var tm = out.taskMetrics();
 		var usage = re.usage();
@@ -261,7 +261,7 @@ public class DashScopeImageModel implements ImageModel {
 		ImageResponseMetadata md = new ImageResponseMetadata();
 
 		Optional.ofNullable(usage)
-			.map(DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage::imageCount)
+			.map(DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage::imageCount)
 			.ifPresent(count -> md.put("imageCount", count));
 		Optional.ofNullable(tm).ifPresent(metrics -> {
 			md.put("taskTotal", metrics.total());

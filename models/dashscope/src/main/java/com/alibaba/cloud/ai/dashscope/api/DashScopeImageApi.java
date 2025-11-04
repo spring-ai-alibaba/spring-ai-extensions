@@ -15,7 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,7 +87,7 @@ public class DashScopeImageApi {
 			.build();
 	}
 
-	public ResponseEntity<DashScopeAPISpec.DashScopeImageAsyncResponse> submitImageGenTask(DashScopeAPISpec.DashScopeImageRequest request) {
+	public ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> submitImageGenTask(DashScopeApiSpec.DashScopeImageRequest request) {
 
 		String model = request.model();
         String url = "/api/v1/services/aigc/";
@@ -114,14 +114,14 @@ public class DashScopeImageApi {
 			.header(HEADER_ASYNC, ENABLED)
 			.body(request)
 			.retrieve()
-			.toEntity(DashScopeAPISpec.DashScopeImageAsyncResponse.class);
+			.toEntity(DashScopeApiSpec.DashScopeImageAsyncResponse.class);
 	}
 
-	public ResponseEntity<DashScopeAPISpec.DashScopeImageAsyncResponse> getImageGenTaskResult(String taskId) {
+	public ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> getImageGenTaskResult(String taskId) {
 		return this.restClient.get()
 			.uri("/api/v1/tasks/{task_id}", taskId)
 			.retrieve()
-			.toEntity(DashScopeAPISpec.DashScopeImageAsyncResponse.class);
+			.toEntity(DashScopeApiSpec.DashScopeImageAsyncResponse.class);
 	}
 
 	String getBaseUrl() {

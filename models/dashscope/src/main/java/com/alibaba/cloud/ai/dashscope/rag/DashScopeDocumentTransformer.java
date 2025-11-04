@@ -21,7 +21,7 @@ import java.util.List;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.common.ErrorCodeEnum;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,14 +58,14 @@ public class DashScopeDocumentTransformer implements DocumentTransformer {
 		validateDocuments(documents);
 		Document document = documents.get(0);
 
-		ResponseEntity<DashScopeAPISpec.DocumentSplitResponse> splitResponseEntity = dashScopeApi.documentSplit(document,
+		ResponseEntity<DashScopeApiSpec.DocumentSplitResponse> splitResponseEntity = dashScopeApi.documentSplit(document,
 				options);
 		validateSplitResponse(splitResponseEntity);
 
-        DashScopeAPISpec.DocumentSplitResponse splitResponse = splitResponseEntity.getBody();
+        DashScopeApiSpec.DocumentSplitResponse splitResponse = splitResponseEntity.getBody();
 		validateChunkResult(splitResponse);
 
-		List<DashScopeAPISpec.DocumentChunk> chunkList = splitResponse.chunkService().chunkResult();
+		List<DashScopeApiSpec.DocumentChunk> chunkList = splitResponse.chunkService().chunkResult();
 		List<Document> documentList = new ArrayList<>();
 
 		chunkList.forEach(e -> {
@@ -85,13 +85,13 @@ public class DashScopeDocumentTransformer implements DocumentTransformer {
 		}
 	}
 
-	private void validateSplitResponse(ResponseEntity<DashScopeAPISpec.DocumentSplitResponse> splitResponseEntity) {
+	private void validateSplitResponse(ResponseEntity<DashScopeApiSpec.DocumentSplitResponse> splitResponseEntity) {
 		if (splitResponseEntity == null) {
 			throw new DashScopeException(ErrorCodeEnum.SPLIT_DOCUMENT_ERROR);
 		}
 	}
 
-	private void validateChunkResult(DashScopeAPISpec.DocumentSplitResponse splitResponse) {
+	private void validateChunkResult(DashScopeApiSpec.DocumentSplitResponse splitResponse) {
 		if (splitResponse == null || splitResponse.chunkService() == null
 				|| CollectionUtils.isEmpty(splitResponse.chunkService().chunkResult())) {
 			logger.error("DashScopeDocumentTransformer NoSplitResult");

@@ -16,7 +16,7 @@
 
 package com.alibaba.cloud.ai.dashscope.video;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import org.springframework.ai.model.ModelResponse;
 import org.springframework.ai.model.ResponseMetadata;
 
@@ -28,23 +28,23 @@ import java.util.List;
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
  */
 
-public class VideoResponse implements ModelResponse<DashScopeAPISpec.VideoGenerationResponse> {
+public class VideoResponse implements ModelResponse<DashScopeApiSpec.VideoGenerationResponse> {
 
-	private final DashScopeAPISpec.VideoGenerationResponse result;
+	private final DashScopeApiSpec.VideoGenerationResponse result;
 
-	public VideoResponse(DashScopeAPISpec.VideoGenerationResponse result) {
+	public VideoResponse(DashScopeApiSpec.VideoGenerationResponse result) {
 
 		this.result = result;
 	}
 
 	@Override
-	public DashScopeAPISpec.VideoGenerationResponse getResult() {
+	public DashScopeApiSpec.VideoGenerationResponse getResult() {
 
 		return this.result;
 	}
 
 	@Override
-	public List<DashScopeAPISpec.VideoGenerationResponse> getResults() {
+	public List<DashScopeApiSpec.VideoGenerationResponse> getResults() {
 
 		return Collections.singletonList(this.result);
 	}

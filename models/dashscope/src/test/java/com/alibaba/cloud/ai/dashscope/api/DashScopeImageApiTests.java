@@ -15,7 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.retry.RetryUtils;
@@ -108,17 +108,17 @@ class DashScopeImageApiTests {
 	@Test
 	void testImageRequestClasses() {
 		// Test creating image request objects
-        DashScopeAPISpec.DashScopeImageRequest.DashScopeImageRequestInput input = new DashScopeAPISpec.DashScopeImageRequest.DashScopeImageRequestInput(
+        DashScopeApiSpec.DashScopeImageRequest.DashScopeImageRequestInput input = new DashScopeApiSpec.DashScopeImageRequest.DashScopeImageRequestInput(
 				"Test prompt", null, null, "stylization_all",
 				"https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8649386271/p848790.png",
 				"https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8649386271/p848791.png",
 				"https://huarong123.oss-cn-hangzhou.aliyuncs.com/image/%E6%B6%82%E9%B8%A6%E8%8D%89%E5%9B%BE.png");
 		Integer[][] colorArray = { { 0, 0, 0 }, { 134, 134, 134 } };
 
-        DashScopeAPISpec.DashScopeImageRequest.DashScopeImageRequestParameter parameter = new DashScopeAPISpec.DashScopeImageRequest.DashScopeImageRequestParameter(
+        DashScopeApiSpec.DashScopeImageRequest.DashScopeImageRequestParameter parameter = new DashScopeApiSpec.DashScopeImageRequest.DashScopeImageRequestParameter(
 				"anime", "1024*1024", 1, 123456, 0.5f, "canny", true, true, 5, true, colorArray, colorArray);
 
-        DashScopeAPISpec.DashScopeImageRequest request = new DashScopeAPISpec.DashScopeImageRequest(
+        DashScopeApiSpec.DashScopeImageRequest request = new DashScopeApiSpec.DashScopeImageRequest(
 				"stable-diffusion-xl", input, parameter);
 
 		// Verify request properties
@@ -138,22 +138,22 @@ class DashScopeImageApiTests {
 	@Test
 	void testImageResponseClasses() {
 		// Test creating image response objects
-        DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult result = new DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult(
+        DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult result = new DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult(
 				"https://example.com/image.png");
 
-		List<DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult> results = Collections
+		List<DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult> results = Collections
 			.singletonList(result);
 
-        DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseTaskMetrics metrics = new DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseTaskMetrics(
+        DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseTaskMetrics metrics = new DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseTaskMetrics(
 				1, 1, 0);
 
-        DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput output = new DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput(
+        DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput output = new DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput(
 				"task-id", "completed", results, metrics, "200", "success");
 
-        DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage usage = new DashScopeAPISpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage(
+        DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage usage = new DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage(
 				1);
 
-        DashScopeAPISpec.DashScopeImageAsyncResponse response = new DashScopeAPISpec.DashScopeImageAsyncResponse(
+        DashScopeApiSpec.DashScopeImageAsyncResponse response = new DashScopeApiSpec.DashScopeImageAsyncResponse(
 				"request-id", output, usage);
 
 		// Verify response properties

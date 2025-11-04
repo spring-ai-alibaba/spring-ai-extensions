@@ -17,7 +17,7 @@ package com.alibaba.cloud.ai.dashscope.rag;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -144,11 +144,11 @@ class DashScopeDocumentTransformerTests {
 		Document document = new Document(TEST_DOC_ID, TEST_CONTENT, metadata);
 
 		// Mock API response
-        DashScopeAPISpec.DocumentChunk chunk = new DashScopeAPISpec.DocumentChunk(
+        DashScopeApiSpec.DocumentChunk chunk = new DashScopeApiSpec.DocumentChunk(
 				TEST_CHUNK_ID, TEST_CHUNK_CONTENT, null, null, null, null);
-        DashScopeAPISpec.DocumentSplitResponseData chunkService = new DashScopeAPISpec.DocumentSplitResponseData(
+        DashScopeApiSpec.DocumentSplitResponseData chunkService = new DashScopeApiSpec.DocumentSplitResponseData(
 				List.of(chunk));
-        DashScopeAPISpec.DocumentSplitResponse response = new DashScopeAPISpec.DocumentSplitResponse(chunkService);
+        DashScopeApiSpec.DocumentSplitResponse response = new DashScopeApiSpec.DocumentSplitResponse(chunkService);
 
 		when(dashScopeApi.documentSplit(any(), any())).thenReturn(ResponseEntity.ok(response));
 
@@ -184,9 +184,9 @@ class DashScopeDocumentTransformerTests {
 		Map<String, Object> metadata = new HashMap<>();
 		Document document = new Document(TEST_DOC_ID, TEST_CONTENT, metadata);
 
-        DashScopeAPISpec.DocumentSplitResponseData chunkService = new DashScopeAPISpec.DocumentSplitResponseData(
+        DashScopeApiSpec.DocumentSplitResponseData chunkService = new DashScopeApiSpec.DocumentSplitResponseData(
 				Collections.emptyList());
-        DashScopeAPISpec.DocumentSplitResponse response = new DashScopeAPISpec.DocumentSplitResponse(chunkService);
+        DashScopeApiSpec.DocumentSplitResponse response = new DashScopeApiSpec.DocumentSplitResponse(chunkService);
 
 		when(dashScopeApi.documentSplit(any(), any())).thenReturn(ResponseEntity.ok(response));
 

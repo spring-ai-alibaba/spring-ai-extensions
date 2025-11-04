@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
@@ -131,7 +131,7 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 		// merging runtime and default options.
 		EmbeddingRequest embeddingRequest = buildEmbeddingRequest(request);
 
-        DashScopeAPISpec.EmbeddingRequest apiRequest = createRequest(embeddingRequest);
+        DashScopeApiSpec.EmbeddingRequest apiRequest = createRequest(embeddingRequest);
 
 		var observationContext = EmbeddingModelObservationContext.builder()
 			.embeddingRequest(embeddingRequest)
@@ -142,7 +142,7 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
                 .observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
                         this.observationRegistry)
                 .observe(() -> {
-                    DashScopeAPISpec.EmbeddingList apiEmbeddingResponse = this.retryTemplate.execute(ctx -> {
+                    DashScopeApiSpec.EmbeddingList apiEmbeddingResponse = this.retryTemplate.execute(ctx -> {
                         try {
                             return this.dashScopeApi.embeddings(apiRequest).getBody();
                         } catch (Exception e) {
@@ -162,7 +162,7 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
                                 + ", message:" + apiEmbeddingResponse.message());
                     }
 
-                    DashScopeAPISpec.EmbeddingUsage usage = apiEmbeddingResponse.usage();
+                    DashScopeApiSpec.EmbeddingUsage usage = apiEmbeddingResponse.usage();
 
                     Usage embeddingUsage = usage != null ? this.getDefaultUsage(usage) : new EmptyUsage();
 
@@ -181,7 +181,7 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
                 }));
 	}
 
-	private DefaultUsage getDefaultUsage(DashScopeAPISpec.EmbeddingUsage usage) {
+	private DefaultUsage getDefaultUsage(DashScopeApiSpec.EmbeddingUsage usage) {
 		return new DefaultUsage(usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens(), usage);
 	}
 
@@ -208,9 +208,9 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 		return new EmbeddingRequest(embeddingRequest.getInstructions(), requestOptions);
 	}
 
-	private DashScopeAPISpec.EmbeddingRequest createRequest(EmbeddingRequest request) {
+	private DashScopeApiSpec.EmbeddingRequest createRequest(EmbeddingRequest request) {
 		DashScopeEmbeddingOptions requestOptions = (DashScopeEmbeddingOptions) request.getOptions();
-		return DashScopeAPISpec.EmbeddingRequest.builder()
+		return DashScopeApiSpec.EmbeddingRequest.builder()
 			.model(requestOptions.getModel())
 			.texts(request.getInstructions())
 			.textType(requestOptions.getTextType())

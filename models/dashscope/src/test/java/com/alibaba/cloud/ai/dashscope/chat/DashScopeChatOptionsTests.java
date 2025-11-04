@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeResponseFormat;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -146,10 +146,10 @@ class DashScopeChatOptionsTests {
 	@Test
 	void testToolsAndToolChoice() {
 		// Test tools and tool choice related methods
-        DashScopeAPISpec.FunctionTool.Function function = new DashScopeAPISpec.FunctionTool.Function("Test function", "test",
+        DashScopeApiSpec.FunctionTool.Function function = new DashScopeApiSpec.FunctionTool.Function("Test function", "test",
 				"{}");
-        DashScopeAPISpec.FunctionTool tool = new DashScopeAPISpec.FunctionTool(function);
-		List<DashScopeAPISpec.FunctionTool> tools = Collections.singletonList(tool);
+        DashScopeApiSpec.FunctionTool tool = new DashScopeApiSpec.FunctionTool(function);
+		List<DashScopeApiSpec.FunctionTool> tools = Collections.singletonList(tool);
 		Map<String, String> toolChoice = Map.of("type", "function", "name", "test");
 
 		DashScopeChatOptions options = DashScopeChatOptions.builder()

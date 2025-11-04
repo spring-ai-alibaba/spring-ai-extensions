@@ -16,7 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.rag;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -118,38 +118,38 @@ class DashScopeDocumentCloudReaderTests {
 	}
 
 	private void mockSuccessfulUpload() {
-        DashScopeAPISpec.UploadRequest request = new DashScopeAPISpec.UploadRequest(TEST_CATEGORY_ID, TEST_FILE_NAME,
+        DashScopeApiSpec.UploadRequest request = new DashScopeApiSpec.UploadRequest(TEST_CATEGORY_ID, TEST_FILE_NAME,
 				TEST_FILE_SIZE, "md5");
-		when(dashScopeApi.upload(any(File.class), any(DashScopeAPISpec.UploadRequest.class))).thenReturn(TEST_FILE_ID);
+		when(dashScopeApi.upload(any(File.class), any(DashScopeApiSpec.UploadRequest.class))).thenReturn(TEST_FILE_ID);
 	}
 
 	private void mockSuccessfulParsing() {
-        DashScopeAPISpec.QueryFileResponseData successResponse = new DashScopeAPISpec.QueryFileResponseData(TEST_CATEGORY_ID,
+        DashScopeApiSpec.QueryFileResponseData successResponse = new DashScopeApiSpec.QueryFileResponseData(TEST_CATEGORY_ID,
 				TEST_FILE_ID, TEST_FILE_NAME, TEST_FILE_TYPE, TEST_FILE_SIZE, "PARSE_SUCCESS", TEST_UPLOAD_TIME);
-        DashScopeAPISpec.CommonResponse<DashScopeAPISpec.QueryFileResponseData> response = new DashScopeAPISpec.CommonResponse<>(
+        DashScopeApiSpec.CommonResponse<DashScopeApiSpec.QueryFileResponseData> response = new DashScopeApiSpec.CommonResponse<>(
 				"SUCCESS", "OK", successResponse);
-		when(dashScopeApi.queryFileInfo(eq(TEST_CATEGORY_ID), any(DashScopeAPISpec.UploadRequest.QueryFileRequest.class)))
+		when(dashScopeApi.queryFileInfo(eq(TEST_CATEGORY_ID), any(DashScopeApiSpec.UploadRequest.QueryFileRequest.class)))
 			.thenReturn(ResponseEntity.ok(response));
 		when(dashScopeApi.getFileParseResult(eq(TEST_CATEGORY_ID),
-				any(DashScopeAPISpec.UploadRequest.QueryFileRequest.class)))
+				any(DashScopeApiSpec.UploadRequest.QueryFileRequest.class)))
 			.thenReturn(TEST_CONTENT);
 	}
 
 	private void mockFailedParsing() {
-        DashScopeAPISpec.QueryFileResponseData failedResponse = new DashScopeAPISpec.QueryFileResponseData(TEST_CATEGORY_ID,
+        DashScopeApiSpec.QueryFileResponseData failedResponse = new DashScopeApiSpec.QueryFileResponseData(TEST_CATEGORY_ID,
 				TEST_FILE_ID, TEST_FILE_NAME, TEST_FILE_TYPE, TEST_FILE_SIZE, "PARSE_FAILED", TEST_UPLOAD_TIME);
-        DashScopeAPISpec.CommonResponse<DashScopeAPISpec.QueryFileResponseData> response = new DashScopeAPISpec.CommonResponse<>(
+        DashScopeApiSpec.CommonResponse<DashScopeApiSpec.QueryFileResponseData> response = new DashScopeApiSpec.CommonResponse<>(
 				"FAILED", "Parse failed", failedResponse);
-		when(dashScopeApi.queryFileInfo(eq(TEST_CATEGORY_ID), any(DashScopeAPISpec.UploadRequest.QueryFileRequest.class)))
+		when(dashScopeApi.queryFileInfo(eq(TEST_CATEGORY_ID), any(DashScopeApiSpec.UploadRequest.QueryFileRequest.class)))
 			.thenReturn(ResponseEntity.ok(response));
 	}
 
 	private void mockPollingTimeout() {
-        DashScopeAPISpec.QueryFileResponseData processingResponse = new DashScopeAPISpec.QueryFileResponseData(TEST_CATEGORY_ID,
+        DashScopeApiSpec.QueryFileResponseData processingResponse = new DashScopeApiSpec.QueryFileResponseData(TEST_CATEGORY_ID,
 				TEST_FILE_ID, TEST_FILE_NAME, TEST_FILE_TYPE, TEST_FILE_SIZE, "PROCESSING", TEST_UPLOAD_TIME);
-        DashScopeAPISpec.CommonResponse<DashScopeAPISpec.QueryFileResponseData> response = new DashScopeAPISpec.CommonResponse<>(
+        DashScopeApiSpec.CommonResponse<DashScopeApiSpec.QueryFileResponseData> response = new DashScopeApiSpec.CommonResponse<>(
 				"SUCCESS", "Processing", processingResponse);
-		when(dashScopeApi.queryFileInfo(eq(TEST_CATEGORY_ID), any(DashScopeAPISpec.UploadRequest.QueryFileRequest.class)))
+		when(dashScopeApi.queryFileInfo(eq(TEST_CATEGORY_ID), any(DashScopeApiSpec.UploadRequest.QueryFileRequest.class)))
 			.thenReturn(ResponseEntity.ok(response));
 	}
 

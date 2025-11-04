@@ -36,7 +36,7 @@ import java.util.Objects;
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
  */
 
-public class DashScopeAPISpec {
+public class DashScopeApiSpec {
 
     public static final String DEFAULT_EMBEDDING_MODEL = DashScopeModel.EmbeddingModel.EMBEDDING_V2.getValue();
 

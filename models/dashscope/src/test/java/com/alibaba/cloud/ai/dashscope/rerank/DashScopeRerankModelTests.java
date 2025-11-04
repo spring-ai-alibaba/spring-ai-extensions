@@ -16,10 +16,10 @@
 package com.alibaba.cloud.ai.dashscope.rerank;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.RerankResponse;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.RerankResponseOutput;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.RerankResponseOutputResult;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.RerankResponse;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.RerankResponseOutput;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.RerankResponseOutputResult;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
 import com.alibaba.cloud.ai.document.DocumentWithScore;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import org.junit.jupiter.api.BeforeEach;

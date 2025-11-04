@@ -16,7 +16,7 @@
 
 package com.alibaba.cloud.ai.dashscope.video;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeAPISpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -79,7 +79,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 	private String negativePrompt;
 
 	@JsonProperty("template")
-	private DashScopeAPISpec.VideoTemplate template;
+	private DashScopeApiSpec.VideoTemplate template;
 
 	@JsonProperty("first_frame_url")
 	private String firstFrameUrl;
@@ -89,7 +89,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 
 	public DashScopeVideoOptions(String imageUrl, Long seed, String prompt, String firstFrameUrl, String lastFrameUrl,
 			String resolution, String model, String size, Boolean promptExtend, String negativePrompt,
-                                 DashScopeAPISpec.VideoTemplate template) {
+                                 DashScopeApiSpec.VideoTemplate template) {
 
 		this.imageUrl = imageUrl;
 		this.prompt = prompt;
@@ -161,11 +161,11 @@ public class DashScopeVideoOptions implements VideoOptions {
 		this.negativePrompt = negativePrompt;
 	}
 
-	public DashScopeAPISpec.VideoTemplate getTemplate() {
+	public DashScopeApiSpec.VideoTemplate getTemplate() {
 		return this.template;
 	}
 
-	public void setTemplate(DashScopeAPISpec.VideoTemplate template) {
+	public void setTemplate(DashScopeApiSpec.VideoTemplate template) {
 		this.template = template;
 	}
 
@@ -249,7 +249,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 
 		private String lastFrameUrl;
 
-		private DashScopeAPISpec.VideoTemplate template;
+		private DashScopeApiSpec.VideoTemplate template;
 
 		public Builder() {
 		}
@@ -309,7 +309,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 			return this;
 		}
 
-		public Builder template(DashScopeAPISpec.VideoTemplate template) {
+		public Builder template(DashScopeApiSpec.VideoTemplate template) {
 			this.template = template;
 			return this;
 		}
