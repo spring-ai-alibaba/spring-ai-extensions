@@ -153,7 +153,6 @@
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-worldbankdata</module>
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-youdaotranslate</module>
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-yuque</module>
-        <module>tool-calls/spring-ai-alibaba-tool-calling-bom</module>
 
         <!-- vector-stores modules -->
         <module>vector-stores/spring-ai-alibaba-starter-analyticdb-store</module>
@@ -176,6 +175,7 @@
         <module>mcp/spring-ai-alibaba-mcp-distributed</module>
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-distributed</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-distributed</module>
+        <module>spring-ai-alibaba-extensions-bom</module>
     </modules>
 
     <scm>
@@ -187,7 +187,7 @@
     <properties>
 
         <!-- Spring AI Alibaba Version -->
-        <revision>1.1.0.0-M3</revision>
+        <revision>1.1.0.0-M4</revision>
 
         <!-- Maven project basic config -->
         <java.version>17</java.version>
@@ -197,7 +197,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <!-- Spring version -->
-        <spring-ai.version>1.1.0-M3</spring-ai.version>
+        <spring-ai.version>1.1.0-M4</spring-ai.version>
         <spring-boot.version>3.4.8</spring-boot.version>
         <springdoc-openapi.version>2.8.8</springdoc-openapi.version>
 
