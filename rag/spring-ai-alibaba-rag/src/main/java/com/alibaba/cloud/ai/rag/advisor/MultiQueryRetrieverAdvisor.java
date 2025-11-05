@@ -106,6 +106,9 @@ public class MultiQueryRetrieverAdvisor implements BaseAdvisor {
         return this.order;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
 
     public static final class Builder {
 
@@ -118,10 +121,6 @@ public class MultiQueryRetrieverAdvisor implements BaseAdvisor {
         private int order;
 
         private Builder() {
-        }
-
-        public static Builder builder() {
-            return new Builder();
         }
 
         public Builder queryExpander(QueryExpander queryExpander) {

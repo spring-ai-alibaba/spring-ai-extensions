@@ -149,6 +149,9 @@ public class HybridSearchAdvisor implements BaseAdvisor {
         return this.order;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
 
     public static final class Builder {
 
@@ -169,10 +172,6 @@ public class HybridSearchAdvisor implements BaseAdvisor {
         private DashScopeRerankPostProcessor dashScopeRerankPostProcessor;
 
         private Builder() {
-        }
-
-        public static Builder builder() {
-            return new Builder();
         }
 
         public Builder queryTransformers(List<QueryTransformer> queryTransformers) {
