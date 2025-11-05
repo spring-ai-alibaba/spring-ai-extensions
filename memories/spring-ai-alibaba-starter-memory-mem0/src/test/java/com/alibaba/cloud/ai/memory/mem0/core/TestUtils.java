@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.memory.mem0.core;
 import com.alibaba.cloud.ai.memory.mem0.advisor.Mem0ChatMemoryAdvisor;
 import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerRequest;
 import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerResp;
+
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.document.Document;
@@ -86,11 +87,11 @@ public class TestUtils {
 	 */
 	public static Mem0ServerRequest.MemoryCreate createTestMemoryCreate() {
 		return Mem0ServerRequest.MemoryCreate.builder()
-			.messages(List.of(new Mem0ServerRequest.Message("user", "test message")))
-			.userId("test-user-" + UUID.randomUUID())
-			.agentId("test-agent-" + UUID.randomUUID())
-			.runId("test-run-" + UUID.randomUUID())
-			.build();
+				.messages(List.of(new Mem0ServerRequest.Message("user", "test message")))
+				.userId("test-user-" + UUID.randomUUID())
+				.agentId("test-agent-" + UUID.randomUUID())
+				.runId("test-run-" + UUID.randomUUID())
+				.build();
 	}
 
 	/**

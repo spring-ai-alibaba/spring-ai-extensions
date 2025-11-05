@@ -16,8 +16,7 @@
 package com.alibaba.cloud.ai.memory.mem0.advisor;
 
 import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.api.AdvisorChain;
@@ -31,15 +30,19 @@ import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import reactor.core.scheduler.Scheduler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.core.scheduler.Scheduler;
 
 /**
  * Memory is retrieved from a Mem0 added into the prompt's system text. user text.
@@ -49,16 +52,11 @@ import java.util.stream.Collectors;
  */
 public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 
-	private static final Logger logger = LoggerFactory.getLogger(Mem0ChatMemoryAdvisor.class);
-
 	public static final String USER_ID = "user_id";
-
 	public static final String AGENT_ID = "agent_id";
-
 	public static final String RUN_ID = "run_id";
-
 	public static final String FILTERS = "filters";
-
+	private static final Logger logger = LoggerFactory.getLogger(Mem0ChatMemoryAdvisor.class);
 	private static final PromptTemplate DEFAULT_SYSTEM_PROMPT_TEMPLATE = new PromptTemplate(
 			"""
 					         ---------------------
@@ -66,7 +64,7 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 					         {query}
 					         ---------------------
 					         Use the long term conversation memory from the LONG_TERM_MEMORY section to provide accurate answers.
-
+					
 					         LONG_TERM_MEMORY is a dictionary containing the search results, typically under a "results" type, and potentially "relations" type if graph store is enabled.
 					         Example:
 					         ```text
@@ -94,7 +92,7 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 					             \\}
 					         ]
 					         ```
-
+					
 					         ---------------------
 					         LONG_TERM_MEMORY:
 					         {long_term_memory}
@@ -117,6 +115,10 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 		this.vectorStore = vectorStore;
 	}
 
+	public static Mem0ChatMemoryAdvisor.Builder builder(VectorStore chatMemory) {
+		return new Mem0ChatMemoryAdvisor.Builder(chatMemory);
+	}
+
 	@Override
 	public ChatClientRequest before(ChatClientRequest request, AdvisorChain advisorChain) {
 		// 1. Search for similar documents in the vector store.
@@ -129,14 +131,14 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 		String query = userMessage != null ? userMessage.getText() : "";
 
 		Map<String, Object> params = request.context();
-		SearchRequest searchRequest = Mem0ServerRequest.SearchRequest.builder()
-			.query(query)
-			.userId(params.containsKey(USER_ID) ? params.get(USER_ID).toString() : null)
-			.agentId(params.containsKey(AGENT_ID) ? params.get(AGENT_ID).toString() : null)
-			.runId(params.containsKey(RUN_ID) ? params.get(RUN_ID).toString() : null)
-			.filters(params.containsKey(FILTERS) && params.get(FILTERS) instanceof Map
-					? (Map<String, Object>) params.get(FILTERS) : null)
-			.build();
+		SearchRequest searchRequest = Mem0ServerRequest.SearchRequest.mem0Builder()
+				.query(query)
+				.userId(params.containsKey(USER_ID) ? params.get(USER_ID).toString() : null)
+				.agentId(params.containsKey(AGENT_ID) ? params.get(AGENT_ID).toString() : null)
+				.runId(params.containsKey(RUN_ID) ? params.get(RUN_ID).toString() : null)
+				.filters(params.containsKey(FILTERS) && params.get(FILTERS) instanceof Map
+						? (Map<String, Object>) params.get(FILTERS) : null)
+				.build();
 
 		List<Document> documents = this.vectorStore.similaritySearch(searchRequest);
 
@@ -145,7 +147,7 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 
 		// 3. Augment the user prompt with the document context.
 		String augmentedUserText = this.systemPromptTemplate
-			.render(Map.of("query", query, "long_term_memory", documentContext));
+				.render(Map.of("query", query, "long_term_memory", documentContext));
 
 		Map<String, Object> metadata = userMessage.getMetadata();
 		metadata.putAll(params);
@@ -178,31 +180,31 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 
 	private List<Document> toDocuments(List<Message> messages) {
 		List<Document> docs = messages.stream()
-			.filter((m) -> m.getMessageType() == MessageType.USER || m.getMessageType() == MessageType.ASSISTANT)
-			.map(message -> {
-				HashMap<String, Object> metadata = new HashMap<>(
-						message.getMetadata() != null ? message.getMetadata() : new HashMap());
-				if (message instanceof UserMessage userMessage) {
-					metadata.put("role", userMessage.getMessageType().getValue());
-				}
-				else if (message instanceof AssistantMessage assistantMessage) {
-					metadata.put("role", assistantMessage.getMessageType().getValue());
-				}
-				else {
-					throw new RuntimeException("Unknown message type: " + message.getMessageType().getValue());
-				}
-				metadata.putAll(message.getMetadata());
+				.filter((m) -> m.getMessageType() == MessageType.USER || m.getMessageType() == MessageType.ASSISTANT)
+				.map(message -> {
+					HashMap<String, Object> metadata = new HashMap<>(
+							message.getMetadata() != null ? message.getMetadata() : new HashMap());
+					if (message instanceof UserMessage userMessage) {
+						metadata.put("role", userMessage.getMessageType().getValue());
+					}
+					else if (message instanceof AssistantMessage assistantMessage) {
+						metadata.put("role", assistantMessage.getMessageType().getValue());
+					}
+					else {
+						throw new RuntimeException("Unknown message type: " + message.getMessageType().getValue());
+					}
+					metadata.putAll(message.getMetadata());
 
-				return Document.builder().text(message.getText()).metadata(metadata).build();
-			})
-			.toList();
+					return Document.builder().text(message.getText()).metadata(metadata).build();
+				})
+				.toList();
 		return docs;
 	}
 
 	private Mem0ServerRequest.SearchRequest getConversationId(Map<String, Object> context) {
-		Mem0ServerRequest.SearchRequest build = Mem0ServerRequest.SearchRequest.builder()
-			.userId(context.getOrDefault(USER_ID, "").toString())
-			.build();
+		Mem0ServerRequest.SearchRequest build = Mem0ServerRequest.SearchRequest.mem0Builder()
+				.userId(context.getOrDefault(USER_ID, "").toString())
+				.build();
 		return build;
 	}
 
@@ -216,21 +218,13 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 		return this.order;
 	}
 
-	public static Mem0ChatMemoryAdvisor.Builder builder(VectorStore chatMemory) {
-		return new Mem0ChatMemoryAdvisor.Builder(chatMemory);
-	}
-
 	public static class Builder {
 
-		private PromptTemplate systemPromptTemplate = DEFAULT_SYSTEM_PROMPT_TEMPLATE;
-
-		private String defaultConversationId;
-
-		private int order;
-
-		private Scheduler scheduler;
-
 		private final VectorStore vectorStore;
+		private PromptTemplate systemPromptTemplate = DEFAULT_SYSTEM_PROMPT_TEMPLATE;
+		private String defaultConversationId;
+		private int order;
+		private Scheduler scheduler;
 
 		protected Builder(VectorStore vectorStore) {
 			this.defaultConversationId = "default";

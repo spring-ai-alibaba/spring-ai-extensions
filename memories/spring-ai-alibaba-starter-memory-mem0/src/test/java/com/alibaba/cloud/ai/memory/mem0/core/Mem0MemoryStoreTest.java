@@ -18,11 +18,7 @@ package com.alibaba.cloud.ai.memory.mem0.core;
 import com.alibaba.cloud.ai.memory.mem0.advisor.Mem0ChatMemoryAdvisor;
 import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerRequest;
 import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerResp;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.filter.Filter;
 
@@ -30,10 +26,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for Mem0MemoryStore
@@ -120,16 +127,16 @@ class Mem0MemoryStoreTest {
 
 		// When & Then
 		assertThatThrownBy(() -> memoryStore.delete(filterExpression)).isInstanceOf(UnsupportedOperationException.class)
-			.hasMessageContaining(
-					"The Mem0 Server only supports delete operation that must include userId, agentId, or runId");
+				.hasMessageContaining(
+						"The Mem0 Server only supports delete operation that must include userId, agentId, or runId");
 	}
 
 	@Test
 	void testSimilaritySearchWithString() {
 		// When & Then
 		assertThatThrownBy(() -> memoryStore.similaritySearch("test query"))
-			.isInstanceOf(UnsupportedOperationException.class)
-			.hasMessageContaining("The Mem0 Server only supports queries that must include userId, agentId, or runId");
+				.isInstanceOf(UnsupportedOperationException.class)
+				.hasMessageContaining("The Mem0 Server only supports queries that must include userId, agentId, or runId");
 	}
 
 	@Test

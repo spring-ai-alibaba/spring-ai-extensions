@@ -46,6 +46,38 @@ public class Mem0Client {
 		return new Builder();
 	}
 
+	public String getBaseUrl() {
+		return baseUrl;
+	}
+
+	public void setBaseUrl(String baseUrl) {
+		this.baseUrl = baseUrl;
+	}
+
+	public boolean isEnableCache() {
+		return enableCache;
+	}
+
+	public void setEnableCache(boolean enableCache) {
+		this.enableCache = enableCache;
+	}
+
+	public int getTimeoutSeconds() {
+		return timeoutSeconds;
+	}
+
+	public void setTimeoutSeconds(int timeoutSeconds) {
+		this.timeoutSeconds = timeoutSeconds;
+	}
+
+	public int getMaxRetryAttempts() {
+		return maxRetryAttempts;
+	}
+
+	public void setMaxRetryAttempts(int maxRetryAttempts) {
+		this.maxRetryAttempts = maxRetryAttempts;
+	}
+
 	public static class Builder {
 
 		private String baseUrl = "http://localhost:8888";
@@ -83,38 +115,6 @@ public class Mem0Client {
 			return new Mem0Client(this);
 		}
 
-	}
-
-	public String getBaseUrl() {
-		return baseUrl;
-	}
-
-	public void setBaseUrl(String baseUrl) {
-		this.baseUrl = baseUrl;
-	}
-
-	public boolean isEnableCache() {
-		return enableCache;
-	}
-
-	public void setEnableCache(boolean enableCache) {
-		this.enableCache = enableCache;
-	}
-
-	public int getTimeoutSeconds() {
-		return timeoutSeconds;
-	}
-
-	public void setTimeoutSeconds(int timeoutSeconds) {
-		this.timeoutSeconds = timeoutSeconds;
-	}
-
-	public int getMaxRetryAttempts() {
-		return maxRetryAttempts;
-	}
-
-	public void setMaxRetryAttempts(int maxRetryAttempts) {
-		this.maxRetryAttempts = maxRetryAttempts;
 	}
 
 }

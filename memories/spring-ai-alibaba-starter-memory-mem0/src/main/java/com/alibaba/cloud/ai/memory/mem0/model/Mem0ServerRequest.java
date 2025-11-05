@@ -15,11 +15,17 @@
  */
 package com.alibaba.cloud.ai.memory.mem0.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionTextParser;
+
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Mem0ServerRequest {
 
@@ -115,6 +121,10 @@ public class Mem0ServerRequest {
 			setMetadata(builder.metadata);
 		}
 
+		public static Builder builder() {
+			return new Builder();
+		}
+
 		public List<Message> getMessages() {
 			return messages;
 		}
@@ -153,10 +163,6 @@ public class Mem0ServerRequest {
 
 		public void setMetadata(Map<String, Object> metadata) {
 			this.metadata = metadata;
-		}
-
-		public static Builder builder() {
-			return new Builder();
 		}
 
 		public static final class Builder {
@@ -229,12 +235,17 @@ public class Mem0ServerRequest {
 		public SearchRequest() {
 		}
 
-		private SearchRequest(Builder builder) {
+		private SearchRequest(Builder builder, org.springframework.ai.vectorstore.SearchRequest.Builder springaiBuilder) {
+			super(springaiBuilder.build());
 			this.query = builder.query;
 			this.agentId = builder.agentId;
 			this.userId = builder.userId;
 			this.runId = builder.runId;
 			this.filters = builder.filters;
+		}
+
+		public static Builder mem0Builder() {
+			return new Builder();
 		}
 
 		@Override
@@ -278,13 +289,12 @@ public class Mem0ServerRequest {
 			this.filters = filters;
 		}
 
-		public static Builder builder() {
-			return new Builder();
-		}
-
-		public static class Builder extends org.springframework.ai.vectorstore.SearchRequest.Builder {
-
-			private String query;
+		public static class Builder {
+			private String query = "";
+			private int topK = 4;
+			private double similarityThreshold = (double) 0.0F;
+			@Nullable
+			private Filter.Expression filterExpression;
 
 			private String userId;
 
@@ -319,8 +329,42 @@ public class Mem0ServerRequest {
 				return this;
 			}
 
+			public Builder topK(int topK) {
+				Assert.isTrue(topK >= 0, "TopK should be positive.");
+				this.topK = topK;
+				return this;
+			}
+
+			public Builder similarityThreshold(double threshold) {
+				Assert.isTrue(threshold >= (double) 0.0F && threshold <= (double) 1.0F, "Similarity threshold must be in [0,1] range.");
+				this.similarityThreshold = threshold;
+				return this;
+			}
+
+			public Builder similarityThresholdAll() {
+				this.similarityThreshold = (double) 0.0F;
+				return this;
+			}
+
+			public Builder filterExpression(@Nullable Filter.Expression expression) {
+				this.filterExpression = expression;
+				return this;
+			}
+
+			public Builder filterExpression(@Nullable String textExpression) {
+				this.filterExpression = textExpression != null ? (new FilterExpressionTextParser()).parse(textExpression) : null;
+				return this;
+			}
+
 			public SearchRequest build() {
-				return new SearchRequest(this);
+				org.springframework.ai.vectorstore.SearchRequest.Builder springaiBuilder
+						= org.springframework.ai.vectorstore.SearchRequest
+						.builder()
+						.filterExpression(this.filterExpression)
+						.similarityThreshold(this.similarityThreshold)
+						.topK(this.topK).query(this.query)
+						.topK(this.topK);
+				return new SearchRequest(this, springaiBuilder);
 			}
 
 		}

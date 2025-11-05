@@ -16,16 +16,18 @@
 package com.alibaba.cloud.ai.memory.mem0.core;
 
 import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerRequest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.core.io.ResourceLoader;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -76,11 +78,11 @@ class Mem0ServiceClientTest {
 	void testAddMemory() {
 		// Given
 		Mem0ServerRequest.MemoryCreate memoryCreate = Mem0ServerRequest.MemoryCreate.builder()
-			.messages(List.of(new Mem0ServerRequest.Message("user", "test message")))
-			.userId("test-user")
-			.agentId("test-agent")
-			.runId("test-run")
-			.build();
+				.messages(List.of(new Mem0ServerRequest.Message("user", "test message")))
+				.userId("test-user")
+				.agentId("test-agent")
+				.runId("test-run")
+				.build();
 
 		// When & Then - Since a real HTTP connection is required, this primarily tests
 		// that the method invocation does not throw exceptions
@@ -126,12 +128,12 @@ class Mem0ServiceClientTest {
 
 		// When
 		Mem0ServerRequest.MemoryCreate memoryCreate = Mem0ServerRequest.MemoryCreate.builder()
-			.messages(List.of(message))
-			.metadata(metadata)
-			.userId("test-user")
-			.agentId("test-agent")
-			.runId("test-run")
-			.build();
+				.messages(List.of(message))
+				.metadata(metadata)
+				.userId("test-user")
+				.agentId("test-agent")
+				.runId("test-run")
+				.build();
 
 		// Then
 		assertThat(memoryCreate.getMessages()).hasSize(1);

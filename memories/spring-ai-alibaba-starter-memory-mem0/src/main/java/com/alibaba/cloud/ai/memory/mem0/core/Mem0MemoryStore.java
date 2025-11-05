@@ -17,14 +17,13 @@ package com.alibaba.cloud.ai.memory.mem0.core;
 
 import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerRequest;
 import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerResp;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+
 import org.springframework.ai.document.Document;
 import org.springframework.ai.util.JacksonUtils;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
+
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.StringUtils;
 
@@ -34,7 +33,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.alibaba.cloud.ai.memory.mem0.advisor.Mem0ChatMemoryAdvisor.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+
+import static com.alibaba.cloud.ai.memory.mem0.advisor.Mem0ChatMemoryAdvisor.AGENT_ID;
+import static com.alibaba.cloud.ai.memory.mem0.advisor.Mem0ChatMemoryAdvisor.RUN_ID;
+import static com.alibaba.cloud.ai.memory.mem0.advisor.Mem0ChatMemoryAdvisor.USER_ID;
 
 /**
  * @author miaoyumeng
@@ -58,20 +63,6 @@ public class Mem0MemoryStore implements InitializingBean, VectorStore {
 		return new Mem0MemoryStoreBuilder(client);
 	}
 
-	public static final class Mem0MemoryStoreBuilder {
-
-		private final Mem0ServiceClient client;
-
-		public Mem0MemoryStoreBuilder(Mem0ServiceClient client) {
-			this.client = client;
-		}
-
-		public Mem0MemoryStore build() {
-			return new Mem0MemoryStore(client);
-		}
-
-	}
-
 	@Override
 	public void afterPropertiesSet() throws Exception {
 
@@ -81,15 +72,18 @@ public class Mem0MemoryStore implements InitializingBean, VectorStore {
 	public void add(List<Document> documents) {
 		// TODO 将role相同的message合并
 		List<Mem0ServerRequest.MemoryCreate> messages = documents.stream()
-			.map(doc -> Mem0ServerRequest.MemoryCreate.builder()
-				.messages(
-						List.of(new Mem0ServerRequest.Message(doc.getMetadata().get("role").toString(), doc.getText())))
-				.metadata(doc.getMetadata())
-				.agentId(doc.getMetadata().containsKey(AGENT_ID) ? doc.getMetadata().get(AGENT_ID).toString() : null)
-				.runId(doc.getMetadata().containsKey(RUN_ID) ? doc.getMetadata().get(RUN_ID).toString() : null)
-				.userId(doc.getMetadata().containsKey(USER_ID) ? doc.getMetadata().get(USER_ID).toString() : null)
-				.build())
-			.toList();
+				.map(doc -> Mem0ServerRequest.MemoryCreate.builder()
+						.messages(
+								List.of(new Mem0ServerRequest.Message(doc.getMetadata().get("role")
+										.toString(), doc.getText())))
+						.metadata(doc.getMetadata())
+						.agentId(doc.getMetadata().containsKey(AGENT_ID) ? doc.getMetadata().get(AGENT_ID)
+								.toString() : null)
+						.runId(doc.getMetadata().containsKey(RUN_ID) ? doc.getMetadata().get(RUN_ID).toString() : null)
+						.userId(doc.getMetadata().containsKey(USER_ID) ? doc.getMetadata().get(USER_ID)
+								.toString() : null)
+						.build())
+				.toList();
 		// TODO 增加异步方式
 		messages.forEach(mem0Client::addMemory);
 	}
@@ -171,9 +165,23 @@ public class Mem0MemoryStore implements InitializingBean, VectorStore {
 
 	private Map<String, Object> filterNullElement(Map<String, Object> map) {
 		return map.entrySet()
-			.stream()
-			.filter(entry -> entry.getValue() != null && !"".equals(entry.getValue()))
-			.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+				.stream()
+				.filter(entry -> entry.getValue() != null && !"".equals(entry.getValue()))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+	}
+
+	public static final class Mem0MemoryStoreBuilder {
+
+		private final Mem0ServiceClient client;
+
+		public Mem0MemoryStoreBuilder(Mem0ServiceClient client) {
+			this.client = client;
+		}
+
+		public Mem0MemoryStore build() {
+			return new Mem0MemoryStore(client);
+		}
+
 	}
 
 }
