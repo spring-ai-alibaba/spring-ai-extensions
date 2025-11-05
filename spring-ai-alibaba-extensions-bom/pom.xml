@@ -146,6 +146,12 @@
                 <version>${project.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.alibaba.cloud.ai</groupId>
+                <artifactId>spring-ai-alibaba-starter-rag</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <!-- Spring AI Alibaba Autoconfiguration  -->
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
@@ -192,6 +198,12 @@
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
                 <artifactId>spring-ai-alibaba-autoconfigure-mcp-distributed</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.cloud.ai</groupId>
+                <artifactId>spring-ai-alibaba-autoconfigure-rag-elasticsearch</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -566,6 +578,13 @@
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
                 <artifactId>spring-ai-alibaba-starter-memory-mem0</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Spring AI Alibaba RAG -->
+            <dependency>
+                <groupId>com.alibaba.cloud.ai</groupId>
+                <artifactId>spring-ai-alibaba-rag</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
