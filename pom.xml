@@ -45,7 +45,6 @@
     </developers>
 
     <modules>
-        <module>spring-ai-alibaba-extensions-bom</module>
         <!-- document-parsers modules -->
         <module>document-parsers/spring-ai-alibaba-starter-document-parser-apache-pdfbox</module>
         <module>document-parsers/spring-ai-alibaba-starter-document-parser-bibtex</module>
