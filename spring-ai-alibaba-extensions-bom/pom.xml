@@ -244,6 +244,7 @@
                 <version>${project.version}</version>
             </dependency>
 
+            <!-- Spring AI Alibaba RAG -->
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
                 <artifactId>spring-ai-alibaba-rag</artifactId>
@@ -576,13 +577,6 @@
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
                 <artifactId>spring-ai-alibaba-starter-memory-mem0</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <!-- Spring AI Alibaba RAG -->
-            <dependency>
-                <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-rag</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
