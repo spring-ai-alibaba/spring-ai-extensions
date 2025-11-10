@@ -39,7 +39,7 @@
 
     <dependencies>
 
-        <!-- Dashscope SDK -->
+        <!-- DashScope SDK -->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-dashscope</artifactId>

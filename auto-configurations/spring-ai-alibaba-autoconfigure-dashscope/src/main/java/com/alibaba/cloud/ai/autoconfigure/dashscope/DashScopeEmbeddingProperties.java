@@ -29,7 +29,7 @@ public class DashScopeEmbeddingProperties extends DashScopeParentProperties {
 	public static final String DEFAULT_EMBEDDING_MODEL = "text-embedding-v3";
 
 	/**
-	 * Enable Dashscope embedding client.
+	 * Enable DashScope embedding client.
 	 */
 	private boolean enabled = true;
 

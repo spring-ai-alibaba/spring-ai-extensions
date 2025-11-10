@@ -69,7 +69,7 @@ Flight Booking Playground, an advanced example showcasing usage of prompt templa
 Core Features
 Spring AI Alibaba provides the following features, read the documentation on our website for more details of how to use these features.
 
-Support for Alibaba Cloud QWen Model and Dashscope Model service.
+Support for Alibaba Cloud QWen Model and DashScope Model service.
 Support high-level AI agent abstraction -- ChatClient.
 Support various Model types like Chat, Text to Image, Audio Transcription, Text to Speech.
 Both synchronous and stream API options are supported.

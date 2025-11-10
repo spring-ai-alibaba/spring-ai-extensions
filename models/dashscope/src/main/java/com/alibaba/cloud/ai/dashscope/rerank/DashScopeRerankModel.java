@@ -40,8 +40,8 @@ import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.Assert;
 
 /**
- * Title Dashscope rerank model.<br>
- * Description Dashscope rerank model.<br>
+ * Title DashScope rerank model.<br>
+ * Description DashScope rerank model.<br>
  *
  * @author yuanci.ytb
  * @since 1.0.0-M2

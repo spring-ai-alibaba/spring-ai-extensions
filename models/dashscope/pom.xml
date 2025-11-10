@@ -25,7 +25,7 @@
     </parent>
     <artifactId>spring-ai-alibaba-dashscope</artifactId>
     <packaging>jar</packaging>
-    <name>Spring AI Alibaba Dashscope Model Extension</name>
+    <name>Spring AI Alibaba DashScope Model Extension</name>
     <description>Spring AI Alibaba core module, DashScope 4 Spring AI Implementation</description>
 
     <url>https://github.com/alibaba/spring-ai-alibaba</url>

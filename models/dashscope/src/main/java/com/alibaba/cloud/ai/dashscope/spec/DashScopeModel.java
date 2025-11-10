@@ -27,7 +27,7 @@ import org.springframework.ai.model.ModelDescription;
 public class DashScopeModel {
 
     /**
-     * Spring AI Alibaba Dashscope implements all models that support the dashscope
+     * Spring AI Alibaba DashScope implements all models that support the dashscope
      * platform, and only the Qwen series models are listed here. For more model options,
      * refer to: <a href="https://help.aliyun.com/zh/model-studio/models">Model List</a>
      */
@@ -159,7 +159,7 @@ public class DashScopeModel {
         QVQ_MAX("qvq-max"),
 
         // =================== DeepSeek Model =====================
-        // The third-party models of the Dashscope platform are currently only listed on
+        // The third-party models of the DashScope platform are currently only listed on
         // Deepseek, refer: https://help.aliyun.com/zh/model-studio/models for
         // more models
 

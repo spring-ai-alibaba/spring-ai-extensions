@@ -29,7 +29,7 @@ import org.springframework.ai.chat.observation.DefaultChatModelObservationConven
 import org.springframework.util.CollectionUtils;
 
 /**
- * Dashscope conventions to populate observations for chat model operations.
+ * DashScope conventions to populate observations for chat model operations.
  *
  * @author Lumian
  * @since 1.0.0

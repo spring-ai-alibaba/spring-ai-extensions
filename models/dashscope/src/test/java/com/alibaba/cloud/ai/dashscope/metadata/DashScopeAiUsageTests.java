@@ -48,7 +48,7 @@ class DashScopeAiUsageTests {
 	void testFromNullTokenUsage() {
 		// Test factory method with null TokenUsage
 		assertThatThrownBy(() -> DashScopeAiUsage.from(null)).isInstanceOf(IllegalArgumentException.class)
-			.hasMessageContaining("Dashscope Usage must not be null");
+			.hasMessageContaining("DashScope Usage must not be null");
 	}
 
 	@Test

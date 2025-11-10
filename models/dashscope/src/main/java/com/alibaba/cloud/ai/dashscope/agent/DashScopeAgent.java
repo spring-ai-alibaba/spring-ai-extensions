@@ -42,8 +42,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Title Dashscope low level agent.<br>
- * Description Dashscope low level agent.<br>
+ * Title DashScope low level agent.<br>
+ * Description DashScope low level agent.<br>
  *
  * @author yuanci.ytb
  * @since 1.0.0-M2

@@ -45,7 +45,7 @@ public class DashScopeChatProperties extends DashScopeParentProperties {
 	private static final Double DEFAULT_TEMPERATURE = 0.8d;
 
 	/**
-	 * Enable Dashscope ai chat client.
+	 * Enable DashScope ai chat client.
 	 */
 	private boolean enabled = true;
 

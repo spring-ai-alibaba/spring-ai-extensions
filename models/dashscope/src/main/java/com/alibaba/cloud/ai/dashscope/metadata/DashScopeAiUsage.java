@@ -29,7 +29,7 @@ public class DashScopeAiUsage implements Usage {
 	private final TokenUsage usage;
 
 	protected DashScopeAiUsage(TokenUsage usage) {
-		Assert.notNull(usage, "Dashscope Usage must not be null");
+		Assert.notNull(usage, "DashScope Usage must not be null");
 		this.usage = usage;
 	}
 
