@@ -573,13 +573,6 @@
                 <version>${project.version}</version>
             </dependency>
 
-            <!-- Spring AI Alibaba RAG -->
-            <dependency>
-                <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-rag</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
             <!-- Spring AI Alibaba Document Parsers -->
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>

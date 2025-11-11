@@ -642,7 +642,7 @@ public class DashScopeChatModel implements ChatModel {
                 options.getSearchOptions(),
 
                 options.getResponseFormat(),
-                options.getIncrementalOutput(),
+				incrementalOutput,
 
                 options.getTools(),
                 options.getToolChoice(),

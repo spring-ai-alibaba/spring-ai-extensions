@@ -539,7 +539,7 @@ class DashScopeChatModelTests {
 		assertThat(lastMessage.partial()).isTrue();
 		assertThat(lastMessage.content()).contains("def calculate_fibonacci");
 	}
-	
+
 	@Test
 	void testPartialModeWithStringValue() {
 		// Test partial mode when set as string "true" in metadata
@@ -573,6 +573,73 @@ class DashScopeChatModelTests {
 		ChatCompletionMessage lastMessage = requestMessages.get(requestMessages.size() - 1);
 
 		assertThat(lastMessage.partial()).isNull();
+	}
+
+	@Test
+	void testCallWithIncrementalOutput() {
+		var message = UserMessage.builder().text(TEST_PROMPT).build();
+		var prompt = Prompt.builder().messages(message).chatOptions(defaultOptions).build();
+		var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+		var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
+		var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+		var usage = new TokenUsage(10, 5, 15, null,
+				null,null, null, null,
+				null, null);
+		var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
+		var responseEntity = ResponseEntity.ok(chatCompletion);
+
+		when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(responseEntity);
+
+		var request = chatModel.createRequest(prompt, false);
+		assertThat(request.parameters().incrementalOutput()).isFalse();
+
+		var chatResponse = chatModel.call(prompt);
+		assertThat(chatResponse).isNotNull();
+	}
+
+	@Test
+	void testStreamWithIncrementalOutput() {
+		var message = UserMessage.builder().text(TEST_PROMPT).build();
+		var prompt = Prompt.builder().messages(message).chatOptions(defaultOptions).build();
+		var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+		var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
+		var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+		var usage = new TokenUsage(10, 5, 15, null,
+				null,null, null, null,
+				null, null);
+		var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
+		var responseEntity = ResponseEntity.ok(chatCompletion);
+
+		when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(responseEntity);
+
+		var request = chatModel.createRequest(prompt, true);
+		assertThat(request.parameters().incrementalOutput()).isTrue();
+
+		var chatResponseFlux = chatModel.stream(prompt);
+		assertThat(chatResponseFlux).isNotNull();
+	}
+
+	@Test
+	void testStreamWithoutIncrementalOutput() {
+		defaultOptions.setIncrementalOutput(false);
+		var message = UserMessage.builder().text(TEST_PROMPT).build();
+		var prompt = Prompt.builder().messages(message).chatOptions(defaultOptions).build();
+		var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+		var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
+		var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+		var usage = new TokenUsage(10, 5, 15, null,
+				null,null, null, null,
+				null, null);
+		var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
+		var responseEntity = ResponseEntity.ok(chatCompletion);
+
+		when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(responseEntity);
+
+		var request = chatModel.createRequest(prompt, true);
+		assertThat(request.parameters().incrementalOutput()).isFalse();
+
+		var chatResponseFlux = chatModel.stream(prompt);
+		assertThat(chatResponseFlux).isNotNull();
 	}
 
 }
