@@ -649,7 +649,7 @@ class DashScopeChatModelTests {
 
 		when(dashScopeApi.chatCompletionStream(any(), any())).thenReturn(Flux
 			.error(new com.alibaba.cloud.ai.dashscope.common.DashScopeException(
-				"[InvalidParameter] 请求参数错误 (requestId: error-request-123)")));
+				"InvalidParameter 请求参数错误 (requestId: error-request-123)")));
 
 		Flux<ChatResponse> responseFlux = chatModel.stream(prompt);
 
