@@ -43,7 +43,7 @@ public class DashScopeAudioSpeechOptions implements SpeechSynthesisOptions {
 	 * Voice, only for tts v2.
 	 */
 	@JsonProperty("voice")
-	private String voice = null;
+	private String voice;
 
 	/**
 	 * Input Text type.

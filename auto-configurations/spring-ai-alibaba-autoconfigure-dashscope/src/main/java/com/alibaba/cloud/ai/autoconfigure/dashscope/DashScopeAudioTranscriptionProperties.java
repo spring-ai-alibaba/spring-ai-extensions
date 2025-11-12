@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionOptions;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -33,8 +34,12 @@ public class DashScopeAudioTranscriptionProperties extends DashScopeParentProper
 	 */
 	public static final String CONFIG_PREFIX = "spring.ai.dashscope.audio.transcription";
 
+	private final String DEFAULT_MODEL = DashScopeModel.AudioModel.PARAFORMER_V2.getValue();
+
 	@NestedConfigurationProperty
-	private DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder().build();
+	private DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+		.withModel(DEFAULT_MODEL)
+		.build();
 
 	public DashScopeAudioTranscriptionOptions getOptions() {
 		return this.options;

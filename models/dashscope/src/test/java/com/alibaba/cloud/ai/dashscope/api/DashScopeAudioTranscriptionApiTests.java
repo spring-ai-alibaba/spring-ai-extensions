@@ -104,26 +104,47 @@ class DashScopeAudioTranscriptionApiTests {
 		// Test creating a Request object
 		List<String> fileUrls = Collections.singletonList("https://example.com/audio.mp3");
 		DashScopeAudioTranscriptionApi.Request.Input input = new DashScopeAudioTranscriptionApi.Request.Input(fileUrls);
+		DashScopeAudioTranscriptionApi.Request.Resource resource = new DashScopeAudioTranscriptionApi.Request.Resource(
+			"resource-id", "resource-type");
 
 		List<Integer> channelIds = Arrays.asList(1, 2);
+		String specialWordFilter = """
+				{
+				  "filter_with_signed": {
+				    "word_list": ["测试"]
+				  },
+				  "filter_with_empty": {
+				    "word_list": ["开始", "发生"]
+				  },
+				  "system_reserved_filter": true
+				}
+				""";
 		List<String> languageHints = Arrays.asList("en", "zh");
 		DashScopeAudioTranscriptionApi.Request.Parameters parameters = new DashScopeAudioTranscriptionApi.Request.Parameters(
-				channelIds, "vocab-id", "phrase-id", true, languageHints);
+			"vocab-id", channelIds, true, true,
+			specialWordFilter, languageHints, true, 2);
 
-		DashScopeAudioTranscriptionApi.Request request = new DashScopeAudioTranscriptionApi.Request("test-model", input,
-				parameters);
+		DashScopeAudioTranscriptionApi.Request request = new DashScopeAudioTranscriptionApi.Request("test-model",
+			input, List.of(resource), parameters);
 
 		// Verify request properties
 		assertNotNull(request, "Request object should be created");
 		assertNotNull(request.input(), "Request input should not be null");
+		assertNotNull(request.resources(), "Request resources should not be null");
 		assertNotNull(request.parameters(), "Request parameters should not be null");
 		assertEquals("test-model", request.model(), "Model should match");
 		assertEquals(fileUrls, request.input().fileUrls(), "File URLs should match");
-		assertEquals(channelIds, request.parameters().channelId(), "Channel IDs should match");
+		assertNotNull(request.resources(), "Resources should not be null");
+		assertEquals("resource-id", request.resources().get(0).resourceId(), "Resource ID should match");
+		assertEquals("resource-type", request.resources().get(0).resourceType(), "Resource type should match");
 		assertEquals("vocab-id", request.parameters().vocabularyId(), "Vocabulary ID should match");
-		assertEquals("phrase-id", request.parameters().phraseId(), "Phrase ID should match");
+		assertEquals(channelIds, request.parameters().channelId(), "Channel IDs should match");
 		assertTrue(request.parameters().disfluencyRemovalEnabled(), "Disfluency removal should be enabled");
+		assertTrue(request.parameters().timestampAlignmentEnabled(), "Timestamp alignment should be enabled");
+		assertEquals(specialWordFilter, request.parameters().specialWordFilter(), "Special word filter should match");
 		assertEquals(languageHints, request.parameters().languageHints(), "Language hints should match");
+		assertTrue(request.parameters().diarizationEnabled(), "Diarization should be enabled");
+		assertEquals(2, request.parameters().speakerCount(), "Speaker Count should match");
 	}
 
 }

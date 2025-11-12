@@ -52,8 +52,8 @@ public class DashScopeAudioSpeechAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	public DashScopeAudioSpeechModel dashScopeSpeechSynthesisModel(RetryTemplate retryTemplate,
-			DashScopeConnectionProperties commonProperties, DashScopeAudioSpeechSynthesisProperties speechProperties) {
+	public DashScopeAudioSpeechModel dashScopeSpeechSynthesisModel(DashScopeConnectionProperties commonProperties,
+			DashScopeAudioSpeechSynthesisProperties speechProperties, RetryTemplate retryTemplate) {
 
 		var dashScopeSpeechSynthesisApi = dashScopeSpeechSynthesisApi(commonProperties, speechProperties);
 
