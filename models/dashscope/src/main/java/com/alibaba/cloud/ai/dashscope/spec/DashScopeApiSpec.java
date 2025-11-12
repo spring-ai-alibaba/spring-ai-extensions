@@ -1130,7 +1130,7 @@ public class DashScopeApiSpec {
     }
 
     /** 
-    * Error response class, used to parse error information in streaming responses
+    * Error response class in streaming responses
     * @param code error code 
     * @param message error message 
     * @param requestId request ID 
