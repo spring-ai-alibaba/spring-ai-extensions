@@ -244,13 +244,6 @@
                 <version>${project.version}</version>
             </dependency>
 
-            <!-- Spring AI Alibaba RAG -->
-            <dependency>
-                <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-rag</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
             <!-- Spring AI Alibaba Community -->
 
             <!-- Spring AI Alibaba Community Tool Call Plugins -->

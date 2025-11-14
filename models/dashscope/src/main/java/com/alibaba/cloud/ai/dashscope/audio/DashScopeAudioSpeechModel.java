@@ -22,6 +22,7 @@ import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisOutput;
 import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisPrompt;
 import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisResponse;
 import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisResult;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.retry.support.RetryTemplate;
@@ -44,7 +45,12 @@ public class DashScopeAudioSpeechModel implements SpeechSynthesisModel {
 	private final RetryTemplate retryTemplate;
 
 	public DashScopeAudioSpeechModel(DashScopeAudioSpeechApi api) {
-		this(api, DashScopeAudioSpeechOptions.builder().model("").build());
+		this(api, DashScopeAudioSpeechOptions.builder()
+			.model(DashScopeModel.AudioModel.COSYVOICE_V1.getValue())
+			.voice("longhua")
+			.speed(1.0f)
+			.responseFormat(DashScopeAudioSpeechApi.ResponseFormat.MP3)
+			.build());
 	}
 
 	public DashScopeAudioSpeechModel(DashScopeAudioSpeechApi api, DashScopeAudioSpeechOptions options) {

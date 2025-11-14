@@ -31,6 +31,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.client.RestClientAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 
@@ -63,9 +64,9 @@ public class DashScopeAudioTranscriptionAutoConfiguration {
 	public DashScopeAudioTranscriptionModel dashScopeAudioTranscriptionModel(
 			DashScopeConnectionProperties commonProperties,
 			DashScopeAudioTranscriptionProperties audioTranscriptionProperties,
-			ObjectProvider<RestClient.Builder> restClientBuilderProvider, ResponseErrorHandler responseErrorHandle
-	// todo Instead of using retryTemplate, use webSocket
-	// RetryTemplate retryTemplate
+			ObjectProvider<RestClient.Builder> restClientBuilderProvider,
+			RetryTemplate retryTemplate,
+			ResponseErrorHandler responseErrorHandle
 	) {
 
 		ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties,
@@ -82,7 +83,7 @@ public class DashScopeAudioTranscriptionAutoConfiguration {
 			.build();
 
 		return new DashScopeAudioTranscriptionModel(dashScopeAudioTranscriptionApi,
-				audioTranscriptionProperties.getOptions());
+				audioTranscriptionProperties.getOptions(), retryTemplate);
 	}
 
 }

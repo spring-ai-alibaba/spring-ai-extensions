@@ -25,6 +25,7 @@ import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
  * @author xYLiu
  * @author yuluo
  * @author kevinlin09
+ * @author xuguan
  */
 public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOptions {
 
@@ -33,13 +34,13 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
      * Audio Transcription models.
      */
     @JsonProperty("model")
-    private String model = "paraformer-v2";
+    private String model;
 
     @JsonProperty("vocabulary_id")
     private String vocabularyId;
 
-    @JsonProperty("phrase_id")
-    private String phraseId;
+    @JsonProperty("resource_id")
+    private String resourceId;
 
 	@JsonProperty("sample_rate")
 	private Integer sampleRate;
@@ -53,8 +54,20 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
     @JsonProperty("disfluency_removal_enabled")
     private Boolean disfluencyRemovalEnabled = false;
 
+	@JsonProperty("timestamp_alignment_enabled")
+	private Boolean timestampAlignmentEnabled = false;
+
+	@JsonProperty("special_word_filter")
+	private String specialWordFilter;
+
     @JsonProperty("language_hints")
     private List<String> languageHints = List.of("zh", "en");
+
+	@JsonProperty("diarization_enabled")
+	private Boolean diarizationEnabled = false;
+
+	@JsonProperty("speaker_count")
+	private Integer speakerCount;
 
     // @formatter:on
 	@Override
@@ -74,8 +87,12 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 		this.vocabularyId = vocabularyId;
 	}
 
-	public String getPhraseId() {
-		return phraseId;
+	public String getResourceId() {
+		return resourceId;
+	}
+
+	public void setResourceId(String resourceId) {
+		this.resourceId = resourceId;
 	}
 
 	public Integer getSampleRate() {
@@ -94,10 +111,6 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 		this.format = format;
 	}
 
-	public void setPhraseId(String phraseId) {
-		this.phraseId = phraseId;
-	}
-
 	public List<Integer> getChannelId() {
 		return channelId;
 	}
@@ -114,12 +127,44 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 		this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
 	}
 
+	public Boolean getTimestampAlignmentEnabled() {
+		return timestampAlignmentEnabled;
+	}
+
+	public void setTimestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
+		this.timestampAlignmentEnabled = timestampAlignmentEnabled;
+	}
+
+	public String getSpecialWordFilter() {
+		return specialWordFilter;
+	}
+
+	public void setSpecialWordFilter(String specialWordFilter) {
+		this.specialWordFilter = specialWordFilter;
+	}
+
 	public List<String> getLanguageHints() {
 		return languageHints;
 	}
 
 	public void setLanguageHints(List<String> languageHints) {
 		this.languageHints = languageHints;
+	}
+
+	public Boolean getDiarizationEnabled() {
+		return diarizationEnabled;
+	}
+
+	public void setDiarizationEnabled(Boolean diarizationEnabled) {
+		this.diarizationEnabled = diarizationEnabled;
+	}
+
+	public Integer getSpeakerCount() {
+		return speakerCount;
+	}
+
+	public void setSpeakerCount(Integer speakerCount) {
+		this.speakerCount = speakerCount;
 	}
 
 	public static Builder builder() {
@@ -140,8 +185,8 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
-		public Builder withPhraseId(String phraseId) {
-			options.setPhraseId(phraseId);
+		public Builder withResourceId(String resourceId) {
+			options.setResourceId(resourceId);
 			return this;
 		}
 
@@ -165,11 +210,30 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
+		public Builder withTimestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
+			options.setTimestampAlignmentEnabled(timestampAlignmentEnabled);
+			return this;
+		}
+
+		public Builder withSpecialWordFilter(String specialWordFilter) {
+			options.setSpecialWordFilter(specialWordFilter);
+			return this;
+		}
+
 		public Builder withLanguageHints(List<String> languageHints) {
 			options.setLanguageHints(languageHints);
 			return this;
 		}
 
+		public Builder withDiarizationEnabled(Boolean diarizationEnabled) {
+			options.setDiarizationEnabled(diarizationEnabled);
+			return this;
+		}
+
+		public Builder withSpeakerCount(Integer speakerCount) {
+			options.setSpeakerCount(speakerCount);
+			return this;
+		}
 		public DashScopeAudioTranscriptionOptions build() {
 			return options;
 		}

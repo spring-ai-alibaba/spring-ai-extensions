@@ -84,6 +84,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 			this.text_emitter = emitter;
 		}, FluxSink.OverflowStrategy.BUFFER);
 
+		// FIXME
 		binary.subscribe(this::sendBinary);
 
 		return flux;

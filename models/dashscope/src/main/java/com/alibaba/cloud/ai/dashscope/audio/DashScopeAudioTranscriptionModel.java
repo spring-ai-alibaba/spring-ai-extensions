@@ -20,6 +20,7 @@ import com.alibaba.cloud.ai.dashscope.audio.transcription.AudioTranscriptionMode
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClient;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.audio.transcription.AudioTranscription;
@@ -28,10 +29,14 @@ import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponseMetadata;
 import org.springframework.ai.model.ModelOptionsUtils;
+import org.springframework.ai.retry.RetryUtils;
+import org.springframework.ai.retry.TransientAiException;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.retry.support.RetryTemplate;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
@@ -40,103 +45,98 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Audio transcription: Input audio, output text.
+ *
+ * @author xuguan
  */
 
 public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel {
 
 	private static final Logger logger = LoggerFactory.getLogger(DashScopeAudioTranscriptionModel.class);
 
-	private final DashScopeAudioTranscriptionApi api;
+	private final DashScopeAudioTranscriptionApi audioTranscriptionApi;
 
-	private final DashScopeAudioTranscriptionOptions options;
+	private final RetryTemplate retryTemplate;
+
+	private final DashScopeAudioTranscriptionOptions defaultOptions;
 
 	public DashScopeAudioTranscriptionModel(DashScopeAudioTranscriptionApi api,
-			DashScopeAudioTranscriptionOptions options) {
+			DashScopeAudioTranscriptionOptions defaultOptions) {
 
-		this.api = Objects.requireNonNull(api, "api must not be null");
-		this.options = Objects.requireNonNull(options, "options must not be null");
+		this(api, defaultOptions, RetryUtils.DEFAULT_RETRY_TEMPLATE);
 	}
 
-	@Override
-	public AudioTranscriptionResponse asyncCall(AudioTranscriptionPrompt prompt) {
-		DashScopeAudioTranscriptionApi.Request request = createRequest(prompt);
+	public DashScopeAudioTranscriptionModel(DashScopeAudioTranscriptionApi api,
+			DashScopeAudioTranscriptionOptions defaultOptions, RetryTemplate retryTemplate) {
 
-		ResponseEntity<DashScopeAudioTranscriptionApi.Response> response = this.api.call(request);
-
-		if (response == null || response.getBody() == null) {
-			logger.warn("app call error: request: {}", request);
-			return null;
-		}
-
-		return toResponse(response.getBody());
-	}
-
-	@Override
-	public AudioTranscriptionResponse fetch(String taskId) {
-		AudioTranscriptionPrompt prompt = new AudioTranscriptionPrompt(null);
-
-		DashScopeAudioTranscriptionApi.Request request = createRequest(prompt);
-
-		ResponseEntity<DashScopeAudioTranscriptionApi.Response> response = this.api.callWithTaskId(request, taskId);
-
-		return toResponse(Objects.requireNonNull(response.getBody()));
+		this.audioTranscriptionApi = Objects.requireNonNull(api, "api must not be null");
+		this.defaultOptions = Objects.requireNonNull(defaultOptions, "options must not be null");
+		this.retryTemplate = Objects.requireNonNull(retryTemplate, "retryTemplate must not be null");
 	}
 
 	@Override
 	public AudioTranscriptionResponse call(AudioTranscriptionPrompt prompt) {
 		DashScopeAudioTranscriptionApi.Request request = createRequest(prompt);
 
-		ResponseEntity<DashScopeAudioTranscriptionApi.Response> submitResponse = this.api.call(request);
+		ResponseEntity<DashScopeAudioTranscriptionApi.Response> submitResponse = this.audioTranscriptionApi.submitTask(request);
 
-		String taskId = Objects.requireNonNull(submitResponse.getBody()).output().taskId();
+		String taskId = Optional.ofNullable(submitResponse)
+			.map(ResponseEntity::getBody)
+			.map(DashScopeAudioTranscriptionApi.Response::output)
+			.map(DashScopeAudioTranscriptionApi.Response.Output::taskId)
+			.orElse(null);
 
-		int waitMilliseconds = 1000;
-		int maxWaitMilliseconds = 5 * 1000;
-		int incrementSteps = 3;
-		int step = 0;
-		while (true) {
-			DashScopeAudioTranscriptionApi.Response fetchResponse = (this.api.callWithTaskId(request, taskId))
-				.getBody();
-
-			DashScopeAudioTranscriptionApi.TaskStatus taskStatus = Objects.requireNonNull(fetchResponse)
-				.output()
-				.taskStatus();
-
-			if (taskStatus == DashScopeAudioTranscriptionApi.TaskStatus.FAILED
-					|| taskStatus == DashScopeAudioTranscriptionApi.TaskStatus.CANCELED
-					|| taskStatus == DashScopeAudioTranscriptionApi.TaskStatus.UNKNOWN) {
-				logger.error("task failed");
-				return toResponse(fetchResponse);
-			}
-			else if (taskStatus == DashScopeAudioTranscriptionApi.TaskStatus.SUCCEEDED) {
-				logger.info("task succeeded");
-				return toResponse(fetchResponse);
-			}
-			else {
-				step += 1;
-				if (waitMilliseconds < maxWaitMilliseconds && step % incrementSteps == 0) {
-					waitMilliseconds = Math.min(waitMilliseconds * 2, maxWaitMilliseconds);
-				}
-				try {
-					Thread.sleep(waitMilliseconds);
-				}
-				catch (InterruptedException ignored) {
-				}
-			}
+		if (taskId == null) {
+			logger.warn("No taskId returned for request: {}", request);
+			AudioTranscriptionResponseMetadata metadata = new AudioTranscriptionResponseMetadata();
+			metadata.put("taskStatus", "NO_TASK_ID");
+			return new AudioTranscriptionResponse(new AudioTranscription(null), metadata);
 		}
+
+		AudioTranscriptionResponse response = this.retryTemplate
+			.execute(ctx -> {
+				DashScopeAudioTranscriptionApi.Response taskResultResponse = this.audioTranscriptionApi.queryTaskResult(taskId)
+					.getBody();
+
+				DashScopeAudioTranscriptionApi.TaskStatus taskStatus = Optional.ofNullable(taskResultResponse)
+					.map(DashScopeAudioTranscriptionApi.Response::output)
+					.map(DashScopeAudioTranscriptionApi.Response.Output::taskStatus)
+					.orElse(null);
+
+				if (taskStatus == null) {
+					logger.warn("No taskStatus returned for request: {}", request);
+					AudioTranscriptionResponseMetadata metadata = new AudioTranscriptionResponseMetadata();
+					metadata.put("taskStatus", "NO_TASK_STATUS");
+					return new AudioTranscriptionResponse(new AudioTranscription(null), metadata);
+				}
+
+				switch (taskStatus) {
+					case FAILED, CANCELED, UNKNOWN -> {
+						logger.error("task failed");
+						return toResponse(taskResultResponse);
+					}
+					case SUCCEEDED -> {
+						logger.info("task succeeded");
+						return toResponse(taskResultResponse);
+					}
+					default -> throw new TransientAiException("Audio generation still pending");
+				}
+			});
+
+		return response;
 	}
 
 	@Override
 	public Flux<AudioTranscriptionResponse> stream(AudioTranscriptionPrompt prompt) {
 		DashScopeAudioTranscriptionApi.RealtimeRequest run_request = createRealtimeRequest(prompt,
-				DashScopeWebSocketClient.EventType.RUN_TASK);
+			DashScopeWebSocketClient.EventType.RUN_TASK);
 
 		logger.info("send run-task");
-		this.api.realtimeControl(run_request);
+		this.audioTranscriptionApi.realtimeControl(run_request);
 
 		Resource resource = prompt.getInstructions();
 
@@ -151,13 +151,13 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 			.delayElements(Duration.ofMillis(100), Schedulers.boundedElastic())
 			.doOnComplete(() -> {
 				DashScopeAudioTranscriptionApi.RealtimeRequest finish_request = createRealtimeRequest(prompt,
-						DashScopeWebSocketClient.EventType.FINISH_TASK);
+					DashScopeWebSocketClient.EventType.FINISH_TASK);
 
 				logger.info("send finish-task");
-				this.api.realtimeControl(finish_request);
+				this.audioTranscriptionApi.realtimeControl(finish_request);
 			});
 
-		return this.api.realtimeStream(audio).map(this::toResponse);
+		return this.audioTranscriptionApi.realtimeStream(audio).map(this::toResponse);
 	}
 
 	private DashScopeAudioTranscriptionApi.Request createRequest(AudioTranscriptionPrompt prompt) {
@@ -168,15 +168,32 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 			if (prompt.getInstructions() != null) {
 				fileUrls = List.of(prompt.getInstructions().getURL().toString());
 			}
-			return new DashScopeAudioTranscriptionApi.Request(options.getModel(),
-					new DashScopeAudioTranscriptionApi.Request.Input(fileUrls),
-					new DashScopeAudioTranscriptionApi.Request.Parameters(options.getChannelId(),
-							options.getVocabularyId(), options.getPhraseId(), options.getDisfluencyRemovalEnabled(),
-							options.getLanguageHints()));
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			throw new DashScopeException("failed to get file urls", e);
 		}
+
+		String model = options.getModel();
+		String vocabularyId = options.getVocabularyId();
+		List<DashScopeAudioTranscriptionApi.Request.Resource> resources = null;
+		if (DashScopeModel.AudioModel.PARAFORMER_V1.getValue().equals(model) ||
+			DashScopeModel.AudioModel.PARAFORMER_8K_V1.getValue().equals(model) ||
+			DashScopeModel.AudioModel.PARAFORMER_MTL_V1.getValue().equals(model)) {
+			vocabularyId = null;
+			String resourceId = options.getResourceId();
+			if (StringUtils.hasText(resourceId)) {
+				resources = List.of(new DashScopeAudioTranscriptionApi.Request.Resource(resourceId,
+					"asr_phrase"));
+			}
+		}
+
+		return new DashScopeAudioTranscriptionApi.Request(model,
+			new DashScopeAudioTranscriptionApi.Request.Input(fileUrls),
+			resources,
+			new DashScopeAudioTranscriptionApi.Request.Parameters(vocabularyId,
+				options.getChannelId(), options.getDisfluencyRemovalEnabled(),
+				options.getTimestampAlignmentEnabled(), options.getSpecialWordFilter(),
+				options.getLanguageHints(), options.getDiarizationEnabled(),
+				options.getSpeakerCount()));
 	}
 
 	private DashScopeAudioTranscriptionApi.RealtimeRequest createRealtimeRequest(AudioTranscriptionPrompt prompt,
@@ -184,38 +201,34 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 		DashScopeAudioTranscriptionOptions options = mergeOptions(prompt);
 
 		return new DashScopeAudioTranscriptionApi.RealtimeRequest(
-				new DashScopeAudioTranscriptionApi.RealtimeRequest.Header(action, UUID.randomUUID().toString(),
-						"duplex"),
-				new DashScopeAudioTranscriptionApi.RealtimeRequest.Payload(options.getModel(), "audio", "asr",
-						"recognition", new DashScopeAudioTranscriptionApi.RealtimeRequest.Payload.Input(),
-						new DashScopeAudioTranscriptionApi.RealtimeRequest.Payload.Parameters(options.getSampleRate(),
-								options.getFormat(), options.getDisfluencyRemovalEnabled())));
+			new DashScopeAudioTranscriptionApi.RealtimeRequest.Header(action, UUID.randomUUID().toString(),
+				"duplex"),
+			new DashScopeAudioTranscriptionApi.RealtimeRequest.Payload(options.getModel(), "audio", "asr",
+				"recognition", new DashScopeAudioTranscriptionApi.RealtimeRequest.Payload.Input(),
+				new DashScopeAudioTranscriptionApi.RealtimeRequest.Payload.Parameters(options.getSampleRate(),
+					options.getFormat(), options.getDisfluencyRemovalEnabled())));
 	}
 
 	private DashScopeAudioTranscriptionOptions mergeOptions(AudioTranscriptionPrompt prompt) {
-		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder().build();
+		DashScopeAudioTranscriptionOptions runtimeOptions = null;
 
 		if (prompt.getOptions() != null) {
-			DashScopeAudioTranscriptionOptions runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(),
-					AudioTranscriptionOptions.class, DashScopeAudioTranscriptionOptions.class);
-
-			options = ModelOptionsUtils.merge(runtimeOptions, options, DashScopeAudioTranscriptionOptions.class);
+			runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(),
+				AudioTranscriptionOptions.class, DashScopeAudioTranscriptionOptions.class);
 		}
 
-		options = ModelOptionsUtils.merge(options, this.options, DashScopeAudioTranscriptionOptions.class);
-		return options;
+		return runtimeOptions == null ? this.defaultOptions
+			: ModelOptionsUtils.merge(runtimeOptions, this.defaultOptions, DashScopeAudioTranscriptionOptions.class);
 	}
 
 	private AudioTranscriptionResponse toResponse(DashScopeAudioTranscriptionApi.Response apiResponse) {
 		DashScopeAudioTranscriptionApi.Response.Output apiOutput = apiResponse.output();
 		List<DashScopeAudioTranscriptionApi.Response.Output.Result> apiResults = apiOutput.results();
 
-		DashScopeAudioTranscriptionApi.TaskStatus taskStatus = apiOutput.taskStatus();
-
 		String text = null;
 		if (apiResults != null && !apiResults.isEmpty()) {
 			String transcriptionUrl = apiResults.get(0).transcriptionUrl();
-			DashScopeAudioTranscriptionApi.Outcome outcome = this.api.getOutcome(transcriptionUrl);
+			DashScopeAudioTranscriptionApi.Outcome outcome = this.audioTranscriptionApi.getOutcome(transcriptionUrl);
 			if (!outcome.transcripts().isEmpty()) {
 				text = outcome.transcripts().get(0).text();
 			}
@@ -224,17 +237,8 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 		AudioTranscription result = new AudioTranscription(text);
 
 		AudioTranscriptionResponseMetadata responseMetadata = new AudioTranscriptionResponseMetadata();
-		if (apiResponse.statusCode() != null) {
-			responseMetadata.put(DashScopeApiConstants.STATUS_CODE, apiResponse.statusCode());
-		}
 		if (apiResponse.requestId() != null) {
 			responseMetadata.put(DashScopeApiConstants.REQUEST_ID, apiResponse.requestId());
-		}
-		if (apiResponse.code() != null) {
-			responseMetadata.put(DashScopeApiConstants.CODE, apiResponse.code());
-		}
-		if (apiResponse.message() != null) {
-			responseMetadata.put(DashScopeApiConstants.MESSAGE, apiResponse.message());
 		}
 		if (apiResponse.usage() != null) {
 			responseMetadata.put(DashScopeApiConstants.USAGE, apiResponse.usage());

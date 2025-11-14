@@ -29,10 +29,6 @@ public interface AudioTranscriptionModel extends Model<AudioTranscriptionPrompt,
 	@Override
 	AudioTranscriptionResponse call(AudioTranscriptionPrompt prompt);
 
-	AudioTranscriptionResponse asyncCall(AudioTranscriptionPrompt prompt);
-
-	AudioTranscriptionResponse fetch(String taskId);
-
 	Flux<AudioTranscriptionResponse> stream(AudioTranscriptionPrompt prompt);
 
 }
