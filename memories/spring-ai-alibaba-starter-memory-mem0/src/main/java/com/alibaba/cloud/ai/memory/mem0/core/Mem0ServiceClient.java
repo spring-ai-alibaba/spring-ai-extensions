@@ -33,6 +33,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -60,6 +65,7 @@ public class Mem0ServiceClient {
 	private final Mem0Client mem0Client;
 	private final Mem0Server mem0Server;
 	private final ResourceLoader resourceLoader;
+	private final Executor asyncExecutor;
 
 	/**
 	 * Constructor
@@ -80,6 +86,25 @@ public class Mem0ServiceClient {
 				.baseUrl(mem0Client.getBaseUrl())
 				.defaultHeader("Content-Type", "application/json")
 				.build();
+
+		// Initialize async executor for memory operations
+		Mem0Client.AsyncConfig async = mem0Client.getAsync();
+		if (async.isEnabled()) {
+			this.asyncExecutor = Executors.newFixedThreadPool(async.getMaxPoolSize(), new ThreadFactory() {
+				private final AtomicInteger threadNumber = new AtomicInteger(1);
+
+				@Override
+				public Thread newThread(Runnable r) {
+					Thread t = new Thread(r, async.getThreadNamePrefix() + threadNumber.getAndIncrement());
+					t.setDaemon(true);
+					return t;
+				}
+			});
+		}
+		else {
+			// If async is disabled, use a synchronous executor
+			this.asyncExecutor = Runnable::run;
+		}
 	}
 
 	/**
@@ -127,9 +152,34 @@ public class Mem0ServiceClient {
 	}
 
 	/**
-	 * Add memory
+	 * Add memory - automatically chooses sync or async based on configuration
 	 */
 	public void addMemory(Mem0ServerRequest.MemoryCreate memoryCreate) {
+		if (mem0Client.getAsync().isEnabled()) {
+			// Execute asynchronously
+			CompletableFuture.runAsync(() -> {
+				executeAddMemory(memoryCreate);
+			}, asyncExecutor);
+		}
+		else {
+			// Execute synchronously
+			executeAddMemory(memoryCreate);
+		}
+	}
+
+	/**
+	 * Add memory asynchronously - returns CompletableFuture for advanced usage
+	 */
+	public CompletableFuture<Void> addMemoryAsync(Mem0ServerRequest.MemoryCreate memoryCreate) {
+		return CompletableFuture.runAsync(() -> {
+			executeAddMemory(memoryCreate);
+		}, asyncExecutor);
+	}
+
+	/**
+	 * Internal method to execute add memory operation
+	 */
+	private void executeAddMemory(Mem0ServerRequest.MemoryCreate memoryCreate) {
 		try {
 			// Add debugging information
 			String requestJson = objectMapper.writeValueAsString(memoryCreate);
@@ -140,12 +190,12 @@ public class Mem0ServiceClient {
 					.body(BodyInserters.fromValue(requestJson))
 					.retrieve()
 					.bodyToMono(String.class)
-					.timeout(Duration.ofSeconds(this.mem0Client.getTimeoutSeconds()))
-					.retry(this.mem0Client.getMaxRetryAttempts())
+					.timeout(Duration.ofSeconds(mem0Client.getTimeoutSeconds()))
+					.retry(mem0Client.getMaxRetryAttempts())
 					.block();
 
 			if (response != null) {
-				Map<String, Object> result = objectMapper.readValue(response, new TypeReference<Map<String, Object>>() {
+				objectMapper.readValue(response, new TypeReference<Map<String, Object>>() {
 				});
 				logger.info("Successfully added memory with {} messages", memoryCreate.getMessages().size());
 			}
@@ -159,8 +209,8 @@ public class Mem0ServiceClient {
 			logger.error("UNKNOWN error adding memory: {}", e.getMessage(), e);
 			throw new RuntimeException("Failed to add memory", e);
 		}
-
 	}
+
 
 	/**
 	 * Get all memory
@@ -267,17 +317,44 @@ public class Mem0ServiceClient {
 	}
 
 	/**
-	 * Update memory
+	 * Update memory - automatically chooses sync or async based on configuration
 	 */
 	public Map<String, Object> updateMemory(String memoryId, Map<String, Object> updatedMemory) {
+		if (mem0Client.getAsync().isEnabled()) {
+			// Execute asynchronously and return empty result immediately
+			CompletableFuture.runAsync(() -> {
+				executeUpdateMemory(memoryId, updatedMemory);
+			}, asyncExecutor);
+			return new HashMap<>();
+		}
+		else {
+			// Execute synchronously and return result
+			return executeUpdateMemory(memoryId, updatedMemory);
+		}
+	}
+
+	/**
+	 * Update memory asynchronously - returns CompletableFuture for advanced usage
+	 */
+	public CompletableFuture<Map<String, Object>> updateMemoryAsync(String memoryId,
+																	Map<String, Object> updatedMemory) {
+		return CompletableFuture.supplyAsync(() -> {
+			return executeUpdateMemory(memoryId, updatedMemory);
+		}, asyncExecutor);
+	}
+
+	/**
+	 * Internal method to execute update memory operation
+	 */
+	private Map<String, Object> executeUpdateMemory(String memoryId, Map<String, Object> updatedMemory) {
 		try {
 			String response = webClient.put()
 					.uri(MEMORIES_ENDPOINT + "/{memoryId}", memoryId)
 					.bodyValue(updatedMemory)
 					.retrieve()
 					.bodyToMono(String.class)
-					.timeout(Duration.ofSeconds(this.mem0Client.getTimeoutSeconds()))
-					.retry(this.mem0Client.getMaxRetryAttempts())
+					.timeout(Duration.ofSeconds(mem0Client.getTimeoutSeconds()))
+					.retry(mem0Client.getMaxRetryAttempts())
 					.block();
 
 			if (response != null) {
@@ -294,6 +371,7 @@ public class Mem0ServiceClient {
 
 		return new HashMap<>();
 	}
+
 
 	/**
 	 * Get memory history
@@ -427,6 +505,16 @@ public class Mem0ServiceClient {
 			return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 		}
 		return null;
+	}
+
+	/**
+	 * Shutdown the async executor
+	 */
+	public void shutdown() {
+		if (asyncExecutor instanceof java.util.concurrent.ExecutorService) {
+			((java.util.concurrent.ExecutorService) asyncExecutor).shutdown();
+			logger.info("Mem0ServiceClient async executor shutdown completed");
+		}
 	}
 
 }

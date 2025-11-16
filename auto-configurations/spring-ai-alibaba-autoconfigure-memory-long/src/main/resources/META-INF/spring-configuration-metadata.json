@@ -29,6 +29,36 @@
       "defaultValue": 3
     },
     {
+      "name": "spring.ai.alibaba.mem0.client.async.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable asynchronous execution for memory operations (add and update).",
+      "defaultValue": true
+    },
+    {
+      "name": "spring.ai.alibaba.mem0.client.async.core-pool-size",
+      "type": "java.lang.Integer",
+      "description": "Core pool size for the async thread pool.",
+      "defaultValue": 2
+    },
+    {
+      "name": "spring.ai.alibaba.mem0.client.async.max-pool-size",
+      "type": "java.lang.Integer",
+      "description": "Maximum pool size for the async thread pool.",
+      "defaultValue": 4
+    },
+    {
+      "name": "spring.ai.alibaba.mem0.client.async.queue-capacity",
+      "type": "java.lang.Integer",
+      "description": "Queue capacity for the async thread pool.",
+      "defaultValue": 100
+    },
+    {
+      "name": "spring.ai.alibaba.mem0.client.async.thread-name-prefix",
+      "type": "java.lang.String",
+      "description": "Thread name prefix for async operations.",
+      "defaultValue": "mem0-async-"
+    },
+    {
       "name": "spring.ai.alibaba.mem0.server.version",
       "type": "java.lang.String",
       "description": "Version of the Mem0 server to connect to.",
