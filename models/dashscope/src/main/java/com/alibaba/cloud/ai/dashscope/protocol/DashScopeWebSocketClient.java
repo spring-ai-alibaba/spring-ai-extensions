@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Headers;
@@ -34,6 +36,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import okio.ByteString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.util.JacksonUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -47,6 +50,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author kevinlin09
+ * @author xuguan
  */
 public class DashScopeWebSocketClient extends WebSocketListener {
 
@@ -54,9 +58,11 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	private final DashScopeWebSocketClientOptions options;
 
-	private WebSocket webSocketClient;
+	private final AtomicBoolean isOpen;
 
-	private AtomicBoolean isOpen;
+	private final ObjectMapper objectMapper;
+
+	private WebSocket webSocketClient;
 
 	FluxSink<ByteBuffer> emitter;
 
@@ -67,6 +73,16 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	public DashScopeWebSocketClient(DashScopeWebSocketClientOptions options) {
 		this.options = options;
 		this.isOpen = new AtomicBoolean(false);
+		this.objectMapper = JsonMapper.builder()
+			// Deserialization configuration
+			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+			// Serialization configuration
+			.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+			.serializationInclusion(JsonInclude.Include.NON_NULL)
+			// Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
+			.addModules(JacksonUtils.instantiateAvailableModules())
+			.build();
 	}
 
 	public Flux<ByteBuffer> streamBinaryOut(String text) {
@@ -84,7 +100,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 			this.text_emitter = emitter;
 		}, FluxSink.OverflowStrategy.BUFFER);
 
-		// FIXME
 		binary.subscribe(this::sendBinary);
 
 		return flux;
@@ -138,7 +153,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		OkHttpClient httpClient = clientBuilder.build();
 
 		try {
-			webSocketClient = httpClient.newWebSocket(buildConnectionRequest(), this);
+			this.webSocketClient = httpClient.newWebSocket(buildConnectionRequest(), this);
 		}
 		catch (Throwable ex) {
 			logger.error("create websocket failed: msg={}", ex.getMessage());
@@ -147,8 +162,8 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	private Request buildConnectionRequest() {
 		Builder bd = new Request.Builder();
-		bd.headers(
-				Headers.of(ApiUtils.getMapContentHeaders(options.getApiKey(), false, options.getWorkSpaceId(), null)));
+		bd.headers(Headers.of(ApiUtils.getMapContentHeaders(options.getApiKey(), false,
+			options.getWorkSpaceId(), null)));
 		return bd.url(options.getUrl()).build();
 	}
 
@@ -198,11 +213,8 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	public void onMessage(WebSocket webSocket, String text) {
 		logger.debug("receive ws event onMessage(text): handle={}, text={}", webSocket, text);
 
-		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
 		try {
-			EventMessage message = objectMapper.readValue(text, EventMessage.class);
+			EventMessage message = this.objectMapper.readValue(text, EventMessage.class);
 			switch (message.header.event) {
 				case TASK_STARTED:
 					logger.info("task started: text={}", text);

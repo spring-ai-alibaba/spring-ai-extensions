@@ -16,7 +16,6 @@
 
 package com.alibaba.cloud.ai.dashscope.api;
 
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionOptions;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClient;
@@ -24,11 +23,15 @@ import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.NoopApiKey;
 import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.retry.RetryUtils;
+import org.springframework.ai.util.JacksonUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
@@ -76,6 +79,8 @@ public class DashScopeAudioTranscriptionApi {
 
 	private final ResponseErrorHandler responseErrorHandler;
 
+	private final ObjectMapper objectMapper;
+
 	// @formatter:off
 	public DashScopeAudioTranscriptionApi(
 			String baseUrl,
@@ -115,6 +120,17 @@ public class DashScopeAudioTranscriptionApi {
 			.withWorkSpaceId(workSpaceId)
 			.withUrl(webSocketUrl)
 			.build());
+
+		this.objectMapper = JsonMapper.builder()
+			// Deserialization configuration
+			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+			// Serialization configuration
+			.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+			.serializationInclusion(JsonInclude.Include.NON_NULL)
+			// Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
+			.addModules(JacksonUtils.instantiateAvailableModules())
+			.build();
 	}
 	// @formatter:on
 
@@ -141,9 +157,9 @@ public class DashScopeAudioTranscriptionApi {
 		return restClient.post().uri(uri).retrieve().toEntity(Response.class);
 	}
 
-	public void realtimeControl(DashScopeAudioTranscriptionApi.RealtimeRequest request) {
+	public void realtimeSendTask(DashScopeAudioTranscriptionApi.RealtimeRequest request) {
 		try {
-			String message = (new ObjectMapper()).writeValueAsString(request);
+			String message = this.objectMapper.writeValueAsString(request);
 			this.webSocketClient.sendText(message);
 		}
 		catch (JsonProcessingException e) {
@@ -152,14 +168,15 @@ public class DashScopeAudioTranscriptionApi {
 	}
 
 	public Flux<RealtimeResponse> realtimeStream(Flux<ByteBuffer> audio) {
-		return this.webSocketClient.streamTextOut(audio).handle((msg, sink) -> {
-			try {
-				sink.next((new ObjectMapper()).readValue(msg, RealtimeResponse.class));
-			}
-			catch (JsonProcessingException e) {
-				sink.error(new DashScopeException(String.valueOf(e)));
-			}
-		});
+		return this.webSocketClient.streamTextOut(audio)
+			.handle((msg, sink) -> {
+				try {
+					RealtimeResponse response = this.objectMapper.readValue(msg, RealtimeResponse.class);
+					sink.next(response);
+				} catch (JsonProcessingException e) {
+					sink.error(new DashScopeException(String.valueOf(e)));
+				}
+			});
 	}
 
 	public Outcome getOutcome(String transcriptionUrl) {
@@ -291,13 +308,31 @@ public class DashScopeAudioTranscriptionApi {
 			@JsonProperty("task") String task,
 			@JsonProperty("function") String function,
 			@JsonProperty("input") Input input,
-			@JsonProperty("parameters") Parameters parameters) {
+			@JsonProperty("parameters") Parameters parameters,
+			@JsonProperty("resources") List<Resource> resources) {
 			public record Input(
 			) {}
 			public record Parameters(
+				@JsonProperty("format") AudioFormat format,
 				@JsonProperty("sample_rate") Integer sampleRate,
-				@JsonProperty("format") DashScopeAudioTranscriptionOptions.AudioFormat format,
-				@JsonProperty("disfluency_removal_enabled") Boolean disfluencyRemovalEnabled
+				@JsonProperty("vocabulary_id") String vocabularyId,
+				@JsonProperty("disfluency_removal_enabled") Boolean difluencyRemovalEnabled,
+				@JsonProperty("language_hints") List<String> languageHints,
+				@JsonProperty("semantic_punctuation_enabled") Boolean semanticPunctuationEnabled,
+				@JsonProperty("max_sentence_silence") Integer maxSentenceSilence,
+				@JsonProperty("multi_threshold_mode_enabled") Boolean multiThresholdModeEnabled,
+				@JsonProperty("punctuation_prediction_enabled") Boolean punctuationPredictionEnabled,
+				@JsonProperty("heartbeat") Boolean heartbeat,
+				@JsonProperty("inverse_text_normalization_enabled") Boolean inverseTextNormalizationEnabled,
+				@JsonProperty("source_language") String sourceLanguage,
+				@JsonProperty("transcription_enabled") Boolean transcriptionEnabled,
+				@JsonProperty("translation_enabled") Boolean translationEnabled,
+				@JsonProperty("translation_target_languages") List<String> translationTargetLanguages,
+				@JsonProperty("max_end_silence") Integer maxEndSilence
+			) {}
+			public record Resource(
+				@JsonProperty("resource_id") String resourceId,
+				@JsonProperty("resource_type") String resourceType
 			) {}
 		}
 	}
@@ -309,7 +344,9 @@ public class DashScopeAudioTranscriptionApi {
 		public record Header(
 			@JsonProperty("task_id") String taskId,
 			@JsonProperty("event") DashScopeWebSocketClient.EventType event,
-			@JsonProperty("attributes") Attributes attributes
+			@JsonProperty("attributes") Attributes attributes,
+			@JsonProperty("error_code") String errorCode,
+			@JsonProperty("error_message") String errorMessage
 		) {
 			public record Attributes(
 			) {}
@@ -320,7 +357,9 @@ public class DashScopeAudioTranscriptionApi {
 			@JsonProperty("usage") Usage usage
 		) {
 			public record Output(
-				@JsonProperty("sentence") Sentence sentence
+				@JsonProperty("sentence") Sentence sentence,
+				@JsonProperty("translations") List<Translation> translations,
+				@JsonProperty("transcription") Transcription transcription
 			) {
 				public record Sentence(
 					@JsonProperty("sentence_id") String sentenceId,
@@ -329,26 +368,38 @@ public class DashScopeAudioTranscriptionApi {
 					@JsonProperty("text") String text,
 					@JsonProperty("channel_id") Integer channelId,
 					@JsonProperty("speaker_id") String speakerId,
+					@JsonProperty("heartbeat") Boolean heartbeat,
+					@JsonProperty("sentence_begin") Boolean sentenceBegin,
 					@JsonProperty("sentence_end") Boolean sentenceEnd,
-					@JsonProperty("words") List<Word> words,
-					@JsonProperty("stash") Stash stash
-				) {
-					public record Word(
-						@JsonProperty("begin_time") Integer beginTime,
-						@JsonProperty("end_time") Integer endTime,
-						@JsonProperty("text") String text,
-						@JsonProperty("punctuation") String punctuation,
-						@JsonProperty("fixed") Boolean fixed,
-						@JsonProperty("speaker_id") String speakerId
-					){}
-					public record Stash(
-						@JsonProperty("sentence_id") String sentenceId,
-						@JsonProperty("text") String text,
-						@JsonProperty("begin_time") Integer beginTime,
-						@JsonProperty("current_time") Integer currentTime,
-						@JsonProperty("words") List<Word> words
-					) {}
-				}
+					@JsonProperty("emo_tag") String emoTag,
+					@JsonProperty("emo_confidence") Double emoConfidence,
+					@JsonProperty("words") List<Word> words
+				) {}
+				public record Translation(
+					@JsonProperty("sentence_id") Integer sentenceId,
+					@JsonProperty("text") String text,
+					@JsonProperty("begin_time") Integer beginTime,
+					@JsonProperty("current_time") Integer currentTime,
+					@JsonProperty("lang") Integer lang,
+					@JsonProperty("sentence_end") Boolean sentenceEnd,
+					@JsonProperty("words") List<Word> words
+				) {}
+				public record Transcription(
+					@JsonProperty("sentence_id") Integer sentenceId,
+					@JsonProperty("text") String text,
+					@JsonProperty("begin_time") Integer beginTime,
+					@JsonProperty("current_time") Integer currentTime,
+					@JsonProperty("sentence_end") Boolean sentenceEnd,
+					@JsonProperty("words") List<Word> words
+				) {}
+				public record Word(
+					@JsonProperty("begin_time") Integer beginTime,
+					@JsonProperty("end_time") Integer endTime,
+					@JsonProperty("text") String text,
+					@JsonProperty("punctuation") String punctuation,
+					@JsonProperty("fixed") Boolean fixed,
+					@JsonProperty("speaker_id") String speakerId
+				){}
 			}
 
 			public record Usage(
@@ -381,6 +432,27 @@ public class DashScopeAudioTranscriptionApi {
 
 		public String getValue() {
 			return status;
+		}
+
+	}
+
+	public enum AudioFormat {
+		@JsonProperty("pcm") PCM("pcm"),
+		@JsonProperty("wav") WAV("wav"),
+		@JsonProperty("mp3") MP3("mp3"),
+		@JsonProperty("opus") OPUS("opus"),
+		@JsonProperty("speex") SPEEX("speex"),
+		@JsonProperty("aac") AAC("aac"),
+		@JsonProperty("amr") AMR("amr");
+
+		public final String value;
+
+		AudioFormat(String value) {
+			this.value = value;
+		}
+
+		public String getValue() {
+			return this.value;
 		}
 
 	}

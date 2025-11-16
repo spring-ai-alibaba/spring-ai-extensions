@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.dashscope.audio;
 
 import java.util.List;
 
+import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
@@ -46,7 +47,7 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 	private Integer sampleRate;
 
 	@JsonProperty("format")
-	private AudioFormat format;
+	private DashScopeAudioTranscriptionApi.AudioFormat format = DashScopeAudioTranscriptionApi.AudioFormat.PCM;
 
     @JsonProperty("channel_id")
     private List<Integer> channelId = List.of(0);
@@ -68,6 +69,39 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 
 	@JsonProperty("speaker_count")
 	private Integer speakerCount;
+
+	@JsonProperty("semantic_punctuation_enabled")
+	private Boolean semanticPunctuationEnabled = false;
+
+	@JsonProperty("max_sentence_silence")
+	private Integer maxSentenceSilence = 800;
+
+	@JsonProperty("multi_threshold_mode_enabled")
+	private Boolean multiThresholdModeEnabled = false;
+
+	@JsonProperty("punctuation_prediction_enabled")
+	private Boolean punctuationPredictionEnabled = true;
+
+	@JsonProperty("heartbeat")
+	private Boolean heartbeat = false;
+
+	@JsonProperty("inverse_text_normalization_enabled")
+	private Boolean inverseTextNormalizationEnabled = true;
+
+	@JsonProperty("source_language")
+	private String sourceLanguage;
+
+	@JsonProperty("transcription_enabled")
+	private Boolean transcriptionEnabled = true;
+
+	@JsonProperty("translation_enabled")
+	private Boolean translationEnabled = false;
+
+	@JsonProperty("translation_target_languages")
+	private List<String> translationTargetLanguages;
+
+	@JsonProperty("max_end_silence")
+	private Integer maxEndSilence = 800;
 
     // @formatter:on
 	@Override
@@ -103,11 +137,11 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 		this.sampleRate = sampleRate;
 	}
 
-	public AudioFormat getFormat() {
+	public DashScopeAudioTranscriptionApi.AudioFormat getFormat() {
 		return format;
 	}
 
-	public void setFormat(AudioFormat format) {
+	public void setFormat(DashScopeAudioTranscriptionApi.AudioFormat format) {
 		this.format = format;
 	}
 
@@ -167,6 +201,94 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 		this.speakerCount = speakerCount;
 	}
 
+	public Boolean getSemanticPunctuationEnabled() {
+		return semanticPunctuationEnabled;
+	}
+
+	public void setSemanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
+		this.semanticPunctuationEnabled = semanticPunctuationEnabled;
+	}
+
+	public Integer getMaxSentenceSilence() {
+		return maxSentenceSilence;
+	}
+
+	public void setMaxSentenceSilence(Integer maxSentenceSilence) {
+		this.maxSentenceSilence = maxSentenceSilence;
+	}
+
+	public Boolean getMultiThresholdModeEnabled() {
+		return multiThresholdModeEnabled;
+	}
+
+	public void setMultiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
+		this.multiThresholdModeEnabled = multiThresholdModeEnabled;
+	}
+
+	public Boolean getPunctuationPredictionEnabled() {
+		return punctuationPredictionEnabled;
+	}
+
+	public void setPunctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
+		this.punctuationPredictionEnabled = punctuationPredictionEnabled;
+	}
+
+	public Boolean getHeartbeat() {
+		return heartbeat;
+	}
+
+	public void setHeartbeat(Boolean heartbeat) {
+		this.heartbeat = heartbeat;
+	}
+
+	public Boolean getInverseTextNormalizationEnabled() {
+		return inverseTextNormalizationEnabled;
+	}
+
+	public void setInverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
+		this.inverseTextNormalizationEnabled = inverseTextNormalizationEnabled;
+	}
+
+	public String getSourceLanguage() {
+		return sourceLanguage;
+	}
+
+	public void setSourceLanguage(String sourceLanguage) {
+		this.sourceLanguage = sourceLanguage;
+	}
+
+	public Boolean getTranscriptionEnabled() {
+		return transcriptionEnabled;
+	}
+
+	public void setTranscriptionEnabled(Boolean transcriptionEnabled) {
+		this.transcriptionEnabled = transcriptionEnabled;
+	}
+
+	public Boolean getTranslationEnabled() {
+		return translationEnabled;
+	}
+
+	public void setTranslationEnabled(Boolean translationEnabled) {
+		this.translationEnabled = translationEnabled;
+	}
+
+	public List<String> getTranslationTargetLanguages() {
+		return translationTargetLanguages;
+	}
+
+	public void setTranslationTargetLanguages(List<String> translationTargetLanguages) {
+		this.translationTargetLanguages = translationTargetLanguages;
+	}
+
+	public Integer getMaxEndSilence() {
+		return maxEndSilence;
+	}
+
+	public void setMaxEndSilence(Integer maxEndSilence) {
+		this.maxEndSilence = maxEndSilence;
+	}
+
 	public static Builder builder() {
 		return new Builder();
 	}
@@ -195,7 +317,7 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
-		public Builder withFormat(AudioFormat format) {
+		public Builder withFormat(DashScopeAudioTranscriptionApi.AudioFormat format) {
 			options.setFormat(format);
 			return this;
 		}
@@ -234,33 +356,65 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			options.setSpeakerCount(speakerCount);
 			return this;
 		}
+
+
+		public Builder withSemanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
+			options.setSemanticPunctuationEnabled(semanticPunctuationEnabled);
+			return this;
+		}
+
+		public Builder withMaxSentenceSilence(Integer maxSentenceSilence) {
+			options.setMaxSentenceSilence(maxSentenceSilence);
+			return this;
+		}
+
+		public Builder withMultiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
+			options.setMultiThresholdModeEnabled(multiThresholdModeEnabled);
+			return this;
+		}
+
+		public Builder withPunctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
+			options.setPunctuationPredictionEnabled(punctuationPredictionEnabled);
+			return this;
+		}
+
+		public Builder withHeartbeat(Boolean heartbeat) {
+			options.setHeartbeat(heartbeat);
+			return this;
+		}
+
+		public Builder withInverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
+			options.setInverseTextNormalizationEnabled(inverseTextNormalizationEnabled);
+			return this;
+		}
+
+		public Builder withSourceLanguage(String sourceLanguage) {
+			options.setSourceLanguage(sourceLanguage);
+			return this;
+		}
+
+		public Builder withTranscriptionEnabled(Boolean transcriptionEnabled) {
+			options.setTranscriptionEnabled(transcriptionEnabled);
+			return this;
+		}
+
+		public Builder withTranslationEnabled(Boolean translationEnabled) {
+			options.setTranslationEnabled(translationEnabled);
+			return this;
+		}
+
+		public Builder withTranslationTargetLanguages(List<String> translationTargetLanguages) {
+			options.setTranslationTargetLanguages(translationTargetLanguages);
+			return this;
+		}
+
+		public Builder withMaxEndSilence(Integer maxEndSilence) {
+			options.setMaxEndSilence(maxEndSilence);
+			return this;
+		}
+
 		public DashScopeAudioTranscriptionOptions build() {
 			return options;
-		}
-
-	}
-
-	public enum AudioFormat {
-
-		// @formatter:off
-		@JsonProperty("pcm") PCM("pcm"),
-		@JsonProperty("wav") WAV("wav"),
-		@JsonProperty("mp3") MP3("mp3"),
-		@JsonProperty("opus") OPUS("opus"),
-		@JsonProperty("speex") SPEEX("speex"),
-		@JsonProperty("aac") AAC("aac"),
-		@JsonProperty("amr") AMR("amr");
-
-		// @formatter:on
-
-		public final String value;
-
-		AudioFormat(String value) {
-			this.value = value;
-		}
-
-		public String getValue() {
-			return this.value;
 		}
 
 	}

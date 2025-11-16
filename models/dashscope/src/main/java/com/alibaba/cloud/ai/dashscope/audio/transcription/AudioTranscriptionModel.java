@@ -23,12 +23,13 @@ import reactor.core.publisher.Flux;
 
 /**
  * @author kevinlin09
+ * @author xuguan
  */
 public interface AudioTranscriptionModel extends Model<AudioTranscriptionPrompt, AudioTranscriptionResponse> {
 
 	@Override
 	AudioTranscriptionResponse call(AudioTranscriptionPrompt prompt);
 
-	Flux<AudioTranscriptionResponse> stream(AudioTranscriptionPrompt prompt);
+	Flux<AudioTranscriptionResponse> realtimeStream(AudioTranscriptionPrompt prompt);
 
 }

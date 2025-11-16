@@ -290,19 +290,33 @@ public class DashScopeModel {
 		SAMBERT_WAAN_V1("sambert-waan-v1"),
 
         // =============== Transcription Model ===============
+		PARAFORMER_REALTIME_V1("paraformer-realtime-v1"),
+
+		PARAFORMER_REALTIME_8K_V1("paraformer-realtime-8k-v1"),
+
+		PARAFORMER_REALTIME_V2("paraformer-realtime-v2"),
+
+		PARAFORMER_REALTIME_8K_V2("paraformer-realtime-8k-v2"),
+
         PARAFORMER_V1("paraformer-v1"),
 
         PARAFORMER_8K_V1("paraformer-8k-v1"),
 
+		PARAFORMER_V2("paraformer-v2"),
+
+		PARAFORMER_8K_V2("paraformer-8k-v2"),
+
         PARAFORMER_MTL_V1("paraformer-mtl-v1"),
 
-        PARAFORMER_V2("paraformer-v2"),
+        FUN_ASR_REALTIME("fun-asr-realtime"),
 
-        PARAFORMER_8K_V2("paraformer-8k-v2"),
+		FUN_ASR("fun-asr"),
 
-        FUN_ASR("fun-asr"),
+		FUN_ASR_MTL("fun-asr-mtl"),
 
-        FUN_ASR_MTL("fun-asr-mtl");
+        GUMMY_REALTIME_V1("gummy-realtime-v1"),
+
+        GUMMY_CHAT_V1("gummy-chat-v1");
 
         public final String value;
 
