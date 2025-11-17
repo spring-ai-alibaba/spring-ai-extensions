@@ -225,7 +225,9 @@ public class LettuceRedisChatMemoryRepositoryTest {
 		var conversationId = UUID.randomUUID().toString();
 
 		var resp = new ToolResponseMessage.ToolResponse("tool-1", "vision-analyzer", "{\"result\":\"ok\"}");
-		var toolMsg = new ToolResponseMessage(List.of(resp));
+		var toolMsg = ToolResponseMessage.builder()
+			.responses(List.of(resp))
+			.build();
 
 		chatMemoryRepository.saveAll(conversationId, List.of(toolMsg));
 		var loaded = chatMemoryRepository.findByConversationId(conversationId);
@@ -247,7 +249,10 @@ public class LettuceRedisChatMemoryRepositoryTest {
 		var resp = new ToolResponseMessage.ToolResponse("tool-2", "math-calc", "{\"value\":42}");
 		var metadata = Map.<String, Object>of("traceId", "t-" + conversationId, "caller", "agent://unit-test");
 
-		var toolMsg = new ToolResponseMessage(List.of(resp), metadata);
+		var toolMsg = ToolResponseMessage.builder()
+			.responses(List.of(resp))
+			.metadata(metadata)
+			.build();
 
 		chatMemoryRepository.saveAll(conversationId, List.of(toolMsg));
 		var loaded = chatMemoryRepository.findByConversationId(conversationId);
@@ -265,7 +270,9 @@ public class LettuceRedisChatMemoryRepositoryTest {
 
 		var resp = new ToolResponseMessage.ToolResponse("tool-3", "vision-analyzer",
 				URI.create("https://docs.spring.io/spring-ai/reference/_images/multimodal.test.png").toString());
-		var toolMsg = new ToolResponseMessage(List.of(resp));
+		var toolMsg = ToolResponseMessage.builder()
+			.responses(List.of(resp))
+			.build();
 
 		chatMemoryRepository.saveAll(conversationId, List.of(toolMsg));
 		var loaded = chatMemoryRepository.findByConversationId(conversationId);

@@ -169,8 +169,11 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 	private static List<Message> buildConversationHistoryBeforeToolExecution(Prompt prompt,
 			AssistantMessage assistantMessage) {
 		List<Message> messageHistory = new ArrayList<>(prompt.copy().getInstructions());
-		messageHistory.add(new AssistantMessage(assistantMessage.getText(), assistantMessage.getMetadata(),
-				assistantMessage.getToolCalls()));
+		messageHistory.add(AssistantMessage.builder()
+			.content(assistantMessage.getText())
+			.properties(assistantMessage.getMetadata())
+			.toolCalls(assistantMessage.getToolCalls())
+			.build());
 		return messageHistory;
 	}
 
@@ -243,7 +246,8 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 			toolResponses.add(new ToolResponseMessage.ToolResponse(toolCall.id(), toolName, toolResult));
 		}
 
-		return new InternalToolExecutionResult(new ToolResponseMessage(toolResponses, Map.of()), returnDirect);
+		return new InternalToolExecutionResult(ToolResponseMessage.builder()
+			.responses(toolResponses).metadata(Map.of()).build(), returnDirect);
 	}
 
 	/**
@@ -277,8 +281,12 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 			// save last one
 			toolCalls.add(new AssistantMessage.ToolCall(id, type, name, argumentsContent.toString()));
 		}
-		return new AssistantMessage(assistantMessage.getText(), assistantMessage.getMetadata(), toolCalls,
-				assistantMessage.getMedia());
+		return AssistantMessage.builder()
+			.content(assistantMessage.getText())
+			.properties(assistantMessage.getMetadata())
+			.toolCalls(toolCalls)
+			.media(assistantMessage.getMedia())
+			.build();
 	}
 
 	private List<Message> buildConversationHistoryAfterToolExecution(List<Message> previousMessages,

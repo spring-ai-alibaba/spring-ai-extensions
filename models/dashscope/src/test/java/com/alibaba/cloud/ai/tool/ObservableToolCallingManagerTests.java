@@ -31,7 +31,11 @@ class ObservableToolCallingManagerTests {
 		List<ToolCall> chunks = List.of(new ToolCall("1", "function", "weather", ""),
 				new ToolCall(null, null, null, "{\"location\":\""), new ToolCall(null, null, null, "Paris\"}"),
 				new ToolCall("2", "function", "time", ""), new ToolCall(null, null, null, "{}"));
-		AssistantMessage message = new AssistantMessage("", Map.of(), chunks);
+		AssistantMessage message = AssistantMessage.builder()
+			.content("")
+			.properties(Map.of())
+			.toolCalls(chunks)
+			.build();
 
 		AssistantMessage merged = ObservableToolCallingManager.mergeToolCalls(message);
 

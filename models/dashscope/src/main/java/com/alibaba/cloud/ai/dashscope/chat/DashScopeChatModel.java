@@ -376,7 +376,11 @@ public class DashScopeChatModel implements ChatModel {
 		String finishReason = finishReasonToMetadataValue(choice.finishReason());
 		var generationMetadataBuilder = ChatGenerationMetadata.builder().finishReason(finishReason);
 
-		var assistantMessage = new AssistantMessage(choice.message().content(), metadata, toolCalls);
+		var assistantMessage = AssistantMessage.builder()
+			.content(choice.message().content())
+			.properties(metadata)
+			.toolCalls(toolCalls)
+			.build();
 		return new Generation(assistantMessage, generationMetadataBuilder.build());
 	}
 

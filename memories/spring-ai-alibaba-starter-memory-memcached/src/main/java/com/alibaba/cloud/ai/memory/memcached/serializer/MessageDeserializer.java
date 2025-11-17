@@ -55,17 +55,21 @@ public class MessageDeserializer extends JsonDeserializer<Message> {
 					.metadata(CollectionUtils.isEmpty(metadata) ? Map.of() : metadata)
 					.build()));
 		MESSAGE_FACTORIES.put("ASSISTANT",
-				((textContent, metadata, toolCalls, toolResponses) -> new AssistantMessage(textContent,
-						CollectionUtils.isEmpty(metadata) ? Map.of() : metadata,
-						CollectionUtils.isEmpty(toolCalls) ? List.of() : toolCalls)));
+				((textContent, metadata, toolCalls, toolResponses) -> AssistantMessage.builder()
+					.content(textContent)
+					.properties(CollectionUtils.isEmpty(metadata) ? Map.of() : metadata)
+					.toolCalls(CollectionUtils.isEmpty(toolCalls) ? List.of() : toolCalls)
+					.build()));
 		MESSAGE_FACTORIES.put("SYSTEM",
 				((textContent, metadata, toolCalls, toolResponses) -> SystemMessage.builder()
 					.text(textContent)
 					.metadata(CollectionUtils.isEmpty(metadata) ? Map.of() : metadata)
 					.build()));
 		MESSAGE_FACTORIES.put("TOOL",
-				((textContent, metadata, toolCalls, toolResponses) -> new ToolResponseMessage(toolResponses,
-						CollectionUtils.isEmpty(metadata) ? Map.of() : metadata)));
+				((textContent, metadata, toolCalls, toolResponses) -> ToolResponseMessage.builder()
+					.responses(toolResponses)
+					.metadata(CollectionUtils.isEmpty(metadata) ? Map.of() : metadata)
+					.build()));
 	}
 
 	@Override

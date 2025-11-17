@@ -44,6 +44,7 @@ import reactor.test.StepVerifier;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -103,7 +104,7 @@ class DashScopeChatModelTests {
 
 		// Mock API response
 		ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE,
-				ChatCompletionMessage.Role.ASSISTANT);
+			ChatCompletionMessage.Role.ASSISTANT);
 		Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
 		ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
 		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
@@ -145,9 +146,9 @@ class DashScopeChatModelTests {
 		ChatCompletionChunk chunk1 = new ChatCompletionChunk(TEST_REQUEST_ID, output1, null, null);
 		ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2, null, null);
 		ChatCompletionChunk chunk3 = new ChatCompletionChunk(TEST_REQUEST_ID, output3,
-				new TokenUsage(10, 5, 15, null, null, null, null, null, null, null),
-            null
-        );
+			new TokenUsage(10, 5, 15, null, null, null, null, null, null, null),
+			null
+		);
 
 		when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any()))
 			.thenReturn(Flux.just(chunk1, chunk2, chunk3));
@@ -175,7 +176,7 @@ class DashScopeChatModelTests {
 		// Mock API response
 		String response = "Hello! How can I help you today?";
 		ChatCompletionMessage responseMessage = new ChatCompletionMessage(response,
-				ChatCompletionMessage.Role.ASSISTANT);
+			ChatCompletionMessage.Role.ASSISTANT);
 		Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
 		ChatCompletionOutput output = new ChatCompletionOutput(response, List.of(choice), null);
 
@@ -218,7 +219,7 @@ class DashScopeChatModelTests {
 		// Mock API responses for tool call
 		String toolCallResponse = "{\"name\": \"get_weather\", \"arguments\": \"{\\\"location\\\": \\\"Beijing\\\"}\"}";
 		ChatCompletionMessage toolMessage = new ChatCompletionMessage(toolCallResponse,
-				ChatCompletionMessage.Role.ASSISTANT);
+			ChatCompletionMessage.Role.ASSISTANT);
 		Choice toolChoice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, toolMessage, null);
 
 		// Add non-null TokenUsage with zero values
@@ -273,14 +274,14 @@ class DashScopeChatModelTests {
 		Choice choice3 = new Choice(ChatCompletionFinishReason.TOOL_CALLS, message3, null);
 
 		ChatCompletionChunk chunk1Response = new ChatCompletionChunk("test-id",
-				new ChatCompletionOutput(chunk1, List.of(choice1), null), null, null);
+			new ChatCompletionOutput(chunk1, List.of(choice1), null), null, null);
 		ChatCompletionChunk chunk2Response = new ChatCompletionChunk("test-id",
-				new ChatCompletionOutput(chunk2, List.of(choice2), null), null, null);
+			new ChatCompletionOutput(chunk2, List.of(choice2), null), null, null);
 		ChatCompletionChunk chunk3Response = new ChatCompletionChunk("test-id",
-				new ChatCompletionOutput(chunk3, List.of(choice3), null),
-				new TokenUsage(10, 5, 15, null, null, null, null, null, null, null),
-                null
-        );
+			new ChatCompletionOutput(chunk3, List.of(choice3), null),
+			new TokenUsage(10, 5, 15, null, null, null, null, null, null, null),
+			null
+		);
 
 		when(dashScopeApi.chatCompletionStream(any(), any()))
 			.thenReturn(Flux.just(chunk1Response, chunk2Response, chunk3Response));
@@ -354,10 +355,10 @@ class DashScopeChatModelTests {
 		Prompt prompt = new Prompt(List.of(message));
 
 		ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE,
-				ChatCompletionMessage.Role.ASSISTANT);
+			ChatCompletionMessage.Role.ASSISTANT);
 		Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
 		ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
-		TokenUsage usage = new TokenUsage(10, 5, 15, null, null,null, null, null, null, null);
+		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
 		ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
 		ResponseEntity<ChatCompletion> responseEntity = ResponseEntity.ok(chatCompletion);
 
@@ -400,7 +401,7 @@ class DashScopeChatModelTests {
 		UserMessage userMessage2 = new UserMessage("What's the weather?");
 
 		ChatCompletionMessage responseMessage = new ChatCompletionMessage("It's sunny today!",
-				ChatCompletionMessage.Role.ASSISTANT);
+			ChatCompletionMessage.Role.ASSISTANT);
 		Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
 		ChatCompletionOutput output = new ChatCompletionOutput("It's sunny today!", List.of(choice), null);
 		// Add non-null TokenUsage with zero values
@@ -495,7 +496,7 @@ class DashScopeChatModelTests {
 		ToolCall nullNameToolCall = new ToolCall("tool-call-id", "function", nullNameFunction, null);
 
 		ChatCompletionMessage nullNameToolMessage = new ChatCompletionMessage("", ChatCompletionMessage.Role.ASSISTANT,
-				null, null, List.of(nullNameToolCall), null, null, null, null, null);
+			null, null, List.of(nullNameToolCall), null, null, null, null, null);
 		Choice nullNameChoice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, nullNameToolMessage, null);
 
 		// Add non-null TokenUsage with correct parameters - 9 parameters total
@@ -523,8 +524,15 @@ class DashScopeChatModelTests {
 	void testPartialModeForCodeCompletion() {
 		// Test partial mode support for code completion scenarios (Issue #298)
 		List<Message> messages = List.of(new UserMessage("Please complete this Fibonacci function."),
-				new AssistantMessage("def calculate_fibonacci(n):\n    if n <= 1:\n        return n\n    else:\n",
-						java.util.Map.of("partial", true)));
+			AssistantMessage.builder()
+				.content("""
+					def calculate_fibonacci(n):
+						if n <= 1:
+							return n
+						else:
+					""")
+				.properties(Map.of("partial", true))
+				.build());
 
 		Prompt prompt = new Prompt(messages, DashScopeChatOptions.builder().build());
 		ChatCompletionRequest request = chatModel.createRequest(prompt, false);
@@ -543,9 +551,15 @@ class DashScopeChatModelTests {
 	@Test
 	void testPartialModeWithStringValue() {
 		// Test partial mode when set as string "true" in metadata
-		AssistantMessage assistantMessage = new AssistantMessage(
-				"def calculate_fibonacci(n):\n    if n <= 1:\n        return n\n    else:\n",
-				java.util.Map.of("partial", "true"));
+		AssistantMessage assistantMessage = AssistantMessage.builder()
+			.content("""
+					def calculate_fibonacci(n):
+						if n <= 1:
+							return n
+						else:
+					""")
+			.properties(Map.of("partial", true))
+			.build();
 
 		List<Message> messages = List.of(new UserMessage("Please complete this function."), assistantMessage);
 
@@ -583,8 +597,8 @@ class DashScopeChatModelTests {
 		var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
 		var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
 		var usage = new TokenUsage(10, 5, 15, null,
-				null,null, null, null,
-				null, null);
+			null, null, null, null,
+			null, null);
 		var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
 		var responseEntity = ResponseEntity.ok(chatCompletion);
 
@@ -605,8 +619,8 @@ class DashScopeChatModelTests {
 		var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
 		var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
 		var usage = new TokenUsage(10, 5, 15, null,
-				null,null, null, null,
-				null, null);
+			null, null, null, null,
+			null, null);
 		var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
 		var responseEntity = ResponseEntity.ok(chatCompletion);
 
@@ -628,8 +642,8 @@ class DashScopeChatModelTests {
 		var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
 		var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
 		var usage = new TokenUsage(10, 5, 15, null,
-				null,null, null, null,
-				null, null);
+			null, null, null, null,
+			null, null);
 		var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
 		var responseEntity = ResponseEntity.ok(chatCompletion);
 

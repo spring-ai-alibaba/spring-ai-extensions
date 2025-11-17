@@ -156,7 +156,10 @@ public final class DashScopeAgent extends Agent {
 		metadata.put(DashScopeApiConstants.USAGE, usage);
 		metadata.put(DashScopeApiConstants.OUTPUT, output);
 
-		var assistantMessage = new AssistantMessage(text, metadata);
+		var assistantMessage = AssistantMessage.builder()
+			.content(text)
+			.properties(metadata)
+			.build();
 		var generationMetadata = ChatGenerationMetadata.builder().finishReason(output.finishReason()).build();
 		Generation generation = new Generation(assistantMessage, generationMetadata);
 
