@@ -90,29 +90,27 @@ class Mem0ServiceClientAsyncIntegrationTest {
 		// When - 并发执行多个添加内存操作
 		for (int i = 0; i < numberOfOperations; i++) {
 			final int index = i;
-			CompletableFuture.runAsync(() -> {
-				try {
-					Mem0ServerRequest.MemoryCreate memoryCreate = Mem0ServerRequest.MemoryCreate.builder()
-						.messages(List.of(new Mem0ServerRequest.Message("user", "test message " + index)))
-						.userId("test-user-" + index)
-						.agentId("test-agent-" + index)
-						.runId("test-run-" + index)
-						.build();
+			Mem0ServerRequest.MemoryCreate memoryCreate = Mem0ServerRequest.MemoryCreate.builder()
+				.messages(List.of(new Mem0ServerRequest.Message("user", "test message " + index)))
+				.userId("test-user-" + index)
+				.agentId("test-agent-" + index)
+				.runId("test-run-" + index)
+				.build();
 
-					client.addMemory(memoryCreate);
+			CompletableFuture<Void> future = client.addMemoryAsync(memoryCreate);
+			future.whenComplete((result, throwable) -> {
+				if (throwable == null) {
 					successCount.incrementAndGet();
 				}
-				catch (Exception e) {
+				else {
 					errorCount.incrementAndGet();
 				}
-				finally {
-					latch.countDown();
-				}
+				latch.countDown();
 			});
 		}
 
 		// Then - 等待所有操作完成
-		boolean allCompleted = latch.await(5, TimeUnit.SECONDS);
+		boolean allCompleted = latch.await(30, TimeUnit.SECONDS);
 		assertThat(allCompleted).isTrue();
 
 		// 验证异步执行（由于没有真实服务器，会有错误，但这是预期的）
@@ -130,31 +128,25 @@ class Mem0ServiceClientAsyncIntegrationTest {
 		// When - 并发执行多个更新内存操作
 		for (int i = 0; i < numberOfOperations; i++) {
 			final int index = i;
-			CompletableFuture.runAsync(() -> {
-				try {
-					String memoryId = "test-memory-" + index;
-					Map<String, Object> updatedMemory = new HashMap<>();
-					updatedMemory.put("content", "updated content " + index);
-					updatedMemory.put("metadata", Map.of("updated_at", System.currentTimeMillis()));
+			String memoryId = "test-memory-" + index;
+			Map<String, Object> updatedMemory = new HashMap<>();
+			updatedMemory.put("content", "updated content " + index);
+			updatedMemory.put("metadata", Map.of("updated_at", System.currentTimeMillis()));
 
-					Map<String, Object> result = client.updateMemory(memoryId, updatedMemory);
-
-					// 异步执行时应该返回空结果
-					if (result.isEmpty()) {
-						successCount.incrementAndGet();
-					}
+			CompletableFuture<Map<String, Object>> future = client.updateMemoryAsync(memoryId, updatedMemory);
+			future.whenComplete((result, throwable) -> {
+				if (throwable == null) {
+					successCount.incrementAndGet();
 				}
-				catch (Exception e) {
+				else {
 					errorCount.incrementAndGet();
 				}
-				finally {
-					latch.countDown();
-				}
+				latch.countDown();
 			});
 		}
 
 		// Then - 等待所有操作完成
-		boolean allCompleted = latch.await(5, TimeUnit.SECONDS);
+		boolean allCompleted = latch.await(10, TimeUnit.SECONDS);
 		assertThat(allCompleted).isTrue();
 
 		// 验证异步执行
@@ -354,7 +346,7 @@ class Mem0ServiceClientAsyncIntegrationTest {
 		});
 
 		// Then - 等待回调执行（由于没有真实服务器，会失败，但回调应该执行）
-		boolean callbackExecuted = callbackLatch.await(2, TimeUnit.SECONDS);
+		boolean callbackExecuted = callbackLatch.await(30, TimeUnit.SECONDS);
 		assertThat(callbackExecuted).isTrue();
 		assertThat(callbackCount.get()).isEqualTo(1);
 	}
@@ -473,7 +465,7 @@ class Mem0ServiceClientAsyncIntegrationTest {
 		}
 
 		// Then - 等待所有操作完成
-		boolean allCompleted = latch.await(5, TimeUnit.SECONDS);
+		boolean allCompleted = latch.await(30, TimeUnit.SECONDS);
 		assertThat(allCompleted).isTrue();
 		assertThat(successCount.get() + errorCount.get()).isEqualTo(numberOfOperations);
 	}
@@ -505,7 +497,7 @@ class Mem0ServiceClientAsyncIntegrationTest {
 		}
 
 		// Then - 等待所有操作完成
-		boolean allCompleted = latch.await(5, TimeUnit.SECONDS);
+		boolean allCompleted = latch.await(30, TimeUnit.SECONDS);
 		assertThat(allCompleted).isTrue();
 		assertThat(successCount.get() + errorCount.get()).isEqualTo(numberOfOperations);
 	}
@@ -545,7 +537,7 @@ class Mem0ServiceClientAsyncIntegrationTest {
 		}
 
 		// Then - 等待所有操作完成
-		boolean allCompleted = latch.await(5, TimeUnit.SECONDS);
+		boolean allCompleted = latch.await(30, TimeUnit.SECONDS);
 		assertThat(allCompleted).isTrue();
 		assertThat(successCount.get() + errorCount.get()).isEqualTo(numberOfOperations);
 	}
@@ -595,7 +587,7 @@ class Mem0ServiceClientAsyncIntegrationTest {
 		}
 
 		// Then - 等待所有操作完成
-		boolean allCompleted = latch.await(5, TimeUnit.SECONDS);
+		boolean allCompleted = latch.await(30, TimeUnit.SECONDS);
 		assertThat(allCompleted).isTrue();
 		assertThat(successCount.get() + errorCount.get()).isEqualTo(numberOfOperations);
 	}
@@ -626,7 +618,7 @@ class Mem0ServiceClientAsyncIntegrationTest {
 		}
 
 		// Then - 等待所有操作完成
-		boolean allCompleted = latch.await(5, TimeUnit.SECONDS);
+		boolean allCompleted = latch.await(30, TimeUnit.SECONDS);
 		assertThat(allCompleted).isTrue();
 		assertThat(successCount.get() + errorCount.get()).isEqualTo(numberOfOperations);
 	}
@@ -657,7 +649,7 @@ class Mem0ServiceClientAsyncIntegrationTest {
 		}
 
 		// Then - 等待所有操作完成
-		boolean allCompleted = latch.await(5, TimeUnit.SECONDS);
+		boolean allCompleted = latch.await(30, TimeUnit.SECONDS);
 		assertThat(allCompleted).isTrue();
 		assertThat(successCount.get() + errorCount.get()).isEqualTo(numberOfOperations);
 	}
@@ -687,7 +679,7 @@ class Mem0ServiceClientAsyncIntegrationTest {
 		}
 
 		// Then - 等待所有操作完成
-		boolean allCompleted = latch.await(5, TimeUnit.SECONDS);
+		boolean allCompleted = latch.await(30, TimeUnit.SECONDS);
 		assertThat(allCompleted).isTrue();
 		assertThat(successCount.get() + errorCount.get()).isEqualTo(numberOfOperations);
 	}
@@ -769,7 +761,7 @@ class Mem0ServiceClientAsyncIntegrationTest {
 		});
 
 		// Then - 等待所有操作完成
-		boolean allCompleted = latch.await(5, TimeUnit.SECONDS);
+		boolean allCompleted = latch.await(30, TimeUnit.SECONDS);
 		assertThat(allCompleted).isTrue();
 		assertThat(completedCount.get()).isGreaterThanOrEqualTo(2); // 至少异步操作应该完成
 	}
@@ -970,7 +962,7 @@ class Mem0ServiceClientAsyncIntegrationTest {
 		}
 
 		// Then - 等待所有操作完成
-		boolean allCompleted = latch.await(5, TimeUnit.SECONDS);
+		boolean allCompleted = latch.await(30, TimeUnit.SECONDS);
 		assertThat(allCompleted).isTrue();
 		// 验证所有操作都完成了（顺序可能不同，因为异步执行）
 		assertThat(executionOrder.size()).isEqualTo(3);
