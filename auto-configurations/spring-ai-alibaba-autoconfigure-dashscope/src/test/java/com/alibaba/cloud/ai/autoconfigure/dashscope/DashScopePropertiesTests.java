@@ -206,7 +206,7 @@ public class DashScopePropertiesTests {
 				assertThat(speechProperties.getOptions().getVoice()).isEqualTo("echo");
 				assertThat(speechProperties.getOptions().getResponseFormat())
 					.isEqualTo(DashScopeAudioSpeechApi.ResponseFormat.PCM);
-				assertThat(speechProperties.getOptions().getSpeed()).isEqualTo(0.8f);
+				assertThat(speechProperties.getOptions().getSpeed()).isEqualTo(0.8);
 			});
 	}
 

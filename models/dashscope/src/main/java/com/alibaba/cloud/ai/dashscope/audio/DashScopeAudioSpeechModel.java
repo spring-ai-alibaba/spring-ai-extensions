@@ -16,103 +16,109 @@
 package com.alibaba.cloud.ai.dashscope.audio;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
-import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisModel;
-import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisOptions;
-import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisOutput;
-import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisPrompt;
-import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisResponse;
-import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisResult;
+import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClient;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.audio.tts.Speech;
+import org.springframework.ai.audio.tts.TextToSpeechModel;
+import org.springframework.ai.audio.tts.TextToSpeechOptions;
+import org.springframework.ai.audio.tts.TextToSpeechPrompt;
+import org.springframework.ai.audio.tts.TextToSpeechResponse;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.retry.support.RetryTemplate;
 import reactor.core.publisher.Flux;
 
-import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.UUID;
 
 /**
  * Audio Speech: input text, output audio.
  *
  * @author kevinlin09
+ * @author xuguan
  */
-public class DashScopeAudioSpeechModel implements SpeechSynthesisModel {
+public class DashScopeAudioSpeechModel implements TextToSpeechModel {
 
-	private final DashScopeAudioSpeechApi api;
+	private static final Logger logger = LoggerFactory.getLogger(DashScopeAudioSpeechModel.class);
 
-	private final DashScopeAudioSpeechOptions options;
+	private final DashScopeAudioSpeechApi audioSpeechApi;
+
+	private final DashScopeAudioSpeechOptions defaultOptions;
 
 	private final RetryTemplate retryTemplate;
 
-	public DashScopeAudioSpeechModel(DashScopeAudioSpeechApi api) {
-		this(api, DashScopeAudioSpeechOptions.builder()
+	public DashScopeAudioSpeechModel(DashScopeAudioSpeechApi audioSpeechApi) {
+		this(audioSpeechApi, DashScopeAudioSpeechOptions.builder()
 			.model(DashScopeModel.AudioModel.COSYVOICE_V1.getValue())
 			.voice("longhua")
-			.speed(1.0f)
+			.speed(1.0)
 			.responseFormat(DashScopeAudioSpeechApi.ResponseFormat.MP3)
 			.build());
 	}
 
-	public DashScopeAudioSpeechModel(DashScopeAudioSpeechApi api, DashScopeAudioSpeechOptions options) {
-		this(api, options, RetryUtils.DEFAULT_RETRY_TEMPLATE);
+	public DashScopeAudioSpeechModel(DashScopeAudioSpeechApi audioSpeechApi, DashScopeAudioSpeechOptions defaultOptions) {
+		this(audioSpeechApi, defaultOptions, RetryUtils.DEFAULT_RETRY_TEMPLATE);
 	}
 
-	public DashScopeAudioSpeechModel(DashScopeAudioSpeechApi api, DashScopeAudioSpeechOptions options,
-			RetryTemplate retryTemplate) {
-		this.api = api;
-		this.options = options;
+	public DashScopeAudioSpeechModel(DashScopeAudioSpeechApi audioSpeechApi, DashScopeAudioSpeechOptions defaultOptions,
+		RetryTemplate retryTemplate) {
+		this.audioSpeechApi = audioSpeechApi;
+		this.defaultOptions = defaultOptions;
 		this.retryTemplate = retryTemplate;
 	}
 
 	@Override
-	public SpeechSynthesisResponse call(SpeechSynthesisPrompt prompt) {
-		Flux<SpeechSynthesisResponse> flux = this.stream(prompt);
-		return flux.reduce((resp1, resp2) -> {
-			ByteBuffer combinedBuffer = ByteBuffer.allocate(resp1.getResult().getOutput().getAudio().remaining()
-					+ resp2.getResult().getOutput().getAudio().remaining());
-			combinedBuffer.put(resp1.getResult().getOutput().getAudio());
-			combinedBuffer.put(resp2.getResult().getOutput().getAudio());
-			combinedBuffer.flip();
-
-			return new SpeechSynthesisResponse(new SpeechSynthesisResult(new SpeechSynthesisOutput(combinedBuffer)));
-		}).block();
+	public TextToSpeechResponse call(TextToSpeechPrompt prompt) {
+		Flux<TextToSpeechResponse> flux = this.stream(prompt);
+		return flux.flatMapIterable(TextToSpeechResponse::getResults)
+			.collectList()
+			.map(TextToSpeechResponse::new)
+			.block();
 	}
 
 	@Override
-	public Flux<SpeechSynthesisResponse> stream(SpeechSynthesisPrompt prompt) {
-		return this.retryTemplate.execute(ctx -> this.api.streamOut(createRequest(prompt))
-			.map(SpeechSynthesisOutput::new)
-			.map(SpeechSynthesisResult::new)
-			.map(SpeechSynthesisResponse::new));
+	public Flux<TextToSpeechResponse> stream(TextToSpeechPrompt prompt) {
+		String taskId = UUID.randomUUID().toString();
+		DashScopeAudioSpeechApi.Request runTaskRequest = this.createRequest(prompt, taskId,
+			DashScopeWebSocketClient.EventType.RUN_TASK);
+
+		logger.info("send run-task");
+		return this.retryTemplate.execute(ctx -> this.audioSpeechApi.streamBinaryOut(runTaskRequest)
+			.map(byteBuffer -> {
+				byte[] data = new byte[byteBuffer.remaining()];
+				byteBuffer.get(data);
+				return new TextToSpeechResponse(List.of(new Speech(data)));
+			}));
 	}
 
-	public DashScopeAudioSpeechApi.Request createRequest(SpeechSynthesisPrompt prompt) {
+	public DashScopeAudioSpeechApi.Request createRequest(TextToSpeechPrompt prompt,
+		String taskId, DashScopeWebSocketClient.EventType action) {
+		DashScopeAudioSpeechOptions options = this.mergeOptions(prompt);
+
+		return new DashScopeAudioSpeechApi.Request(
+			new DashScopeAudioSpeechApi.Request.RequestHeader(action, taskId, "out"),
+			new DashScopeAudioSpeechApi.Request.RequestPayload(options.getModel(),
+				"audio", "tts", "SpeechSynthesizer",
+				new DashScopeAudioSpeechApi.Request.RequestPayload.RequestPayloadInput(prompt.getInstructions().getText()),
+				new DashScopeAudioSpeechApi.Request.RequestPayload.RequestPayloadParameters(
+					options.getVolume(), options.getRequestTextType(), options.getVoice(), options.getSampleRate(),
+					options.getSpeed(), options.getResponseFormat(), options.getPitch(), options.getEnableSsml(),
+					options.getBitRate(), options.getSeed(), options.getLanguageHints(), options.getInstruction(),
+					options.getEnablePhonemeTimestamp(), options.getEnableWordTimestamp())));
+	}
+
+	private DashScopeAudioSpeechOptions mergeOptions(TextToSpeechPrompt prompt) {
 		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder().build();
 		if (prompt.getOptions() != null) {
 			DashScopeAudioSpeechOptions runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(),
-					SpeechSynthesisOptions.class, DashScopeAudioSpeechOptions.class);
+				TextToSpeechOptions.class, DashScopeAudioSpeechOptions.class);
 
 			options = ModelOptionsUtils.merge(runtimeOptions, options, DashScopeAudioSpeechOptions.class);
 		}
 
-		options = ModelOptionsUtils.merge(options, this.options, DashScopeAudioSpeechOptions.class);
-
-		return new DashScopeAudioSpeechApi.Request(
-				new DashScopeAudioSpeechApi.Request.RequestHeader("run-task", UUID.randomUUID().toString(), "out"),
-				new DashScopeAudioSpeechApi.Request.RequestPayload(options.getModel(), "audio", "tts",
-						"SpeechSynthesizer",
-						new DashScopeAudioSpeechApi.Request.RequestPayload.RequestPayloadInput(
-								prompt.getInstructions().get(0).getText()),
-						new DashScopeAudioSpeechApi.Request.RequestPayload.RequestPayloadParameters(options.getVolume(),
-								options.getRequestTextType().getValue(), options.getVoice(), options.getSampleRate(),
-								options.getSpeed(), options.getResponseFormat().getValue(), options.getPitch(),
-								options.getEnablePhonemeTimestamp(), options.getEnableWordTimestamp())));
-	}
-
-	private SpeechSynthesisResponse toResponse(DashScopeAudioSpeechApi.Response apiResponse) {
-		SpeechSynthesisOutput output = new SpeechSynthesisOutput(apiResponse.getAudio());
-		SpeechSynthesisResult result = new SpeechSynthesisResult(output);
-		return new SpeechSynthesisResponse(result);
+		return ModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioSpeechOptions.class);
 	}
 
 }

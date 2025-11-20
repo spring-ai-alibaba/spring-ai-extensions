@@ -18,7 +18,6 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechModel;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechOptions;
-import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisPrompt;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;
@@ -26,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.springframework.ai.audio.tts.TextToSpeechPrompt;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -92,14 +92,12 @@ public class DashScopeAutoConfigurationIT {
 			.run(context -> {
 				DashScopeAudioSpeechModel speechModel = context.getBean(DashScopeAudioSpeechModel.class);
 				byte[] response = speechModel
-					.call(new SpeechSynthesisPrompt("H",
+					.call(new TextToSpeechPrompt("H",
 							DashScopeAudioSpeechOptions.builder()
 								.responseFormat(DashScopeAudioSpeechApi.ResponseFormat.MP3)
 								.build()))
 					.getResult()
-					.getOutput()
-					.getAudio()
-					.array();
+					.getOutput();
 				assertThat(response).isNotNull();
 				// todo: check mp3 types
 				assertThat(response.length).isNotEqualTo(0);

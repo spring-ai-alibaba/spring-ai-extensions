@@ -15,8 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.metadata.audio;
 
-import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisResult;
-
+import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
 import org.springframework.ai.chat.metadata.EmptyRateLimit;
 import org.springframework.ai.chat.metadata.RateLimit;
 import org.springframework.ai.model.MutableResponseMetadata;
@@ -47,7 +46,7 @@ public class DashScopeAudioSpeechResponseMetadata extends MutableResponseMetadat
 		this.rateLimit = rateLimit;
 	}
 
-	public static DashScopeAudioSpeechResponseMetadata from(SpeechSynthesisResult result) {
+	public static DashScopeAudioSpeechResponseMetadata from(DashScopeAudioTranscriptionApi.Response result) {
 		Assert.notNull(result, "DashScope speech must not be null");
 		DashScopeAudioSpeechResponseMetadata speechResponseMetadata = new DashScopeAudioSpeechResponseMetadata();
 		return speechResponseMetadata;

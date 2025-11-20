@@ -15,7 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.metadata.audio;
 
-import com.alibaba.cloud.ai.dashscope.audio.synthesis.SpeechSynthesisResult;
+import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.metadata.EmptyRateLimit;
 import org.springframework.ai.chat.metadata.RateLimit;
@@ -57,7 +57,7 @@ class DashScopeAudioSpeechResponseMetadataTests {
 	@Test
 	void testFromSpeechSynthesisResult() {
 		// Test factory method with SpeechSynthesisResult
-		SpeechSynthesisResult result = mock(SpeechSynthesisResult.class);
+		DashScopeAudioTranscriptionApi.Response result = mock(DashScopeAudioTranscriptionApi.Response.class);
 		DashScopeAudioSpeechResponseMetadata metadata = DashScopeAudioSpeechResponseMetadata.from(result);
 
 		// Verify metadata is created successfully
@@ -79,7 +79,7 @@ class DashScopeAudioSpeechResponseMetadataTests {
 	@Test
 	void testFromWithNullResult() {
 		// Test factory method with null SpeechSynthesisResult
-		assertThatThrownBy(() -> DashScopeAudioSpeechResponseMetadata.from((SpeechSynthesisResult) null))
+		assertThatThrownBy(() -> DashScopeAudioSpeechResponseMetadata.from((DashScopeAudioTranscriptionApi.Response) null))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("DashScope speech must not be null");
 

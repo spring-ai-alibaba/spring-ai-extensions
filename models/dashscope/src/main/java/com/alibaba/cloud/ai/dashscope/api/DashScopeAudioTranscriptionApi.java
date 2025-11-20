@@ -179,8 +179,7 @@ public class DashScopeAudioTranscriptionApi {
         .handle(
             (msg, sink) -> {
               try {
-                RealtimeResponse response =
-                    this.objectMapper.readValue(msg, RealtimeResponse.class);
+                RealtimeResponse response = this.objectMapper.readValue(msg, RealtimeResponse.class);
                 sink.next(response);
               } catch (JsonProcessingException e) {
                 sink.error(new DashScopeException(String.valueOf(e)));

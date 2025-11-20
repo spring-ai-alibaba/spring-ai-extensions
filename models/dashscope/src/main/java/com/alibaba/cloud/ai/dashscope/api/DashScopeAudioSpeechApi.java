@@ -15,20 +15,31 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
-import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_WEBSOCKET_URL;
-
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClient;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.ByteBuffer;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import org.springframework.ai.util.JacksonUtils;
 import reactor.core.publisher.Flux;
 
+import java.nio.ByteBuffer;
+import java.util.List;
+
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_WEBSOCKET_URL;
+
+/**
+ * @author xuguan
+ */
 public class DashScopeAudioSpeechApi {
 
 	private final DashScopeWebSocketClient webSocketClient;
+
+	private final ObjectMapper objectMapper;
 
 	public DashScopeAudioSpeechApi(String apiKey) {
 		this(apiKey, null);
@@ -44,6 +55,28 @@ public class DashScopeAudioSpeechApi {
 			.workSpaceId(workSpaceId)
 			.url(websocketUrl)
 			.build());
+
+		this.objectMapper =
+			JsonMapper.builder()
+				// Deserialization configuration
+				.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+				// Serialization configuration
+				.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+				.serializationInclusion(JsonInclude.Include.NON_NULL)
+				// Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
+				.addModules(JacksonUtils.instantiateAvailableModules())
+				.build();
+	}
+
+	public Flux<ByteBuffer> streamBinaryOut(Request request) {
+		try {
+			String message = this.objectMapper.writeValueAsString(request);
+			return this.webSocketClient.streamBinaryOut(message);
+		}
+		catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	// @formatter:off
@@ -52,10 +85,11 @@ public class DashScopeAudioSpeechApi {
 			@JsonProperty("header") RequestHeader header,
 			@JsonProperty("payload") RequestPayload payload) {
 		public record RequestHeader(
-			@JsonProperty("action") String action,
+			@JsonProperty("action") DashScopeWebSocketClient.EventType action,
 			@JsonProperty("task_id") String taskId,
 			@JsonProperty("streaming") String streaming
 		) {}
+		@JsonInclude(JsonInclude.Include.NON_NULL)
 		public record RequestPayload(
 			@JsonProperty("model") String model,
 			@JsonProperty("task_group") String taskGroup,
@@ -63,17 +97,24 @@ public class DashScopeAudioSpeechApi {
 			@JsonProperty("function") String function,
 			@JsonProperty("input") RequestPayloadInput input,
 			@JsonProperty("parameters") RequestPayloadParameters parameters) {
+			@JsonInclude(JsonInclude.Include.NON_NULL)
 			public record RequestPayloadInput(
 				@JsonProperty("text") String text
 			) {}
+			@JsonInclude(JsonInclude.Include.NON_NULL)
 			public record RequestPayloadParameters(
 				@JsonProperty("volume") Integer volume,
-				@JsonProperty("text_type") String textType,
+				@JsonProperty("text_type") RequestTextType textType,
 				@JsonProperty("voice") String voice,
 				@JsonProperty("sample_rate") Integer sampleRate,
-				@JsonProperty("rate") Float rate,
-				@JsonProperty("format") String format,
+				@JsonProperty("rate") Double rate,
+				@JsonProperty("format") ResponseFormat format,
 				@JsonProperty("pitch") Double pitch,
+				@JsonProperty("enable_ssml") Boolean enableSsml,
+				@JsonProperty("bit_rate") Boolean bitRate,
+				@JsonProperty("seed") Integer seed,
+				@JsonProperty("language_hints") List<String> languageHints,
+				@JsonProperty("instruction") String instruction,
 				@JsonProperty("phoneme_timestamp_enabled") Boolean phonemeTimestampEnabled,
 				@JsonProperty("word_timestamp_enabled") Boolean wordTimestampEnabled
 			) {}
@@ -90,21 +131,11 @@ public class DashScopeAudioSpeechApi {
     }
     // @formatter:on
 
-	public Flux<ByteBuffer> streamOut(Request request) {
-		try {
-			String message = (new ObjectMapper()).writeValueAsString(request);
-			return this.webSocketClient.streamBinaryOut(message);
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	public enum RequestTextType {
 
 		// @formatter:off
-		@JsonProperty("plain_text") PLAIN_TEXT("PlainText"),
-		@JsonProperty("ssml") SSML("SSML");
+		@JsonProperty("PlainText") PLAIN_TEXT("PlainText"),
+		@JsonProperty("SSML") SSML("SSML");
 		// @formatter:on
 
 		private final String value;

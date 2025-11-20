@@ -15,6 +15,9 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
+import java.util.List;
+
+import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -66,13 +69,14 @@ class DashScopeSpeechSynthesisApiTests {
 	void testRequestClasses() {
 		// Test creating request objects
 		DashScopeAudioSpeechApi.Request.RequestHeader header = new DashScopeAudioSpeechApi.Request.RequestHeader(
-				"action", "task-id", "true");
+				DashScopeWebSocketClient.EventType.RUN_TASK, "task-id", "true");
 
 		DashScopeAudioSpeechApi.Request.RequestPayload.RequestPayloadInput input = new DashScopeAudioSpeechApi.Request.RequestPayload.RequestPayloadInput(
 				"Hello, world!");
 
 		DashScopeAudioSpeechApi.Request.RequestPayload.RequestPayloadParameters parameters = new DashScopeAudioSpeechApi.Request.RequestPayload.RequestPayloadParameters(
-				100, "plain", "female", 16000, 1.0F, "wav", 1.0, true, true);
+				100, DashScopeAudioSpeechApi.RequestTextType.PLAIN_TEXT, "female", 16000, 1.0, DashScopeAudioSpeechApi.ResponseFormat.WAV, 1.0, true,
+			true, 0, List.of("zh"), "neutral", true, true);
 
 		DashScopeAudioSpeechApi.Request.RequestPayload payload = new DashScopeAudioSpeechApi.Request.RequestPayload(
 				"model", "task-group", "task", "function", input, parameters);
@@ -85,7 +89,7 @@ class DashScopeSpeechSynthesisApiTests {
 		assertNotNull(request.payload(), "Request payload should not be null");
 
 		// Verify header properties
-		assertEquals("action", request.header().action(), "Action should match");
+		assertEquals(DashScopeWebSocketClient.EventType.RUN_TASK, request.header().action(), "Action should match");
 		assertEquals("task-id", request.header().taskId(), "Task ID should match");
 		assertEquals("true", request.header().streaming(), "Streaming should match");
 
@@ -102,14 +106,20 @@ class DashScopeSpeechSynthesisApiTests {
 		// Verify parameters properties
 		assertNotNull(request.payload().parameters(), "Payload parameters should not be null");
 		assertEquals(100, request.payload().parameters().volume(), "Volume should match");
-		assertEquals("plain", request.payload().parameters().textType(), "Text type should match");
+		assertEquals("PlainText", request.payload().parameters().textType().getValue(), "Text type should match");
 		assertEquals("female", request.payload().parameters().voice(), "Voice should match");
 		assertEquals(16000, request.payload().parameters().sampleRate(), "Sample rate should match");
 		assertEquals(1.0F, request.payload().parameters().rate(), "Rate should match");
-		assertEquals("wav", request.payload().parameters().format(), "Format should match");
+		assertEquals("wav", request.payload().parameters().format().getValue(), "Format should match");
 		assertEquals(1.0, request.payload().parameters().pitch(), "Pitch should match");
+		assertTrue(request.payload().parameters().enableSsml(), "Ssml should match");
+		assertTrue(request.payload().parameters().bitRate(), "Bit rate should match");
+		assertEquals(0, request.payload().parameters().seed(), "Seed should match");
+		assertEquals(List.of("zh"), request.payload().parameters().languageHints(), "LanguageHints should match");
+		assertEquals("neutral", request.payload().parameters().instruction(), "Instruction should match");
 		assertTrue(request.payload().parameters().phonemeTimestampEnabled(), "Phoneme timestamp should be enabled");
 		assertTrue(request.payload().parameters().wordTimestampEnabled(), "Word timestamp should be enabled");
+
 	}
 
 	@Test

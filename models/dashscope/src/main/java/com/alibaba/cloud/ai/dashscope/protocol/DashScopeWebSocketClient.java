@@ -64,11 +64,9 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	private WebSocket webSocketClient;
 
-	FluxSink<ByteBuffer> emitter;
+	FluxSink<ByteBuffer> binaryEmitter;
 
-	FluxSink<ByteBuffer> binary_emitter;
-
-	FluxSink<String> text_emitter;
+	FluxSink<String> textEmitter;
 
 	public DashScopeWebSocketClient(DashScopeWebSocketClientOptions options) {
 		this.options = options;
@@ -87,7 +85,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	public Flux<ByteBuffer> streamBinaryOut(String text) {
 		Flux<ByteBuffer> flux = Flux.<ByteBuffer>create(emitter -> {
-			this.binary_emitter = emitter;
+			this.binaryEmitter = emitter;
 		}, FluxSink.OverflowStrategy.BUFFER);
 
 		sendText(text);
@@ -97,7 +95,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	public Flux<String> streamTextOut(Flux<ByteBuffer> binary) {
 		Flux<String> flux = Flux.<String>create(emitter -> {
-			this.text_emitter = emitter;
+			this.textEmitter = emitter;
 		}, FluxSink.OverflowStrategy.BUFFER);
 
 		binary.subscribe(this::sendBinary);
@@ -228,8 +226,8 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 					emittersError("task failed", new Exception());
 					break;
 				case RESULT_GENERATED:
-					if (this.text_emitter != null) {
-						text_emitter.next(text);
+					if (this.textEmitter != null) {
+						textEmitter.next(text);
 					}
 					break;
 				default:
@@ -245,31 +243,31 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	@Override
 	public void onMessage(WebSocket webSocket, ByteString bytes) {
 		logger.debug("receive ws event onMessage(bytes): handle={}, size={}", webSocket, bytes.size());
-		if (this.binary_emitter != null) {
-			binary_emitter.next(bytes.asByteBuffer());
+		if (this.binaryEmitter != null) {
+			binaryEmitter.next(bytes.asByteBuffer());
 		}
 	}
 
 	private void emittersComplete(String event) {
-		if (this.binary_emitter != null && !this.binary_emitter.isCancelled()) {
+		if (this.binaryEmitter != null && !this.binaryEmitter.isCancelled()) {
 			logger.info("binary emitter handling: complete on {}", event);
-			this.binary_emitter.complete();
+			this.binaryEmitter.complete();
 		}
-		if (this.text_emitter != null && !this.text_emitter.isCancelled()) {
+		if (this.textEmitter != null && !this.textEmitter.isCancelled()) {
 			logger.info("text emitter handling: complete on {}", event);
-			this.text_emitter.complete();
+			this.textEmitter.complete();
 			logger.info("done");
 		}
 	}
 
 	private void emittersError(String event, Throwable t) {
-		if (this.binary_emitter != null && !this.binary_emitter.isCancelled()) {
+		if (this.binaryEmitter != null && !this.binaryEmitter.isCancelled()) {
 			logger.info("binary emitter handling: error on {}", event);
-			this.binary_emitter.error(t);
+			this.binaryEmitter.error(t);
 		}
-		if (this.text_emitter != null && !this.text_emitter.isCancelled()) {
+		if (this.textEmitter != null && !this.textEmitter.isCancelled()) {
 			logger.info("text emitter handling: error on {}", event);
-			this.text_emitter.error(t);
+			this.textEmitter.error(t);
 		}
 	}
 

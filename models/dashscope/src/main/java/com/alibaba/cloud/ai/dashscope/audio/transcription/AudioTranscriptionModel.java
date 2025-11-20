@@ -15,21 +15,30 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
+import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
-
-import org.springframework.ai.model.Model;
-import reactor.core.publisher.Flux;
+import org.springframework.ai.audio.transcription.TranscriptionModel;
+import org.springframework.core.io.Resource;
+import org.springframework.lang.Nullable;
 
 /**
  * @author kevinlin09
  * @author xuguan
  */
-public interface AudioTranscriptionModel extends Model<AudioTranscriptionPrompt, AudioTranscriptionResponse> {
+public interface AudioTranscriptionModel extends TranscriptionModel, StreamingTranscriptionModel {
 
-	@Override
-	AudioTranscriptionResponse call(AudioTranscriptionPrompt prompt);
-
-	Flux<AudioTranscriptionResponse> realtimeStream(AudioTranscriptionPrompt prompt);
+	@Nullable
+	default String call(Resource resource) {
+		AudioTranscriptionPrompt prompt = new AudioTranscriptionPrompt(resource);
+		AudioTranscriptionResponse transcriptionResponse = call(prompt);
+		return transcriptionResponse.getResult().getOutput();
+	}
+	@Nullable
+	default String call(Resource resource, AudioTranscriptionOptions options) {
+		AudioTranscriptionPrompt prompt = new AudioTranscriptionPrompt(resource, options);
+		AudioTranscriptionResponse transcriptionResponse = call(prompt);
+		return transcriptionResponse.getResult().getOutput();
+	}
 
 }

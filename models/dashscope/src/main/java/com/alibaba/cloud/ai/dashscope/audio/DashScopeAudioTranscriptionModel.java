@@ -53,16 +53,15 @@ import java.util.UUID;
  *
  * @author xuguan
  */
-
 public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel {
 
 	private static final Logger logger = LoggerFactory.getLogger(DashScopeAudioTranscriptionModel.class);
 
 	private final DashScopeAudioTranscriptionApi audioTranscriptionApi;
 
-	private final RetryTemplate retryTemplate;
-
 	private final DashScopeAudioTranscriptionOptions defaultOptions;
+
+	private final RetryTemplate retryTemplate;
 
 	public DashScopeAudioTranscriptionModel(DashScopeAudioTranscriptionApi api,
 			DashScopeAudioTranscriptionOptions defaultOptions) {
@@ -80,7 +79,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 
 	@Override
 	public AudioTranscriptionResponse call(AudioTranscriptionPrompt prompt) {
-		DashScopeAudioTranscriptionApi.Request request = createRequest(prompt);
+		DashScopeAudioTranscriptionApi.Request request = this.createRequest(prompt);
 
 		ResponseEntity<DashScopeAudioTranscriptionApi.Response> submitResponse = this.audioTranscriptionApi.submitTask(request);
 
@@ -117,11 +116,11 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 				switch (taskStatus) {
 					case FAILED, CANCELED, UNKNOWN -> {
 						logger.error("task failed");
-						return toResponse(taskResultResponse);
+						return this.toResponse(taskResultResponse);
 					}
 					case SUCCEEDED -> {
 						logger.info("task succeeded");
-						return toResponse(taskResultResponse);
+						return this.toResponse(taskResultResponse);
 					}
 					default -> throw new TransientAiException("Audio generation still pending");
 				}
@@ -131,9 +130,9 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	}
 
 	@Override
-	public Flux<AudioTranscriptionResponse> realtimeStream(AudioTranscriptionPrompt prompt) {
+	public Flux<AudioTranscriptionResponse> stream(AudioTranscriptionPrompt prompt) {
 		String taskId = UUID.randomUUID().toString();
-		DashScopeAudioTranscriptionApi.RealtimeRequest runTaskRequest = createRealtimeRequest(prompt, taskId,
+		DashScopeAudioTranscriptionApi.RealtimeRequest runTaskRequest = this.createRealtimeRequest(prompt, taskId,
 			DashScopeWebSocketClient.EventType.RUN_TASK);
 
 		logger.info("send run-task, taskId={}", taskId);
@@ -153,8 +152,8 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 			})
 			.delayElements(Duration.ofMillis(100), Schedulers.boundedElastic())
 			.doOnComplete(() -> {
-				DashScopeAudioTranscriptionApi.RealtimeRequest finishTaskRequest = createRealtimeRequest(prompt, taskId,
-					DashScopeWebSocketClient.EventType.FINISH_TASK);
+				DashScopeAudioTranscriptionApi.RealtimeRequest finishTaskRequest = this.createRealtimeRequest(prompt,
+					taskId, DashScopeWebSocketClient.EventType.FINISH_TASK);
 
 				logger.info("send finish-task, taskId={}", taskId);
 				this.audioTranscriptionApi.realtimeSendTask(finishTaskRequest);
@@ -164,7 +163,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	}
 
 	private DashScopeAudioTranscriptionApi.Request createRequest(AudioTranscriptionPrompt prompt) {
-		DashScopeAudioTranscriptionOptions options = mergeOptions(prompt);
+		DashScopeAudioTranscriptionOptions options = this.mergeOptions(prompt);
 
 		List<String> fileUrls = List.of();
 		try {
@@ -201,7 +200,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 
 	private DashScopeAudioTranscriptionApi.RealtimeRequest createRealtimeRequest(AudioTranscriptionPrompt prompt,
 			String taskId, DashScopeWebSocketClient.EventType action) {
-		DashScopeAudioTranscriptionOptions options = mergeOptions(prompt);
+		DashScopeAudioTranscriptionOptions options = this.mergeOptions(prompt);
 
 		String model = options.getModel();
 		String vocabularyId = options.getVocabularyId();
