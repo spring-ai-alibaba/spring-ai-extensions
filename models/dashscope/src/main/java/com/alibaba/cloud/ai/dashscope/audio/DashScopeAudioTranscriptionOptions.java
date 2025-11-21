@@ -297,118 +297,118 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 
 		private final DashScopeAudioTranscriptionOptions options = new DashScopeAudioTranscriptionOptions();
 
-		public Builder withModel(String model) {
+		public Builder model(String model) {
 			options.setModel(model);
 			return this;
 		}
 
-		public Builder withVocabularyId(String vocabularyId) {
+		public Builder vocabularyId(String vocabularyId) {
 			options.setVocabularyId(vocabularyId);
 			return this;
 		}
 
-		public Builder withResourceId(String resourceId) {
+		public Builder resourceId(String resourceId) {
 			options.setResourceId(resourceId);
 			return this;
 		}
 
-		public Builder withSampleRate(Integer sampleRate) {
+		public Builder sampleRate(Integer sampleRate) {
 			options.setSampleRate(sampleRate);
 			return this;
 		}
 
-		public Builder withFormat(DashScopeAudioTranscriptionApi.AudioFormat format) {
+		public Builder format(DashScopeAudioTranscriptionApi.AudioFormat format) {
 			options.setFormat(format);
 			return this;
 		}
 
-		public Builder withChannelId(List<Integer> channelId) {
+		public Builder channelId(List<Integer> channelId) {
 			options.setChannelId(channelId);
 			return this;
 		}
 
-		public Builder withDisfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+		public Builder disfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
 			options.setDisfluencyRemovalEnabled(disfluencyRemovalEnabled);
 			return this;
 		}
 
-		public Builder withTimestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
+		public Builder timestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
 			options.setTimestampAlignmentEnabled(timestampAlignmentEnabled);
 			return this;
 		}
 
-		public Builder withSpecialWordFilter(String specialWordFilter) {
+		public Builder specialWordFilter(String specialWordFilter) {
 			options.setSpecialWordFilter(specialWordFilter);
 			return this;
 		}
 
-		public Builder withLanguageHints(List<String> languageHints) {
+		public Builder languageHints(List<String> languageHints) {
 			options.setLanguageHints(languageHints);
 			return this;
 		}
 
-		public Builder withDiarizationEnabled(Boolean diarizationEnabled) {
+		public Builder diarizationEnabled(Boolean diarizationEnabled) {
 			options.setDiarizationEnabled(diarizationEnabled);
 			return this;
 		}
 
-		public Builder withSpeakerCount(Integer speakerCount) {
+		public Builder speakerCount(Integer speakerCount) {
 			options.setSpeakerCount(speakerCount);
 			return this;
 		}
 
 
-		public Builder withSemanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
+		public Builder semanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
 			options.setSemanticPunctuationEnabled(semanticPunctuationEnabled);
 			return this;
 		}
 
-		public Builder withMaxSentenceSilence(Integer maxSentenceSilence) {
+		public Builder maxSentenceSilence(Integer maxSentenceSilence) {
 			options.setMaxSentenceSilence(maxSentenceSilence);
 			return this;
 		}
 
-		public Builder withMultiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
+		public Builder multiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
 			options.setMultiThresholdModeEnabled(multiThresholdModeEnabled);
 			return this;
 		}
 
-		public Builder withPunctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
+		public Builder punctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
 			options.setPunctuationPredictionEnabled(punctuationPredictionEnabled);
 			return this;
 		}
 
-		public Builder withHeartbeat(Boolean heartbeat) {
+		public Builder heartbeat(Boolean heartbeat) {
 			options.setHeartbeat(heartbeat);
 			return this;
 		}
 
-		public Builder withInverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
+		public Builder inverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
 			options.setInverseTextNormalizationEnabled(inverseTextNormalizationEnabled);
 			return this;
 		}
 
-		public Builder withSourceLanguage(String sourceLanguage) {
+		public Builder sourceLanguage(String sourceLanguage) {
 			options.setSourceLanguage(sourceLanguage);
 			return this;
 		}
 
-		public Builder withTranscriptionEnabled(Boolean transcriptionEnabled) {
+		public Builder transcriptionEnabled(Boolean transcriptionEnabled) {
 			options.setTranscriptionEnabled(transcriptionEnabled);
 			return this;
 		}
 
-		public Builder withTranslationEnabled(Boolean translationEnabled) {
+		public Builder translationEnabled(Boolean translationEnabled) {
 			options.setTranslationEnabled(translationEnabled);
 			return this;
 		}
 
-		public Builder withTranslationTargetLanguages(List<String> translationTargetLanguages) {
+		public Builder translationTargetLanguages(List<String> translationTargetLanguages) {
 			options.setTranslationTargetLanguages(translationTargetLanguages);
 			return this;
 		}
 
-		public Builder withMaxEndSilence(Integer maxEndSilence) {
+		public Builder maxEndSilence(Integer maxEndSilence) {
 			options.setMaxEndSilence(maxEndSilence);
 			return this;
 		}

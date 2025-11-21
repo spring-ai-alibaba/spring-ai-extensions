@@ -723,8 +723,8 @@ public class DashScopeChatModel implements ChatModel {
 		private DashScopeApi dashScopeApi;
 
 		private DashScopeChatOptions defaultOptions = DashScopeChatOptions.builder()
-			.withModel(DEFAULT_MODEL_NAME)
-			.withTemperature(DEFAULT_TEMPERATURE)
+			.model(DEFAULT_MODEL_NAME)
+			.temperature(DEFAULT_TEMPERATURE)
 			.build();
 
 		private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;

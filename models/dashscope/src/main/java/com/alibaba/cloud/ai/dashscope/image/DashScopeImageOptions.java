@@ -300,60 +300,15 @@ public class DashScopeImageOptions implements ImageOptions {
 
   @Override
   public String toString() {
-    return "DashScopeImageOptions{"
-        + "model='"
-        + model
-        + '\''
-        + ", n="
-        + n
-        + ", width="
-        + width
-        + ", height="
-        + height
-        + ", size='"
-        + size
-        + '\''
-        + ", style='"
-        + style
-        + '\''
-        + ", seed="
-        + seed
-        + ", refImg='"
-        + refImg
-        + '\''
-        + ", refStrength="
-        + refStrength
-        + ", refMode='"
-        + refMode
-        + '\''
-        + ", negativePrompt='"
-        + negativePrompt
-        + '\''
-        + ", promptExtend="
-        + promptExtend
-        + ", watermark="
-        + watermark
-        + ", function='"
-        + function
-        + '\''
-        + ", baseImageUrl='"
-        + baseImageUrl
-        + '\''
-        + ", maskImageUrl='"
-        + maskImageUrl
-        + '\''
-        + ", sketchImageUrl='"
-        + sketchImageUrl
-        + '\''
-        + ", sketchWeight="
-        + sketchWeight
-        + ", sketchExtraction="
-        + sketchExtraction
-        + ", sketchColor="
-        + Arrays.toString(sketchColor)
-        + ", maskColor="
-        + Arrays.toString(maskColor)
-        + '}';
+    return "DashScopeImageOptions{" + "model='" + this.model + '\'' + ", n=" + this.n + ", width=" + this.width
+        + ", height=" + this.height + ", size='" + this.size + '\'' + ", style='" + this.style + '\'' + ", seed="
+        + this.seed + ", refImg='" + this.refImg + '\'' + ", refStrength=" + this.refStrength + ", responseFormat='"
+        + this.responseFormat + '\'' + ", refMode='" + this.refMode + '\'' + ", negativePrompt='"
+        + this.negativePrompt + '\'' + ", promptExtend=" + this.promptExtend + ", watermark=" + this.watermark
+        + ", function='" + this.function + '\'' + ", baseImageUrl='" + this.baseImageUrl + '\'' + ", maskImageUrl='"
+        + this.maskImageUrl + '\'' + ", sketchImageUrl='" + this.sketchImageUrl + '\'' + ", sketchWeight="
+        + this.sketchWeight + ", sketchExtraction=" + this.sketchExtraction + ", sketchColor="
+        + Arrays.toString(this.sketchColor) + ", maskColor=" + Arrays.toString(this.maskColor) + '}';
   }
 
   public static class Builder {

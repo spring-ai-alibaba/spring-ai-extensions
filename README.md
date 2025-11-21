@@ -57,7 +57,7 @@ public class HelloworldController {
         )
         .defaultOptions(
             DashScopeChatOptions.builder()
-                .withTopP(0.7)
+                .topP(0.7)
                 .build()
         )
         .build();
