@@ -297,9 +297,19 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 
 		private final DashScopeAudioTranscriptionOptions options = new DashScopeAudioTranscriptionOptions();
 
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withModel(String model) {
+			return this.model(model);
+		}
+
 		public Builder model(String model) {
 			options.setModel(model);
 			return this;
+		}
+
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withVocabularyId(String vocabularyId) {
+			return this.vocabularyId(vocabularyId);
 		}
 
 		public Builder vocabularyId(String vocabularyId) {
@@ -307,9 +317,19 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withResourceId(String resourceId) {
+			return this.resourceId(resourceId);
+		}
+
 		public Builder resourceId(String resourceId) {
 			options.setResourceId(resourceId);
 			return this;
+		}
+
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withSampleRate(Integer sampleRate) {
+			return this.sampleRate(sampleRate);
 		}
 
 		public Builder sampleRate(Integer sampleRate) {
@@ -317,9 +337,19 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withFormat(DashScopeAudioTranscriptionApi.AudioFormat format) {
+			return this.format(format);
+		}
+
 		public Builder format(DashScopeAudioTranscriptionApi.AudioFormat format) {
 			options.setFormat(format);
 			return this;
+		}
+
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withChannelId(List<Integer> channelId) {
+			return this.channelId(channelId);
 		}
 
 		public Builder channelId(List<Integer> channelId) {
@@ -327,9 +357,19 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withDisfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+			return this.disfluencyRemovalEnabled(disfluencyRemovalEnabled);
+		}
+
 		public Builder disfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
 			options.setDisfluencyRemovalEnabled(disfluencyRemovalEnabled);
 			return this;
+		}
+
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withTimestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
+			return this.timestampAlignmentEnabled(timestampAlignmentEnabled);
 		}
 
 		public Builder timestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
@@ -337,9 +377,19 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withSpecialWordFilter(String specialWordFilter) {
+			return this.specialWordFilter(specialWordFilter);
+		}
+
 		public Builder specialWordFilter(String specialWordFilter) {
 			options.setSpecialWordFilter(specialWordFilter);
 			return this;
+		}
+
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withLanguageHints(List<String> languageHints) {
+			return this.languageHints(languageHints);
 		}
 
 		public Builder languageHints(List<String> languageHints) {
@@ -347,9 +397,19 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withDiarizationEnabled(Boolean diarizationEnabled) {
+			return this.diarizationEnabled(diarizationEnabled);
+		}
+
 		public Builder diarizationEnabled(Boolean diarizationEnabled) {
 			options.setDiarizationEnabled(diarizationEnabled);
 			return this;
+		}
+
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withSpeakerCount(Integer speakerCount) {
+			return this.speakerCount(speakerCount);
 		}
 
 		public Builder speakerCount(Integer speakerCount) {
@@ -357,10 +417,19 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withSemanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
+			return this.semanticPunctuationEnabled(semanticPunctuationEnabled);
+		}
 
 		public Builder semanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
 			options.setSemanticPunctuationEnabled(semanticPunctuationEnabled);
 			return this;
+		}
+
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withMaxSentenceSilence(Integer maxSentenceSilence) {
+			return this.maxSentenceSilence(maxSentenceSilence);
 		}
 
 		public Builder maxSentenceSilence(Integer maxSentenceSilence) {
@@ -368,9 +437,19 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withMultiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
+			return this.multiThresholdModeEnabled(multiThresholdModeEnabled);
+		}
+
 		public Builder multiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
 			options.setMultiThresholdModeEnabled(multiThresholdModeEnabled);
 			return this;
+		}
+
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withPunctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
+			return this.punctuationPredictionEnabled(punctuationPredictionEnabled);
 		}
 
 		public Builder punctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
@@ -378,9 +457,19 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withHeartbeat(Boolean heartbeat) {
+			return this.heartbeat(heartbeat);
+		}
+
 		public Builder heartbeat(Boolean heartbeat) {
 			options.setHeartbeat(heartbeat);
 			return this;
+		}
+
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withInverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
+			return this.inverseTextNormalizationEnabled(inverseTextNormalizationEnabled);
 		}
 
 		public Builder inverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
@@ -388,9 +477,19 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withSourceLanguage(String sourceLanguage) {
+			return this.sourceLanguage(sourceLanguage);
+		}
+
 		public Builder sourceLanguage(String sourceLanguage) {
 			options.setSourceLanguage(sourceLanguage);
 			return this;
+		}
+
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withTranscriptionEnabled(Boolean transcriptionEnabled) {
+			return this.transcriptionEnabled(transcriptionEnabled);
 		}
 
 		public Builder transcriptionEnabled(Boolean transcriptionEnabled) {
@@ -398,14 +497,29 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			return this;
 		}
 
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withTranslationEnabled(Boolean translationEnabled) {
+			return this.translationEnabled(translationEnabled);
+		}
+
 		public Builder translationEnabled(Boolean translationEnabled) {
 			options.setTranslationEnabled(translationEnabled);
 			return this;
 		}
 
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withTranslationTargetLanguages(List<String> translationTargetLanguages) {
+			return this.translationTargetLanguages(translationTargetLanguages);
+		}
+
 		public Builder translationTargetLanguages(List<String> translationTargetLanguages) {
 			options.setTranslationTargetLanguages(translationTargetLanguages);
 			return this;
+		}
+
+		@Deprecated(since = "1.1.0.0", forRemoval = true)
+		public Builder withMaxEndSilence(Integer maxEndSilence) {
+			return this.maxEndSilence(maxEndSilence);
 		}
 
 		public Builder maxEndSilence(Integer maxEndSilence) {
