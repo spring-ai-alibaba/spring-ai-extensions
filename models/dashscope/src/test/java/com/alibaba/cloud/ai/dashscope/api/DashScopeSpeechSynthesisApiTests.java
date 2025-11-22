@@ -76,7 +76,7 @@ class DashScopeSpeechSynthesisApiTests {
 
 		DashScopeAudioSpeechApi.Request.RequestPayload.RequestPayloadParameters parameters = new DashScopeAudioSpeechApi.Request.RequestPayload.RequestPayloadParameters(
 				100, DashScopeAudioSpeechApi.RequestTextType.PLAIN_TEXT, "female", 16000, 1.0, DashScopeAudioSpeechApi.ResponseFormat.WAV, 1.0, true,
-			true, 0, List.of("zh"), "neutral", true, true);
+			0, 0, List.of("zh"), "neutral", true, true);
 
 		DashScopeAudioSpeechApi.Request.RequestPayload payload = new DashScopeAudioSpeechApi.Request.RequestPayload(
 				"model", "task-group", "task", "function", input, parameters);
@@ -113,7 +113,7 @@ class DashScopeSpeechSynthesisApiTests {
 		assertEquals("wav", request.payload().parameters().format().getValue(), "Format should match");
 		assertEquals(1.0, request.payload().parameters().pitch(), "Pitch should match");
 		assertTrue(request.payload().parameters().enableSsml(), "Ssml should match");
-		assertTrue(request.payload().parameters().bitRate(), "Bit rate should match");
+		assertEquals(0, request.payload().parameters().bitRate(), "Bit rate should match");
 		assertEquals(0, request.payload().parameters().seed(), "Seed should match");
 		assertEquals(List.of("zh"), request.payload().parameters().languageHints(), "LanguageHints should match");
 		assertEquals("neutral", request.payload().parameters().instruction(), "Instruction should match");

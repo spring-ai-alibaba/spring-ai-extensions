@@ -102,7 +102,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 	 * Audio bit rate.
 	 */
 	@JsonProperty("bit_rate")
-	private Boolean bitRate;
+	private Integer bitRate;
 
 	/**
 	 * The random number seed used at the time of generation.
@@ -228,11 +228,11 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 		this.enableSsml = enableSsml;
 	}
 
-	public Boolean getBitRate() {
-		return this.bitRate;
+	public Integer getBitRate() {
+		return bitRate;
 	}
 
-	public void setBitRate(Boolean bitRate) {
+	public void setBitRate(Integer bitRate) {
 		this.bitRate = bitRate;
 	}
 
@@ -364,7 +364,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 			return this;
 		}
 
-		public DashScopeAudioSpeechOptions.Builder bitRate(Boolean bitRate) {
+		public DashScopeAudioSpeechOptions.Builder bitRate(Integer bitRate) {
 			options.bitRate = bitRate;
 			return this;
 		}

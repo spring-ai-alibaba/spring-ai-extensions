@@ -362,8 +362,8 @@ public class DashScopeAudioTranscriptionApi {
             @JsonProperty("sentence_id") Integer sentenceId,
             @JsonProperty("text") String text,
             @JsonProperty("begin_time") Integer beginTime,
-            @JsonProperty("current_time") Integer currentTime,
-            @JsonProperty("lang") Integer lang,
+            @JsonProperty("end_time") Integer endTime,
+            @JsonProperty("lang") String lang,
             @JsonProperty("sentence_end") Boolean sentenceEnd,
             @JsonProperty("words") List<Word> words) {}
 

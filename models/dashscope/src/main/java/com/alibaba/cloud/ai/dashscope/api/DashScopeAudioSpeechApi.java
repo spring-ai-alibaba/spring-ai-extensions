@@ -111,7 +111,7 @@ public class DashScopeAudioSpeechApi {
 				@JsonProperty("format") ResponseFormat format,
 				@JsonProperty("pitch") Double pitch,
 				@JsonProperty("enable_ssml") Boolean enableSsml,
-				@JsonProperty("bit_rate") Boolean bitRate,
+				@JsonProperty("bit_rate") Integer bitRate,
 				@JsonProperty("seed") Integer seed,
 				@JsonProperty("language_hints") List<String> languageHints,
 				@JsonProperty("instruction") String instruction,
@@ -120,6 +120,7 @@ public class DashScopeAudioSpeechApi {
 			) {}
 		}
 	}
+	// @formatter:on
 
 	// @formatter:off
     public static class Response {
