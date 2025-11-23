@@ -24,7 +24,7 @@ To quickly get started with Spring AI Alibaba, add 'spring-ai-alibaba-starter-da
     <dependency>
       <groupId>com.alibaba.cloud.ai</groupId>
       <artifactId>spring-ai-extensions-bom</artifactId>
-      <version>1.1.0.0</version>
+      <version>1.1.0.0-M5-SNAPSHOT</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
