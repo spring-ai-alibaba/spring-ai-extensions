@@ -118,7 +118,7 @@
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson</artifactId>
-            <version>${redission.version}</version>
+            <version>${redisson.version}</version>
             <optional>true</optional>
         </dependency>
 

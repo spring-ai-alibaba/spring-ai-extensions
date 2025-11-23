@@ -216,7 +216,7 @@
         <spring-alibaba-nacos-config.version>2023.0.1.3</spring-alibaba-nacos-config.version>
 
         <!-- Redis -->
-        <redission.version>3.42.0</redission.version>
+        <redisson.version>3.42.0</redisson.version>
         <jedis.version>5.2.0</jedis.version>
 
         <!-- Json -->
