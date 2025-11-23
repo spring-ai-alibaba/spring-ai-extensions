@@ -23,8 +23,8 @@
 
     <packaging>pom</packaging>
     <name>Spring AI Extensions</name>
-    <description>Extensions of Spring AI core concepts and components.</description>
-    <url>https://github.com/alibaba/spring-ai-alibaba</url>
+    <description>Extensions of Spring AI core concepts and components</description>
+    <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
 
     <licenses>
         <license>
@@ -99,6 +99,9 @@
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-registry</module>
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-router</module>
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-rag-elasticsearch</module>
+        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-distributed</module>
+        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-gateway</module>
+        <!--<module>auto-configurations/spring-ai-alibaba-autoconfigure-a2a-server</module>-->
 
         <!-- spring-boot-starters modules -->
         <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope</module>
@@ -109,6 +112,8 @@
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-registry</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-router</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-rag</module>
+        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-gateway</module>
+        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-distributed</module>
 
         <!-- tool-calls modules -->
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-alitranslate</module>
@@ -155,36 +160,34 @@
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-yuque</module>
 
         <!-- vector-stores modules -->
-        <module>vector-stores/spring-ai-alibaba-starter-analyticdb-store</module>
-        <module>vector-stores/spring-ai-alibaba-starter-oceanbase-store</module>
-        <module>vector-stores/spring-ai-alibaba-starter-opensearch-store</module>
-        <module>vector-stores/spring-ai-alibaba-starter-tablestore-store</module>
-        <module>vector-stores/spring-ai-alibaba-starter-tair-store</module>
+        <module>vector-stores/spring-ai-alibaba-analyticdb-store</module>
+        <module>vector-stores/spring-ai-alibaba-oceanbase-store</module>
+        <module>vector-stores/spring-ai-alibaba-opensearch-store</module>
+        <module>vector-stores/spring-ai-alibaba-tablestore-store</module>
+        <module>vector-stores/spring-ai-alibaba-tair-store</module>
 
+        <!-- MCP Module -->
         <module>mcp/spring-ai-alibaba-mcp-common</module>
         <module>mcp/spring-ai-alibaba-mcp-registry</module>
         <module>mcp/spring-ai-alibaba-mcp-router</module>
+        <module>mcp/spring-ai-alibaba-mcp-distributed</module>
+        <module>mcp/spring-ai-alibaba-mcp-gateway</module>
 
         <module>prompt/spring-ai-alibaba-prompt-nacos</module>
 
-        <module>models/dashscope</module>
+        <module>models/spring-ai-alibaba-dashscope</module>
 
         <module>rag/spring-ai-alibaba-rag</module>
 
-        <module>observation</module>
-        <module>mcp/spring-ai-alibaba-mcp-distributed</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-distributed</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-distributed</module>
+        <module>spring-ai-alibaba-observation-extension</module>
+
         <module>spring-ai-alibaba-extensions-bom</module>
-        <module>mcp/spring-ai-alibaba-mcp-gateway</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-gateway</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-gateway</module>
     </modules>
 
     <scm>
         <connection>git://github.com/spring-ai-alibaba/spring-ai-extensions.git</connection>
         <developerConnection>git@github.com:spring-ai-alibaba/spring-ai-extensions.git</developerConnection>
-        <url>https://github.com/spring-ai-alibaba/spring-ai-extensions</url>
+        <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
     </scm>
 
     <properties>
@@ -213,49 +216,43 @@
         <spring-alibaba-nacos-config.version>2023.0.1.3</spring-alibaba-nacos-config.version>
 
         <!-- Redis -->
-        <redission.version>3.22.0</redission.version>
+        <redission.version>3.42.0</redission.version>
+        <jedis.version>5.2.0</jedis.version>
 
         <!-- Json -->
         <gson.version>2.10.1</gson.version>
         <fastjson.version>1.2.83</fastjson.version>
-
-        <okhttp.version>4.12.0</okhttp.version>
+        <json-path.version>2.9.0</json-path.version>
 
         <async-generator.version>3.2.0</async-generator.version>
 
+        <docker-java.version>3.5.3</docker-java.version>
+
+        <!-- DB Driver -->
+        <mysql.version>8.0.32</mysql.version>
+        <postgresql.version>42.4.4</postgresql.version>
+
+        <!-- Common utils -->
         <commons-codec.version>1.17.0</commons-codec.version>
         <commons-exec.version>1.3</commons-exec.version>
         <commons-collections4.version>4.4</commons-collections4.version>
-
-        <docker-java.version>3.5.3</docker-java.version>
-
-        <opennlp-tools.version>2.3.3</opennlp-tools.version>
-
-        <json-path.version>2.9.0</json-path.version>
-
-        <jedis.version>5.2.0</jedis.version>
-
-        <redisson.version>3.42.0</redisson.version>
-
-        <mysql.version>8.0.32</mysql.version>
-
-        <postgresql.version>42.4.4</postgresql.version>
-
         <commons-collections.version>3.2.2</commons-collections.version>
-
         <commons-io.version>2.14.0</commons-io.version>
-
         <commons-lang3.version>3.9</commons-lang3.version>
 
-        <webdrivermanager.version>6.1.0</webdrivermanager.version>
-
+        <okhttp.version>4.12.0</okhttp.version>
         <httpclient5.version>5.4.3</httpclient5.version>
 
         <poi.version>5.4.0</poi.version>
 
+        <!-- For AI -->
         <mcp.version>0.11.2</mcp.version>
-        <opentelemetry.version>1.38.0</opentelemetry.version>
+        <opennlp-tools.version>2.3.3</opennlp-tools.version>
+        <webdrivermanager.version>6.1.0</webdrivermanager.version>
         <a2a-sdk.version>0.2.5.Beta2</a2a-sdk.version>
+
+        <!-- o11y -->
+        <opentelemetry.version>1.38.0</opentelemetry.version>
 
         <!-- CheckStyle Plugin -->
         <disable.checks>false</disable.checks>
@@ -616,8 +613,6 @@
     <profiles>
         <profile>
             <id>release</id>
-
-            <distributionManagement></distributionManagement>
             <build>
                 <plugins>
                     <plugin>

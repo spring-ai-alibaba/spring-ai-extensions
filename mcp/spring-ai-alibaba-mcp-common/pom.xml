@@ -12,7 +12,7 @@
     <artifactId>spring-ai-alibaba-mcp-common</artifactId>
     <name>Spring AI Alibaba MCP Nacos Common</name>
     <description>Nacos3 MCP for Spring AI Alibaba</description>
-    <url>https://github.com/alibaba/spring-ai-alibaba</url>
+    <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
 
     <licenses>
         <license>
@@ -32,9 +32,9 @@
         </developer>
     </developers>
     <scm>
-        <connection>git://github.com/alibaba/spring-ai-alibaba.git</connection>
-        <developerConnection>git@github.com:alibaba/spring-ai-alibaba.git</developerConnection>
-        <url>https://github.com/alibaba/spring-ai-alibaba</url>
+        <connection>git://github.com/spring-ai-alibaba/spring-ai-extensions.git</connection>
+        <developerConnection>git@github.com:spring-ai-alibaba/spring-ai-extensions.git</developerConnection>
+        <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
     </scm>
 
     <properties>

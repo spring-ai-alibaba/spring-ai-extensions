@@ -11,7 +11,7 @@
     <artifactId>spring-ai-alibaba-autoconfigure-mcp-gateway</artifactId>
     <name>Spring AI Alibaba Nacos Mcp Gateway Autoconfiguration</name>
     <description>Spring AI Alibaba Nacos Mcp Gateway Autoconfiguration</description>
-    <url>https://github.com/alibaba/spring-ai-alibaba</url>
+    <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
 
     <licenses>
         <license>
@@ -31,9 +31,9 @@
         </developer>
     </developers>
     <scm>
-        <connection>git://github.com/alibaba/spring-ai-alibaba.git</connection>
-        <developerConnection>git@github.com:alibaba/spring-ai-alibaba.git</developerConnection>
-        <url>https://github.com/alibaba/spring-ai-alibaba</url>
+        <connection>git://github.com/spring-ai-alibaba/spring-ai-extensions.git</connection>
+        <developerConnection>git@github.com:spring-ai-alibaba/spring-ai-extensions.git</developerConnection>
+        <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
     </scm>
 
     <properties>

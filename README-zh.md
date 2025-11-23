@@ -74,7 +74,32 @@ public class HelloworldController {
 
 ### 使用 Agent 框架开发智能体
 
-// 待补充
+在引入了 `spring-ai-alibaba-agent-frwmework` 之后，您可以使用 DashScope ChatModel 作为模型接入以此来创建一个 React Agent：
+
+```java
+@RestController
+public class ReactAgent {
+
+    private final DashScopeChatModel chatModel;
+
+    public SimpleReactAgent(DashScopeChatModel chatModel) {
+        this.chatModel = chatModel;
+    }
+
+    @GetMapping("/act")
+    public String test() throws GraphRunnerException {
+
+        return ReactAgent.builder()
+                .name("demoReactAgent")
+                .model(chatModel)
+                .instruction("主题为: {target_topic}")
+                .systemPrompt("你是一个诗歌写作专家，请按照给定的主题写作200字左右的诗歌")
+                .build()
+                .call("春天")
+                .getText();
+    }
+}
+```
 
 ## 示例和演示
 

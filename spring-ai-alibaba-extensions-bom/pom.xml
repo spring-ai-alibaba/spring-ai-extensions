@@ -25,7 +25,7 @@
     <packaging>pom</packaging>
 
     <name>Spring AI Alibaba Extensions Bom</name>
-    <url>https://github.com/alibaba/spring-ai-alibaba</url>
+    <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
     <description>Bill of Materials POM (BOM) for the Spring AI Alibaba modules</description>
 
     <organization>
@@ -34,7 +34,7 @@
     </organization>
 
     <scm>
-        <url>https://github.com/alibaba/spring-ai-alibaba</url>
+        <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
         <connection>git://github.com/alibaba/spring-ai-alibaba.git</connection>
         <developerConnection>git@github.com:alibaba/spring-ai-alibaba.git</developerConnection>
     </scm>
@@ -240,7 +240,7 @@
 
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-observation</artifactId>
+                <artifactId>spring-ai-alibaba-observation-extension</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -509,31 +509,31 @@
             <!-- Spring AI Alibaba Vector Stores -->
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-starter-store-analyticdb</artifactId>
+                <artifactId>spring-ai-alibaba-analyticdb-store</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-starter-store-tablestore</artifactId>
+                <artifactId>spring-ai-alibaba-tablestore-store</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-starter-store-oceanbase</artifactId>
+                <artifactId>spring-ai-alibaba-oceanbase-store</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-starter-store-opensearch</artifactId>
+                <artifactId>spring-ai-alibaba-opensearch-store</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-starter-store-tair</artifactId>
+                <artifactId>spring-ai-alibaba-tair-store</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

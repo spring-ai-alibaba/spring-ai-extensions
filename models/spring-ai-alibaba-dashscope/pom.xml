@@ -16,16 +16,18 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.alibaba.cloud.ai</groupId>
         <artifactId>spring-ai-alibaba-extensions</artifactId>
         <version>${revision}</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
+    <artifactId>spring-ai-alibaba-dashscope</artifactId>
+    <packaging>jar</packaging>
+    <name>Spring AI Alibaba DashScope Model Extension</name>
+    <description>Spring AI Alibaba core module, DashScope 4 Spring AI Implementation</description>
 
-    <artifactId>spring-ai-alibaba-starter-document-reader-sqlite</artifactId>
-    <name>Spring AI Alibaba Starter Document Reader SQLite</name>
-    <description>Spring AI Alibaba SQLite Document Reader Implementation</description>
     <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
 
     <licenses>
@@ -45,6 +47,7 @@
             <organizationUrl>https://aliyun.com</organizationUrl>
         </developer>
     </developers>
+
     <scm>
         <connection>git://github.com/spring-ai-alibaba/spring-ai-extensions.git</connection>
         <developerConnection>git@github.com:spring-ai-alibaba/spring-ai-extensions.git</developerConnection>
@@ -52,33 +55,74 @@
     </scm>
 
     <dependencies>
-        <!-- Spring AI Commons -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-commons</artifactId>
         </dependency>
-
-        <!-- SQLite JDBC Driver NON JNI-->
         <dependency>
-            <groupId>io.roastedroot</groupId>
-            <artifactId>sqlite4j</artifactId>
-            <version>3.49.1.0</version>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-rag</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-retry</artifactId>
         </dependency>
 
-        <!-- Test Dependencies -->
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webflux</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>${okhttp.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>logging-interceptor</artifactId>
+            <version>${okhttp.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.opennlp</groupId>
+            <artifactId>opennlp-tools</artifactId>
+            <version>${opennlp-tools.version}</version>
+        </dependency>
+
+        <!-- test dependencies -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-test</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-observation-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- integration test dependencies -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -23,13 +23,11 @@
         <version>${revision}</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
-    <artifactId>spring-ai-alibaba-starter-store-opensearch</artifactId>
-    <packaging>jar</packaging>
 
-    <name>Spring AI Alibaba Starter Store OpenSearch</name>
-
-    <description>Aliyun OpenSearch vector store implementation for Spring AI Alibaba</description>
-    <url>https://github.com/alibaba/spring-ai-alibaba</url>
+    <artifactId>spring-ai-alibaba-oceanbase-store</artifactId>
+    <name>Spring AI Alibaba Store - OceanBase</name>
+    <description>Spring AI Alibaba OceanBase vector store</description>
+    <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
 
     <licenses>
         <license>
@@ -49,20 +47,20 @@
         </developer>
     </developers>
     <scm>
-        <connection>git://github.com/alibaba/spring-ai-alibaba.git</connection>
-        <developerConnection>git@github.com:alibaba/spring-ai-alibaba.git</developerConnection>
-        <url>https://github.com/alibaba/spring-ai-alibaba</url>
+        <connection>git://github.com/spring-ai-alibaba/spring-ai-extensions.git</connection>
+        <developerConnection>git@github.com:spring-ai-alibaba/spring-ai-extensions.git</developerConnection>
+        <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
     </scm>
 
     <properties>
-        <ha3-engine-vector.version>1.1.11</ha3-engine-vector.version>
+        <testcontainer.oceanbase.version>1.20.1</testcontainer.oceanbase.version>
     </properties>
 
     <dependencies>
-
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
+            <groupId>com.oceanbase</groupId>
+            <artifactId>oceanbase-client</artifactId>
+            <version>2.4.13</version>
         </dependency>
 
         <dependency>
@@ -72,20 +70,49 @@
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <dependency>
-            <groupId>com.aliyun</groupId>
-            <artifactId>aliyun-sdk-ha3engine-vector</artifactId>
-            <version>${ha3-engine-vector.version}</version>
-        </dependency>
-
+        <!-- Transformers Embedding Model -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-transformers</artifactId>
             <optional>true</optional>
         </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-observation-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>oceanbase</artifactId>
+            <version>${testcontainer.oceanbase.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+        </dependency>
     </dependencies>
+
 </project>

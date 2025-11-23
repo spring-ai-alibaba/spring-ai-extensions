@@ -12,11 +12,11 @@
     <artifactId>spring-ai-alibaba-rag</artifactId>
     <name>Spring AI Alibaba RAG</name>
     <description>RAG for Spring AI Alibaba</description>
-    <url>https://github.com/alibaba/spring-ai-alibaba</url>
+    <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
     <scm>
-        <connection>git://github.com/alibaba/spring-ai-alibaba.git</connection>
-        <developerConnection>git@github.com:alibaba/spring-ai-alibaba.git</developerConnection>
-        <url>https://github.com/alibaba/spring-ai-alibaba</url>
+        <connection>git://github.com/spring-ai-alibaba/spring-ai-extensions.git</connection>
+        <developerConnection>git@github.com:spring-ai-alibaba/spring-ai-extensions.git</developerConnection>
+        <url>https://github.com/spring-ai-alibaba/spring-ai-extensions.git</url>
     </scm>
 
     <properties>
