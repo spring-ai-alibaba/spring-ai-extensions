@@ -557,23 +557,12 @@ public class DashScopeApi {
 			.takeUntil(SSE_DONE_PREDICATE)
 			.filter(SSE_DONE_PREDICATE.negate())
 			.map(content -> {
-				try {
-					DashScopeApiSpec.DashScopeErrorResponse error = ModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.DashScopeErrorResponse.class);
-					if (error != null && error.code() != null) {
-						throw new DashScopeException(String.format("[%s] %s (requestId: %s)",
-							error.code(), error.message(), error.requestId()));
-					}
-				} catch (DashScopeException e) {
-					throw e;
-				} catch (Exception e) {
-					//Normal parsing
+				DashScopeApiSpec.DashScopeErrorResponse error = ModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.DashScopeErrorResponse.class);
+				if (error != null && error.code() != null) {
+					throw new DashScopeException(String.format("[%s] %s (requestId: %s)",
+						error.code(), error.message(), error.requestId()));
 				}
-
-				DashScopeApiSpec.ChatCompletionChunk chunk = ModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.ChatCompletionChunk.class);
-				if (chunk == null) {
-					throw new DashScopeException("无法解析响应内容: " + content);
-				}
-				return chunk;
+				return ModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.ChatCompletionChunk.class);
 			})
 			.map(chunk -> {
 				if (chunkMerger.isStreamingToolFunctionCall(chunk)) {
