@@ -15,11 +15,11 @@
  */
 package com.alibaba.cloud.ai.dashscope.embedding;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.embedding.EmbeddingOptions;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test cases for DashScopeEmbeddingOptions. Tests cover builder pattern, getters/setters,
@@ -43,9 +43,9 @@ class DashScopeEmbeddingOptionsTests {
 		// Test building DashScopeEmbeddingOptions using builder pattern and verify
 		// getters
 		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
-			.withModel(TEST_MODEL)
-			.withTextType(TEST_TEXT_TYPE)
-			.withDimensions(TEST_DIMENSIONS)
+			.model(TEST_MODEL)
+			.textType(TEST_TEXT_TYPE)
+			.dimensions(TEST_DIMENSIONS)
 			.build();
 
 		// Verify all fields are set correctly
@@ -84,7 +84,7 @@ class DashScopeEmbeddingOptionsTests {
 	void testBuilderWithDefaultModel() {
 		// Test builder with default embedding model
 		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
-			.withModel(DashScopeApi.DEFAULT_EMBEDDING_MODEL)
+			.model(DashScopeApi.DEFAULT_EMBEDDING_MODEL)
 			.build();
 
 		// Verify default model is set correctly
@@ -95,7 +95,7 @@ class DashScopeEmbeddingOptionsTests {
 	void testBuilderWithDefaultTextType() {
 		// Test builder with default text type
 		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
-			.withTextType(DashScopeApi.DEFAULT_EMBEDDING_TEXT_TYPE)
+			.textType(DashScopeApi.DEFAULT_EMBEDDING_TEXT_TYPE)
 			.build();
 
 		// Verify default text type is set correctly

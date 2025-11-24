@@ -38,7 +38,7 @@ public class DashScopeAudioTranscriptionProperties extends DashScopeParentProper
 
 	@NestedConfigurationProperty
 	private DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
-		.withModel(DEFAULT_MODEL)
+		.model(DEFAULT_MODEL)
 		.build();
 
 	public DashScopeAudioTranscriptionOptions getOptions() {

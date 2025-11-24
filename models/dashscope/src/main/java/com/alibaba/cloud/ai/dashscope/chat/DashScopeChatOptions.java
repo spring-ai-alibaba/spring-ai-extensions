@@ -435,6 +435,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
   public Boolean getEnableSearch() {
     return enableSearch;
   }
+
   public void setEnableSearch(Boolean enableSearch) {
     this.enableSearch = enableSearch;
   }
@@ -513,12 +514,12 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
   }
 
   @Override
-  public Map<String,Object> getToolContext() {
+  public Map<String, Object> getToolContext() {
     return this.toolContext;
   }
 
   @Override
-  public void setToolContext(Map<String,Object> toolContext) {
+  public void setToolContext(Map<String, Object> toolContext) {
     this.toolContext = toolContext;
   }
 
@@ -535,7 +536,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
   }
 
   public void setVlHighResolutionImages(Boolean vlHighResolutionImages) {
-      this.vlHighResolutionImages = vlHighResolutionImages;
+    this.vlHighResolutionImages = vlHighResolutionImages;
   }
 
   public Boolean getEnableThinking() {
@@ -551,7 +552,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
   }
 
   public void setMultiModel(Boolean multiModel) {
-      this.  multiModel = multiModel;
+    this.multiModel = multiModel;
   }
 
   public static DashScopeChatOptionsBuilder builder() {
@@ -560,96 +561,176 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
   public static class DashScopeChatOptionsBuilder {
 
-    private DashScopeChatOptions options;
+    private final DashScopeChatOptions options;
 
     public DashScopeChatOptionsBuilder() {
       this.options = new DashScopeChatOptions();
     }
 
-    public DashScopeChatOptionsBuilder withModel(String model) {
+    public DashScopeChatOptionsBuilder model(String model) {
       this.options.model = model;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withSearchOptions(DashScopeApiSpec.SearchOptions searchOptions) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withModel(String model) {
+      return model(model);
+    }
+
+    public DashScopeChatOptionsBuilder searchOptions(DashScopeApiSpec.SearchOptions searchOptions) {
       this.options.searchOptions = searchOptions;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withParallelToolCalls(Boolean parallelToolCalls) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withSearchOptions(
+        DashScopeApiSpec.SearchOptions searchOptions) {
+      return searchOptions(searchOptions);
+    }
+
+    public DashScopeChatOptionsBuilder parallelToolCalls(Boolean parallelToolCalls) {
       this.options.parallelToolCalls = parallelToolCalls;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withHttpHeaders(Map<String, String> httpHeaders) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withParallelToolCalls(Boolean parallelToolCalls) {
+      return parallelToolCalls(parallelToolCalls);
+    }
+
+    public DashScopeChatOptionsBuilder httpHeaders(Map<String, String> httpHeaders) {
       this.options.httpHeaders = httpHeaders;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withMaxToken(Integer maxTokens) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withHttpHeaders(Map<String, String> httpHeaders) {
+      return httpHeaders(httpHeaders);
+    }
+
+    public DashScopeChatOptionsBuilder maxToken(Integer maxTokens) {
       this.options.maxTokens = maxTokens;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withTemperature(Double temperature) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withMaxToken(Integer maxTokens) {
+      return maxToken(maxTokens);
+    }
+
+    public DashScopeChatOptionsBuilder temperature(Double temperature) {
       this.options.temperature = temperature;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withTopP(Double topP) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withTemperature(Double temperature) {
+      return temperature(temperature);
+    }
+
+    public DashScopeChatOptionsBuilder topP(Double topP) {
       this.options.topP = topP;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withTopK(Integer topK) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withTopP(Double topP) {
+      return topP(topP);
+    }
+
+    public DashScopeChatOptionsBuilder topK(Integer topK) {
       this.options.topK = topK;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withStop(List<Object> stop) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withTopK(Integer topK) {
+      return topK(topK);
+    }
+
+    public DashScopeChatOptionsBuilder stop(List<Object> stop) {
       this.options.stop = stop;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withResponseFormat(DashScopeResponseFormat responseFormat) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withStop(List<Object> stop) {
+      return stop(stop);
+    }
+
+    public DashScopeChatOptionsBuilder responseFormat(DashScopeResponseFormat responseFormat) {
       this.options.responseFormat = responseFormat;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withEnableSearch(Boolean enableSearch) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withResponseFormat(DashScopeResponseFormat responseFormat) {
+      return responseFormat(responseFormat);
+    }
+
+    public DashScopeChatOptionsBuilder enableSearch(Boolean enableSearch) {
       this.options.enableSearch = enableSearch;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withRepetitionPenalty(Double repetitionPenalty) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withEnableSearch(Boolean enableSearch) {
+      return enableSearch(enableSearch);
+    }
+
+    public DashScopeChatOptionsBuilder repetitionPenalty(Double repetitionPenalty) {
       this.options.repetitionPenalty = repetitionPenalty;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withTools(List<DashScopeApiSpec.FunctionTool> tools) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withRepetitionPenalty(Double repetitionPenalty) {
+      return repetitionPenalty(repetitionPenalty);
+    }
+
+    public DashScopeChatOptionsBuilder tools(List<DashScopeApiSpec.FunctionTool> tools) {
       this.options.tools = tools;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withToolChoice(Object toolChoice) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withTools(List<DashScopeApiSpec.FunctionTool> tools) {
+      return tools(tools);
+    }
+
+    public DashScopeChatOptionsBuilder toolChoice(Object toolChoice) {
       this.options.toolChoice = toolChoice;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withStream(Boolean stream) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withToolChoice(Object toolChoice) {
+      return toolChoice(toolChoice);
+    }
+
+    public DashScopeChatOptionsBuilder stream(Boolean stream) {
       this.options.stream = stream;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withToolCallbacks(
-            List<ToolCallback> toolCallbacks) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withStream(Boolean stream) {
+      return stream(stream);
+    }
+
+    public DashScopeChatOptionsBuilder toolCallbacks(List<ToolCallback> toolCallbacks) {
       Assert.notNull(toolCallbacks, "toolCallbacks cannot be null");
       Assert.noNullElements(toolCallbacks, "toolCallbacks cannot contain null elements");
       this.options.toolCallbacks = toolCallbacks;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withToolNames(Set<String> toolNames) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withToolCallbacks(List<ToolCallback> toolCallbacks) {
+      return toolCallbacks(toolCallbacks);
+    }
+
+    public DashScopeChatOptionsBuilder toolNames(Set<String> toolNames) {
       Assert.notNull(toolNames, "toolNames cannot be null");
       Assert.noNullElements(toolNames, "toolNames cannot contain null elements");
       toolNames.forEach(tool -> Assert.hasText(tool, "toolNames cannot contain empty elements"));
@@ -657,55 +738,106 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withToolName(String toolName) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withToolNames(Set<String> toolNames) {
+      return toolNames(toolNames);
+    }
+
+    public DashScopeChatOptionsBuilder toolName(String toolName) {
       Assert.hasText(toolName, "Tool name must not be empty");
       this.options.toolNames.add(toolName);
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withInternalToolExecutionEnabled(Boolean internalToolExecutionEnabled) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withToolName(String toolName) {
+      return toolName(toolName);
+    }
+
+    public DashScopeChatOptionsBuilder internalToolExecutionEnabled(
+        Boolean internalToolExecutionEnabled) {
       this.options.internalToolExecutionEnabled = internalToolExecutionEnabled;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withSeed(Integer seed) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withInternalToolExecutionEnabled(
+        Boolean internalToolExecutionEnabled) {
+      return internalToolExecutionEnabled(internalToolExecutionEnabled);
+    }
+
+    public DashScopeChatOptionsBuilder seed(Integer seed) {
       this.options.seed = seed;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withIncrementalOutput(Boolean incrementalOutput) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withSeed(Integer seed) {
+      return seed(seed);
+    }
+
+    public DashScopeChatOptionsBuilder incrementalOutput(Boolean incrementalOutput) {
       this.options.incrementalOutput = incrementalOutput;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withToolContext(Map<String, Object> toolContext) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withIncrementalOutput(Boolean incrementalOutput) {
+      return incrementalOutput(incrementalOutput);
+    }
+
+    public DashScopeChatOptionsBuilder toolContext(Map<String, Object> toolContext) {
       if (this.options.toolContext == null) {
         this.options.toolContext = toolContext;
-      }
-      else {
+      } else {
         this.options.toolContext.putAll(toolContext);
       }
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withVlHighResolutionImages(Boolean vlHighResolutionImages) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withToolContext(Map<String, Object> toolContext) {
+      return toolContext(toolContext);
+    }
+
+    public DashScopeChatOptionsBuilder vlHighResolutionImages(Boolean vlHighResolutionImages) {
       this.options.vlHighResolutionImages = vlHighResolutionImages;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withEnableThinking(Boolean enableThinking) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withVlHighResolutionImages(Boolean vlHighResolutionImages) {
+      return vlHighResolutionImages(vlHighResolutionImages);
+    }
+
+    public DashScopeChatOptionsBuilder enableThinking(Boolean enableThinking) {
       this.options.enableThinking = enableThinking;
       return this;
     }
 
-    public DashScopeChatOptionsBuilder withMultiModel(Boolean multiModel) {
+    @Deprecated
+    public DashScopeChatOptionsBuilder withEnableThinking(Boolean enableThinking) {
+      return enableThinking(enableThinking);
+    }
+
+    public DashScopeChatOptionsBuilder multiModel(Boolean multiModel) {
       this.options.multiModel = multiModel;
       return this;
     }
 
+    @Deprecated
+    public DashScopeChatOptionsBuilder withMultiModel(Boolean multiModel) {
+      return multiModel(multiModel);
+    }
+
+    public DashScopeChatOptionsBuilder thinkingBudget(Integer thinkingBudget) {
+      this.options.thinkingBudget = thinkingBudget;
+      return this;
+    }
+
+    @Deprecated
     public DashScopeChatOptionsBuilder withThinkingBudget(Integer thinkingBudget) {
-        this.options.thinkingBudget = thinkingBudget;
-        return this;
+      return thinkingBudget(thinkingBudget);
     }
 
     public DashScopeChatOptions build() {
@@ -716,31 +848,31 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
   public static DashScopeChatOptions fromOptions(DashScopeChatOptions fromOptions){
 
     return DashScopeChatOptions.builder()
-            .withModel(fromOptions.getModel())
-            .withTemperature(fromOptions.getTemperature())
-            .withMaxToken(fromOptions.getMaxTokens())
-            .withTopP(fromOptions.getTopP())
-            .withTopK(fromOptions.getTopK())
-            .withSeed(fromOptions.getSeed())
-            .withStop(fromOptions.getStop())
-            .withResponseFormat(fromOptions.getResponseFormat())
-            .withStream(fromOptions.getStream())
-            .withEnableSearch(fromOptions.enableSearch)
-            .withIncrementalOutput(fromOptions.getIncrementalOutput())
-            .withToolCallbacks(fromOptions.getToolCallbacks())
-            .withToolNames(fromOptions.getToolNames())
-            .withInternalToolExecutionEnabled(fromOptions.getInternalToolExecutionEnabled())
-            .withRepetitionPenalty(fromOptions.getRepetitionPenalty())
-            .withTools(fromOptions.getTools())
-            .withToolContext(fromOptions.getToolContext())
-            .withMultiModel(fromOptions.getMultiModel())
-            .withVlHighResolutionImages(fromOptions.getVlHighResolutionImages())
-            .withEnableThinking(fromOptions.getEnableThinking())
-            .withThinkingBudget(fromOptions.getThinkingBudget())
-            .withParallelToolCalls(fromOptions.getParallelToolCalls())
-            .withSearchOptions(fromOptions.getSearchOptions())
-            .withHttpHeaders(fromOptions.getHttpHeaders())
-            .build();
+        .model(fromOptions.getModel())
+        .temperature(fromOptions.getTemperature())
+        .maxToken(fromOptions.getMaxTokens())
+        .topP(fromOptions.getTopP())
+        .topK(fromOptions.getTopK())
+        .seed(fromOptions.getSeed())
+        .stop(fromOptions.getStop())
+        .responseFormat(fromOptions.getResponseFormat())
+        .stream(fromOptions.getStream())
+        .enableSearch(fromOptions.enableSearch)
+        .incrementalOutput(fromOptions.getIncrementalOutput())
+        .toolCallbacks(fromOptions.getToolCallbacks())
+        .toolNames(fromOptions.getToolNames())
+        .internalToolExecutionEnabled(fromOptions.getInternalToolExecutionEnabled())
+        .repetitionPenalty(fromOptions.getRepetitionPenalty())
+        .tools(fromOptions.getTools())
+        .toolContext(fromOptions.getToolContext())
+        .multiModel(fromOptions.getMultiModel())
+        .vlHighResolutionImages(fromOptions.getVlHighResolutionImages())
+        .enableThinking(fromOptions.getEnableThinking())
+        .thinkingBudget(fromOptions.getThinkingBudget())
+        .parallelToolCalls(fromOptions.getParallelToolCalls())
+        .searchOptions(fromOptions.getSearchOptions())
+        .httpHeaders(fromOptions.getHttpHeaders())
+        .build();
   }
 
   @Override

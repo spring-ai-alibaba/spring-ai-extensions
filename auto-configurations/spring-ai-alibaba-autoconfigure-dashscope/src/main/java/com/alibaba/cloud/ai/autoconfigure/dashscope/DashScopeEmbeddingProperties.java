@@ -24,44 +24,40 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 @ConfigurationProperties(DashScopeEmbeddingProperties.CONFIG_PREFIX)
 public class DashScopeEmbeddingProperties extends DashScopeParentProperties {
 
-	public static final String CONFIG_PREFIX = "spring.ai.dashscope.embedding";
+  public static final String CONFIG_PREFIX = "spring.ai.dashscope.embedding";
 
-	public static final String DEFAULT_EMBEDDING_MODEL = "text-embedding-v3";
+  public static final String DEFAULT_EMBEDDING_MODEL = "text-embedding-v3";
 
-	/**
-	 * Enable DashScope embedding client.
-	 */
-	private boolean enabled = true;
+  /** Enable DashScope embedding client. */
+  private boolean enabled = true;
 
-	private MetadataMode metadataMode = MetadataMode.EMBED;
+  private MetadataMode metadataMode = MetadataMode.EMBED;
 
-	@NestedConfigurationProperty
-	private DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
-		.withModel(DEFAULT_EMBEDDING_MODEL)
-		.build();
+  @NestedConfigurationProperty
+  private DashScopeEmbeddingOptions options =
+      DashScopeEmbeddingOptions.builder().model(DEFAULT_EMBEDDING_MODEL).build();
 
-	public DashScopeEmbeddingOptions getOptions() {
-		return this.options;
-	}
+  public DashScopeEmbeddingOptions getOptions() {
+    return this.options;
+  }
 
-	public void setOptions(DashScopeEmbeddingOptions options) {
-		this.options = options;
-	}
+  public void setOptions(DashScopeEmbeddingOptions options) {
+    this.options = options;
+  }
 
-	public MetadataMode getMetadataMode() {
-		return this.metadataMode;
-	}
+  public MetadataMode getMetadataMode() {
+    return this.metadataMode;
+  }
 
-	public void setMetadataMode(MetadataMode metadataMode) {
-		this.metadataMode = metadataMode;
-	}
+  public void setMetadataMode(MetadataMode metadataMode) {
+    this.metadataMode = metadataMode;
+  }
 
-	public boolean isEnabled() {
-		return this.enabled;
-	}
+  public boolean isEnabled() {
+    return this.enabled;
+  }
 
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
-
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
 }

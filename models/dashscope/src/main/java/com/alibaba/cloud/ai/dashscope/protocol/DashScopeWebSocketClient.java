@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Headers;
@@ -34,6 +36,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import okio.ByteString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.util.JacksonUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -47,6 +50,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author kevinlin09
+ * @author xuguan
  */
 public class DashScopeWebSocketClient extends WebSocketListener {
 
@@ -54,24 +58,34 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	private final DashScopeWebSocketClientOptions options;
 
+	private final AtomicBoolean isOpen;
+
+	private final ObjectMapper objectMapper;
+
 	private WebSocket webSocketClient;
 
-	private AtomicBoolean isOpen;
+	FluxSink<ByteBuffer> binaryEmitter;
 
-	FluxSink<ByteBuffer> emitter;
-
-	FluxSink<ByteBuffer> binary_emitter;
-
-	FluxSink<String> text_emitter;
+	FluxSink<String> textEmitter;
 
 	public DashScopeWebSocketClient(DashScopeWebSocketClientOptions options) {
 		this.options = options;
 		this.isOpen = new AtomicBoolean(false);
+		this.objectMapper = JsonMapper.builder()
+			// Deserialization configuration
+			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+			// Serialization configuration
+			.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+			.serializationInclusion(JsonInclude.Include.NON_NULL)
+			// Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
+			.addModules(JacksonUtils.instantiateAvailableModules())
+			.build();
 	}
 
 	public Flux<ByteBuffer> streamBinaryOut(String text) {
 		Flux<ByteBuffer> flux = Flux.<ByteBuffer>create(emitter -> {
-			this.binary_emitter = emitter;
+			this.binaryEmitter = emitter;
 		}, FluxSink.OverflowStrategy.BUFFER);
 
 		sendText(text);
@@ -81,10 +95,9 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	public Flux<String> streamTextOut(Flux<ByteBuffer> binary) {
 		Flux<String> flux = Flux.<String>create(emitter -> {
-			this.text_emitter = emitter;
+			this.textEmitter = emitter;
 		}, FluxSink.OverflowStrategy.BUFFER);
 
-		// FIXME
 		binary.subscribe(this::sendBinary);
 
 		return flux;
@@ -138,7 +151,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		OkHttpClient httpClient = clientBuilder.build();
 
 		try {
-			webSocketClient = httpClient.newWebSocket(buildConnectionRequest(), this);
+			this.webSocketClient = httpClient.newWebSocket(buildConnectionRequest(), this);
 		}
 		catch (Throwable ex) {
 			logger.error("create websocket failed: msg={}", ex.getMessage());
@@ -147,8 +160,8 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	private Request buildConnectionRequest() {
 		Builder bd = new Request.Builder();
-		bd.headers(
-				Headers.of(ApiUtils.getMapContentHeaders(options.getApiKey(), false, options.getWorkSpaceId(), null)));
+		bd.headers(Headers.of(ApiUtils.getMapContentHeaders(options.getApiKey(), false,
+			options.getWorkSpaceId(), null)));
 		return bd.url(options.getUrl()).build();
 	}
 
@@ -198,11 +211,8 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	public void onMessage(WebSocket webSocket, String text) {
 		logger.debug("receive ws event onMessage(text): handle={}, text={}", webSocket, text);
 
-		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
 		try {
-			EventMessage message = objectMapper.readValue(text, EventMessage.class);
+			EventMessage message = this.objectMapper.readValue(text, EventMessage.class);
 			switch (message.header.event) {
 				case TASK_STARTED:
 					logger.info("task started: text={}", text);
@@ -216,8 +226,8 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 					emittersError("task failed", new Exception());
 					break;
 				case RESULT_GENERATED:
-					if (this.text_emitter != null) {
-						text_emitter.next(text);
+					if (this.textEmitter != null) {
+						textEmitter.next(text);
 					}
 					break;
 				default:
@@ -233,31 +243,31 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	@Override
 	public void onMessage(WebSocket webSocket, ByteString bytes) {
 		logger.debug("receive ws event onMessage(bytes): handle={}, size={}", webSocket, bytes.size());
-		if (this.binary_emitter != null) {
-			binary_emitter.next(bytes.asByteBuffer());
+		if (this.binaryEmitter != null) {
+			binaryEmitter.next(bytes.asByteBuffer());
 		}
 	}
 
 	private void emittersComplete(String event) {
-		if (this.binary_emitter != null && !this.binary_emitter.isCancelled()) {
+		if (this.binaryEmitter != null && !this.binaryEmitter.isCancelled()) {
 			logger.info("binary emitter handling: complete on {}", event);
-			this.binary_emitter.complete();
+			this.binaryEmitter.complete();
 		}
-		if (this.text_emitter != null && !this.text_emitter.isCancelled()) {
+		if (this.textEmitter != null && !this.textEmitter.isCancelled()) {
 			logger.info("text emitter handling: complete on {}", event);
-			this.text_emitter.complete();
+			this.textEmitter.complete();
 			logger.info("done");
 		}
 	}
 
 	private void emittersError(String event, Throwable t) {
-		if (this.binary_emitter != null && !this.binary_emitter.isCancelled()) {
+		if (this.binaryEmitter != null && !this.binaryEmitter.isCancelled()) {
 			logger.info("binary emitter handling: error on {}", event);
-			this.binary_emitter.error(t);
+			this.binaryEmitter.error(t);
 		}
-		if (this.text_emitter != null && !this.text_emitter.isCancelled()) {
+		if (this.textEmitter != null && !this.textEmitter.isCancelled()) {
 			logger.info("text emitter handling: error on {}", event);
-			this.text_emitter.error(t);
+			this.textEmitter.error(t);
 		}
 	}
 

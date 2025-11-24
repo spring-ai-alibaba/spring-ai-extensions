@@ -16,9 +16,6 @@
 
 package com.alibaba.cloud.ai.dashscope.rerank;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
@@ -28,9 +25,10 @@ import com.alibaba.cloud.ai.model.RerankOptions;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
 import com.alibaba.cloud.ai.model.RerankResponseMetadata;
+import java.util.Collections;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.ai.document.Document;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
@@ -133,9 +131,9 @@ public class DashScopeRerankModel implements RerankModel {
 		}
 
 		return DashScopeRerankOptions.builder()
-			.withModel(ModelOptionsUtils.mergeOption(runtimeOptionsForProvider.getModel(), defaultOptions.getModel()))
-			.withTopN(ModelOptionsUtils.mergeOption(runtimeOptionsForProvider.getTopN(), defaultOptions.getTopN()))
-			.withReturnDocuments(ModelOptionsUtils.mergeOption(runtimeOptionsForProvider.getReturnDocuments(),
+			.model(ModelOptionsUtils.mergeOption(runtimeOptionsForProvider.getModel(), defaultOptions.getModel()))
+			.topN(ModelOptionsUtils.mergeOption(runtimeOptionsForProvider.getTopN(), defaultOptions.getTopN()))
+			.returnDocuments(ModelOptionsUtils.mergeOption(runtimeOptionsForProvider.getReturnDocuments(),
 					defaultOptions.getReturnDocuments()))
 			.build();
 	}

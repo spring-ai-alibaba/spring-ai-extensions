@@ -15,12 +15,18 @@
  */
 package com.alibaba.cloud.ai.dashscope.agent;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentRequest;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,13 +39,6 @@ import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 /**
  * Test cases for DashScopeAgent.
  *
@@ -51,210 +50,218 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class DashScopeAgentTests {
 
-	private static final String TEST_APP_ID = "test-app-id";
+  private static final String TEST_APP_ID = "test-app-id";
 
-	private static final String TEST_USER_MESSAGE = "Hello, AI!";
+  private static final String TEST_USER_MESSAGE = "Hello, AI!";
 
-	private static final String TEST_ASSISTANT_RESPONSE = "Hello, Human!";
+  private static final String TEST_ASSISTANT_RESPONSE = "Hello, Human!";
 
-	@Mock
-	private DashScopeAgentApi dashScopeAgentApi;
+  @Mock private DashScopeAgentApi dashScopeAgentApi;
 
-	private DashScopeAgent agent;
+  private DashScopeAgent agent;
 
-	private DashScopeAgentOptions options;
+  private DashScopeAgentOptions options;
 
-	private ObjectMapper objectMapper;
+  private ObjectMapper objectMapper;
 
-	private JsonNode testBizParams;
+  private JsonNode testBizParams;
 
-	@BeforeEach
-	void setUp() {
-		// Initialize ObjectMapper and create test bizParams
-		objectMapper = new ObjectMapper();
-		ObjectNode bizParams = objectMapper.createObjectNode();
-		bizParams.put("key1", "value1");
-		bizParams.put("key2", "value2");
-		testBizParams = bizParams;
+  @BeforeEach
+  void setUp() {
+    // Initialize ObjectMapper and create test bizParams
+    objectMapper = new ObjectMapper();
+    ObjectNode bizParams = objectMapper.createObjectNode();
+    bizParams.put("key1", "value1");
+    bizParams.put("key2", "value2");
+    testBizParams = bizParams;
 
-		// Create agent options
-		options = DashScopeAgentOptions.builder()
-			.withAppId(TEST_APP_ID)
-			.withSessionId("test-session")
-			.withMemoryId("test-memory")
-			.withIncrementalOutput(false)
-			.withHasThoughts(false)
-			.withBizParams(testBizParams)
-			.build();
+    // Create agent options
+    options =
+        DashScopeAgentOptions.builder()
+            .appId(TEST_APP_ID)
+            .sessionId("test-session")
+            .memoryId("test-memory")
+            .incrementalOutput(false)
+            .hasThoughts(false)
+            .bizParams(testBizParams)
+            .build();
 
-		// Create agent instance
-		agent = new DashScopeAgent(dashScopeAgentApi, options);
-	}
+    // Create agent instance
+    agent = new DashScopeAgent(dashScopeAgentApi, options);
+  }
 
-	/**
-	 * Test successful call with valid prompt
-	 */
-	@Test
-	void testSuccessfulCall() {
-		// Prepare test data
-		Message message = new UserMessage(TEST_USER_MESSAGE);
-		Prompt prompt = new Prompt(List.of(message), options);
+  /** Test successful call with valid prompt */
+  @Test
+  void testSuccessfulCall() {
+    // Prepare test data
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    Prompt prompt = new Prompt(List.of(message), options);
 
-		// Create mock response
-		DashScopeAgentResponse response = createMockResponse();
+    // Create mock response
+    DashScopeAgentResponse response = createMockResponse();
 
-		// Mock API behavior
-		when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class))).thenReturn(ResponseEntity.ok(response));
+    // Mock API behavior
+    when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class)))
+        .thenReturn(ResponseEntity.ok(response));
 
-		// Execute test
-		var result = agent.call(prompt);
+    // Execute test
+    var result = agent.call(prompt);
 
-		// Verify response
-		assertThat(result).isNotNull();
-		assertThat(result.getResults()).hasSize(1);
-		var assistantMessage = result.getResults().get(0).getOutput();
-		assertThat(assistantMessage.toString()).contains(TEST_ASSISTANT_RESPONSE);
-		assertThat(result.getResults().get(0).getMetadata().getFinishReason()).isEqualTo("stop");
-	}
+    // Verify response
+    assertThat(result).isNotNull();
+    assertThat(result.getResults()).hasSize(1);
+    var assistantMessage = result.getResults().get(0).getOutput();
+    assertThat(assistantMessage.toString()).contains(TEST_ASSISTANT_RESPONSE);
+    assertThat(result.getResults().get(0).getMetadata().getFinishReason()).isEqualTo("stop");
+  }
 
-	/**
-	 * Test call with null response
-	 */
-	@Test
-	void testCallWithNullResponse() {
-		// Prepare test data
-		Message message = new UserMessage(TEST_USER_MESSAGE);
-		Prompt prompt = new Prompt(List.of(message), options);
+  /** Test call with null response */
+  @Test
+  void testCallWithNullResponse() {
+    // Prepare test data
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    Prompt prompt = new Prompt(List.of(message), options);
 
-		// Mock API behavior to return null
-		when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class))).thenReturn(null);
+    // Mock API behavior to return null
+    when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class))).thenReturn(null);
 
-		// Execute test
-		var result = agent.call(prompt);
+    // Execute test
+    var result = agent.call(prompt);
 
-		// Verify response is null
-		assertThat(result).isNull();
-	}
+    // Verify response is null
+    assertThat(result).isNull();
+  }
 
-	/**
-	 * Test call with null prompt
-	 */
-	@Test
-	void testCallWithNullPrompt() {
-		// Execute test and verify exception
-		assertThatThrownBy(() -> agent.call(null)).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("option is null");
-	}
+  /** Test call with null prompt */
+  @Test
+  void testCallWithNullPrompt() {
+    // Execute test and verify exception
+    assertThatThrownBy(() -> agent.call(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("option is null");
+  }
 
-	/**
-	 * Test call with null appId
-	 */
-	@Test
-	void testCallWithNullAppId() {
-		// Prepare test data with null appId
-		DashScopeAgentOptions optionsWithNullAppId = DashScopeAgentOptions.builder().withAppId("").build();
-		Message message = new UserMessage(TEST_USER_MESSAGE);
-		Prompt prompt = new Prompt(List.of(message), optionsWithNullAppId);
+  /** Test call with null appId */
+  @Test
+  void testCallWithNullAppId() {
+    // Prepare test data with null appId
+    DashScopeAgentOptions optionsWithNullAppId = DashScopeAgentOptions.builder().appId("").build();
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    Prompt prompt = new Prompt(List.of(message), optionsWithNullAppId);
 
-		// Execute test and verify exception
-		assertThatThrownBy(() -> agent.call(prompt)).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("appId must be set");
-	}
+    // Execute test and verify exception
+    assertThatThrownBy(() -> agent.call(prompt))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("appId must be set");
+  }
 
-	/**
-	 * Test successful stream with valid prompt
-	 */
-	@Test
-	void testSuccessfulStream() {
-		// Prepare test data
-		Message message = new UserMessage(TEST_USER_MESSAGE);
-		Prompt prompt = new Prompt(List.of(message), options);
+  /** Test successful stream with valid prompt */
+  @Test
+  void testSuccessfulStream() {
+    // Prepare test data
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    Prompt prompt = new Prompt(List.of(message), options);
 
-		// Create mock response
-		DashScopeAgentResponse response = createMockResponse();
+    // Create mock response
+    DashScopeAgentResponse response = createMockResponse();
 
-		// Mock API behavior
-		when(dashScopeAgentApi.stream(any(DashScopeAgentRequest.class))).thenReturn(Flux.just(response));
+    // Mock API behavior
+    when(dashScopeAgentApi.stream(any(DashScopeAgentRequest.class)))
+        .thenReturn(Flux.just(response));
 
-		// Execute test
-		var resultFlux = agent.stream(prompt);
+    // Execute test
+    var resultFlux = agent.stream(prompt);
 
-		// Verify stream response
-		StepVerifier.create(resultFlux).assertNext(result -> {
-			assertThat(result).isNotNull();
-			assertThat(result.getResults()).hasSize(1);
-			var assistantMessage = result.getResults().get(0).getOutput();
-			assertThat(assistantMessage.toString()).contains(TEST_ASSISTANT_RESPONSE);
-			assertThat(result.getResults().get(0).getMetadata().getFinishReason()).isEqualTo("stop");
-		}).verifyComplete();
-	}
+    // Verify stream response
+    StepVerifier.create(resultFlux)
+        .assertNext(
+            result -> {
+              assertThat(result).isNotNull();
+              assertThat(result.getResults()).hasSize(1);
+              var assistantMessage = result.getResults().get(0).getOutput();
+              assertThat(assistantMessage.toString()).contains(TEST_ASSISTANT_RESPONSE);
+              assertThat(result.getResults().get(0).getMetadata().getFinishReason())
+                  .isEqualTo("stop");
+            })
+        .verifyComplete();
+  }
 
-	/**
-	 * Test stream with null prompt
-	 */
-	@Test
-	void testStreamWithNullPrompt() {
-		// Execute test and verify exception
-		assertThatThrownBy(() -> agent.stream(null)).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("option is null");
-	}
+  /** Test stream with null prompt */
+  @Test
+  void testStreamWithNullPrompt() {
+    // Execute test and verify exception
+    assertThatThrownBy(() -> agent.stream(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("option is null");
+  }
 
-	/**
-	 * Test default constructor
-	 */
-	@Test
-	void testDefaultConstructor() {
-		// Create agent with default constructor
-		DashScopeAgent defaultAgent = new DashScopeAgent(dashScopeAgentApi);
+  /** Test default constructor */
+  @Test
+  void testDefaultConstructor() {
+    // Create agent with default constructor
+    DashScopeAgent defaultAgent = new DashScopeAgent(dashScopeAgentApi);
 
-		// Verify default options are set
-		Message message = new UserMessage(TEST_USER_MESSAGE);
-		DashScopeAgentOptions defaultOptions = DashScopeAgentOptions.builder().withAppId(TEST_APP_ID).build();
-		Prompt prompt = new Prompt(List.of(message), defaultOptions);
+    // Verify default options are set
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    DashScopeAgentOptions defaultOptions =
+        DashScopeAgentOptions.builder().appId(TEST_APP_ID).build();
+    Prompt prompt = new Prompt(List.of(message), defaultOptions);
 
-		// Create mock response
-		DashScopeAgentResponse response = createMockResponse();
+    // Create mock response
+    DashScopeAgentResponse response = createMockResponse();
 
-		// Mock API behavior
-		when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class))).thenReturn(ResponseEntity.ok(response));
+    // Mock API behavior
+    when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class)))
+        .thenReturn(ResponseEntity.ok(response));
 
-		// Execute test
-		var result = defaultAgent.call(prompt);
+    // Execute test
+    var result = defaultAgent.call(prompt);
 
-		// Verify response
-		assertThat(result).isNotNull();
-		assertThat(result.getResults()).hasSize(1);
-	}
+    // Verify response
+    assertThat(result).isNotNull();
+    assertThat(result.getResults()).hasSize(1);
+  }
 
-	/**
-	 * Helper method to create a mock DashScopeAgentResponse
-	 */
-	private DashScopeAgentResponse createMockResponse() {
-		// Create thoughts list
-		var thought = new DashScopeAgentResponse.DashScopeAgentResponseOutput.DashScopeAgentResponseOutputThoughts(
-				"test thought", "test action type", "test action name", "test action", "test input stream",
-				"test input", "test response", "test observation", "test reasoning content");
-		List<DashScopeAgentResponse.DashScopeAgentResponseOutput.DashScopeAgentResponseOutputThoughts> thoughts = List
-			.of(thought);
+  /** Helper method to create a mock DashScopeAgentResponse */
+  private DashScopeAgentResponse createMockResponse() {
+    // Create thoughts list
+    var thought =
+        new DashScopeAgentResponse.DashScopeAgentResponseOutput
+            .DashScopeAgentResponseOutputThoughts(
+            "test thought",
+            "test action type",
+            "test action name",
+            "test action",
+            "test input stream",
+            "test input",
+            "test response",
+            "test observation",
+            "test reasoning content");
+    List<DashScopeAgentResponse.DashScopeAgentResponseOutput.DashScopeAgentResponseOutputThoughts>
+        thoughts = List.of(thought);
 
-		// Create doc references list (empty for this test)
-		List<DashScopeAgentResponse.DashScopeAgentResponseOutput.DashScopeAgentResponseOutputDocReference> docReferences = List
-			.of();
+    // Create doc references list (empty for this test)
+    List<
+            DashScopeAgentResponse.DashScopeAgentResponseOutput
+                .DashScopeAgentResponseOutputDocReference>
+        docReferences = List.of();
 
-		// Create output with all required parameters
-		var output = new DashScopeAgentResponse.DashScopeAgentResponseOutput(TEST_ASSISTANT_RESPONSE, // text
-				"stop", // finishReason
-				"test-session", // sessionId
-				thoughts, // thoughts list
-				docReferences // docReferences list
-		);
+    // Create output with all required parameters
+    var output =
+        new DashScopeAgentResponse.DashScopeAgentResponseOutput(
+            TEST_ASSISTANT_RESPONSE, // text
+            "stop", // finishReason
+            "test-session", // sessionId
+            thoughts, // thoughts list
+            docReferences // docReferences list
+            );
 
-		// Create usage with models list
-		var usageModel = new DashScopeAgentResponse.DashScopeAgentResponseUsage.DashScopeAgentResponseUsageModels(
-				"test-model", 10, 20);
-		var usage = new DashScopeAgentResponse.DashScopeAgentResponseUsage(List.of(usageModel));
+    // Create usage with models list
+    var usageModel =
+        new DashScopeAgentResponse.DashScopeAgentResponseUsage.DashScopeAgentResponseUsageModels(
+            "test-model", 10, 20);
+    var usage = new DashScopeAgentResponse.DashScopeAgentResponseUsage(List.of(usageModel));
 
-		return new DashScopeAgentResponse(null, "request-123", null, null, output, usage);
-	}
-
+    return new DashScopeAgentResponse(null, "request-123", null, null, output, usage);
+  }
 }

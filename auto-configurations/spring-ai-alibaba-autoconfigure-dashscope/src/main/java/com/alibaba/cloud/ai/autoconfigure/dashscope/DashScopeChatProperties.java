@@ -16,7 +16,6 @@
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -51,8 +50,8 @@ public class DashScopeChatProperties extends DashScopeParentProperties {
 
 	@NestedConfigurationProperty
 	private DashScopeChatOptions options = DashScopeChatOptions.builder()
-		.withModel(DEFAULT_DEPLOYMENT_NAME)
-		.withTemperature(DEFAULT_TEMPERATURE)
+		.model(DEFAULT_DEPLOYMENT_NAME)
+		.temperature(DEFAULT_TEMPERATURE)
 		.build();
 
 	public DashScopeChatOptions getOptions() {

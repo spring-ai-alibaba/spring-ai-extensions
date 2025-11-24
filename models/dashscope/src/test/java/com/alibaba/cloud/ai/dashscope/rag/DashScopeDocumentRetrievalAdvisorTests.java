@@ -114,7 +114,10 @@ class DashScopeDocumentRetrievalAdvisorTests {
 		// Create a valid ChatResponse with Generation and metadata
 		Map<String, Object> metadata = new HashMap<>();
 		metadata.put("finishReason", ChatCompletionFinishReason.STOP.name());
-		AssistantMessage assistantMessage = new AssistantMessage("Test response", metadata);
+		AssistantMessage assistantMessage = AssistantMessage.builder()
+			.content("Test response")
+			.properties(metadata)
+			.build();
 		ChatGenerationMetadata generationMetadata = ChatGenerationMetadata.builder()
 			.finishReason(ChatCompletionFinishReason.STOP.name())
 			.build();
@@ -130,9 +133,9 @@ class DashScopeDocumentRetrievalAdvisorTests {
 		// Create question_answer_context as a Map
 		Map<String, String> qaContext = new HashMap<>();
 		qaContext.put("context",
-				String.format("[1] 【文档名】%s\n【标题】%s\n【正文】%s\n\n",
-						documents.get(0).getMetadata().getOrDefault("doc_name", ""),
-						documents.get(0).getMetadata().getOrDefault("title", ""), documents.get(0).getText()));
+			String.format("[1] 【文档名】%s\n【标题】%s\n【正文】%s\n\n",
+				documents.get(0).getMetadata().getOrDefault("doc_name", ""),
+				documents.get(0).getMetadata().getOrDefault("title", ""), documents.get(0).getText()));
 		responseAdviseContext.put("question_answer_context", qaContext);
 
 		when(callChain.nextCall(any()))
@@ -159,7 +162,10 @@ class DashScopeDocumentRetrievalAdvisorTests {
 		// Create a valid ChatResponse with Generation and metadata
 		Map<String, Object> metadata = new HashMap<>();
 		metadata.put("finishReason", ChatCompletionFinishReason.STOP.name());
-		AssistantMessage assistantMessage = new AssistantMessage("Test response", metadata);
+		AssistantMessage assistantMessage = AssistantMessage.builder()
+			.content("Test response")
+			.properties(metadata)
+			.build();
 		ChatGenerationMetadata generationMetadata = ChatGenerationMetadata.builder()
 			.finishReason(ChatCompletionFinishReason.STOP.name())
 			.build();
@@ -191,7 +197,10 @@ class DashScopeDocumentRetrievalAdvisorTests {
 		// Create chat response with metadata
 		Map<String, Object> metadata = new HashMap<>();
 		metadata.put("finishReason", ChatCompletionFinishReason.STOP.name());
-		AssistantMessage assistantMessage = new AssistantMessage("Test response", metadata);
+		AssistantMessage assistantMessage = AssistantMessage.builder()
+			.content("Test response")
+			.properties(metadata)
+			.build();
 		ChatGenerationMetadata generationMetadata = ChatGenerationMetadata.builder()
 			.finishReason(ChatCompletionFinishReason.STOP.name())
 			.build();
@@ -228,7 +237,10 @@ class DashScopeDocumentRetrievalAdvisorTests {
 		// Create a valid ChatResponse with Generation and metadata
 		Map<String, Object> metadata = new HashMap<>();
 		metadata.put("finishReason", ChatCompletionFinishReason.STOP.name());
-		AssistantMessage assistantMessage = new AssistantMessage("Test response", metadata);
+		AssistantMessage assistantMessage = AssistantMessage.builder()
+			.content("Test response")
+			.properties(metadata)
+			.build();
 		ChatGenerationMetadata generationMetadata = ChatGenerationMetadata.builder()
 			.finishReason(ChatCompletionFinishReason.STOP.name())
 			.build();
@@ -265,7 +277,10 @@ class DashScopeDocumentRetrievalAdvisorTests {
 		// Create a valid ChatResponse with Generation and metadata
 		Map<String, Object> metadata = new HashMap<>();
 		metadata.put("finishReason", ChatCompletionFinishReason.STOP.name());
-		AssistantMessage assistantMessage = new AssistantMessage("Test response", metadata);
+		AssistantMessage assistantMessage = AssistantMessage.builder()
+			.content("Test response")
+			.properties(metadata)
+			.build();
 		ChatGenerationMetadata generationMetadata = ChatGenerationMetadata.builder()
 			.finishReason(ChatCompletionFinishReason.STOP.name())
 			.build();
@@ -303,7 +318,10 @@ class DashScopeDocumentRetrievalAdvisorTests {
 		// Create a valid ChatResponse with Generation and metadata
 		Map<String, Object> metadata = new HashMap<>();
 		metadata.put("finishReason", ChatCompletionFinishReason.STOP.name());
-		AssistantMessage assistantMessage = new AssistantMessage("Test response", metadata);
+		AssistantMessage assistantMessage = AssistantMessage.builder()
+			.content("Test response")
+			.properties(metadata)
+			.build();
 		ChatGenerationMetadata generationMetadata = ChatGenerationMetadata.builder()
 			.finishReason(ChatCompletionFinishReason.STOP.name())
 			.build();

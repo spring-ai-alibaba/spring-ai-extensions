@@ -15,6 +15,14 @@
  */
 package com.alibaba.cloud.ai.dashscope.protocol;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okio.ByteString;
@@ -22,15 +30,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
-
-import java.nio.ByteBuffer;
-import java.lang.reflect.Field;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Test cases for DashScopeWebSocketClient. Tests cover WebSocket connection, message
@@ -67,8 +66,8 @@ class DashScopeWebSocketClientTests {
 
 		// Configure client options
 		DashScopeWebSocketClientOptions options = DashScopeWebSocketClientOptions.builder()
-			.withApiKey(TEST_API_KEY)
-			.withWorkSpaceId(TEST_WORKSPACE_ID)
+			.apiKey(TEST_API_KEY)
+			.workSpaceId(TEST_WORKSPACE_ID)
 			.build();
 
 		// Initialize client

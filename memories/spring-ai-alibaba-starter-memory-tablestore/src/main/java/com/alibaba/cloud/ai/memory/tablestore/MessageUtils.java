@@ -128,7 +128,12 @@ public class MessageUtils {
 						});
 					}
 
-					return new AssistantMessage(content, metadataMap, toolCalls, media);
+					return AssistantMessage.builder()
+						.content(content)
+						.properties(metadataMap)
+						.toolCalls(toolCalls)
+						.media(media)
+						.build();
 				}
 				case SYSTEM: {
 					return SystemMessage.builder().text(content).metadata(metadataMap).build();
@@ -141,7 +146,10 @@ public class MessageUtils {
 								new TypeReference<List<ToolResponseMessage.ToolResponse>>() {
 								});
 					}
-					return new ToolResponseMessage(toolResponse, metadataMap);
+					return ToolResponseMessage.builder()
+						.responses(toolResponse)
+						.metadata(metadataMap)
+						.build();
 				}
 				default:
 					throw new UnsupportedOperationException("MessageType " + messageType + " is not supported");

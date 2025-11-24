@@ -32,6 +32,7 @@ import com.alibaba.cloud.ai.mcp.router.service.McpProxyService;
 import com.alibaba.cloud.ai.mcp.router.service.McpRouterService;
 import com.alibaba.nacos.api.exception.NacosException;
 import jakarta.annotation.PostConstruct;
+import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.MetadataMode;
@@ -45,8 +46,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-
-import java.util.Properties;
 
 /**
  * Register NacosMcpServiceDiscovery to McpServiceDiscoveryFactory.
@@ -73,7 +72,7 @@ public class NacosMcpRouterAutoConfiguration {
 		DashScopeApi dashScopeApi = DashScopeApi.builder().apiKey(apiKey).build();
 
 		return new DashScopeEmbeddingModel(dashScopeApi, MetadataMode.EMBED,
-				DashScopeEmbeddingOptions.builder().withModel("text-embedding-v2").build());
+				DashScopeEmbeddingOptions.builder().model("text-embedding-v2").build());
 	}
 
 	@Bean

@@ -15,20 +15,19 @@
  */
 package com.alibaba.cloud.ai.dashscope.chat;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import reactor.core.publisher.Flux;
-
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import reactor.core.publisher.Flux;
 
 /**
  * Integration tests for DashScope Chat functionality. These tests will only run if
@@ -69,7 +68,7 @@ class DashScopeChatIT {
 		;
 
 		// Create chat model with default options
-		DashScopeChatOptions options = DashScopeChatOptions.builder().withModel(TEST_MODEL).build();
+		DashScopeChatOptions options = DashScopeChatOptions.builder().model(TEST_MODEL).build();
 		DashScopeChatModel chatModel = DashScopeChatModel.builder()
 			.dashScopeApi(realApi)
 			.defaultOptions(options)
@@ -98,7 +97,7 @@ class DashScopeChatIT {
 		;
 
 		// Create chat model with default options
-		DashScopeChatOptions options = DashScopeChatOptions.builder().withModel(TEST_MODEL).build();
+		DashScopeChatOptions options = DashScopeChatOptions.builder().model(TEST_MODEL).build();
 		DashScopeChatModel chatModel = DashScopeChatModel.builder()
 			.dashScopeApi(realApi)
 			.defaultOptions(options)

@@ -22,71 +22,84 @@ import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
  */
 public class DashScopeWebSocketClientOptions {
 
-	private String url = DashScopeApiConstants.DEFAULT_WEBSOCKET_URL;
+  private String url = DashScopeApiConstants.DEFAULT_WEBSOCKET_URL;
 
-	private String apiKey;
+  private String apiKey;
 
-	private String workSpaceId = null;
+  private String workSpaceId = null;
 
-	public String getUrl() {
-		return url;
-	}
+  public String getUrl() {
+    return url;
+  }
 
-	public void setUrl(String url) {
-		this.url = url;
-	}
+  public void setUrl(String url) {
+    this.url = url;
+  }
 
-	public String getApiKey() {
-		return apiKey;
-	}
+  public String getApiKey() {
+    return apiKey;
+  }
 
-	public void setApiKey(String apiKey) {
-		this.apiKey = apiKey;
-	}
+  public void setApiKey(String apiKey) {
+    this.apiKey = apiKey;
+  }
 
-	public String getWorkSpaceId() {
-		return workSpaceId;
-	}
+  public String getWorkSpaceId() {
+    return workSpaceId;
+  }
 
-	public void setWorkSpaceId(String workSpaceId) {
-		this.workSpaceId = workSpaceId;
-	}
+  public void setWorkSpaceId(String workSpaceId) {
+    this.workSpaceId = workSpaceId;
+  }
 
-	public static Builder builder() {
-		return new Builder();
-	}
+  public static Builder builder() {
+    return new Builder();
+  }
 
-	public static class Builder {
+  public static class Builder {
 
-		protected DashScopeWebSocketClientOptions options;
+    protected DashScopeWebSocketClientOptions options;
 
-		public Builder() {
-			this.options = new DashScopeWebSocketClientOptions();
-		}
+    public Builder() {
+      this.options = new DashScopeWebSocketClientOptions();
+    }
 
-		public Builder(DashScopeWebSocketClientOptions options) {
-			this.options = options;
-		}
+    public Builder(DashScopeWebSocketClientOptions options) {
+      this.options = options;
+    }
 
-		public Builder withUrl(String baseUrl) {
-			options.setUrl(baseUrl);
-			return this;
-		}
+    public Builder url(String baseUrl) {
+      options.setUrl(baseUrl);
+      return this;
+    }
 
-		public Builder withApiKey(String apiKey) {
-			options.setApiKey(apiKey);
-			return this;
-		}
+    @Deprecated
+    public Builder withUrl(String baseUrl) {
+      return url(baseUrl);
+    }
 
-		public Builder withWorkSpaceId(String workSpaceId) {
-			options.setWorkSpaceId(workSpaceId);
-			return this;
-		}
+    public Builder apiKey(String apiKey) {
+      options.setApiKey(apiKey);
+      return this;
+    }
 
-		public DashScopeWebSocketClientOptions build() {
-			return options;
-		}
+    @Deprecated
+    public Builder withApiKey(String apiKey) {
+      return apiKey(apiKey);
+    }
 
-	}
+    public Builder workSpaceId(String workSpaceId) {
+      options.setWorkSpaceId(workSpaceId);
+      return this;
+    }
 
+    @Deprecated
+    public Builder withWorkSpaceId(String workSpaceId) {
+      return workSpaceId(workSpaceId);
+    }
+
+    public DashScopeWebSocketClientOptions build() {
+      return options;
+    }
+  }
 }

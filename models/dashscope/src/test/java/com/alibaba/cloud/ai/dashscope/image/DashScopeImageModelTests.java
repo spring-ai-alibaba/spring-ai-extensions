@@ -15,12 +15,19 @@
  */
 package com.alibaba.cloud.ai.dashscope.image;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage;
 import io.micrometer.observation.ObservationRegistry;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -28,14 +35,6 @@ import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.retry.support.RetryTemplate;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * Test cases for DashScopeImageModel. Tests cover basic image generation, custom options,
@@ -69,7 +68,7 @@ class DashScopeImageModelTests {
 	void setUp() {
 		// Initialize mock objects and test instances
 		dashScopeImageApi = Mockito.mock(DashScopeImageApi.class);
-		defaultOptions = DashScopeImageOptions.builder().withModel(TEST_MODEL).withN(1).build();
+		defaultOptions = DashScopeImageOptions.builder().model(TEST_MODEL).n(1).build();
 		imageModel = new DashScopeImageModel(dashScopeImageApi, defaultOptions, RetryTemplate.builder().build(),
 				ObservationRegistry.NOOP);
 	}
@@ -92,12 +91,12 @@ class DashScopeImageModelTests {
 		mockSuccessfulImageGeneration();
 
 		DashScopeImageOptions customOptions = DashScopeImageOptions.builder()
-			.withModel(TEST_MODEL)
-			.withN(2)
-			.withWidth(1024)
-			.withHeight(1024)
-			.withStyle("photography")
-			.withSeed(42)
+			.model(TEST_MODEL)
+			.n(2)
+			.width(1024)
+			.height(1024)
+			.style("photography")
+			.seed(42)
 			.build();
 
 		ImagePrompt prompt = new ImagePrompt(TEST_PROMPT, customOptions);

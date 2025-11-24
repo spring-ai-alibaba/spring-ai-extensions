@@ -41,10 +41,15 @@ public class DashScopeApiSpec {
     public static final String DEFAULT_EMBEDDING_MODEL = DashScopeModel.EmbeddingModel.EMBEDDING_V2.getValue();
 
     public static final String DEFAULT_EMBEDDING_TEXT_TYPE = DashScopeModel.EmbeddingTextType.DOCUMENT.getValue();
+    
+    public interface ApiResponse {
+        String code();
+        String message();
+    }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record CommonResponse<T>(@JsonProperty("code") String code, @JsonProperty("message") String message,
-                                    @JsonProperty("data") T data) {
+                                    @JsonProperty("data") T data) implements ApiResponse {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -1127,6 +1132,18 @@ public class DashScopeApiSpec {
     public record ChatCompletionChunk(@JsonProperty("request_id") String requestId,
                                       @JsonProperty("output") ChatCompletionOutput output, @JsonProperty("usage") TokenUsage usage,
                                       Object o) {
+    }
+
+    /**
+     * Error response class in streaming responses.
+     * @param code error code 
+     * @param message error message 
+     * @param requestId request ID 
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record DashScopeErrorResponse(@JsonProperty("code") String code, 
+                                       @JsonProperty("message") String message,
+                                       @JsonProperty("request_id") String requestId) implements ApiResponse {
     }
 
     /**

@@ -1,13 +1,21 @@
 # Mem0测试配置
-mem0:
-  server:
-    version: v1.1
-  client:
-    base-url: http://localhost:8888
-    timeout-seconds: 30
-
-# 测试环境配置
 spring:
+  ai:
+    alibaba:
+      mem0:
+        server:
+          version: v1.1
+        client:
+          base-url: http://localhost:8888
+          timeout-seconds: 30
+          async:
+            enabled: true
+            core-pool-size: 2
+            max-pool-size: 4
+            queue-capacity: 100
+            thread-name-prefix: "test-mem0-async-"
+
+  # 测试环境配置
   application:
     name: mem0-test
   profiles:

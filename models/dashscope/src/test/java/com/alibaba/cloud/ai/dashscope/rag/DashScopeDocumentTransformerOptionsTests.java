@@ -15,8 +15,9 @@
  */
 package com.alibaba.cloud.ai.dashscope.rag;
 
-import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * Test cases for DashScopeDocumentTransformerOptions. Tests cover default values, builder
@@ -63,11 +64,11 @@ class DashScopeDocumentTransformerOptionsTests {
 	@Test
 	void testBuilderPattern() {
 		DashScopeDocumentTransformerOptions options = DashScopeDocumentTransformerOptions.builder()
-			.withChunkSize(TEST_CHUNK_SIZE)
-			.withOverlapSize(TEST_OVERLAP_SIZE)
-			.withSeparator(TEST_SEPARATOR)
-			.withFileType(TEST_FILE_TYPE)
-			.withLanguage(TEST_LANGUAGE)
+			.chunkSize(TEST_CHUNK_SIZE)
+			.overlapSize(TEST_OVERLAP_SIZE)
+			.separator(TEST_SEPARATOR)
+			.fileType(TEST_FILE_TYPE)
+			.language(TEST_LANGUAGE)
 			.build();
 
 		// Verify all properties are set correctly
@@ -108,8 +109,8 @@ class DashScopeDocumentTransformerOptionsTests {
 	@Test
 	void testBuilderWithPartialValues() {
 		DashScopeDocumentTransformerOptions options = DashScopeDocumentTransformerOptions.builder()
-			.withChunkSize(TEST_CHUNK_SIZE)
-			.withLanguage(TEST_LANGUAGE)
+			.chunkSize(TEST_CHUNK_SIZE)
+			.language(TEST_LANGUAGE)
 			.build();
 
 		// Verify set values

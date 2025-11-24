@@ -4,6 +4,8 @@ This project builds upon Spring AI, providing extended implementations of core c
 
 Based on these components, developers can use Spring AI [ChatClient](https://java2ai.com/docs/1.0.0.2/tutorials/basics/chat-client/), or [Spring AI Alibaba Agent Framework](https://github.com/alibaba/spring-ai-alibaba) to quickly build their own AI agent applications. Please choose according to your specific use case.
 
+**English** | [📖 中文版](README-zh.md)
+
 ## Get Started
 
 ### Prerequsites
@@ -22,7 +24,7 @@ To quickly get started with Spring AI Alibaba, add 'spring-ai-alibaba-starter-da
     <dependency>
       <groupId>com.alibaba.cloud.ai</groupId>
       <artifactId>spring-ai-extensions-bom</artifactId>
-      <version>1.1.0.0-SNAPSHOT</version>
+      <version>1.1.0.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -55,7 +57,7 @@ public class HelloworldController {
         )
         .defaultOptions(
             DashScopeChatOptions.builder()
-                .withTopP(0.7)
+                .topP(0.7)
                 .build()
         )
         .build();

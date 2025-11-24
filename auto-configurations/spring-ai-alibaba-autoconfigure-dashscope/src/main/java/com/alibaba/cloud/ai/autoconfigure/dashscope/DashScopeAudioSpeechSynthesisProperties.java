@@ -36,7 +36,7 @@ public class DashScopeAudioSpeechSynthesisProperties extends DashScopeParentProp
 
 	private final String DEFAULT_MODEL = DashScopeModel.AudioModel.COSYVOICE_V1.getValue();
 
-	private static final Float SPEED = 1.0f;
+	private static final Double SPEED = 1.0;
 
 	private static final String DEFAULT_VOICE = "longhua";
 

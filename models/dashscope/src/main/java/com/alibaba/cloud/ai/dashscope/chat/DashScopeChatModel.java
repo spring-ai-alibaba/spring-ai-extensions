@@ -317,7 +317,7 @@ public class DashScopeChatModel implements ChatModel {
 			return new ChatResponse(List.of());
 		}
 
-		// DashScope searchInfos
+		// Dashscope searchInfos
         DashScopeApiSpec.SearchInfo searchInfo = chatCompletion.output().searchInfo();
 
 		ConcurrentHashMap<String, String> finalRoleMap = roleMap == null ? new ConcurrentHashMap<>() : roleMap;
@@ -376,7 +376,11 @@ public class DashScopeChatModel implements ChatModel {
 		String finishReason = finishReasonToMetadataValue(choice.finishReason());
 		var generationMetadataBuilder = ChatGenerationMetadata.builder().finishReason(finishReason);
 
-		var assistantMessage = new AssistantMessage(choice.message().content(), metadata, toolCalls);
+		var assistantMessage = AssistantMessage.builder()
+			.content(choice.message().content())
+			.properties(metadata)
+			.toolCalls(toolCalls)
+			.build();
 		return new Generation(assistantMessage, generationMetadataBuilder.build());
 	}
 
@@ -719,8 +723,8 @@ public class DashScopeChatModel implements ChatModel {
 		private DashScopeApi dashScopeApi;
 
 		private DashScopeChatOptions defaultOptions = DashScopeChatOptions.builder()
-			.withModel(DEFAULT_MODEL_NAME)
-			.withTemperature(DEFAULT_TEMPERATURE)
+			.model(DEFAULT_MODEL_NAME)
+			.temperature(DEFAULT_TEMPERATURE)
 			.build();
 
 		private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;

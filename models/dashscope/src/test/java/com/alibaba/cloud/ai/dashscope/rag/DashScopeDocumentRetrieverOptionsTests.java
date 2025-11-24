@@ -15,8 +15,9 @@
  */
 package com.alibaba.cloud.ai.dashscope.rag;
 
-import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * Test cases for DashScopeDocumentRetrieverOptions. Tests cover builder pattern,
@@ -65,15 +66,15 @@ class DashScopeDocumentRetrieverOptionsTests {
 	void testBuilderPattern() {
 		// Test builder pattern with all properties set
 		DashScopeDocumentRetrieverOptions options = DashScopeDocumentRetrieverOptions.builder()
-			.withIndexName(TEST_INDEX_NAME)
-			.withDenseSimilarityTopK(TEST_DENSE_TOP_K)
-			.withSparseSimilarityTopK(TEST_SPARSE_TOP_K)
-			.withEnableRewrite(true)
-			.withRewriteModelName(TEST_REWRITE_MODEL)
-			.withEnableReranking(false)
-			.withRerankModelName(TEST_RERANK_MODEL)
-			.withRerankMinScore(TEST_RERANK_MIN_SCORE)
-			.withRerankTopN(TEST_RERANK_TOP_N)
+			.indexName(TEST_INDEX_NAME)
+			.denseSimilarityTopK(TEST_DENSE_TOP_K)
+			.sparseSimilarityTopK(TEST_SPARSE_TOP_K)
+			.enableRewrite(true)
+			.rewriteModelName(TEST_REWRITE_MODEL)
+			.enableReranking(false)
+			.rerankModelName(TEST_RERANK_MODEL)
+			.rerankMinScore(TEST_RERANK_MIN_SCORE)
+			.rerankTopN(TEST_RERANK_TOP_N)
 			.build();
 
 		// Verify all properties are set correctly
@@ -120,8 +121,8 @@ class DashScopeDocumentRetrieverOptionsTests {
 	void testBuilderWithPartialValues() {
 		// Test builder with only some properties set
 		DashScopeDocumentRetrieverOptions options = DashScopeDocumentRetrieverOptions.builder()
-			.withIndexName(TEST_INDEX_NAME)
-			.withDenseSimilarityTopK(TEST_DENSE_TOP_K)
+			.indexName(TEST_INDEX_NAME)
+			.denseSimilarityTopK(TEST_DENSE_TOP_K)
 			.build();
 
 		// Verify set values

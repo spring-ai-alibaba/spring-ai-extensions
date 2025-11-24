@@ -58,15 +58,17 @@ class TablestoreChatMemoryRepositoryTest {
 	void saveMessagesMultipleMessages() {
 		var conversationId = UUID.randomUUID().toString();
 		var messages = List.<Message>of(new AssistantMessage("idx:1 Message from assistant - " + conversationId),
-				new UserMessage("idx:2 Message from user - " + conversationId),
-				new SystemMessage("idx:3 Message from system - " + conversationId),
-				new ToolResponseMessage(List.of(
-						new ToolResponseMessage.ToolResponse("idx:4-1", "tool1",
-								"Message from tool - " + conversationId),
-						new ToolResponseMessage.ToolResponse("idx:4-2", "tool2",
-								"Message from tool - " + conversationId),
-						new ToolResponseMessage.ToolResponse("idx:4-3", "tool3",
-								"Message from tool - " + conversationId))));
+			new UserMessage("idx:2 Message from user - " + conversationId),
+			new SystemMessage("idx:3 Message from system - " + conversationId),
+			ToolResponseMessage.builder()
+				.responses(List.of(
+					new ToolResponseMessage.ToolResponse("idx:4-1", "tool1",
+						"Message from tool - " + conversationId),
+					new ToolResponseMessage.ToolResponse("idx:4-2", "tool2",
+						"Message from tool - " + conversationId),
+					new ToolResponseMessage.ToolResponse("idx:4-3", "tool3",
+						"Message from tool - " + conversationId)))
+				.build());
 
 		chatMemoryRepository.saveAll(conversationId, messages);
 

@@ -15,20 +15,18 @@
  */
 package com.alibaba.cloud.ai.dashscope.chat.observation;
 
-import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import io.micrometer.common.KeyValues;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.observation.ChatModelObservationContext;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test cases for DashScopeChatModelObservationConvention. Tests cover observation name,
@@ -52,7 +50,7 @@ class DashScopeChatModelObservationConventionTests {
 
 		// Create a basic prompt with a user message
 		Prompt prompt = new Prompt(List.of(new UserMessage("Test message")),
-				DashScopeChatOptions.builder().withModel("qwen-turbo").build());
+				DashScopeChatOptions.builder().model("qwen-turbo").build());
 
 		// Create context with DashScope specific options
 		context = ChatModelObservationContext.builder()

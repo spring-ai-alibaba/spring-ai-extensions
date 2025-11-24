@@ -15,8 +15,9 @@
  */
 package com.alibaba.cloud.ai.dashscope.rerank;
 
-import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * Test cases for DashScopeRerankOptions. Tests cover default values, builder pattern, and
@@ -57,9 +58,9 @@ class DashScopeRerankOptionsTests {
 	@Test
 	void testBuilderPattern() {
 		DashScopeRerankOptions options = DashScopeRerankOptions.builder()
-			.withModel(TEST_MODEL)
-			.withTopN(TEST_TOP_N)
-			.withReturnDocuments(TEST_RETURN_DOCUMENTS)
+			.model(TEST_MODEL)
+			.topN(TEST_TOP_N)
+			.returnDocuments(TEST_RETURN_DOCUMENTS)
 			.build();
 
 		assertThat(options.getModel()).isEqualTo(TEST_MODEL);
@@ -91,8 +92,8 @@ class DashScopeRerankOptionsTests {
 	@Test
 	void testBuilderWithPartialValues() {
 		DashScopeRerankOptions options = DashScopeRerankOptions.builder()
-			.withModel(TEST_MODEL)
-			.withTopN(TEST_TOP_N)
+			.model(TEST_MODEL)
+			.topN(TEST_TOP_N)
 			.build();
 
 		assertThat(options.getModel()).isEqualTo(TEST_MODEL);

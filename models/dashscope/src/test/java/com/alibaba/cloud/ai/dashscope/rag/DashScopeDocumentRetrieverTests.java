@@ -15,8 +15,18 @@
  */
 package com.alibaba.cloud.ai.dashscope.rag;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,17 +34,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.rag.Query;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 /**
  * Test cases for DashScopeDocumentRetriever. Tests cover document retrieval
@@ -69,7 +68,7 @@ class DashScopeDocumentRetrieverTests {
 	@BeforeEach
 	void setUp() {
 		// Initialize options with test values
-		options = DashScopeDocumentRetrieverOptions.builder().withIndexName(TEST_INDEX_NAME).build();
+		options = DashScopeDocumentRetrieverOptions.builder().indexName(TEST_INDEX_NAME).build();
 
 		// Create retriever instance
 		retriever = new DashScopeDocumentRetriever(dashScopeApi, options);

@@ -18,8 +18,8 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
+import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionModel;
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionOptions;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechModel;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
@@ -206,7 +206,7 @@ public class DashScopePropertiesTests {
 				assertThat(speechProperties.getOptions().getVoice()).isEqualTo("echo");
 				assertThat(speechProperties.getOptions().getResponseFormat())
 					.isEqualTo(DashScopeAudioSpeechApi.ResponseFormat.PCM);
-				assertThat(speechProperties.getOptions().getSpeed()).isEqualTo(0.8f);
+				assertThat(speechProperties.getOptions().getSpeed()).isEqualTo(0.8);
 			});
 	}
 
@@ -379,7 +379,7 @@ public class DashScopePropertiesTests {
 				List<String> languageHints = transcriptionProperties.getOptions().getLanguageHints();
 				assertThat(languageHints.contains("en")).isTrue();
 				assertThat(transcriptionProperties.getOptions().getFormat())
-					.isEqualTo(DashScopeAudioTranscriptionOptions.AudioFormat.MP3);
+					.isEqualTo(DashScopeAudioTranscriptionApi.AudioFormat.MP3);
 			});
 	}
 

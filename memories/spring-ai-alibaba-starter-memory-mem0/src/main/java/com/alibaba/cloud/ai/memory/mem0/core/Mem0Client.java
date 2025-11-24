@@ -30,6 +30,8 @@ public class Mem0Client {
 
 	private int maxRetryAttempts = 3;
 
+	private AsyncConfig async = new AsyncConfig();
+
 	// 私有构造函数，防止直接实例化
 	private Mem0Client() {
 	}
@@ -40,6 +42,70 @@ public class Mem0Client {
 		this.enableCache = builder.enableCache;
 		this.timeoutSeconds = builder.timeoutSeconds;
 		this.maxRetryAttempts = builder.maxRetryAttempts;
+		this.async = builder.async;
+	}
+
+	public static class AsyncConfig {
+
+		private boolean enabled = true;
+
+		private int corePoolSize = 2;
+
+		private int maxPoolSize = 4;
+
+		private int queueCapacity = 100;
+
+		private String threadNamePrefix = "mem0-async-";
+
+		public boolean isEnabled() {
+			return enabled;
+		}
+
+		public void setEnabled(boolean enabled) {
+			this.enabled = enabled;
+		}
+
+		public int getCorePoolSize() {
+			return corePoolSize;
+		}
+
+		public void setCorePoolSize(int corePoolSize) {
+			this.corePoolSize = corePoolSize;
+		}
+
+		public int getMaxPoolSize() {
+			return maxPoolSize;
+		}
+
+		public void setMaxPoolSize(int maxPoolSize) {
+			this.maxPoolSize = maxPoolSize;
+		}
+
+		public int getQueueCapacity() {
+			return queueCapacity;
+		}
+
+		public void setQueueCapacity(int queueCapacity) {
+			this.queueCapacity = queueCapacity;
+		}
+
+		public String getThreadNamePrefix() {
+			return threadNamePrefix;
+		}
+
+		public void setThreadNamePrefix(String threadNamePrefix) {
+			this.threadNamePrefix = threadNamePrefix;
+		}
+
+	}
+
+
+	public AsyncConfig getAsync() {
+		return async;
+	}
+
+	public void setAsync(AsyncConfig async) {
+		this.async = async;
 	}
 
 	public static Builder builder() {
@@ -88,6 +154,8 @@ public class Mem0Client {
 
 		private int maxRetryAttempts = 3;
 
+		private AsyncConfig async = new AsyncConfig();
+
 		private Builder() {
 		}
 
@@ -108,6 +176,11 @@ public class Mem0Client {
 
 		public Builder maxRetryAttempts(int maxRetryAttempts) {
 			this.maxRetryAttempts = maxRetryAttempts;
+			return this;
+		}
+
+		public Builder async(AsyncConfig async) {
+			this.async = async;
 			return this;
 		}
 

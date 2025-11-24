@@ -15,30 +15,28 @@
  */
 package com.alibaba.cloud.ai.dashscope.embedding;
 
+import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
+import io.micrometer.observation.ObservationRegistry;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
-import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
-import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.metadata.EmptyUsage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.MetadataMode;
 import org.springframework.ai.embedding.AbstractEmbeddingModel;
+import org.springframework.ai.embedding.BatchingStrategy;
 import org.springframework.ai.embedding.Embedding;
 import org.springframework.ai.embedding.EmbeddingOptions;
 import org.springframework.ai.embedding.EmbeddingRequest;
 import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.embedding.EmbeddingResponseMetadata;
-import org.springframework.ai.embedding.BatchingStrategy;
 import org.springframework.ai.embedding.observation.DefaultEmbeddingModelObservationConvention;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationContext;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationConvention;
@@ -89,8 +87,8 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 	public DashScopeEmbeddingModel(DashScopeApi dashScopeApi, MetadataMode metadataMode) {
 		this(dashScopeApi, metadataMode,
 				DashScopeEmbeddingOptions.builder()
-					.withModel(DashScopeApi.DEFAULT_EMBEDDING_MODEL)
-					.withTextType(DashScopeApi.DEFAULT_EMBEDDING_TEXT_TYPE)
+					.model(DashScopeApi.DEFAULT_EMBEDDING_MODEL)
+					.textType(DashScopeApi.DEFAULT_EMBEDDING_TEXT_TYPE)
 					.build());
 	}
 
@@ -196,12 +194,12 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 		DashScopeEmbeddingOptions requestOptions = runtimeOptions == null ? this.defaultOptions
 				: DashScopeEmbeddingOptions.builder()
 					// Handle portable embedding options
-					.withModel(ModelOptionsUtils.mergeOption(runtimeOptions.getModel(), this.defaultOptions.getModel()))
-					.withDimensions(ModelOptionsUtils.mergeOption(runtimeOptions.getDimensions(),
+					.model(ModelOptionsUtils.mergeOption(runtimeOptions.getModel(), this.defaultOptions.getModel()))
+					.dimensions(ModelOptionsUtils.mergeOption(runtimeOptions.getDimensions(),
 							defaultOptions.getDimensions()))
 
 					// Handle dashscope specific embedding options
-					.withTextType(
+					.textType(
 							ModelOptionsUtils.mergeOption(runtimeOptions.getTextType(), defaultOptions.getTextType()))
 					.build();
 

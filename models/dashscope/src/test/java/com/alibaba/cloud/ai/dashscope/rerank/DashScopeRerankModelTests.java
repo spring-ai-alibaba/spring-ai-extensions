@@ -15,6 +15,11 @@
  */
 package com.alibaba.cloud.ai.dashscope.rerank;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.RerankResponse;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.RerankResponseOutput;
@@ -22,6 +27,10 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.RerankResponseOutput
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
 import com.alibaba.cloud.ai.document.DocumentWithScore;
 import com.alibaba.cloud.ai.model.RerankRequest;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,16 +38,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.document.Document;
 import org.springframework.http.ResponseEntity;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * Test cases for DashScopeRerankModel. Tests cover constructor validation, reranking
@@ -72,9 +71,9 @@ class DashScopeRerankModelTests {
 	void setUp() {
 		// Initialize default options
 		defaultOptions = DashScopeRerankOptions.builder()
-			.withModel(TEST_MODEL)
-			.withTopN(3)
-			.withReturnDocuments(false)
+			.model(TEST_MODEL)
+			.topN(3)
+			.returnDocuments(false)
 			.build();
 
 		// Initialize rerank model
@@ -193,9 +192,9 @@ class DashScopeRerankModelTests {
 
 		// Create custom options
 		DashScopeRerankOptions customOptions = DashScopeRerankOptions.builder()
-			.withModel("custom-model")
-			.withTopN(5)
-			.withReturnDocuments(true)
+			.model("custom-model")
+			.topN(5)
+			.returnDocuments(true)
 			.build();
 
 		// Mock API response

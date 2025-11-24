@@ -15,11 +15,19 @@
  */
 package com.alibaba.cloud.ai.dashscope.embedding;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.Embedding;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.EmbeddingList;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.EmbeddingUsage;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.Embeddings;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.Embedding;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -28,15 +36,6 @@ import org.springframework.ai.document.MetadataMode;
 import org.springframework.ai.embedding.EmbeddingRequest;
 import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.http.ResponseEntity;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * Test cases for DashScopeEmbeddingModel. Tests cover basic embedding operations, error
@@ -71,9 +70,9 @@ class DashScopeEmbeddingModelTests {
 		// Initialize mock objects and test instances
 		dashScopeApi = Mockito.mock(DashScopeApi.class);
 		defaultOptions = DashScopeEmbeddingOptions.builder()
-			.withModel(TEST_MODEL)
-			.withTextType(TEST_TEXT_TYPE)
-			.withDimensions(TEST_DIMENSION)
+			.model(TEST_MODEL)
+			.textType(TEST_TEXT_TYPE)
+			.dimensions(TEST_DIMENSION)
 			.build();
 		embeddingModel = new DashScopeEmbeddingModel(dashScopeApi, MetadataMode.EMBED, defaultOptions);
 	}
@@ -175,9 +174,9 @@ class DashScopeEmbeddingModelTests {
 		when(dashScopeApi.embeddings(any())).thenReturn(responseEntity);
 
 		DashScopeEmbeddingOptions customOptions = DashScopeEmbeddingOptions.builder()
-			.withModel("custom-model")
-			.withTextType("query")
-			.withDimensions(512)
+			.model("custom-model")
+			.textType("query")
+			.dimensions(512)
 			.build();
 
 		EmbeddingRequest request = new EmbeddingRequest(List.of(TEST_TEXT), customOptions);
@@ -216,9 +215,9 @@ class DashScopeEmbeddingModelTests {
 
 		// Create options with null textType (simulating the issue scenario)
 		DashScopeEmbeddingOptions optionsWithNullTextType = DashScopeEmbeddingOptions.builder()
-			.withModel(TEST_MODEL)
-			.withTextType(null) // null textType
-			.withDimensions(TEST_DIMENSION)
+			.model(TEST_MODEL)
+			.textType(null) // null textType
+			.dimensions(TEST_DIMENSION)
 			.build();
 
 		EmbeddingRequest request = new EmbeddingRequest(List.of(TEST_TEXT), optionsWithNullTextType);
@@ -243,9 +242,9 @@ class DashScopeEmbeddingModelTests {
 
 		// Test empty textType handling.
 		DashScopeEmbeddingOptions optionsWithEmptyTextType = DashScopeEmbeddingOptions.builder()
-			.withModel(TEST_MODEL)
-			.withTextType("") // Empty textType - user's explicit choice.
-			.withDimensions(TEST_DIMENSION)
+			.model(TEST_MODEL)
+			.textType("") // Empty textType - user's explicit choice.
+			.dimensions(TEST_DIMENSION)
 			.build();
 
 		EmbeddingRequest request = new EmbeddingRequest(List.of(TEST_TEXT), optionsWithEmptyTextType);

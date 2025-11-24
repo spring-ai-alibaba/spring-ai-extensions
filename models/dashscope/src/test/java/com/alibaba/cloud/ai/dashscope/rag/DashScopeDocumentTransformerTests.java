@@ -15,25 +15,24 @@
  */
 package com.alibaba.cloud.ai.dashscope.rag;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.document.Document;
 import org.springframework.http.ResponseEntity;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * Test cases for DashScopeDocumentTransformer. Tests cover constructor validation,
@@ -69,11 +68,11 @@ class DashScopeDocumentTransformerTests {
 
 		// Create default options
 		options = DashScopeDocumentTransformerOptions.builder()
-			.withChunkSize(500)
-			.withOverlapSize(100)
-			.withSeparator("|,|，|。|？|！|\\n|\\\\?|\\\\!")
-			.withFileType("idp")
-			.withLanguage("cn")
+			.chunkSize(500)
+			.overlapSize(100)
+			.separator("|,|，|。|？|！|\\n|\\\\?|\\\\!")
+			.fileType("idp")
+			.language("cn")
 			.build();
 
 		// Create transformer instance
