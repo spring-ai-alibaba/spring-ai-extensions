@@ -839,10 +839,15 @@ public class DashScopeApiSpec {
 
                 Object object = list.get(0);
                 if (object instanceof Map map) {
-                    if (map.isEmpty() || map.get("text") == null) {
+                    if (map.isEmpty()) {
                         return "";
                     }
-
+                    if (map.get("audio") != null && map.get("audio") instanceof Map audioMap && audioMap.get("data") != null) {
+                        return String.format("<audio>%s</audio>", audioMap.get("data").toString());
+                    }
+                    if (map.get("text") == null) {
+                        return "";
+                    }
                     return map.get("text").toString();
                 }
             }

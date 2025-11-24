@@ -75,7 +75,9 @@ public class DashScopeModel {
 		QWEN_MATH_PLUS("qwen-math-plus"),
 
 		/**
-		 * Tongyi Qianwen Code Model. The latest Qwen3-Coder-Plus series models are code generation models based on Qwen3, featuring powerful Coding Agent capabilities. They excel at tool invocation and environment interaction, enabling autonomous programming. Their code capabilities are outstanding while also possessing general capabilities.
+		 * Tongyi Qianwen Code Model. The latest Qwen3-Coder-Plus series models are code generation models based on Qwen3,
+		 * featuring powerful Coding Agent capabilities. They excel at tool invocation and environment interaction,
+		 * enabling autonomous programming. Their code capabilities are outstanding while also possessing general capabilities.
 		 */
 		QWEN_CODER_PLUS("qwen3-coder-plus"),
 
@@ -120,12 +122,39 @@ public class DashScopeModel {
 		QWEN_OMNI_FLASH_REALTIME("qwen3-omni-flash-realtime"),
 
 		/**
+		 * Tongyi Qianwen 3-Omni-Flash multimodal large model, based on Thinker-Talker hybrid expert (MoE) architecture,
+		 * supports efficient understanding of text, images, audio, video and speech generation capabilities,
+		 * and can perform text interaction in 119 languages and speech interaction in 20 languages to generate
+		 * human-like speech for accurate cross-language communication. The model has powerful command following
+		 * and system prompt customization functions, flexibly adapts dialogue style and role setting,
+		 * and is widely used in text creation, voice assistant, multimedia analysis and other scenes to provide a
+		 * natural and smooth multi-modal interaction experience.
+		 */
+		QWEN3_OMNI_FLASH("qwen3-omni-flash"),
+
+		/**
 		 * The Qwen-Omni model can receive combined inputs of various modalities such as text,
 		 * images, audio, and video, and generate responses in text or voice forms.
 		 * It offers multiple anthropomorphic voices and supports voice output in multiple languages and dialects.
 		 * It can be applied in scenarios such as text creation, visual recognition, and voice assistants.
 		 */
 		QWEN_OMNI_FLASH("qwen-omni-flash"),
+
+		/**
+		 * Tongyi Qianwen new multi-modal understanding generation model, support text, image, voice, video input
+		 * understanding and mixed input understanding, with text and voice simultaneous streaming generation ability,
+		 * multi-modal content understanding speed significantly improved, provides 4 natural dialogue tones,
+		 * this version is a dynamic update version.
+		 */
+		QWEN_OMNI_TURBO_LATEST("qwen-omni-turbo-latest"),
+
+		/**
+		 * Qwen2.5 training based on the new multi-modal understanding to generate large models, support text, image,
+		 * voice, video input understanding and mixed input understanding, with text and voice simultaneous streaming
+		 * generation capabilities, multi-modal content understanding speed significantly improved,
+		 * providing 4 natural dialogue tones.
+		 */
+		QWEN2_5_OMNI_7B("qwen2.5-omni-7b"),
 
 		/**
 		 * The qwen-vl model can answer based on the pictures you pass in.
@@ -147,7 +176,10 @@ public class DashScopeModel {
 		QWEN_FLASH("qwen-flash"),
 
 		/**
-		 * The Tongyi Qianwen OCR model is a model specifically designed for text extraction. Compared to the Tongyi Qianwen VL model, it focuses more on the text extraction capabilities for types of images such as documents, tables, test questions, and handwritten text. It can recognize multiple languages, including English, French, Japanese, Korean, German, Russian, and Italian, etc.
+		 * The Tongyi Qianwen OCR model is a model specifically designed for text extraction. Compared to the
+		 * Tongyi Qianwen VL model, it focuses more on the text extraction capabilities for types of images such as
+		 * documents, tables, test questions, and handwritten text. It can recognize multiple languages, including
+		 * English, French, Japanese, Korean, German, Russian, and Italian, etc.
 		 */
 		QWEN_VL_OCR("qwen-vl-ocr"),
 
