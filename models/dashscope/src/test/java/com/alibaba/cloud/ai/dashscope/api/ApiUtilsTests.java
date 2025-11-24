@@ -50,7 +50,7 @@ class ApiUtilsTests {
 		assertThat(headers.getFirst(DashScopeApiConstants.HEADER_OPENAPI_SOURCE))
 			.isEqualTo(DashScopeApiConstants.SOURCE_FLAG);
 		assertThat(headers.getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
-		assertThat(headers.getFirst("user-agent")).contains(DashScopeApiConstants.SDK_FLAG);
+		assertThat(headers.getFirst(HttpHeaders.USER_AGENT)).contains(DashScopeApiConstants.SDK_FLAG);
 	}
 
 	@Test
@@ -64,7 +64,7 @@ class ApiUtilsTests {
 			.isEqualTo(DashScopeApiConstants.SOURCE_FLAG);
 		assertThat(headers.getFirst(DashScopeApiConstants.HEADER_WORK_SPACE_ID)).isEqualTo(TEST_WORKSPACE_ID);
 		assertThat(headers.getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
-		assertThat(headers.getFirst("user-agent")).contains(DashScopeApiConstants.SDK_FLAG);
+		assertThat(headers.getFirst(HttpHeaders.USER_AGENT)).contains(DashScopeApiConstants.SDK_FLAG);
 	}
 
 	@Test
@@ -78,8 +78,8 @@ class ApiUtilsTests {
 			.isEqualTo(DashScopeApiConstants.SOURCE_FLAG);
 		assertThat(headers.getFirst(DashScopeApiConstants.HEADER_WORK_SPACE_ID)).isEqualTo(TEST_WORKSPACE_ID);
 		assertThat(headers.getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
-		assertThat(headers.getFirst("X-DashScope-SSE")).isEqualTo("enable");
-		assertThat(headers.getFirst("user-agent")).contains(DashScopeApiConstants.SDK_FLAG);
+		assertThat(headers.getFirst(DashScopeApiConstants.HEADER_SSE)).isEqualTo("enable");
+		assertThat(headers.getFirst(HttpHeaders.USER_AGENT)).contains(DashScopeApiConstants.SDK_FLAG);
 	}
 
 	@Test
@@ -93,7 +93,7 @@ class ApiUtilsTests {
 
 		assertThat(headers.get(HttpHeaders.AUTHORIZATION)).isEqualTo("bearer " + TEST_API_KEY);
 		assertThat(headers.get(DashScopeApiConstants.HEADER_WORK_SPACE_ID)).isEqualTo(TEST_WORKSPACE_ID);
-		assertThat(headers.get("X-DashScope-DataInspection")).isEqualTo("enable");
+		assertThat(headers.get(DashScopeApiConstants.HEADER_DATAINSPECTION)).isEqualTo("enable");
 		assertThat(headers.get("Custom-Header")).isEqualTo("custom-value");
 		assertThat(headers.get(HttpHeaders.USER_AGENT)).contains(DashScopeApiConstants.SDK_FLAG);
 	}
@@ -104,12 +104,12 @@ class ApiUtilsTests {
 		HttpHeaders headers = new HttpHeaders();
 		ApiUtils.getAudioTranscriptionHeaders(TEST_WORKSPACE_ID, true, true, true).accept(headers);
 
-		assertThat(headers.getFirst("X-DashScope-WorkSpace")).isEqualTo(TEST_WORKSPACE_ID);
-		assertThat(headers.getFirst("X-DashScope-DataInspection")).isEqualTo("enable");
-		assertThat(headers.getFirst("X-DashScope-Async")).isEqualTo("enable");
-		assertThat(headers.getFirst("X-DashScope-SSE")).isEqualTo("enable");
-		assertThat(headers.getFirst("Cache-Control")).isEqualTo("no-cache");
-		assertThat(headers.getFirst("X-Accel-Buffering")).isEqualTo("no");
+		assertThat(headers.getFirst(DashScopeApiConstants.HEADER_WORK_SPACE_ID)).isEqualTo(TEST_WORKSPACE_ID);
+		assertThat(headers.getFirst(DashScopeApiConstants.HEADER_DATAINSPECTION)).isEqualTo("enable");
+		assertThat(headers.getFirst(DashScopeApiConstants.HEADER_ASYNC)).isEqualTo("enable");
+		assertThat(headers.getFirst(DashScopeApiConstants.HEADER_SSE)).isEqualTo("enable");
+		assertThat(headers.getFirst(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-cache");
+		assertThat(headers.getFirst(DashScopeApiConstants.HEADER_X_ACCEL_BUFFERING)).isEqualTo("no");
 		assertThat(headers.getFirst(HttpHeaders.ACCEPT)).isEqualTo("text/event-stream");
 		assertThat(headers.getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
 	}

@@ -15,7 +15,6 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
-import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.common.ErrorCodeEnum;
 import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetrieverOptions;
@@ -63,6 +62,26 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ADD_FILE_CATEGORY_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DELETE_PIPELINE_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DOCUMENT_SPLITER_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DOWNLOAD_LEASE_CATEGORY_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MANAGED_INGEST_PIPELINE_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.PIPELINE_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.PIPELINE_SIMPLE_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.QUERY_CATEGORY_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_BASE_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_PARSER_NAME;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ENABLED;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_SSE;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_WORK_SPACE_ID;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MULTIMODAL_GENERATION_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.RETRIEVE_PIPELINE_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.TEXT_EMBEDDING_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.TEXT_GENERATION_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.TEXT_RERANK_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.UPLOAD_LEASE_CATEGORY_RESTFUL_URL;
 
 /**
  * @author nuocheng.lxm
@@ -146,7 +165,7 @@ public class DashScopeApi {
 
 		// For DashScope API, the workspace ID is passed in the headers.
 		if (StringUtils.hasText(workSpaceId)) {
-			this.headers.add(DashScopeApiConstants.HEADER_WORK_SPACE_ID, workSpaceId);
+			this.headers.add(HEADER_WORK_SPACE_ID, workSpaceId);
 		}
 
 		// Check API Key in headers.
@@ -209,7 +228,7 @@ public class DashScopeApi {
 	public ResponseEntity<DashScopeApiSpec.CommonResponse<DashScopeApiSpec.QueryFileResponseData>> queryFileInfo(String categoryId,
 																												 DashScopeApiSpec.UploadRequest.QueryFileRequest request) {
 		return this.restClient.post()
-			.uri("/api/v1/datacenter/category/{category}/file/{fileId}/query", categoryId, request.fileId())
+			.uri(QUERY_CATEGORY_RESTFUL_URL, request.fileId())
 			.body(request)
 			.retrieve()
 			.toEntity(new ParameterizedTypeReference<>() {
@@ -218,7 +237,7 @@ public class DashScopeApi {
 
 	public String getFileParseResult(String categoryId, DashScopeApiSpec.UploadRequest.QueryFileRequest request) {
 		ResponseEntity<DashScopeApiSpec.CommonResponse<DashScopeApiSpec.QueryFileParseResultData>> fileParseResponse = this.restClient.post()
-			.uri("/api/v1/datacenter/category/{categoryId}/file/{fileId}/download_lease", categoryId, request.fileId())
+			.uri(DOWNLOAD_LEASE_CATEGORY_RESTFUL_URL, categoryId, request.fileId())
 			.body(request)
 			.retrieve()
 			.toEntity(new ParameterizedTypeReference<>() {
@@ -247,9 +266,9 @@ public class DashScopeApi {
 	private String addFile(String leaseId, DashScopeApiSpec.UploadRequest request) {
 		try {
 			DashScopeApiSpec.UploadRequest.AddFileRequest addFileRequest = new DashScopeApiSpec.UploadRequest.AddFileRequest(leaseId,
-					DashScopeApiConstants.DEFAULT_PARSER_NAME);
+					DEFAULT_PARSER_NAME);
 			ResponseEntity<DashScopeApiSpec.CommonResponse<DashScopeApiSpec.AddFileResponseData>> response = this.restClient.post()
-				.uri("/api/v1/datacenter/category/{categoryId}/add_file", request.categoryId())
+				.uri(ADD_FILE_CATEGORY_RESTFUL_URL, request.categoryId())
 				.body(addFileRequest)
 				.retrieve()
 				.toEntity(new ParameterizedTypeReference<>() {
@@ -308,7 +327,7 @@ public class DashScopeApi {
 
 	private ResponseEntity<DashScopeApiSpec.UploadLeaseResponse> uploadLease(DashScopeApiSpec.UploadRequest request) {
 		return this.restClient.post()
-			.uri("/api/v1/datacenter/category/{categoryId}/upload_lease", request.categoryId())
+			.uri(UPLOAD_LEASE_CATEGORY_RESTFUL_URL, request.categoryId())
 			.body(request)
 			.retrieve()
 			.toEntity(DashScopeApiSpec.UploadLeaseResponse.class);
@@ -319,17 +338,16 @@ public class DashScopeApi {
 		DashScopeApiSpec.DocumentSplitRequest request = new DashScopeApiSpec.DocumentSplitRequest(document.getText(), options.getChunkSize(),
 				options.getOverlapSize(), options.getFileType(), options.getLanguage(), options.getSeparator());
 		return this.restClient.post()
-			.uri("/api/v1/indices/component/configed_transformations/spliter")
+			.uri(DOCUMENT_SPLITER_RESTFUL_URL)
 			.body(request)
 			.retrieve()
 			.toEntity(new ParameterizedTypeReference<>() {
 			});
 	}
 
-
 	public String getPipelineIdByName(String pipelineName) {
 		ResponseEntity<DashScopeApiSpec.QueryPipelineResponse> startPipelineResponse = this.restClient.get()
-			.uri("/api/v1/indices/pipeline_simple?pipeline_name={pipelineName}", pipelineName)
+			.uri(ub -> ub.path(PIPELINE_SIMPLE_RESTFUL_URL).queryParam("pipeline_name", pipelineName).build())
 			.retrieve()
 			.toEntity(DashScopeApiSpec.QueryPipelineResponse.class);
 		if (startPipelineResponse == null || startPipelineResponse.getBody() == null
@@ -383,7 +401,7 @@ public class DashScopeApi {
 
 		);
 		ResponseEntity<DashScopeApiSpec.UpsertPipelineResponse> upsertPipelineResponse = this.restClient.put()
-			.uri("/api/v1/indices/pipeline")
+			.uri(PIPELINE_RESTFUL_URL)
 			.body(upsertPipelineRequest)
 			.retrieve()
 			.toEntity(DashScopeApiSpec.UpsertPipelineResponse.class);
@@ -393,7 +411,7 @@ public class DashScopeApi {
 		}
 		String pipelineId = upsertPipelineResponse.getBody().id();
 		ResponseEntity<DashScopeApiSpec.StartPipelineResponse> startPipelineResponse = this.restClient.post()
-			.uri("/api/v1/indices/pipeline/{pipeline_id}/managed_ingest", pipelineId)
+			.uri(MANAGED_INGEST_PIPELINE_RESTFUL_URL, pipelineId)
 			.body(upsertPipelineRequest)
 			.retrieve()
 			.toEntity(DashScopeApiSpec.StartPipelineResponse.class);
@@ -408,7 +426,7 @@ public class DashScopeApi {
 			.asList(new DashScopeApiSpec.DelePipelineDocumentRequest.DelePipelineDocumentDataSource("DATA_CENTER_FILE",
 					Arrays.asList(new DashScopeApiSpec.DelePipelineDocumentRequest.DelePipelineDocumentDataSourceComponent(idList)))));
 		ResponseEntity<DashScopeApiSpec.DelePipelineDocumentResponse> deleDocumentResponse = this.restClient.post()
-			.uri("/api/v1/indices/pipeline/{pipeline_id}/delete", pipelineId)
+			.uri(DELETE_PIPELINE_RESTFUL_URL, pipelineId)
 			.body(request)
 			.retrieve()
 			.toEntity(DashScopeApiSpec.DelePipelineDocumentResponse.class);
@@ -429,7 +447,7 @@ public class DashScopeApi {
                         null)),
 				searchOption.getRerankMinScore(), searchOption.getRerankTopN(), searchOption.getSearchFilters());
 		ResponseEntity<DashScopeApiSpec.DocumentRetrieveResponse> deleDocumentResponse = this.restClient.post()
-			.uri("/api/v1/indices/pipeline/{pipeline_id}/retrieve", pipelineId)
+			.uri(RETRIEVE_PIPELINE_RESTFUL_URL, pipelineId)
 			.body(request)
 			.retrieve()
 			.toEntity(DashScopeApiSpec.DocumentRetrieveResponse.class);
@@ -486,7 +504,7 @@ public class DashScopeApi {
 
 		var chatCompletionUri = this.completionsPath;
 		if (chatRequest.multiModel()) {
-			chatCompletionUri = "/api/v1/services/aigc/multimodal-generation/generation";
+			chatCompletionUri = MULTIMODAL_GENERATION_RESTFUL_URL;
 		}
 
 		// @formatter:off
@@ -542,13 +560,13 @@ public class DashScopeApi {
 
 		var chatCompletionUri = this.completionsPath;
 		if (chatRequest.multiModel()) {
-			chatCompletionUri = "/api/v1/services/aigc/multimodal-generation/generation";
+			chatCompletionUri = MULTIMODAL_GENERATION_RESTFUL_URL;
 		}
 
 		return this.webClient.post().uri(chatCompletionUri).headers(headers -> {
 			headers.addAll(additionalHttpHeader);
 			// For DashScope stream
-			headers.add("X-DashScope-SSE", "enable");
+			headers.add(HEADER_SSE, ENABLED);
 			addDefaultHeadersIfMissing(headers);
 		})
 			.body(Mono.just(chatRequest), DashScopeApiSpec.ChatCompletionRequest.class)
@@ -608,7 +626,7 @@ public class DashScopeApi {
 		Assert.notNull(rerankRequest, "The request body can not be null.");
 
 		return this.restClient.post()
-			.uri("/api/v1/services/rerank/text-rerank/text-rerank")
+			.uri(TEXT_RERANK_RESTFUL_URL)
 			.body(rerankRequest)
 			.retrieve()
 			.toEntity(DashScopeApiSpec.RerankResponse.class);
@@ -645,7 +663,7 @@ public class DashScopeApi {
 			this.responseErrorHandler = api.getResponseErrorHandler();
 		}
 
-		private String baseUrl = DashScopeApiConstants.DEFAULT_BASE_URL;
+		private String baseUrl = DEFAULT_BASE_URL;
 
 		private ApiKey apiKey;
 
@@ -653,9 +671,9 @@ public class DashScopeApi {
 
 		private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
 
-		private String completionsPath = "/api/v1/services/aigc/text-generation/generation";
+		private String completionsPath = TEXT_GENERATION_RESTFUL_URL;
 
-		private String embeddingsPath = "api/v1/services/embeddings/text-embedding/text-embedding";
+		private String embeddingsPath = TEXT_EMBEDDING_RESTFUL_URL;
 
 		private RestClient.Builder restClientBuilder = RestClient.builder();
 

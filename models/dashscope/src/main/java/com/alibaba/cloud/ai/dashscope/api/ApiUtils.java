@@ -51,7 +51,7 @@ public class ApiUtils {
 			}
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			if (stream) {
-				headers.set("X-DashScope-SSE", "enable");
+				headers.set(DashScopeApiConstants.HEADER_SSE, DashScopeApiConstants.ENABLED);
 			}
 		};
 	}
@@ -65,7 +65,7 @@ public class ApiUtils {
 			headers.put(DashScopeApiConstants.HEADER_WORK_SPACE_ID, workspace);
 		}
 		if (isSecurityCheck) {
-			headers.put("X-DashScope-DataInspection", "enable");
+			headers.put(DashScopeApiConstants.HEADER_DATAINSPECTION, DashScopeApiConstants.ENABLED);
 		}
 		if (customHeaders != null && !customHeaders.isEmpty()) {
 			headers.putAll(customHeaders);
@@ -79,7 +79,7 @@ public class ApiUtils {
 		return (headers) -> {
 			headers.set(HttpHeaders.USER_AGENT, USER_AGENT);
 			if (isSecurityCheck) {
-				headers.set("X-DashScope-DataInspection", "enable");
+				headers.set(DashScopeApiConstants.HEADER_DATAINSPECTION, DashScopeApiConstants.ENABLED);
 			}
 
 			if (workspace != null && !workspace.isEmpty()) {
@@ -87,15 +87,15 @@ public class ApiUtils {
 			}
 
 			if (isAsyncTask) {
-				headers.set("X-DashScope-Async", "enable");
+				headers.set(DashScopeApiConstants.HEADER_ASYNC, DashScopeApiConstants.ENABLED);
 			}
 
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			if (isSSE) {
 				headers.set(HttpHeaders.CACHE_CONTROL, "no-cache");
 				headers.setAccept(List.of(MediaType.TEXT_EVENT_STREAM));
-				headers.set("X-Accel-Buffering", "no");
-				headers.set("X-DashScope-SSE", "enable");
+				headers.set(DashScopeApiConstants.HEADER_X_ACCEL_BUFFERING, "no");
+				headers.set(DashScopeApiConstants.HEADER_SSE, DashScopeApiConstants.ENABLED);
 			}
 			else {
 				headers.setAccept(List.of(MediaType.parseMediaType("application/json; charset=utf-8")));

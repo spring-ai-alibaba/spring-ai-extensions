@@ -16,7 +16,6 @@
 package com.alibaba.cloud.ai.dashscope.api;
 
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
-import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ApiKey;
@@ -28,8 +27,13 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_BASE_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ENABLED;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_ASYNC;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.IMAGE2IMAGE_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MULTIMODAL_GENERATION_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.QUERY_TASK_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.TEXT2IMAGE_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_IMAGE;
 import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_IMAGE_EDIT;
 import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_MT_IMAGE;
@@ -90,27 +94,25 @@ public class DashScopeImageApi {
 	public ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> submitImageGenTask(DashScopeApiSpec.DashScopeImageRequest request) {
 
 		String model = request.model();
-        String url = "/api/v1/services/aigc/";
+        String uri;
 
-        if (model.equals(DEFAULT_IMAGE_MODEL) || model.equals(QWEN_IMAGE.getValue()) || model.equals(QWEN_IMAGE_EDIT.value)) {
-            url += "multimodal-generation/generation";
+        if (model.equals(QWEN_IMAGE.getValue()) || model.equals(QWEN_IMAGE_EDIT.value)) {
+			uri = MULTIMODAL_GENERATION_RESTFUL_URL;
         } else if (model.equals(QWEN_MT_IMAGE.getValue()) || model.equals(WANX_2_1_IMAGEEDIT.getValue())) {
-            url += "image2image/image-synthesis";
+			uri = IMAGE2IMAGE_RESTFUL_URL;
         } else if (model.equals(WAN_2_2_T_2_I_PLUS.getValue()) || model.equals(WAN_2_2_T_2_I_FLASH.getValue()) || model.equals(WAN_2_5_I_2_I_PREVIEW.getValue())) {
-            url += "text2image/image-synthesis";
+			uri = TEXT2IMAGE_RESTFUL_URL;
         } else {
             logger.info("not match model, use default url");
             if (model.contains("edit")) {
-                url += "image2image/image-synthesis";
+				uri = IMAGE2IMAGE_RESTFUL_URL;
             } else {
-                url += "text2image/image-synthesis";
+				uri = TEXT2IMAGE_RESTFUL_URL;
             }
-            url += "";
         }
 
 		return this.restClient.post()
-			.uri(url)
-			// todo: add workspaceId header
+			.uri(uri)
 			.header(HEADER_ASYNC, ENABLED)
 			.body(request)
 			.retrieve()
@@ -119,7 +121,7 @@ public class DashScopeImageApi {
 
 	public ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> getImageGenTaskResult(String taskId) {
 		return this.restClient.get()
-			.uri("/api/v1/tasks/{task_id}", taskId)
+			.uri(QUERY_TASK_RESTFUL_URL, taskId)
 			.retrieve()
 			.toEntity(DashScopeApiSpec.DashScopeImageAsyncResponse.class);
 	}
@@ -153,7 +155,7 @@ public class DashScopeImageApi {
 			this.responseErrorHandler = api.getResponseErrorHandler();
 		}
 
-		private String baseUrl = DashScopeApiConstants.DEFAULT_BASE_URL;
+		private String baseUrl = DEFAULT_BASE_URL;
 
 		private ApiKey apiKey;
 

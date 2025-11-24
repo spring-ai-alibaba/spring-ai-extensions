@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.api;
 
 import com.alibaba.cloud.ai.dashscope.agent.DashScopeAgentFlowStreamMode;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -112,7 +113,7 @@ class DashScopeAgentApiTests {
 				try {
 					// Use mock RestClient
 					return restClient.post()
-						.uri("/api/v1/apps/" + request.appId() + "/completion")
+						.uri(DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL, request.appId())
 						.body(request)
 						.retrieve()
 						.toEntity(DashScopeAgentResponse.class);
@@ -131,7 +132,7 @@ class DashScopeAgentApiTests {
 				try {
 					// Use mock WebClient
 					return webClient.post()
-						.uri("/api/v1/apps/" + request.appId() + "/completion")
+						.uri(DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL, request.appId())
 						.body(Mono.just(request), DashScopeAgentResponse.class)
 						.retrieve()
 						.bodyToFlux(DashScopeAgentResponse.class);

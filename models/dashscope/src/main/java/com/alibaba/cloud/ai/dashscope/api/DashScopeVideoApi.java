@@ -96,20 +96,18 @@ public class DashScopeVideoApi {
 
 		logger.debug("Submitting video generation task with options: {}", request);
 
-		String baseUrl = "/api/v1/services/aigc";
-		String firstAndLAst = "/image2video/video-synthesis";
-		String normal = "/video-generation/video-synthesis";
+		String uri;
 
 		// Use unused uri paths based on the head and tail frames
 		if (request.getInput().getFirstFrameUrl() != null || request.getInput().getLastFrameUrl() != null) {
-			baseUrl += firstAndLAst;
+			uri = DashScopeApiConstants.IMAGE2VIDEO_RESTFUL_URL;
 		}
 		else {
-			baseUrl += normal;
+			uri = DashScopeApiConstants.VIDEO_GENERATION_RESTFUL_URL;
 		}
 
 		return this.restClient.post()
-			.uri(baseUrl)
+			.uri(uri)
 			.body(request)
 			.header(HEADER_ASYNC, ENABLED)
 			.retrieve()
@@ -121,7 +119,7 @@ public class DashScopeVideoApi {
 	 */
 	public ResponseEntity<DashScopeApiSpec.VideoGenerationResponse> queryVideoGenTask(String taskId) {
 		return this.restClient.get()
-			.uri("/api/v1/tasks/{taskId}", taskId)
+			.uri(DashScopeApiConstants.QUERY_TASK_RESTFUL_URL, taskId)
 			.retrieve()
 			.toEntity(DashScopeApiSpec.VideoGenerationResponse.class);
 	}

@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.api;
 
 import com.alibaba.cloud.ai.dashscope.agent.DashScopeAgentFlowStreamMode;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -81,14 +82,16 @@ public class DashScopeAgentApi {
 	}
 
 	public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest request) {
-		String uri = "/api/v1/apps/" + request.appId() + "/completion";
-		return restClient.post().uri(uri).body(request).retrieve().toEntity(DashScopeAgentResponse.class);
+		return restClient.post()
+			.uri(DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL, request.appId())
+			.body(request)
+			.retrieve()
+			.toEntity(DashScopeAgentResponse.class);
 	}
 
 	public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest request) {
-		String uri = "/api/v1/apps/" + request.appId() + "/completion";
 		return webClient.post()
-			.uri(uri)
+			.uri(DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL, request.appId())
 			.body(Mono.just(request), DashScopeAgentResponse.class)
 			.retrieve()
 			.bodyToFlux(DashScopeAgentResponse.class)
