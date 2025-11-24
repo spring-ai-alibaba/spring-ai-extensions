@@ -55,6 +55,11 @@
             <artifactId>spring-ai-commons</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-model</artifactId>
+        </dependency>
+
         <!-- GraalVM Polyglot for Python execution -->
         <dependency>
             <groupId>org.graalvm.polyglot</groupId>
@@ -93,4 +98,3 @@
     </build>
 
 </project>
-
