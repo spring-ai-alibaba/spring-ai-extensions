@@ -204,7 +204,7 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 			// 如果仍然没有结果，尝试获取所有服务器
 			if (documents.isEmpty()) {
 				logger.debug("No results found, trying to get all servers");
-				SearchRequest allRequest = SearchRequest.builder().query("").topK(Integer.MAX_VALUE).build();
+				SearchRequest allRequest = SearchRequest.builder().query(" ").topK(Integer.MAX_VALUE).build();
 				List<Document> allDocuments = vectorStore.similaritySearch(allRequest);
 				documents.addAll(allDocuments);
 				logger.debug("Found {} total documents in vector store", allDocuments.size());
@@ -242,7 +242,7 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 	private List<Document> searchByKeywords(String query, int limit) {
 		try {
 			// 获取所有文档进行关键词匹配
-			SearchRequest searchRequest = SearchRequest.builder().query("").topK(Integer.MAX_VALUE).build();
+			SearchRequest searchRequest = SearchRequest.builder().query(" ").topK(Integer.MAX_VALUE).build();
 			List<Document> allDocuments = vectorStore.similaritySearch(searchRequest);
 
 			logger.debug("Keyword search: found {} total documents to search in", allDocuments.size());
@@ -323,7 +323,7 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 		}
 
 		try {
-			SearchRequest searchRequest = SearchRequest.builder().query("").topK(Integer.MAX_VALUE).build();
+			SearchRequest searchRequest = SearchRequest.builder().query(" ").topK(Integer.MAX_VALUE).build();
 
 			List<Document> documents = vectorStore.similaritySearch(searchRequest);
 			logger.debug("Vector store size: {}", documents.size());
@@ -344,7 +344,7 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 
 		try {
 			// 获取所有文档并删除
-			SearchRequest searchRequest = SearchRequest.builder().query("").topK(Integer.MAX_VALUE).build();
+			SearchRequest searchRequest = SearchRequest.builder().query(" ").topK(Integer.MAX_VALUE).build();
 
 			List<Document> documents = vectorStore.similaritySearch(searchRequest);
 			List<String> ids = documents.stream().map(Document::getId).collect(Collectors.toList());
@@ -453,7 +453,7 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 
 		try {
 			// 获取所有文档
-			SearchRequest searchRequest = SearchRequest.builder().query("").topK(Integer.MAX_VALUE).build();
+			SearchRequest searchRequest = SearchRequest.builder().query(" ").topK(Integer.MAX_VALUE).build();
 			List<Document> allDocuments = vectorStore.similaritySearch(searchRequest);
 
 			logger.info("=== Vector Store Debug Information ===");
