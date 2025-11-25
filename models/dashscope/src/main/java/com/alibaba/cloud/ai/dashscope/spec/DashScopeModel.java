@@ -122,8 +122,8 @@ public class DashScopeModel {
 		QWEN_OMNI_FLASH_REALTIME("qwen3-omni-flash-realtime"),
 
 		/**
-		 * Tongyi Qianwen 3-Omni-Flash multimodal large model, based on Thinker-Talker hybrid expert (MoE) architecture,
-		 * supports efficient understanding of text, images, audio, video and speech generation capabilities,
+		 * Tongyi Qianwen 3-Omni-Flash multimodal large model, based on Thinker-Talker Mixture of Experts (MoE) architecture,
+		 * supports efficient understanding of text, images, audio, video and speech generation capability,
 		 * and can perform text interaction in 119 languages and speech interaction in 20 languages to generate
 		 * human-like speech for accurate cross-language communication. The model has powerful command following
 		 * and system prompt customization functions, flexibly adapts dialogue style and role setting,
