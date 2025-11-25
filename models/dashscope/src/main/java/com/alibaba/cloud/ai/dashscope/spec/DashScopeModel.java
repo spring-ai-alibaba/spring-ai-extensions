@@ -149,9 +149,9 @@ public class DashScopeModel {
 		QWEN_OMNI_TURBO_LATEST("qwen-omni-turbo-latest"),
 
 		/**
-		 * Qwen2.5 training based on the new multi-modal understanding to generate large models, support text, image,
-		 * voice, video input understanding and mixed input understanding, with text and voice simultaneous streaming
-		 * generation capabilities, multi-modal content understanding speed significantly improved,
+		 * New multi-modal understanding generation large model trained based on Qwen2.5, supports text, image,
+		 * voice, and video input understanding as well as mixed input understanding, with text and voice simultaneous streaming
+		 * generation capabilities. Multi-modal content understanding speed is significantly improved,
 		 * providing 4 natural dialogue tones.
 		 */
 		QWEN2_5_OMNI_7B("qwen2.5-omni-7b"),
