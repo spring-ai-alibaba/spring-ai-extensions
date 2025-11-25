@@ -562,7 +562,11 @@ public class DashScopeApi {
 					throw new DashScopeException(String.format("[%s] %s (requestId: %s)",
 						error.code(), error.message(), error.requestId()));
 				}
-				return ModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.ChatCompletionChunk.class);
+				DashScopeApiSpec.ChatCompletionChunk chunk = ModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.ChatCompletionChunk.class);
+				if (chunk == null) {
+					throw new DashScopeException("Failed to parse response content: " + content);
+				}
+				return chunk;
 			})
 			.map(chunk -> {
 				if (chunkMerger.isStreamingToolFunctionCall(chunk)) {
