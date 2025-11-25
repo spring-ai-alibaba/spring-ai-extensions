@@ -822,6 +822,8 @@ public class DashScopeApiSpec {
 
         /**
          * Get message content as String.
+         * If content contains both audio and text, audio takes precedence.
+         * Audio content is wrapped in <audio></audio> tags.
          */
         public String content() {
             if (this.rawContent == null) {
