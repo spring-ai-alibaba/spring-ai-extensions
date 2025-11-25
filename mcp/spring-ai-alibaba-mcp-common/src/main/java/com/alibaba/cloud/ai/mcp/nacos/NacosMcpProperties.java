@@ -68,6 +68,8 @@ public class NacosMcpProperties {
 	String endpoint;
 
 	String ip;
+	
+	int port = -1;
 
 	@Autowired
 	@JsonIgnore
@@ -120,7 +122,15 @@ public class NacosMcpProperties {
 	public void setIp(String ip) {
 		this.ip = ip;
 	}
-
+	
+	public int getPort() {
+		return port;
+	}
+	
+	public void setPort(int port) {
+		this.port = port;
+	}
+	
 	public String getEndpoint() {
 		return endpoint;
 	}
@@ -139,8 +149,22 @@ public class NacosMcpProperties {
 
 	@PostConstruct
 	public void init() throws Exception {
-		if (StringUtils.isEmpty(this.ip)) {
+		
+		String  ipFromEnv = environment.getProperty("NACOS_MCP_SERVER_ENDPOINT","");
+		
+		if(!StringUtils.isEmpty(ipFromEnv)){
+			this.ip = ipFromEnv;
+		} else if (StringUtils.isEmpty(this.ip)) {
 			this.ip = NetUtils.localIp();
+		}
+		
+		String portFromEnv = environment.getProperty("NACOS_MCP_SERVER_PORT","");
+		if (!StringUtils.isEmpty(portFromEnv)) {
+			try {
+				this.port = Integer.parseInt(portFromEnv);
+			} catch (NumberFormatException e) {
+				log.warn("Invalid port value from NACOS_MCP_SERVER_PORT: {}", portFromEnv);
+			}
 		}
 	}
 

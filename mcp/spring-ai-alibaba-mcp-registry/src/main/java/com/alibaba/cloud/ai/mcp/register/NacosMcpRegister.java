@@ -376,7 +376,10 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 					return;
 				}
 			}
-			int port = event.getWebServer().getPort();
+			int port = this.nacosMcpProperties.getPort();
+			if (this.nacosMcpProperties.getPort() < 0 || this.nacosMcpProperties.getPort() > 65535) {
+				port = event.getWebServer().getPort();
+			}
 			Instance instance = new Instance();
 			instance.setIp(this.nacosMcpProperties.getIp());
 			instance.setPort(port);
