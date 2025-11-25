@@ -36,7 +36,7 @@ public class NacosMcpRegisterProperties {
 	
 	String host;
 	
-	int port;
+	int port = -1;
 
 	String serviceGroup;
 
