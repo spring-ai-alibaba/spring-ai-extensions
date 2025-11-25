@@ -840,6 +840,21 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
       return thinkingBudget(thinkingBudget);
     }
 
+    public DashScopeChatOptionsBuilder modalities(List<String> modalities) {
+      this.options.modalities = modalities;
+      return this;
+    }
+
+    public DashScopeChatOptionsBuilder audio(Object audio) {
+      this.options.audio = audio;
+      return this;
+    }
+
+    public DashScopeChatOptionsBuilder streamOptions(Object streamOptions) {
+      this.options.streamOptions = streamOptions;
+      return this;
+    }
+
     public DashScopeChatOptions build() {
       return this.options;
     }
@@ -848,30 +863,33 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
   public static DashScopeChatOptions fromOptions(DashScopeChatOptions fromOptions){
 
     return DashScopeChatOptions.builder()
-        .model(fromOptions.getModel())
-        .temperature(fromOptions.getTemperature())
-        .maxToken(fromOptions.getMaxTokens())
-        .topP(fromOptions.getTopP())
-        .topK(fromOptions.getTopK())
-        .seed(fromOptions.getSeed())
-        .stop(fromOptions.getStop())
-        .responseFormat(fromOptions.getResponseFormat())
-        .stream(fromOptions.getStream())
+        .model(fromOptions.model)
+        .temperature(fromOptions.temperature)
+        .maxToken(fromOptions.maxTokens)
+        .topP(fromOptions.topP)
+        .topK(fromOptions.topK)
+        .seed(fromOptions.seed)
+        .stop(fromOptions.stop)
+        .responseFormat(fromOptions.responseFormat)
+        .stream(fromOptions.stream)
         .enableSearch(fromOptions.enableSearch)
-        .incrementalOutput(fromOptions.getIncrementalOutput())
-        .toolCallbacks(fromOptions.getToolCallbacks())
-        .toolNames(fromOptions.getToolNames())
-        .internalToolExecutionEnabled(fromOptions.getInternalToolExecutionEnabled())
-        .repetitionPenalty(fromOptions.getRepetitionPenalty())
-        .tools(fromOptions.getTools())
-        .toolContext(fromOptions.getToolContext())
-        .multiModel(fromOptions.getMultiModel())
-        .vlHighResolutionImages(fromOptions.getVlHighResolutionImages())
-        .enableThinking(fromOptions.getEnableThinking())
-        .thinkingBudget(fromOptions.getThinkingBudget())
-        .parallelToolCalls(fromOptions.getParallelToolCalls())
-        .searchOptions(fromOptions.getSearchOptions())
-        .httpHeaders(fromOptions.getHttpHeaders())
+        .incrementalOutput(fromOptions.incrementalOutput)
+        .toolCallbacks(fromOptions.toolCallbacks)
+        .toolNames(fromOptions.toolNames)
+        .internalToolExecutionEnabled(fromOptions.internalToolExecutionEnabled)
+        .repetitionPenalty(fromOptions.repetitionPenalty)
+        .tools(fromOptions.tools)
+        .toolContext(fromOptions.toolContext)
+        .multiModel(fromOptions.multiModel)
+        .vlHighResolutionImages(fromOptions.vlHighResolutionImages)
+        .enableThinking(fromOptions.enableThinking)
+        .thinkingBudget(fromOptions.thinkingBudget)
+        .parallelToolCalls(fromOptions.parallelToolCalls)
+        .searchOptions(fromOptions.searchOptions)
+        .httpHeaders(fromOptions.httpHeaders)
+        .modalities(fromOptions.modalities)
+        .audio(fromOptions.audio)
+        .streamOptions(fromOptions.streamOptions)
         .build();
   }
 
@@ -882,38 +900,40 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 	if (o == null || getClass() != o.getClass()) return false;
 	DashScopeChatOptions that = (DashScopeChatOptions) o;
 
-    return Objects.equals(model, that.model) &&
-            Objects.equals(stream, that.stream) &&
-            Objects.equals(temperature, that.temperature) &&
-            Objects.equals(seed, that.seed) &&
-            Objects.equals(topP, that.topP) &&
-            Objects.equals(topK, that.topK) &&
-            Objects.equals(stop, that.stop) &&
-            Objects.equals(enableSearch, that.enableSearch) &&
-            Objects.equals(responseFormat, that.responseFormat) &&
-            Objects.equals(incrementalOutput, that.incrementalOutput) &&
-            Objects.equals(repetitionPenalty, that.repetitionPenalty) &&
-            Objects.equals(tools, that.tools) &&
-            Objects.equals(toolChoice, that.toolChoice) &&
-            Objects.equals(vlHighResolutionImages, that.vlHighResolutionImages) &&
-            Objects.equals(enableThinking, that.enableThinking) &&
-            Objects.equals(thinkingBudget, that.thinkingBudget) &&
-            Objects.equals(toolCallbacks, that.toolCallbacks) &&
-            Objects.equals(toolNames, that.toolNames) &&
-            Objects.equals(internalToolExecutionEnabled, that.internalToolExecutionEnabled) &&
-            Objects.equals(multiModel, that.multiModel) &&
-            Objects.equals(searchOptions, that.searchOptions) &&
-            Objects.equals(parallelToolCalls, that.parallelToolCalls) &&
-            Objects.equals(httpHeaders, that.httpHeaders) &&
-            Objects.equals(toolContext, that.toolContext);
+    return Objects.equals(this.model, that.model) &&
+            Objects.equals(this.stream, that.stream) &&
+            Objects.equals(this.temperature, that.temperature) &&
+            Objects.equals(this.seed, that.seed) &&
+            Objects.equals(this.topP, that.topP) &&
+            Objects.equals(this.topK, that.topK) &&
+            Objects.equals(this.stop, that.stop) &&
+            Objects.equals(this.enableSearch, that.enableSearch) &&
+            Objects.equals(this.responseFormat, that.responseFormat) &&
+            Objects.equals(this.incrementalOutput, that.incrementalOutput) &&
+            Objects.equals(this.repetitionPenalty, that.repetitionPenalty) &&
+            Objects.equals(this.tools, that.tools) &&
+            Objects.equals(this.toolChoice, that.toolChoice) &&
+            Objects.equals(this.vlHighResolutionImages, that.vlHighResolutionImages) &&
+            Objects.equals(this.enableThinking, that.enableThinking) &&
+            Objects.equals(this.thinkingBudget, that.thinkingBudget) &&
+            Objects.equals(this.toolCallbacks, that.toolCallbacks) &&
+            Objects.equals(this.toolNames, that.toolNames) &&
+            Objects.equals(this.internalToolExecutionEnabled, that.internalToolExecutionEnabled) &&
+            Objects.equals(this.multiModel, that.multiModel) &&
+            Objects.equals(this.searchOptions, that.searchOptions) &&
+            Objects.equals(this.parallelToolCalls, that.parallelToolCalls) &&
+            Objects.equals(this.httpHeaders, that.httpHeaders) &&
+            Objects.equals(this.toolContext, that.toolContext) &&
+            Objects.equals(this.modalities, that.modalities);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(model, stream, temperature, seed, topP, topK, stop, enableSearch,
-            responseFormat, incrementalOutput, repetitionPenalty, tools, toolChoice,
-            vlHighResolutionImages, enableThinking, thinkingBudget, toolCallbacks, toolNames,
-            internalToolExecutionEnabled, multiModel, searchOptions, parallelToolCalls, httpHeaders, toolContext);
+    return Objects.hash(this.model, this.stream, this.temperature, this.seed, this.topP, this.topK, this.stop,
+        this.enableSearch, this.responseFormat, this.incrementalOutput, this.repetitionPenalty, this.tools,
+        this.toolChoice, this.vlHighResolutionImages, this.enableThinking, this.thinkingBudget, this.toolCallbacks,
+        this.toolNames, this.internalToolExecutionEnabled, this.multiModel, this.searchOptions, this.parallelToolCalls,
+        this.httpHeaders, this.toolContext, this.modalities);
   }
 
   @Override
