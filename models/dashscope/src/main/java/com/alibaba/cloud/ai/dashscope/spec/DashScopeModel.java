@@ -141,7 +141,7 @@ public class DashScopeModel {
 		QWEN_OMNI_FLASH("qwen-omni-flash"),
 
 		/**
-		 * Tongyi Qianwen new multi-modal understanding generation model, support text, image, voice, video input
+		 * Tongyi Qianwen new multi-modal understanding generation model, supports text, image, voice, video input
 		 * understanding and mixed input understanding, with text and voice simultaneous streaming generation ability,
 		 * multi-modal content understanding speed significantly improved, provides 4 natural dialogue tones,
 		 * this version is a dynamic update version.
