@@ -924,7 +924,9 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
             Objects.equals(this.parallelToolCalls, that.parallelToolCalls) &&
             Objects.equals(this.httpHeaders, that.httpHeaders) &&
             Objects.equals(this.toolContext, that.toolContext) &&
-            Objects.equals(this.modalities, that.modalities);
+            Objects.equals(this.modalities, that.modalities) &&
+            Objects.equals(this.audio, that.audio) &&
+            Objects.equals(this.streamOptions, that.streamOptions);
   }
 
   @Override
