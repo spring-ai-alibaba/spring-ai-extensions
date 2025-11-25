@@ -16,10 +16,8 @@
 package com.alibaba.cloud.ai.mcp.nacos;
 
 import com.alibaba.nacos.api.PropertyKeyConst;
-import com.alibaba.nacos.api.utils.NetUtils;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,8 +66,6 @@ public class NacosMcpProperties {
 	String endpoint;
 
 	String ip;
-	
-	int port = -1;
 
 	@Autowired
 	@JsonIgnore
@@ -123,14 +119,6 @@ public class NacosMcpProperties {
 		this.ip = ip;
 	}
 	
-	public int getPort() {
-		return port;
-	}
-	
-	public void setPort(int port) {
-		this.port = port;
-	}
-	
 	public String getEndpoint() {
 		return endpoint;
 	}
@@ -145,27 +133,6 @@ public class NacosMcpProperties {
 
 	void setServerAddr(String serverAddr) {
 		this.serverAddr = serverAddr;
-	}
-
-	@PostConstruct
-	public void init() throws Exception {
-		
-		String  ipFromEnv = environment.getProperty("NACOS_MCP_SERVER_ENDPOINT","");
-		
-		if(!StringUtils.isEmpty(ipFromEnv)){
-			this.ip = ipFromEnv;
-		} else if (StringUtils.isEmpty(this.ip)) {
-			this.ip = NetUtils.localIp();
-		}
-		
-		String portFromEnv = environment.getProperty("NACOS_MCP_SERVER_PORT","");
-		if (!StringUtils.isEmpty(portFromEnv)) {
-			try {
-				this.port = Integer.parseInt(portFromEnv);
-			} catch (NumberFormatException e) {
-				log.warn("Invalid port value from NACOS_MCP_SERVER_PORT: {}", portFromEnv);
-			}
-		}
 	}
 
 	public Properties getNacosProperties() {

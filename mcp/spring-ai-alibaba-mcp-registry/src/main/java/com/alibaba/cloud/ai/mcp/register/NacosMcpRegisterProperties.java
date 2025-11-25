@@ -18,6 +18,8 @@ package com.alibaba.cloud.ai.mcp.register;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.env.Environment;
@@ -27,8 +29,14 @@ import org.springframework.core.env.Environment;
  */
 @ConfigurationProperties(prefix = NacosMcpRegisterProperties.CONFIG_PREFIX)
 public class NacosMcpRegisterProperties {
+	
+	private static final Logger log = LoggerFactory.getLogger(NacosMcpRegisterProperties.class);
 
 	public static final String CONFIG_PREFIX = "spring.ai.alibaba.mcp.nacos.register";
+	
+	String host;
+	
+	int port;
 
 	String serviceGroup;
 
@@ -83,13 +91,43 @@ public class NacosMcpRegisterProperties {
 	public void setServiceName(String serviceName) {
 		this.serviceName = serviceName;
 	}
-
+	
+	public String getHost() {
+		return host;
+	}
+	
+	public void setHost(String host) {
+		this.host = host;
+	}
+	
+	public int getPort() {
+		return port;
+	}
+	
+	public void setPort(int port) {
+		this.port = port;
+	}
+	
 	@PostConstruct
 	public void init() throws Exception {
 		if (StringUtils.isBlank(this.sseExportContextPath)) {
 			String path = environment.getProperty("server.servlet.context-path");
 			if (!StringUtils.isBlank(path)) {
 				this.sseExportContextPath = path;
+			}
+		}
+		
+		String  ipFromEnv = environment.getProperty("NACOS_MCP_SERVER_HOST","");
+		if(!StringUtils.isEmpty(ipFromEnv)){
+			this.host = ipFromEnv;
+		}
+
+		String portFromEnv = environment.getProperty("NACOS_MCP_SERVER_PORT","");
+		if (!StringUtils.isEmpty(portFromEnv)) {
+			try {
+				this.port = Integer.parseInt(portFromEnv);
+			} catch (NumberFormatException e) {
+				log.warn("Invalid port value from NACOS_MCP_SERVER_PORT: {}", portFromEnv);
 			}
 		}
 	}

@@ -32,6 +32,7 @@ import com.alibaba.nacos.api.ai.model.mcp.McpToolSpecification;
 import com.alibaba.nacos.api.ai.model.mcp.registry.ServerVersionDetail;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.pojo.Instance;
+import com.alibaba.nacos.api.utils.NetUtils;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.alibaba.nacos.common.utils.JacksonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -376,12 +377,19 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 					return;
 				}
 			}
-			int port = this.nacosMcpProperties.getPort();
-			if (this.nacosMcpProperties.getPort() < 0 || this.nacosMcpProperties.getPort() > 65535) {
+			String host = this.nacosMcpRegistryProperties.getHost();
+			if (StringUtils.isBlank(host)) {
+				host = this.nacosMcpProperties.getIp();
+			}
+			if (StringUtils.isBlank(host)) {
+				host = NetUtils.localIp();
+			}
+			int port = this.nacosMcpRegistryProperties.getPort();
+			if (port < 0 || port > 65535) {
 				port = event.getWebServer().getPort();
 			}
 			Instance instance = new Instance();
-			instance.setIp(this.nacosMcpProperties.getIp());
+			instance.setIp(host);
 			instance.setPort(port);
 			instance.setEphemeral(this.nacosMcpRegistryProperties.isServiceEphemeral());
 			String groupName = StringUtils.isBlank(this.nacosMcpRegistryProperties.getServiceGroup()) ? "DEFAULT_GROUP"
