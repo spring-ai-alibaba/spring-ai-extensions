@@ -66,7 +66,7 @@ public final class DashScopeApiConstants {
 
 	public static final String TEXT_RERANK_RESTFUL_URL = "/api/v1/services/rerank/text-rerank/text-rerank";
 
-	public static final String APPS_COMPLETION_RESTFUL_URL = "/api/v1/apps/{app_id}/completion";;
+	public static final String APPS_COMPLETION_RESTFUL_URL = "/api/v1/apps/{app_id}/completion";
 
 	public static final String QUERY_TASK_RESTFUL_URL = "/api/v1/tasks/{task_id}";
 

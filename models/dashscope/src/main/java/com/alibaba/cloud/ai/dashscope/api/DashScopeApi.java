@@ -228,7 +228,7 @@ public class DashScopeApi {
 	public ResponseEntity<DashScopeApiSpec.CommonResponse<DashScopeApiSpec.QueryFileResponseData>> queryFileInfo(String categoryId,
 																												 DashScopeApiSpec.UploadRequest.QueryFileRequest request) {
 		return this.restClient.post()
-			.uri(QUERY_CATEGORY_RESTFUL_URL, request.fileId())
+			.uri(QUERY_CATEGORY_RESTFUL_URL, categoryId, request.fileId())
 			.body(request)
 			.retrieve()
 			.toEntity(new ParameterizedTypeReference<>() {
