@@ -935,7 +935,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         this.enableSearch, this.responseFormat, this.incrementalOutput, this.repetitionPenalty, this.tools,
         this.toolChoice, this.vlHighResolutionImages, this.enableThinking, this.thinkingBudget, this.toolCallbacks,
         this.toolNames, this.internalToolExecutionEnabled, this.multiModel, this.searchOptions, this.parallelToolCalls,
-        this.httpHeaders, this.toolContext, this.modalities);
+        this.httpHeaders, this.toolContext, this.modalities, this.audio, this.streamOptions);
   }
 
   @Override
