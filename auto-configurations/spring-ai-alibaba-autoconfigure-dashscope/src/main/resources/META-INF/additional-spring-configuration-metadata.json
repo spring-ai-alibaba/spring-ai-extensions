@@ -1,0 +1,13 @@
+{
+  "groups": [],
+  "properties": [
+    {
+      "name": "spring.ai.dashscope.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable DashScope model.",
+      "sourceType": "com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionProperties",
+      "defaultValue": true
+    }
+  ],
+  "hints": []
+}
