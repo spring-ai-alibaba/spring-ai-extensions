@@ -99,6 +99,8 @@
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-registry</module>
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-router</module>
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-rag-elasticsearch</module>
+        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-distributed</module>
+        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-gateway</module>
 
         <!-- spring-boot-starters modules -->
         <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope</module>
@@ -109,6 +111,8 @@
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-registry</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-router</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-rag</module>
+        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-distributed</module>
+        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-gateway</module>
 
         <!-- tool-calls modules -->
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-alitranslate</module>
@@ -166,20 +170,14 @@
         <module>mcp/spring-ai-alibaba-mcp-registry</module>
         <module>mcp/spring-ai-alibaba-mcp-router</module>
         <module>mcp/spring-ai-alibaba-mcp-distributed</module>
+        <module>mcp/spring-ai-alibaba-mcp-gateway</module>
 
         <module>prompt/spring-ai-alibaba-prompt-nacos</module>
 
         <module>models/dashscope</module>
-
         <module>rag/spring-ai-alibaba-rag</module>
-
         <module>observation</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-distributed</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-distributed</module>
         <module>spring-ai-alibaba-extensions-bom</module>
-        <module>mcp/spring-ai-alibaba-mcp-gateway</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-gateway</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-gateway</module>
     </modules>
 
     <scm>
