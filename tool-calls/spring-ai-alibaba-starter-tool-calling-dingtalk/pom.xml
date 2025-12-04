@@ -53,8 +53,7 @@
     </scm>
 
     <properties>
-        <dingtalk-sdk-version>2.1.68</dingtalk-sdk-version>
-        <old-dingtalk-sdk-version>2.0.0</old-dingtalk-sdk-version>
+        <dingtalk-sdk.version>2.2.41</dingtalk-sdk.version>
     </properties>
 
     <dependencies>
@@ -82,14 +81,24 @@
         <dependency>
             <groupId>com.aliyun</groupId>
             <artifactId>dingtalk</artifactId>
-            <version>${dingtalk-sdk-version}</version>
+            <version>${dingtalk-sdk.version}</version>
         </dependency>
 
         <!--The old version of DingTalk SDK. Some interfaces have not been fully replaced yet-->
         <dependency>
             <groupId>com.aliyun</groupId>
             <artifactId>alibaba-dingtalk-service-sdk</artifactId>
-            <version>${old-dingtalk-sdk-version}</version>
+            <version>2.0.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
         </dependency>
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>

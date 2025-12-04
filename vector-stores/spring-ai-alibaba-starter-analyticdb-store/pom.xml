@@ -58,7 +58,7 @@
         <dependency>
             <groupId>com.aliyun</groupId>
             <artifactId>gpdb20160503</artifactId>
-            <version>3.0.0</version>
+            <version>3.4.0</version>
         </dependency>
 
         <dependency>

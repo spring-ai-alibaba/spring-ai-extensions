@@ -200,7 +200,7 @@
 
         <!-- Spring version -->
         <spring-ai.version>1.1.0</spring-ai.version>
-        <spring-boot.version>3.5.7</spring-boot.version>
+        <spring-boot.version>3.5.8</spring-boot.version>
         <springdoc-openapi.version>2.8.14</springdoc-openapi.version>
 
         <!-- DashScope SDK Version -->
@@ -223,7 +223,7 @@
         <commons-exec.version>1.3</commons-exec.version>
         <commons-collections4.version>4.4</commons-collections4.version>
 
-        <docker-java.version>3.5.3</docker-java.version>
+        <docker-java.version>3.7.0</docker-java.version>
 
         <opennlp-tools.version>2.3.3</opennlp-tools.version>
 
@@ -291,6 +291,25 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp-bom</artifactId>
+                <version>${okhttp.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.docker-java</groupId>
+                <artifactId>docker-java-bom</artifactId>
+                <version>${docker-java.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>dashscope-sdk-java</artifactId>
                 <version>${dashscope-sdk-java.version}</version>
@@ -316,13 +335,6 @@
                 <groupId>org.springframework.ai</groupId>
                 <artifactId>spring-ai-bom</artifactId>
                 <version>${spring-ai.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.github.docker-java</groupId>
-                <artifactId>docker-java-bom</artifactId>
-                <version>${docker-java.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
