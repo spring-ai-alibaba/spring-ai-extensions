@@ -99,17 +99,17 @@ public class StreamWebFluxDistributedAsyncMcpClient implements DistributedAsyncM
             this.serverEndpoint = this.nacosMcpOperationService.getServerEndpoint(serverName, version);
             if (this.serverEndpoint == null) {
                 throw new NacosException(NacosException.NOT_FOUND,
-                        String.format("[Nacos Mcp Sync Client] Can not find mcp server from nacos: %s, version:%s",
+                        String.format("[Nacos Mcp Async Client] Can not find mcp server from nacos: %s, version:%s",
                                 serverName, version));
             }
             if (!StringUtils.equals(serverEndpoint.getProtocol(), AiConstants.Mcp.MCP_PROTOCOL_STREAMABLE)) {
                 throw new RuntimeException(
-                        String.format("[Nacos Mcp Sync Client] Protocol of mcp server:%s, version :%s must be streamable",
+                        String.format("[Nacos Mcp Async Client] Protocol of mcp server:%s, version :%s must be streamable",
                                 serverName, version));
             }
         } catch (NacosException e) {
             throw new RuntimeException(String.format(
-                    "[Nacos Mcp Sync Client] Failed to get endpoints for Mcp Server from nacos: %s, version:%s",
+                    "[Nacos Mcp Async Client] Failed to get endpoints for Mcp Server from nacos: %s, version:%s",
                     serverName, version), e);
         }
 
@@ -135,7 +135,7 @@ public class StreamWebFluxDistributedAsyncMcpClient implements DistributedAsyncM
         for (McpEndpointInfo mcpEndpointInfo : serverEndpoint.getMcpEndpointInfoList()) {
             updateByAddEndpoint(mcpEndpointInfo, serverEndpoint.getExportPath());
         }
-        logger.info("[Nacos Mcp Sync Client] McpSyncClient init, serverName: {}, version: {}, endpoint: {}", serverName,
+        logger.info("[Nacos Mcp Async Client] McpSyncClient init, serverName: {}, version: {}, endpoint: {}", serverName,
                 version, serverEndpoint);
         return keyToClientMap;
     }
@@ -152,7 +152,7 @@ public class StreamWebFluxDistributedAsyncMcpClient implements DistributedAsyncM
                     protocol, realVersion);
             updateClientList(nacosMcpServerEndpoint);
         });
-        logger.info("[Nacos Mcp Sync Client] Subscribe Mcp Server from nacos, serverName: {}, version: {}", serverName,
+        logger.info("[Nacos Mcp Async Client] Subscribe Mcp Server from nacos, serverName: {}, version: {}", serverName,
                 version);
     }
 
@@ -223,7 +223,7 @@ public class StreamWebFluxDistributedAsyncMcpClient implements DistributedAsyncM
         if (!StringUtils.equals(this.serverEndpoint.getExportPath(), newServerEndpoint.getExportPath())
                 || !StringUtils.equals(this.serverEndpoint.getVersion(), newServerEndpoint.getVersion())) {
             logger.info(
-                    "[Nacos Mcp Sync Client] Mcp server {} exportPath or protocol changed, need to update all endpoints: {}",
+                    "[Nacos Mcp Async Client] Mcp server {} exportPath or protocol changed, need to update all endpoints: {}",
                     serverName, newServerEndpoint);
             updateAll(newServerEndpoint);
         }
@@ -241,14 +241,14 @@ public class StreamWebFluxDistributedAsyncMcpClient implements DistributedAsyncM
                                     && newEndpoint.getPort() == currentEndpoint.getPort()))
                     .toList();
             if (!addEndpointInfoList.isEmpty()) {
-                logger.info("[Nacos Mcp Sync Client] Mcp server {} endpoints changed, endpoints need to add {}",
+                logger.info("[Nacos Mcp Async Client] Mcp server {} endpoints changed, endpoints need to add {}",
                         serverName, addEndpointInfoList);
             }
             for (McpEndpointInfo addEndpointInfo : addEndpointInfoList) {
                 updateByAddEndpoint(addEndpointInfo, newServerEndpoint.getExportPath());
             }
             if (!removeEndpointInfoList.isEmpty()) {
-                logger.info("[Nacos Mcp Sync Client] Mcp server {} endpoints changed, endpoints need to remove {}",
+                logger.info("[Nacos Mcp Async Client] Mcp server {} endpoints changed, endpoints need to remove {}",
                         serverName, removeEndpointInfoList);
             }
             for (McpEndpointInfo removeEndpointInfo : removeEndpointInfoList) {

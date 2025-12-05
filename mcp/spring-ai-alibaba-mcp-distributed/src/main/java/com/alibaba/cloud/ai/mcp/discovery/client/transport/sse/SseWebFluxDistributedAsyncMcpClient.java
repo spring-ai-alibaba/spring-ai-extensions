@@ -99,17 +99,17 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
             this.serverEndpoint = this.nacosMcpOperationService.getServerEndpoint(serverName, version);
             if (this.serverEndpoint == null) {
                 throw new NacosException(NacosException.NOT_FOUND,
-                        String.format("[Nacos Mcp Sync Client] Can not find mcp server from nacos: %s, version:%s",
+                        String.format("[Nacos Mcp Async Client] Can not find mcp server from nacos: %s, version:%s",
                                 serverName, version));
             }
             if (!StringUtils.equals(serverEndpoint.getProtocol(), AiConstants.Mcp.MCP_PROTOCOL_SSE)) {
                 throw new RuntimeException(
-                        String.format("[Nacos Mcp Sync Client] Protocol of mcp server:%s, version :%s must be sse",
+                        String.format("[Nacos Mcp Async Client] Protocol of mcp server:%s, version :%s must be sse",
                                 serverName, version));
             }
         } catch (NacosException e) {
             throw new RuntimeException(String.format(
-                    "[Nacos Mcp Sync Client] Failed to get endpoints for Mcp Server from nacos: %s, version:%s",
+                    "[Nacos Mcp Async Client] Failed to get endpoints for Mcp Server from nacos: %s, version:%s",
                     serverName, version), e);
         }
 
