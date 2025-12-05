@@ -113,8 +113,8 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
   private @JsonProperty("response_format") DashScopeResponseFormat responseFormat;
 
   /**
-   * @param maxTokens The maximum number of tokens to generate in the chat completion.
-   * 	 * The total length of input tokens and generated tokens is limited by the model's context length.
+   * The maximum number of tokens to generate in the chat completion.
+   * The total length of input tokens and generated tokens is limited by the model's context length.
    */
   private @JsonProperty("max_tokens") Integer maxTokens;
 

@@ -98,8 +98,6 @@ public class DashScopeChatModel implements ChatModel {
 
 	public static final String DEFAULT_MODEL_NAME = DashScopeApi.DEFAULT_CHAT_MODEL;
 
-	public static final Double DEFAULT_TEMPERATURE = 0.7;
-
 	private static final ChatModelObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DashScopeChatModelObservationConvention();
 
 	private static final ToolCallingManager DEFAULT_TOOL_CALLING_MANAGER = ToolCallingManager.builder().build();
@@ -627,7 +625,7 @@ public class DashScopeChatModel implements ChatModel {
 			return new ChatCompletionRequestParameter();
 		}
 
-        // formatter:off
+        // @formatter:off
 		// todo: sync modify by {@link ChatCompletionRequestParameter} new params.
 		Boolean incrementalOutput = stream && options.getIncrementalOutput();
 		return new ChatCompletionRequestParameter(
@@ -677,7 +675,7 @@ public class DashScopeChatModel implements ChatModel {
                 options.getAsrOptions(),
                 options.getOutputFormat()
         );
-        // formatter:off
+        // @formatter:on
     }
 
 
@@ -724,7 +722,6 @@ public class DashScopeChatModel implements ChatModel {
 
 		private DashScopeChatOptions defaultOptions = DashScopeChatOptions.builder()
 			.model(DEFAULT_MODEL_NAME)
-			.temperature(DEFAULT_TEMPERATURE)
 			.build();
 
 		private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
