@@ -15,12 +15,12 @@
  */
 package com.alibaba.cloud.ai.reader.email.eml;
 
+import jakarta.mail.internet.MimeUtility;
+import java.io.UnsupportedEncodingException;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.io.UnsupportedEncodingException;
-import javax.mail.internet.MimeUtility;
 
 /**
  * Base class for all email elements Represents different parts of an email like subject,
