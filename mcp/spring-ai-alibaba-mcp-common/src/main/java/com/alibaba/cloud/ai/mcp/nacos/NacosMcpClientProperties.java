@@ -32,9 +32,19 @@ public class NacosMcpClientProperties {
 
     private final Map<String, NacosConfig> configs = new HashMap<>();
 
+	private boolean lazyInit = false;
+
     public Map<String, NacosConfig> getConfigs() {
         return configs;
     }
+
+	public boolean isLazyInit() {
+		return lazyInit;
+	}
+
+	public void setLazyInit(boolean lazyInit) {
+		this.lazyInit = lazyInit;
+	}
 
     public record NacosConfig(String namespace, String serverAddr, String username, String password, String accessKey, String secretKey,
                                      String endpoint) {

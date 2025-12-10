@@ -49,7 +49,8 @@ public class NacosMcpStreamableClientAutoConfiguration {
             matchIfMissing = true)
     public List<DistributedSyncMcpClient> streamableWebFluxDistributedSyncClients(
             ObjectProvider<Map<String, NacosMcpOperationService>> nacosMcpOperationServiceMapProvider,
-            NacosMcpStreamableClientProperties nacosMcpStreamableClientProperties, ApplicationContext applicationContext) {
+            NacosMcpStreamableClientProperties nacosMcpStreamableClientProperties,
+            ApplicationContext applicationContext, NacosMcpClientProperties nacosMcpClientProperties) {
         Map<String, NacosMcpOperationService> nacosMcpOperationServiceMap = nacosMcpOperationServiceMapProvider.getObject();
         List<DistributedSyncMcpClient> clients = new ArrayList<>();
 
@@ -59,11 +60,11 @@ public class NacosMcpStreamableClientAutoConfiguration {
                     .version(nacosSseParameters.version())
                     .nacosMcpOperationService(nacosMcpOperationServiceMap.get(name))
                     .applicationContext(applicationContext)
+                    .lazyInit(nacosMcpClientProperties.isLazyInit())
                     .build();
             client.init();
             client.subscribe();
             clients.add(client);
-
         });
         return clients;
     }
@@ -73,7 +74,8 @@ public class NacosMcpStreamableClientAutoConfiguration {
             matchIfMissing = true)
     public List<DistributedAsyncMcpClient> streamableWebFluxDistributedAsyncClients(
             ObjectProvider<Map<String, NacosMcpOperationService>> nacosMcpOperationServiceMapProvider,
-            NacosMcpStreamableClientProperties nacosMcpStreamableClientProperties, ApplicationContext applicationContext) {
+            NacosMcpStreamableClientProperties nacosMcpStreamableClientProperties,
+            ApplicationContext applicationContext, NacosMcpClientProperties nacosMcpClientProperties) {
         Map<String, NacosMcpOperationService> nacosMcpOperationServiceMap = nacosMcpOperationServiceMapProvider.getObject();
         List<DistributedAsyncMcpClient> clients = new ArrayList<>();
 
@@ -83,10 +85,10 @@ public class NacosMcpStreamableClientAutoConfiguration {
                     .version(nacosSseParameters.version())
                     .nacosMcpOperationService(nacosMcpOperationServiceMap.get(name))
                     .applicationContext(applicationContext)
+                    .lazyInit(nacosMcpClientProperties.isLazyInit())
                     .build();
             client.init();
             client.subscribe();
-
             clients.add(client);
         });
         return clients;
