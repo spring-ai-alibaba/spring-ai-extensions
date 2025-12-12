@@ -110,7 +110,7 @@ public abstract class RedisChatMemoryConnectionAutoConfiguration<T extends ChatM
 		RedisMemoryConnectionDetails.Standalone standalone = connectionDetails.getStandalone();
 		return new RedisChatMemoryStandalone(standalone.getHost(), standalone.getPort(),
 				connectionDetails.getUsername(), connectionDetails.getPassword(), properties.getTimeout(),
-				properties.getSsl(), sslBundles);
+                standalone.getDatabase(), properties.getSsl(), sslBundles);
 	}
 
 	/**
@@ -122,7 +122,7 @@ public abstract class RedisChatMemoryConnectionAutoConfiguration<T extends ChatM
 			throw new IllegalStateException("Cluster nodes configuration is required for CLUSTER mode");
 		}
 		List<String> nodes = getNodes(connectionDetails.getCluster());
-		return new RedisChatMemoryCluster(nodes, connectionDetails.getUsername(),
+		return new RedisChatMemoryCluster(nodes, properties.getCluster().getMaxRedirects(), connectionDetails.getUsername(),
 				connectionDetails.getPassword(), properties.getTimeout(), properties.getSsl(), sslBundles);
 	}
 

@@ -78,10 +78,22 @@ public class JedisRedisChatMemoryRepository extends BaseRedisChatMemoryRepositor
 
 		private JedisPoolConfig poolConfig;
 
+        protected Integer maxRedirects;
+
 		@Override
 		protected RedisBuilder self() {
 			return this;
 		}
+
+        public RedisBuilder poolConfig(JedisPoolConfig poolConfig) {
+            this.poolConfig = poolConfig;
+            return this;
+        }
+
+        public RedisBuilder maxRedirects(Integer maxRedirects) {
+            this.maxRedirects = maxRedirects;
+            return this;
+        }
 
 		public JedisRedisChatMemoryRepository build() {
 			JedisConnectionFactory jedisConnectionFactory;
@@ -93,10 +105,14 @@ public class JedisRedisChatMemoryRepository extends BaseRedisChatMemoryRepositor
 				if (StringUtils.hasText(password)) {
 					clusterConfig.setPassword(password);
 				}
+                if (maxRedirects != null) {
+                    clusterConfig.setMaxRedirects(maxRedirects);
+                }
 				jedisConnectionFactory = new JedisConnectionFactory(clusterConfig, applyConfiguration());
 			}
 			else {
 				RedisStandaloneConfiguration standaloneConfig = new RedisStandaloneConfiguration(host, port);
+                standaloneConfig.setDatabase(database);
 				if (StringUtils.hasText(username)) {
 					standaloneConfig.setUsername(username);
 				}

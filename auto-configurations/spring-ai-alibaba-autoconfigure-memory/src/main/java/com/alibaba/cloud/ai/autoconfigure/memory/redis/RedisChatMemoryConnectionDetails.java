@@ -43,7 +43,7 @@ public class RedisChatMemoryConnectionDetails implements RedisMemoryConnectionDe
 
 	@Override
 	public Standalone getStandalone() {
-		return Standalone.of(properties.getHost(), properties.getPort());
+		return Standalone.of(properties.getHost(), properties.getPort(), properties.getDatabase());
 	}
 
 	@Override

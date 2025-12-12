@@ -42,6 +42,8 @@ public abstract class RedisChatMemoryBuilder<T extends RedisChatMemoryBuilder<T>
 
 	protected int timeout = 2000;
 
+    protected int database = 0;
+
 	protected boolean useCluster = false;
 
 	protected boolean useSsl = false;
@@ -82,6 +84,11 @@ public abstract class RedisChatMemoryBuilder<T extends RedisChatMemoryBuilder<T>
 		this.timeout = timeout;
 		return self();
 	}
+
+    public T database(int database) {
+        this.database = database;
+        return self();
+    }
 
 	public T useSsl(boolean useSsl) {
 		this.useSsl = useSsl;

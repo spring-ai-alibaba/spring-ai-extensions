@@ -26,7 +26,7 @@ import java.util.List;
  * @author benym
  * @since 2025/7/30 21:33
  */
-public record RedisChatMemoryCluster(List<String> nodeAddresses, String username, String password,
+public record RedisChatMemoryCluster(List<String> nodeAddresses, int maxRedirects, String username, String password,
 									 int timeout, RedisChatMemoryProperties.Ssl ssl, SslBundles sslBundles) {
 
 }

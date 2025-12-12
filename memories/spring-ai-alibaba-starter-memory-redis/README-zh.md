@@ -124,6 +124,7 @@ spring:
         username: yourUsername
         password: yourPassword
         timeout: 2000
+        database: 0
 ```
 
 ### 完全配置-集群
@@ -141,6 +142,8 @@ spring:
         client-type: jedis
         cluster:
           nodes: localhost:6379,localhost:6380,localhost:6381
+          # Supports jedis and lettuce
+          max-redirects: 5
 ```
 
 ### (可选)使用JedisPoolConfig覆盖默认的JedisRedisChatMemoryRepository

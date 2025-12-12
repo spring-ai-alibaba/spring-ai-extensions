@@ -51,6 +51,11 @@ public class RedisChatMemoryProperties {
 	 */
 	private String password;
 
+    /**
+     * Database index used by the connection factory.
+     */
+    private int database = 0;
+
 	/**
 	 * Connection timeout in milliseconds.
 	 */
@@ -116,7 +121,15 @@ public class RedisChatMemoryProperties {
 		this.timeout = timeout;
 	}
 
-	public Cluster getCluster() {
+    public int getDatabase() {
+        return database;
+    }
+
+    public void setDatabase(int database) {
+        this.database = database;
+    }
+
+    public Cluster getCluster() {
 		return cluster;
 	}
 
@@ -177,6 +190,12 @@ public class RedisChatMemoryProperties {
 		 */
 		private List<String> nodes;
 
+        /**
+         * Maximum number of redirects to follow when executing commands across the
+         * cluster. Support Jedis and Lettuce clients.
+         */
+        private Integer maxRedirects;
+
 		public List<String> getNodes() {
 			return nodes;
 		}
@@ -185,7 +204,14 @@ public class RedisChatMemoryProperties {
 			this.nodes = nodes;
 		}
 
-	}
+        public Integer getMaxRedirects() {
+            return maxRedirects;
+        }
+
+        public void setMaxRedirects(Integer maxRedirects) {
+            this.maxRedirects = maxRedirects;
+        }
+    }
 
 	/**
 	 * Type of Redis memory mode to use

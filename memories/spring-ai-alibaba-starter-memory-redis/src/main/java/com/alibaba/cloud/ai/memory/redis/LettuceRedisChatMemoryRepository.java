@@ -79,6 +79,8 @@ public class LettuceRedisChatMemoryRepository extends BaseRedisChatMemoryReposit
 
     private GenericObjectPoolConfig poolConfig;
 
+    private Integer maxRedirects;
+
     @Override
     protected RedisBuilder self() {
       return this;
@@ -86,6 +88,11 @@ public class LettuceRedisChatMemoryRepository extends BaseRedisChatMemoryReposit
 
     public RedisBuilder poolConfig(GenericObjectPoolConfig poolConfig) {
       this.poolConfig = poolConfig;
+      return this;
+    }
+
+    public RedisBuilder maxRedirects(Integer maxRedirects) {
+      this.maxRedirects = maxRedirects;
       return this;
     }
 
@@ -99,11 +106,15 @@ public class LettuceRedisChatMemoryRepository extends BaseRedisChatMemoryReposit
         if (StringUtils.hasText(password)) {
           clusterConfig.setPassword(password);
         }
+        if (maxRedirects != null) {
+          clusterConfig.setMaxRedirects(maxRedirects);
+        }
         lettuceConnectionFactory =
             new LettuceConnectionFactory(clusterConfig, applyConfiguration());
       } else {
         RedisStandaloneConfiguration standaloneConfig =
             new RedisStandaloneConfiguration(host, port);
+        standaloneConfig.setDatabase(database);
         if (StringUtils.hasText(username)) {
           standaloneConfig.setUsername(username);
         }
