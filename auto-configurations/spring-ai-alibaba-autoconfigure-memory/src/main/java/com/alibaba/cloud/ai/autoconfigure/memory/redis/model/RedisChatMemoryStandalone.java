@@ -25,6 +25,6 @@ import org.springframework.boot.ssl.SslBundles;
  * @since 2025/7/30 21:32
  */
 public record RedisChatMemoryStandalone(String hostName, int port, String username, String password,
-										int timeout, int database, RedisChatMemoryProperties.Ssl ssl, SslBundles sslBundles) {
+										int timeout, int database, String keyPrefix, RedisChatMemoryProperties.Ssl ssl, SslBundles sslBundles) {
 
 }

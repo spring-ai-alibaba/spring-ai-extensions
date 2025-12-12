@@ -97,6 +97,7 @@ public class LettuceRedisChatMemoryRepository extends BaseRedisChatMemoryReposit
     }
 
     public LettuceRedisChatMemoryRepository build() {
+      CUSTOM_KEY_PREFIX = this.keyPrefix;
       LettuceConnectionFactory lettuceConnectionFactory;
       if (useCluster) {
         RedisClusterConfiguration clusterConfig = new RedisClusterConfiguration(Set.copyOf(nodes));
@@ -185,16 +186,16 @@ public class LettuceRedisChatMemoryRepository extends BaseRedisChatMemoryReposit
 
   @Override
   public List<String> findConversationIds() {
-    Set<String> keys = redisTemplate.keys(DEFAULT_KEY_PREFIX + "*");
+    Set<String> keys = redisTemplate.keys(getKeyPrefix() + "*");
     return keys.stream()
-        .map(key -> key.substring(DEFAULT_KEY_PREFIX.length()))
+        .map(key -> key.substring(getKeyPrefix().length()))
         .collect(Collectors.toList());
   }
 
   @Override
   public List<Message> findByConversationId(String conversationId) {
     Assert.hasText(conversationId, "conversationId cannot be null or empty");
-    String key = DEFAULT_KEY_PREFIX + conversationId;
+    String key = getKeyPrefix() + conversationId;
     List<String> messageStrings = redisTemplate.opsForList().range(key, 0, -1);
     if (CollectionUtils.isEmpty(messageStrings)) {
       return Collections.emptyList();
@@ -207,7 +208,7 @@ public class LettuceRedisChatMemoryRepository extends BaseRedisChatMemoryReposit
     Assert.hasText(conversationId, "conversationId cannot be null or empty");
     Assert.notNull(messages, "messages cannot be null");
     Assert.noNullElements(messages, "messages cannot contain null elements");
-    String key = DEFAULT_KEY_PREFIX + conversationId;
+    String key = getKeyPrefix() + conversationId;
     List<String> messageJsons = messages.stream().map(this::serializeMessage).toList();
     try (RedisConnection connection = redisTemplate.getConnectionFactory().getConnection()) {
       connection.keyCommands().del(key.getBytes());
@@ -224,7 +225,7 @@ public class LettuceRedisChatMemoryRepository extends BaseRedisChatMemoryReposit
   @Override
   public void deleteByConversationId(String conversationId) {
     Assert.hasText(conversationId, "conversationId cannot be null or empty");
-    redisTemplate.delete(DEFAULT_KEY_PREFIX + conversationId);
+    redisTemplate.delete(getKeyPrefix() + conversationId);
   }
 
   /**
@@ -236,7 +237,7 @@ public class LettuceRedisChatMemoryRepository extends BaseRedisChatMemoryReposit
    */
   public void clearOverLimit(String conversationId, int maxLimit, int deleteSize) {
     Assert.hasText(conversationId, "conversationId cannot be null or empty");
-    String key = DEFAULT_KEY_PREFIX + conversationId;
+    String key = getKeyPrefix() + conversationId;
     Long size = redisTemplate.opsForList().size(key);
     if (size < maxLimit) {
       return;

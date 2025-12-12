@@ -125,6 +125,7 @@ spring:
         password: yourPassword
         timeout: 2000
         database: 0
+        key-prefix: yourKeyPrefix
 ```
 
 ### Complete Configuration - Cluster
@@ -138,6 +139,7 @@ spring:
         username: yourUsername
         password: yourPassword
         timeout: 2000
+        key-prefix: yourKeyPrefix
         # Supports jedis, lettuce, and redisson
         client-type: jedis
         cluster:

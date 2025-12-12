@@ -61,6 +61,11 @@ public class RedisChatMemoryProperties {
 	 */
 	private int timeout = 2000;
 
+    /**
+     * The default key prefix of memory.
+     */
+    private String keyPrefix;
+
 	/**
 	 * Type of client to use. By default, auto-detected according to the classpath.
 	 */
@@ -120,6 +125,14 @@ public class RedisChatMemoryProperties {
 	public void setTimeout(int timeout) {
 		this.timeout = timeout;
 	}
+
+    public String getKeyPrefix() {
+        return keyPrefix;
+    }
+
+    public void setKeyPrefix(String keyPrefix) {
+        this.keyPrefix = keyPrefix;
+    }
 
     public int getDatabase() {
         return database;

@@ -110,7 +110,7 @@ public abstract class RedisChatMemoryConnectionAutoConfiguration<T extends ChatM
 		RedisMemoryConnectionDetails.Standalone standalone = connectionDetails.getStandalone();
 		return new RedisChatMemoryStandalone(standalone.getHost(), standalone.getPort(),
 				connectionDetails.getUsername(), connectionDetails.getPassword(), properties.getTimeout(),
-                standalone.getDatabase(), properties.getSsl(), sslBundles);
+                standalone.getDatabase(), properties.getKeyPrefix(), properties.getSsl(), sslBundles);
 	}
 
 	/**
@@ -123,7 +123,7 @@ public abstract class RedisChatMemoryConnectionAutoConfiguration<T extends ChatM
 		}
 		List<String> nodes = getNodes(connectionDetails.getCluster());
 		return new RedisChatMemoryCluster(nodes, properties.getCluster().getMaxRedirects(), connectionDetails.getUsername(),
-				connectionDetails.getPassword(), properties.getTimeout(), properties.getSsl(), sslBundles);
+				connectionDetails.getPassword(), properties.getTimeout(), properties.getKeyPrefix(), properties.getSsl(), sslBundles);
 	}
 
 	/**

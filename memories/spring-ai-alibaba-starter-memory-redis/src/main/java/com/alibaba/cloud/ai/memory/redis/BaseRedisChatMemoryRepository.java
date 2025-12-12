@@ -40,6 +40,8 @@ public abstract class BaseRedisChatMemoryRepository implements ChatMemoryReposit
 
 	protected static final String DEFAULT_KEY_PREFIX = "spring_ai_alibaba_chat_memory:";
 
+    protected static String CUSTOM_KEY_PREFIX;
+
 	protected final ObjectMapper objectMapper;
 
 	public BaseRedisChatMemoryRepository() {
@@ -72,4 +74,7 @@ public abstract class BaseRedisChatMemoryRepository implements ChatMemoryReposit
 		}
 	}
 
+    protected String getKeyPrefix() {
+        return CUSTOM_KEY_PREFIX != null ? CUSTOM_KEY_PREFIX : DEFAULT_KEY_PREFIX;
+    }
 }

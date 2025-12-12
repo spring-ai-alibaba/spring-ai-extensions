@@ -80,6 +80,7 @@ public class RedissonRedisChatMemoryRepository extends BaseRedisChatMemoryReposi
 		}
 
 		public RedissonRedisChatMemoryRepository build() {
+            CUSTOM_KEY_PREFIX = this.keyPrefix;
 			if (redissonConfig != null) {
 				// when the user does not set redisson serialization, maintain String
 				// serialization consistent with jedis and lettuce
@@ -143,17 +144,17 @@ public class RedissonRedisChatMemoryRepository extends BaseRedisChatMemoryReposi
 	@Override
 	public List<String> findConversationIds() {
 		RKeys keys = redissonClient.getKeys();
-		KeysScanOptions scanOptions = KeysScanOptions.defaults().pattern(DEFAULT_KEY_PREFIX + "*");
+		KeysScanOptions scanOptions = KeysScanOptions.defaults().pattern(getKeyPrefix() + "*");
 		Iterable<String> keysIter = keys.getKeys(scanOptions);
 		return StreamSupport.stream(keysIter.spliterator(), false)
-			.map(key -> key.substring(DEFAULT_KEY_PREFIX.length()))
+			.map(key -> key.substring(getKeyPrefix().length()))
 			.collect(Collectors.toList());
 	}
 
 	@Override
 	public List<Message> findByConversationId(String conversationId) {
 		Assert.hasText(conversationId, "conversationId cannot be null or empty");
-		RList<String> redisList = redissonClient.getList(DEFAULT_KEY_PREFIX + conversationId);
+		RList<String> redisList = redissonClient.getList(getKeyPrefix() + conversationId);
 		return redisList.readAll()
 			.parallelStream()
 			.map(this::deserializeMessage)
@@ -166,7 +167,7 @@ public class RedissonRedisChatMemoryRepository extends BaseRedisChatMemoryReposi
 		Assert.hasText(conversationId, "conversationId cannot be null or empty");
 		Assert.notNull(messages, "messages cannot be null");
 		Assert.noNullElements(messages, "messages cannot contain null elements");
-		RList<String> redisList = redissonClient.getList(DEFAULT_KEY_PREFIX + conversationId);
+		RList<String> redisList = redissonClient.getList(getKeyPrefix() + conversationId);
 		redisList.delete();
 		List<String> serializedMessages = messages.stream().map(this::serializeMessage).toList();
 		redisList.addAll(serializedMessages);
@@ -175,7 +176,7 @@ public class RedissonRedisChatMemoryRepository extends BaseRedisChatMemoryReposi
 	@Override
 	public void deleteByConversationId(String conversationId) {
 		Assert.hasText(conversationId, "conversationId cannot be null or empty");
-		RList<String> redisList = redissonClient.getList(DEFAULT_KEY_PREFIX + conversationId);
+		RList<String> redisList = redissonClient.getList(getKeyPrefix() + conversationId);
 		redisList.delete();
 	}
 
@@ -187,7 +188,7 @@ public class RedissonRedisChatMemoryRepository extends BaseRedisChatMemoryReposi
 	 */
 	public void clearOverLimit(String conversationId, int maxLimit, int deleteSize) {
 		Assert.hasText(conversationId, "conversationId cannot be null or empty");
-		String key = DEFAULT_KEY_PREFIX + conversationId;
+		String key = getKeyPrefix() + conversationId;
 		RList<Object> list = redissonClient.getList(key);
 		int size = list.size();
 		if (size < maxLimit) {
