@@ -72,6 +72,8 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
 
     private final McpJsonMapper mcpJsonMapper;
 
+    private final boolean lazyInit;
+
     private final AtomicInteger index = new AtomicInteger(0);
 
     private Map<String, McpSyncClient> keyToClientMap;
@@ -81,8 +83,9 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
     // Link Tracking Filters
     private final ExchangeFilterFunction traceFilter;
 
-    public SseWebFluxDistributedSyncMcpClient(String serverName, String version,
-                                              NacosMcpOperationService nacosMcpOperationService, ApplicationContext applicationContext) {
+    public SseWebFluxDistributedSyncMcpClient(String serverName, String version, 
+                                             NacosMcpOperationService nacosMcpOperationService, 
+                                             ApplicationContext applicationContext, boolean lazyInit) {
         Assert.notNull(serverName, "serviceName cannot be null");
         Assert.notNull(version, "version cannot be null");
         Assert.notNull(nacosMcpOperationService, "nacosMcpOperationService cannot be null");
@@ -91,24 +94,7 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
         this.serverName = serverName;
         this.version = version;
         this.nacosMcpOperationService = nacosMcpOperationService;
-
-        try {
-            this.serverEndpoint = this.nacosMcpOperationService.getServerEndpoint(serverName, version);
-            if (this.serverEndpoint == null) {
-                throw new NacosException(NacosException.NOT_FOUND,
-                        String.format("[Nacos Mcp Sync Client] Can not find mcp server from nacos: %s, version:%s",
-                                serverName, version));
-            }
-            if (!StringUtils.equals(serverEndpoint.getProtocol(), AiConstants.Mcp.MCP_PROTOCOL_SSE)) {
-                throw new RuntimeException(
-                        String.format("[Nacos Mcp Sync Client] Protocol of mcp server:%s, version :%s must be sse",
-                                serverName, version));
-            }
-        } catch (NacosException e) {
-            throw new RuntimeException(String.format(
-                    "[Nacos Mcp Sync Client] Failed to get endpoints for Mcp Server from nacos: %s, version:%s",
-                    serverName, version), e);
-        }
+        this.lazyInit = lazyInit;
 
         commonProperties = applicationContext.getBean(McpClientCommonProperties.class);
         mcpSyncClientConfigurer = applicationContext.getBean(McpSyncClientConfigurer.class);
@@ -129,6 +115,12 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
 
     public Map<String, McpSyncClient> init() {
         keyToClientMap = new ConcurrentHashMap<>();
+        boolean initialized = initServerEndpoint(serverName, version);
+        if (!initialized) {
+            logger.info("[Nacos Mcp Sync Client] No MCP server endpoint found during init. serverName: {}, version: {}",
+                    serverName, version);
+            return keyToClientMap;
+        }
         for (McpEndpointInfo mcpEndpointInfo : serverEndpoint.getMcpEndpointInfoList()) {
             updateByAddEndpoint(mcpEndpointInfo, serverEndpoint.getExportPath());
         }
@@ -217,6 +209,13 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
     }
 
     private void updateClientList(NacosMcpServerEndpoint newServerEndpoint) {
+        if (this.serverEndpoint == null) {
+            for (McpEndpointInfo mcpEndpointInfo : newServerEndpoint.getMcpEndpointInfoList()) {
+                updateByAddEndpoint(mcpEndpointInfo, newServerEndpoint.getExportPath());
+            }
+            this.serverEndpoint = newServerEndpoint;
+            return;
+        }
         if (!StringUtils.equals(this.serverEndpoint.getExportPath(), newServerEndpoint.getExportPath())
                 || !StringUtils.equals(this.serverEndpoint.getVersion(), newServerEndpoint.getVersion())) {
             logger.info(
@@ -253,6 +252,33 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
             }
         }
         this.serverEndpoint = newServerEndpoint;
+    }
+
+    protected boolean initServerEndpoint(String serverName, String version) {
+        try {
+            this.serverEndpoint = this.nacosMcpOperationService.getServerEndpoint(serverName, version);
+            if (this.serverEndpoint == null) {
+                throw new NacosException(NacosException.NOT_FOUND,
+                        String.format("[Nacos Mcp Sync Client] Can not find mcp server from nacos: %s, version:%s",
+                                serverName, version));
+            }
+            if (!StringUtils.equals(serverEndpoint.getProtocol(), AiConstants.Mcp.MCP_PROTOCOL_SSE)) {
+                throw new RuntimeException(
+                        String.format("[Nacos Mcp Sync Client] Protocol of mcp server:%s, version :%s must be sse",
+                                serverName, version));
+            }
+            return true;
+        } catch (NacosException e) {
+            if (lazyInit) {
+                logger.warn("[Nacos Mcp Sync Client] Failed to get endpoints for Mcp Server from nacos: {}, " +
+                        "version:{}", serverName, version, e);
+                this.serverEndpoint = null;
+                return false;
+            }
+            throw new RuntimeException(String.format(
+                    "[Nacos Mcp Sync Client] Failed to get endpoints for Mcp Server from nacos: %s, version:%s",
+                    serverName, version), e);
+        }
     }
 
     private void updateAll(NacosMcpServerEndpoint newServerEndpoint) {
@@ -438,6 +464,8 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
 
         private ApplicationContext applicationContext;
 
+        private boolean lazyInit;
+
         public Builder serverName(String serverName) {
             this.serverName = serverName;
             return this;
@@ -458,9 +486,14 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
             return this;
         }
 
+        public Builder lazyInit(boolean lazyInit) {
+            this.lazyInit = lazyInit;
+            return this;
+        }
+
         public SseWebFluxDistributedSyncMcpClient build() {
-            return new SseWebFluxDistributedSyncMcpClient(this.serverName, this.version, this.nacosMcpOperationService,
-                    this.applicationContext);
+            return new SseWebFluxDistributedSyncMcpClient(this.serverName, this.version, 
+                this.nacosMcpOperationService, this.applicationContext, this.lazyInit);
         }
 
     }
