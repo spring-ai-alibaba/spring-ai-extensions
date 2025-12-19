@@ -17,6 +17,8 @@
 package com.alibaba.cloud.ai.dashscope.spec;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeResponseFormat;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,6 +29,7 @@ import org.springframework.ai.model.ModelResult;
 import org.springframework.ai.model.ResultMetadata;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,7 +44,7 @@ public class DashScopeApiSpec {
     public static final String DEFAULT_EMBEDDING_MODEL = DashScopeModel.EmbeddingModel.EMBEDDING_V2.getValue();
 
     public static final String DEFAULT_EMBEDDING_TEXT_TYPE = DashScopeModel.EmbeddingTextType.DOCUMENT.getValue();
-    
+
     public interface ApiResponse {
         String code();
         String message();
@@ -646,8 +649,19 @@ public class DashScopeApiSpec {
             // Optional values:
             //   "model_detailed_report": Detailed Report, approximately 6,000 words
             //   "model_summary_report": Summary Report, approximately 1500 - 2000 words
-            @JsonProperty("output_format") String outputFormat
+            @JsonProperty("output_format") String outputFormat,
+            @JsonProperty("extra_body") Map<String, Object> extraBody
     ) {
+
+        /**
+         * Compact constructor that ensures extraBody is initialized as a mutable HashMap
+         * when null, enabling @JsonAnySetter to populate it during deserialization.
+         */
+        public ChatCompletionRequestParameter{
+            if (extraBody == null) {
+                extraBody = new HashMap<>();
+            }
+        }
 
         /**
          * shortcut constructor for chat request parameter
@@ -655,8 +669,32 @@ public class DashScopeApiSpec {
         public ChatCompletionRequestParameter() {
 
             this(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                    null, null, null, null, null, null, null, null, null, null, null, null, null);
+                    null, null, null, null, null, null, null, null, null, null, null, null, null, null);
          }
+
+        /**
+         * Overrides the default accessor to add @JsonAnyGetter annotation.
+         * This causes Jackson to flatten the extraBody map contents to the top level of the JSON.
+         * @return The extraBody map, or null if not set.
+         */
+        @JsonAnyGetter
+        public Map<String, Object> extraBody() {
+            return this.extraBody;
+        }
+
+        /**
+         * Handles deserialization of unknown properties into the extraBody map.
+         * This enables JSON with extra fields to be deserialized into ChatCompletionRequest,
+         * which is useful for implementing OpenAI API proxy servers with @RestController.
+         * @param key The property name
+         * @param value The property value
+         */
+        @JsonAnySetter
+        private void setExtraBodyProperty(String key, Object value) {
+            if (this.extraBody != null) {
+                this.extraBody.put(key, value);
+            }
+        }
 
         /**
          * Helper factory that creates a tool_choice of type 'none', 'auto' or selected
@@ -1143,12 +1181,12 @@ public class DashScopeApiSpec {
 
     /**
      * Error response class in streaming responses.
-     * @param code error code 
-     * @param message error message 
-     * @param requestId request ID 
+     * @param code error code
+     * @param message error message
+     * @param requestId request ID
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record DashScopeErrorResponse(@JsonProperty("code") String code, 
+    public record DashScopeErrorResponse(@JsonProperty("code") String code,
                                        @JsonProperty("message") String message,
                                        @JsonProperty("request_id") String requestId) implements ApiResponse {
     }

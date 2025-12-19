@@ -454,12 +454,14 @@ public class DashScopeChatModel implements ChatModel {
 					this.defaultOptions.getToolCallbacks()));
 			requestOptions.setToolContext(ToolCallingChatOptions.mergeToolContext(runtimeOptions.getToolContext(),
 					this.defaultOptions.getToolContext()));
+            requestOptions.setExtraBody(mergeExtraBody(runtimeOptions.getExtraBody(), this.defaultOptions.getExtraBody()));
 		}
 		else {
 			requestOptions.setInternalToolExecutionEnabled(this.defaultOptions.getInternalToolExecutionEnabled());
 			requestOptions.setToolNames(this.defaultOptions.getToolNames());
 			requestOptions.setToolCallbacks(this.defaultOptions.getToolCallbacks());
 			requestOptions.setToolContext(this.defaultOptions.getToolContext());
+            requestOptions.setExtraBody(this.defaultOptions.getExtraBody());
 		}
 
 		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
@@ -673,11 +675,33 @@ public class DashScopeChatModel implements ChatModel {
                 options.getMaxInputTokens(),
 
                 options.getAsrOptions(),
-                options.getOutputFormat()
+                options.getOutputFormat(),
+
+                options.getExtraBody()
         );
         // @formatter:on
     }
 
+    /**
+     * Merge the extra body from the runtime options with the default options.
+     * @param runtimeExtraBody The extra body from the runtime options
+     * @param defaultExtraBody The default extra body
+     * @return The merged extra body
+     */
+    private Map<String, Object> mergeExtraBody(Map<String, Object> runtimeExtraBody,
+            Map<String, Object> defaultExtraBody) {
+        if (defaultExtraBody == null && runtimeExtraBody == null) {
+            return null;
+        }
+        Map<String, Object> merged = new HashMap<>();
+        if (defaultExtraBody != null) {
+            merged.putAll(defaultExtraBody);
+        }
+        if (runtimeExtraBody != null) {
+            merged.putAll(runtimeExtraBody); // runtime overrides default
+        }
+        return merged.isEmpty() ? null : merged;
+    }
 
 	/**
 	 * Use the provided convention for reporting observation data

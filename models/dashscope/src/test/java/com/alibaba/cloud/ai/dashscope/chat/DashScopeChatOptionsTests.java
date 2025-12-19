@@ -26,7 +26,6 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeResponseFormat;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
 import org.springframework.ai.tool.ToolCallback;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,183 +40,196 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class DashScopeChatOptionsTests {
 
-  private static final String TEST_MODEL = "qwen-turbo";
+    private static final String TEST_MODEL = "qwen-turbo";
 
-  private static final Double TEST_TEMPERATURE = 0.7;
+    private static final Double TEST_TEMPERATURE = 0.7;
 
-  private static final Double TEST_TOP_P = 0.8;
+    private static final Double TEST_TOP_P = 0.8;
 
-  private static final Integer TEST_TOP_K = 50;
+    private static final Integer TEST_TOP_K = 50;
 
-  private static final Integer TEST_SEED = 42;
+    private static final Integer TEST_SEED = 42;
 
-  private static final Double TEST_REPETITION_PENALTY = 1.1;
+    private static final Double TEST_REPETITION_PENALTY = 1.1;
 
-  private static final Integer TEST_THINKING_BUDGET = 1000;
+    private static final Integer TEST_THINKING_BUDGET = 1000;
 
-  @Test
-  void testBuilderAndGetters() {
-    // Test building DashScopeChatOptions using builder pattern and verify getters
-    DashScopeChatOptions options =
-        DashScopeChatOptions.builder()
-            .model(TEST_MODEL)
-            .temperature(TEST_TEMPERATURE)
-            .topP(TEST_TOP_P)
-            .topK(TEST_TOP_K)
-            .seed(TEST_SEED)
-            .repetitionPenalty(TEST_REPETITION_PENALTY)
-            .stream(true)
-            .enableSearch(true)
-            .incrementalOutput(true)
-            .vlHighResolutionImages(true)
-            .enableThinking(true)
-            .thinkingBudget(TEST_THINKING_BUDGET)
-            .multiModel(true)
-            .build();
+    private static final Map<String, Object> TEST_EXTRA_BODY = Map.of("customKey", "customValue");
 
-    // Verify all fields are set correctly
-    assertThat(options.getModel()).isEqualTo(TEST_MODEL);
-    assertThat(options.getTemperature()).isEqualTo(TEST_TEMPERATURE);
-    assertThat(options.getTopP()).isEqualTo(TEST_TOP_P);
-    assertThat(options.getTopK()).isEqualTo(TEST_TOP_K);
-    assertThat(options.getSeed()).isEqualTo(TEST_SEED);
-    assertThat(options.getRepetitionPenalty()).isEqualTo(TEST_REPETITION_PENALTY);
-    assertThat(options.getStream()).isTrue();
-    assertThat(options.getEnableSearch()).isTrue();
-    assertThat(options.getIncrementalOutput()).isTrue();
-    assertThat(options.getVlHighResolutionImages()).isTrue();
-    assertThat(options.getEnableThinking()).isTrue();
-    assertThat(options.getThinkingBudget()).isEqualTo(TEST_THINKING_BUDGET);
-    assertThat(options.getMultiModel()).isTrue();
-  }
+    @Test
+    void testBuilderAndGetters() {
+        // Test building DashScopeChatOptions using builder pattern and verify getters
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .temperature(TEST_TEMPERATURE)
+                .topP(TEST_TOP_P)
+                .topK(TEST_TOP_K)
+                .seed(TEST_SEED)
+                .repetitionPenalty(TEST_REPETITION_PENALTY)
+                .stream(true)
+                .enableSearch(true)
+                .incrementalOutput(true)
+                .vlHighResolutionImages(true)
+                .enableThinking(true)
+                .thinkingBudget(TEST_THINKING_BUDGET)
+                .multiModel(true)
+                .extraBody(TEST_EXTRA_BODY)
+                .build();
 
-  @Test
-  void testSettersAndGetters() {
-    // Test setters and getters
-    DashScopeChatOptions options = new DashScopeChatOptions();
+        // Verify all fields are set correctly
+        assertThat(options.getModel()).isEqualTo(TEST_MODEL);
+        assertThat(options.getTemperature()).isEqualTo(TEST_TEMPERATURE);
+        assertThat(options.getTopP()).isEqualTo(TEST_TOP_P);
+        assertThat(options.getTopK()).isEqualTo(TEST_TOP_K);
+        assertThat(options.getSeed()).isEqualTo(TEST_SEED);
+        assertThat(options.getRepetitionPenalty()).isEqualTo(TEST_REPETITION_PENALTY);
+        assertThat(options.getStream()).isTrue();
+        assertThat(options.getEnableSearch()).isTrue();
+        assertThat(options.getIncrementalOutput()).isTrue();
+        assertThat(options.getVlHighResolutionImages()).isTrue();
+        assertThat(options.getEnableThinking()).isTrue();
+        assertThat(options.getThinkingBudget()).isEqualTo(TEST_THINKING_BUDGET);
+        assertThat(options.getMultiModel()).isTrue();
+        assertThat(options.getExtraBody()).isEqualTo(TEST_EXTRA_BODY);
+    }
 
-    options.setModel(TEST_MODEL);
-    options.setTemperature(TEST_TEMPERATURE);
-    options.setTopP(TEST_TOP_P);
-    options.setTopK(TEST_TOP_K);
-    options.setSeed(TEST_SEED);
-    options.setRepetitionPenalty(TEST_REPETITION_PENALTY);
-    options.setStream(true);
-    options.setEnableSearch(true);
-    options.setIncrementalOutput(true);
-    options.setVlHighResolutionImages(true);
-    options.setEnableThinking(true);
-    options.setThinkingBudget(TEST_THINKING_BUDGET);
-    options.setMultiModel(true);
+    @Test
+    void testSettersAndGetters() {
+        // Test setters and getters
+        DashScopeChatOptions options = new DashScopeChatOptions();
 
-    // Verify all fields are set correctly
-    assertThat(options.getModel()).isEqualTo(TEST_MODEL);
-    assertThat(options.getTemperature()).isEqualTo(TEST_TEMPERATURE);
-    assertThat(options.getTopP()).isEqualTo(TEST_TOP_P);
-    assertThat(options.getTopK()).isEqualTo(TEST_TOP_K);
-    assertThat(options.getSeed()).isEqualTo(TEST_SEED);
-    assertThat(options.getRepetitionPenalty()).isEqualTo(TEST_REPETITION_PENALTY);
-    assertThat(options.getStream()).isTrue();
-    assertThat(options.getEnableSearch()).isTrue();
-    assertThat(options.getIncrementalOutput()).isTrue();
-    assertThat(options.getVlHighResolutionImages()).isTrue();
-    assertThat(options.getEnableThinking()).isTrue();
-    assertThat(options.getThinkingBudget()).isEqualTo(TEST_THINKING_BUDGET);
-    assertThat(options.getMultiModel()).isTrue();
-  }
+        options.setModel(TEST_MODEL);
+        options.setTemperature(TEST_TEMPERATURE);
+        options.setTopP(TEST_TOP_P);
+        options.setTopK(TEST_TOP_K);
+        options.setSeed(TEST_SEED);
+        options.setRepetitionPenalty(TEST_REPETITION_PENALTY);
+        options.setStream(true);
+        options.setEnableSearch(true);
+        options.setIncrementalOutput(true);
+        options.setVlHighResolutionImages(true);
+        options.setEnableThinking(true);
+        options.setThinkingBudget(TEST_THINKING_BUDGET);
+        options.setMultiModel(true);
+        options.setExtraBody(TEST_EXTRA_BODY);
 
-  @Test
-  void testToolCallbacks() {
-    // Test function callbacks related methods
-    ToolCallback callback1 = Mockito.mock(ToolCallback.class);
-    ToolCallback callback2 = Mockito.mock(ToolCallback.class);
+        // Verify all fields are set correctly
+        assertThat(options.getModel()).isEqualTo(TEST_MODEL);
+        assertThat(options.getTemperature()).isEqualTo(TEST_TEMPERATURE);
+        assertThat(options.getTopP()).isEqualTo(TEST_TOP_P);
+        assertThat(options.getTopK()).isEqualTo(TEST_TOP_K);
+        assertThat(options.getSeed()).isEqualTo(TEST_SEED);
+        assertThat(options.getRepetitionPenalty()).isEqualTo(TEST_REPETITION_PENALTY);
+        assertThat(options.getStream()).isTrue();
+        assertThat(options.getEnableSearch()).isTrue();
+        assertThat(options.getIncrementalOutput()).isTrue();
+        assertThat(options.getVlHighResolutionImages()).isTrue();
+        assertThat(options.getEnableThinking()).isTrue();
+        assertThat(options.getThinkingBudget()).isEqualTo(TEST_THINKING_BUDGET);
+        assertThat(options.getMultiModel()).isTrue();
+        assertThat(options.getExtraBody()).isEqualTo(TEST_EXTRA_BODY);
+    }
 
-    List<ToolCallback> callbacks = Arrays.asList(callback1, callback2);
-    Set<String> functions = new HashSet<>(Arrays.asList("test1", "test2"));
+    @Test
+    void testToolCallbacks() {
+        // Test function callbacks related methods
+        ToolCallback callback1 = Mockito.mock(ToolCallback.class);
+        ToolCallback callback2 = Mockito.mock(ToolCallback.class);
 
-    DashScopeChatOptions options =
-        DashScopeChatOptions.builder().toolCallbacks(callbacks).toolNames(functions).build();
+        List<ToolCallback> callbacks = Arrays.asList(callback1, callback2);
+        Set<String> functions = new HashSet<>(Arrays.asList("test1", "test2"));
 
-    assertThat(options.getToolCallbacks()).containsExactlyElementsOf(callbacks);
-    assertThat(options.getToolNames()).containsExactlyInAnyOrderElementsOf(functions);
-  }
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .toolCallbacks(callbacks)
+                .toolNames(functions)
+                .build();
 
-  @Test
-  void testToolsAndToolChoice() {
-    // Test tools and tool choice related methods
-    DashScopeApiSpec.FunctionTool.Function function =
-        new DashScopeApiSpec.FunctionTool.Function("Test function", "test", "{}");
-    DashScopeApiSpec.FunctionTool tool = new DashScopeApiSpec.FunctionTool(function);
-    List<DashScopeApiSpec.FunctionTool> tools = Collections.singletonList(tool);
-    Map<String, String> toolChoice = Map.of("type", "function", "name", "test");
+        assertThat(options.getToolCallbacks()).containsExactlyElementsOf(callbacks);
+        assertThat(options.getToolNames()).containsExactlyInAnyOrderElementsOf(functions);
+    }
 
-    DashScopeChatOptions options =
-        DashScopeChatOptions.builder().tools(tools).toolChoice(toolChoice).build();
+    @Test
+    void testToolsAndToolChoice() {
+        // Test tools and tool choice related methods
+        DashScopeApiSpec.FunctionTool.Function function = new DashScopeApiSpec.FunctionTool.Function("Test function", "test", "{}");
+        DashScopeApiSpec.FunctionTool tool = new DashScopeApiSpec.FunctionTool(function);
+        List<DashScopeApiSpec.FunctionTool> tools = Collections.singletonList(tool);
+        Map<String, String> toolChoice = Map.of("type", "function", "name", "test");
 
-    assertThat(options.getTools()).containsExactlyElementsOf(tools);
-    assertThat(options.getToolChoice()).isEqualTo(toolChoice);
-  }
+        DashScopeChatOptions options = DashScopeChatOptions.builder().tools(tools).toolChoice(toolChoice).build();
 
-  @Test
-  void testResponseFormat() {
-    // Test response format related methods
-    DashScopeResponseFormat responseFormat =
-        DashScopeResponseFormat.builder().type(DashScopeResponseFormat.Type.JSON_OBJECT).build();
+        assertThat(options.getTools()).containsExactlyElementsOf(tools);
+        assertThat(options.getToolChoice()).isEqualTo(toolChoice);
+    }
 
-    DashScopeChatOptions options =
-        DashScopeChatOptions.builder().responseFormat(responseFormat).build();
+    @Test
+    void testResponseFormat() {
+        // Test response format related methods
+        DashScopeResponseFormat responseFormat = DashScopeResponseFormat.builder()
+                .type(DashScopeResponseFormat.Type.JSON_OBJECT)
+                .build();
 
-    assertThat(options.getResponseFormat()).isEqualTo(responseFormat);
-    assertThat(options.getResponseFormat().getType())
-        .isEqualTo(DashScopeResponseFormat.Type.JSON_OBJECT);
-  }
+        DashScopeChatOptions options = DashScopeChatOptions.builder().responseFormat(responseFormat).build();
 
-  @Test
-  void testCopy() {
-    // Test copy method
-    DashScopeChatOptions original =
-        DashScopeChatOptions.builder()
-            .model(TEST_MODEL)
-            .temperature(TEST_TEMPERATURE)
-            .topP(TEST_TOP_P)
-            .topK(TEST_TOP_K)
-            .build();
+        assertThat(options.getResponseFormat()).isEqualTo(responseFormat);
+        assertThat(options.getResponseFormat().getType()).isEqualTo(DashScopeResponseFormat.Type.JSON_OBJECT);
+    }
 
-    DashScopeChatOptions copy = (DashScopeChatOptions) original.copy();
+    @Test
+    void testCopy() {
+        // Test copy method
+        DashScopeChatOptions original = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .temperature(TEST_TEMPERATURE)
+                .topP(TEST_TOP_P)
+                .topK(TEST_TOP_K)
+                .build();
 
-    assertThat(copy).usingRecursiveComparison().isEqualTo(original);
-    assertThat(copy).isNotSameAs(original);
-  }
+        DashScopeChatOptions copy = (DashScopeChatOptions) original.copy();
 
-  @Test
-  void testEqualsAndHashCode() {
-    // Test equals and hashCode methods
-    DashScopeChatOptions options1 =
-        DashScopeChatOptions.builder().model(TEST_MODEL).temperature(TEST_TEMPERATURE).build();
+        assertThat(copy).usingRecursiveComparison().isEqualTo(original);
+        assertThat(copy).isNotSameAs(original);
+    }
 
-    DashScopeChatOptions options2 =
-        DashScopeChatOptions.builder().model(TEST_MODEL).temperature(TEST_TEMPERATURE).build();
+    @Test
+    void testEqualsAndHashCode() {
+        // Test equals and hashCode methods
+        DashScopeChatOptions options1 = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .temperature(TEST_TEMPERATURE)
+                .extraBody(TEST_EXTRA_BODY)
+                .build();
 
-    DashScopeChatOptions options3 =
-        DashScopeChatOptions.builder().model("different-model").temperature(0.5).build();
+        DashScopeChatOptions options2 = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .temperature(TEST_TEMPERATURE)
+                .extraBody(TEST_EXTRA_BODY)
+                .build();
 
-    assertThat(options1).isEqualTo(options2);
-    assertThat(options1.hashCode()).isEqualTo(options2.hashCode());
-    assertThat(options1).isNotEqualTo(options3);
-    assertThat(options1.hashCode()).isNotEqualTo(options3.hashCode());
-  }
+        DashScopeChatOptions options3 = DashScopeChatOptions.builder()
+                .model("different-model")
+                .temperature(0.5)
+                .extraBody(Map.of())
+                .build();
 
-  @Test
-  void testToString() {
-    // Test toString method
-    DashScopeChatOptions options =
-        DashScopeChatOptions.builder().model(TEST_MODEL).temperature(TEST_TEMPERATURE).build();
+        assertThat(options1).isEqualTo(options2);
+        assertThat(options1.hashCode()).isEqualTo(options2.hashCode());
+        assertThat(options1).isNotEqualTo(options3);
+        assertThat(options1.hashCode()).isNotEqualTo(options3.hashCode());
+    }
 
-    String toString = options.toString();
+    @Test
+    void testToString() {
+        // Test toString method
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .temperature(TEST_TEMPERATURE)
+                .build();
 
-    assertThat(toString)
-        .contains("DashScopeChatOptions")
-        .contains(TEST_MODEL)
-        .contains(TEST_TEMPERATURE.toString());
-  }
+        String toString = options.toString();
+
+        assertThat(toString).contains("DashScopeChatOptions")
+                .contains(TEST_MODEL)
+                .contains(TEST_TEMPERATURE.toString());
+    }
 }
