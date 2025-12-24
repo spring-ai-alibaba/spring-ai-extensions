@@ -26,6 +26,10 @@ class DashScopeParentProperties {
 
 	private String workspaceId;
 
+	private String completionsPath;
+
+	private String embeddingsPath;
+
 	public String getApiKey() {
 		return apiKey;
 	}
@@ -56,6 +60,22 @@ class DashScopeParentProperties {
 
 	public void setWorkspaceId(String workspaceId) {
 		this.workspaceId = workspaceId;
+	}
+
+	public String getCompletionsPath() {
+		return completionsPath;
+	}
+
+	public void setCompletionsPath(String completionsPath) {
+		this.completionsPath = completionsPath;
+	}
+
+	public String getEmbeddingsPath() {
+		return embeddingsPath;
+	}
+
+	public void setEmbeddingsPath(String embeddingsPath) {
+		this.embeddingsPath = embeddingsPath;
 	}
 
 }

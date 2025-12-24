@@ -44,6 +44,96 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class DashScopePropertiesTests {
 
 	@Test
+	public void chatPropertiesWithCompletionsPath() {
+		new ApplicationContextRunner().withPropertyValues(
+		// @formatter:off
+						"spring.ai.dashscope.base-url=TEST_BASE_URL",
+						"spring.ai.dashscope.api-key=abc123_test",
+						"spring.ai.dashscope.chat.options.model=MODEL_CUSTOM",
+						"spring.ai.dashscope.chat.options.temperature=0.80",
+						"spring.ai.dashscope.chat.options.completions_path=/custom/v1/chat/completions")
+				// @formatter:on
+			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.run(context -> {
+				var chatProperties = context.getBean(DashScopeChatProperties.class);
+				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
+
+				assertThat(connectionProperties.getApiKey()).isEqualTo("abc123_test");
+				assertThat(connectionProperties.getBaseUrl()).isEqualTo("TEST_BASE_URL");
+
+				assertThat(chatProperties.getApiKey()).isNull();
+				assertThat(chatProperties.getBaseUrl()).isNull();
+
+				assertThat(chatProperties.getOptions().getModel()).isEqualTo("MODEL_CUSTOM");
+				assertThat(chatProperties.getOptions().getTemperature()).isEqualTo(0.80);
+				assertThat(chatProperties.getOptions().getCompletionsPath()).isEqualTo("/custom/v1/chat/completions");
+			});
+	}
+
+	@Test
+	public void embeddingPropertiesWithEmbeddingsPath() {
+		new ApplicationContextRunner().withPropertyValues(
+		// @formatter:off
+						"spring.ai.dashscope.base-url=TEST_BASE_URL",
+						"spring.ai.dashscope.api-key=abc123_test",
+						"spring.ai.dashscope.embedding.options.model=MODEL_CUSTOM",
+						"spring.ai.dashscope.embedding.options.embeddings_path=/custom/v1/embeddings")
+				// @formatter:on
+			.withConfiguration(AutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
+			.run(context -> {
+				var embeddingProperties = context.getBean(DashScopeEmbeddingProperties.class);
+				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
+
+				assertThat(connectionProperties.getApiKey()).isEqualTo("abc123_test");
+				assertThat(connectionProperties.getBaseUrl()).isEqualTo("TEST_BASE_URL");
+
+				assertThat(embeddingProperties.getApiKey()).isNull();
+				assertThat(embeddingProperties.getBaseUrl()).isNull();
+
+				assertThat(embeddingProperties.getOptions().getModel()).isEqualTo("MODEL_CUSTOM");
+				assertThat(embeddingProperties.getOptions().getEmbeddingsPath()).isEqualTo("/custom/v1/embeddings");
+			});
+	}
+
+	@Test
+	public void chatCompletionsPathOverridesParent() {
+		new ApplicationContextRunner().withPropertyValues(
+		// @formatter:off
+						"spring.ai.dashscope.base-url=TEST_BASE_URL",
+						"spring.ai.dashscope.api-key=abc123_test",
+						"spring.ai.dashscope.completions_path=/default/v1/chat/completions",
+						"spring.ai.dashscope.chat.options.completions_path=/custom/v1/chat/completions")
+				// @formatter:on
+			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.run(context -> {
+				var chatProperties = context.getBean(DashScopeChatProperties.class);
+				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
+
+				assertThat(connectionProperties.getCompletionsPath()).isEqualTo("/default/v1/chat/completions");
+				assertThat(chatProperties.getOptions().getCompletionsPath()).isEqualTo("/custom/v1/chat/completions");
+			});
+	}
+
+	@Test
+	public void embeddingEmbeddingsPathOverridesParent() {
+		new ApplicationContextRunner().withPropertyValues(
+		// @formatter:off
+						"spring.ai.dashscope.base-url=TEST_BASE_URL",
+						"spring.ai.dashscope.api-key=abc123_test",
+						"spring.ai.dashscope.embeddings_path=/default/v1/embeddings",
+						"spring.ai.dashscope.embedding.options.embeddings_path=/custom/v1/embeddings")
+				// @formatter:on
+			.withConfiguration(AutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
+			.run(context -> {
+				var embeddingProperties = context.getBean(DashScopeEmbeddingProperties.class);
+				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
+
+				assertThat(connectionProperties.getEmbeddingsPath()).isEqualTo("/default/v1/embeddings");
+				assertThat(embeddingProperties.getOptions().getEmbeddingsPath()).isEqualTo("/custom/v1/embeddings");
+			});
+	}
+
+	@Test
 	public void chatProperties() {
 
 		new ApplicationContextRunner().withPropertyValues(

@@ -302,6 +302,12 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
     private Map<String, Object> toolContext = new HashMap<>();
 
     /**
+     * Custom completions path to override the default API endpoint.
+     */
+    @JsonProperty
+    private String completionsPath;
+
+    /**
      * Additional parameters to pass to DashScope-compatible servers. Accepts any key-value pairs
      * that will be included at the top level of the JSON request.
      * <p>
@@ -616,6 +622,14 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         this.toolContext = toolContext;
     }
 
+    public String getCompletionsPath() {
+        return completionsPath;
+    }
+
+    public void setCompletionsPath(String completionsPath) {
+        this.completionsPath = completionsPath;
+    }
+
     public Boolean getIncrementalOutput() {
         return incrementalOutput;
     }
@@ -896,6 +910,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
             return this;
         }
 
+        public DashScopeChatOptionsBuilder completionsPath(String completionsPath) {
+            this.options.completionsPath = completionsPath;
+            return this;
+        }
+
         @Deprecated
         public DashScopeChatOptionsBuilder withToolContext(Map<String, Object> toolContext) {
             return toolContext(toolContext);
@@ -986,6 +1005,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 .repetitionPenalty(fromOptions.repetitionPenalty)
                 .tools(fromOptions.tools)
                 .toolContext(fromOptions.toolContext)
+                .completionsPath(fromOptions.completionsPath)
                 .multiModel(fromOptions.multiModel)
                 .vlHighResolutionImages(fromOptions.vlHighResolutionImages)
                 .enableThinking(fromOptions.enableThinking)
@@ -1022,6 +1042,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 && Objects.equals(this.toolNames, that.toolNames)
                 && Objects.equals(this.internalToolExecutionEnabled, that.internalToolExecutionEnabled)
                 && Objects.equals(this.multiModel, that.multiModel)
+                && Objects.equals(this.completionsPath, that.completionsPath)
                 && Objects.equals(this.searchOptions, that.searchOptions)
                 && Objects.equals(this.parallelToolCalls, that.parallelToolCalls)
                 && Objects.equals(this.httpHeaders, that.httpHeaders)
@@ -1033,7 +1054,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.model, this.stream, this.temperature, this.seed, this.topP, this.topK, this.stop, this.enableSearch, this.responseFormat, this.incrementalOutput, this.repetitionPenalty, this.tools, this.toolChoice, this.vlHighResolutionImages, this.enableThinking, this.thinkingBudget, this.toolCallbacks, this.toolNames, this.internalToolExecutionEnabled, this.multiModel, this.searchOptions, this.parallelToolCalls, this.httpHeaders, this.toolContext, this.modalities, this.audio, this.streamOptions, this.extraBody);
+        return Objects.hash(this.model, this.stream, this.temperature, this.seed, this.topP, this.topK, this.stop, this.enableSearch, this.responseFormat, this.incrementalOutput, this.repetitionPenalty, this.tools, this.toolChoice, this.vlHighResolutionImages, this.enableThinking, this.thinkingBudget, this.toolCallbacks, this.toolNames, this.internalToolExecutionEnabled, this.multiModel, this.completionsPath, this.searchOptions, this.parallelToolCalls, this.httpHeaders, this.toolContext, this.modalities, this.audio, this.streamOptions, this.extraBody);
     }
 
     @Override

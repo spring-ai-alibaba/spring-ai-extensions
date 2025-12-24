@@ -46,6 +46,16 @@ public final class DashScopeConnectionUtils {
 				: commonProperties.getApiKey();
 		String workspaceId = StringUtils.hasText(modelProperties.getWorkspaceId()) ? modelProperties.getWorkspaceId()
 				: commonProperties.getWorkspaceId();
+		String completionsPath = null;
+		String embeddingsPath = null;
+
+		if ("chat".equals(modelType)) {
+			completionsPath = StringUtils.hasText(modelProperties.getCompletionsPath()) ? modelProperties.getCompletionsPath()
+					: commonProperties.getCompletionsPath();
+		} else if ("embedding".equals(modelType)) {
+			embeddingsPath = StringUtils.hasText(modelProperties.getEmbeddingsPath()) ? modelProperties.getEmbeddingsPath()
+					: commonProperties.getEmbeddingsPath();
+		}
 
 		Map<String, List<String>> connectionHeaders = new HashMap<>();
 		if (StringUtils.hasText(workspaceId)) {
@@ -67,7 +77,7 @@ public final class DashScopeConnectionUtils {
 						+ modelType + ".api-key property.");
 
 		return new ResolvedConnectionProperties(baseUrl, apiKey, workspaceId,
-				CollectionUtils.toMultiValueMap(connectionHeaders));
+				CollectionUtils.toMultiValueMap(connectionHeaders), completionsPath, embeddingsPath);
 	}
 
 }

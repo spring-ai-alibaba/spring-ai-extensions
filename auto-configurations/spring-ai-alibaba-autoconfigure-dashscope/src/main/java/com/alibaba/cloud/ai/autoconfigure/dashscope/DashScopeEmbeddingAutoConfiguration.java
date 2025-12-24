@@ -93,6 +93,7 @@ public class DashScopeEmbeddingAutoConfiguration {
 			.workSpaceId(resolved.workspaceId())
 			.restClientBuilder(restClientBuilder)
 			.responseErrorHandler(responseErrorHandler)
+			.embeddingsPath(resolved.embeddingsPath())
 			.build();
 	}
 

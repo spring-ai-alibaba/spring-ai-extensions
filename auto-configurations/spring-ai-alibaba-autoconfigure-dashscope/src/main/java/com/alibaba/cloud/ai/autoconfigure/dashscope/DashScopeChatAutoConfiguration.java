@@ -136,6 +136,7 @@ public class DashScopeChatAutoConfiguration {
 					.workSpaceId(resolved.workspaceId())
 					.restClientBuilder(restClientBuilder)
 					.responseErrorHandler(responseErrorHandler)
+					.completionsPath(resolved.completionsPath())
 					.build();
 		}
 }

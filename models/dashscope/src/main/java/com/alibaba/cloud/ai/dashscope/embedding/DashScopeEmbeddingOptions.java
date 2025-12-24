@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.embedding;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.ai.embedding.EmbeddingOptions;
@@ -34,6 +35,9 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 	private @JsonProperty("text_type") String textType;
 
 	private @JsonProperty("dimensions") Integer dimensions;
+
+	@JsonProperty
+	private String embeddingsPath;
 
 	public static Builder builder() {
 		return new Builder();
@@ -63,6 +67,14 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 
 	public void setTextType(String textType) {
 		this.textType = textType;
+	}
+
+	public String getEmbeddingsPath() {
+		return embeddingsPath;
+	}
+
+	public void setEmbeddingsPath(String embeddingsPath) {
+		this.embeddingsPath = embeddingsPath;
 	}
 
 	public static class Builder {
@@ -101,6 +113,16 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 		@Deprecated
 		public Builder withTextType(String textType) {
 			return textType(textType);
+		}
+
+		public Builder embeddingsPath(String embeddingsPath) {
+			this.options.setEmbeddingsPath(embeddingsPath);
+			return this;
+		}
+
+		@Deprecated
+		public Builder withEmbeddingsPath(String embeddingsPath) {
+			return embeddingsPath(embeddingsPath);
 		}
 
 		public DashScopeEmbeddingOptions build() {
