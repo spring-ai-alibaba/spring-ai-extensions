@@ -56,87 +56,88 @@ import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUt
 @ConditionalOnClass(DashScopeApi.class)
 @ConditionalOnDashScopeEnabled
 @ConditionalOnProperty(name = SpringAIModelProperties.CHAT_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
-		matchIfMissing = true)
+        matchIfMissing = true)
 @AutoConfiguration(after = {
-		RestClientAutoConfiguration.class,
-		SpringAiRetryAutoConfiguration.class,
+        RestClientAutoConfiguration.class,
+        SpringAiRetryAutoConfiguration.class,
         ToolCallingAutoConfiguration.class})
 @ImportAutoConfiguration(classes = {
-		SpringAiRetryAutoConfiguration.class,
-		RestClientAutoConfiguration.class,
-		ToolCallingAutoConfiguration.class,
-		WebClientAutoConfiguration.class
+        SpringAiRetryAutoConfiguration.class,
+        RestClientAutoConfiguration.class,
+        ToolCallingAutoConfiguration.class,
+        WebClientAutoConfiguration.class
 })
 @EnableConfigurationProperties({
-		DashScopeConnectionProperties.class,
-		DashScopeChatProperties.class,
+        DashScopeConnectionProperties.class,
+        DashScopeChatProperties.class,
 })
 public class DashScopeChatAutoConfiguration {
 
 
-		@Bean
-		@ConditionalOnMissingBean
-		public DashScopeChatModel dashScopeChatModel(
-				RetryTemplate retryTemplate,
-				ToolCallingManager toolCallingManager,
-				DashScopeChatProperties chatProperties,
-				ResponseErrorHandler responseErrorHandler,
-				DashScopeConnectionProperties commonProperties,
-				ObjectProvider<ObservationRegistry> observationRegistry,
-				ObjectProvider<WebClient.Builder> webClientBuilderProvider,
-				ObjectProvider<RestClient.Builder> restClientBuilderProvider,
-				ObjectProvider<ChatModelObservationConvention> observationConvention,
-				ObjectProvider<ToolExecutionEligibilityPredicate> dashscopeToolExecutionEligibilityPredicate
-		) {
+    @Bean
+    @ConditionalOnMissingBean
+    public DashScopeChatModel dashScopeChatModel(
+            RetryTemplate retryTemplate,
+            ToolCallingManager toolCallingManager,
+            DashScopeChatProperties chatProperties,
+            ResponseErrorHandler responseErrorHandler,
+            DashScopeConnectionProperties commonProperties,
+            ObjectProvider<ObservationRegistry> observationRegistry,
+            ObjectProvider<WebClient.Builder> webClientBuilderProvider,
+            ObjectProvider<RestClient.Builder> restClientBuilderProvider,
+            ObjectProvider<ChatModelObservationConvention> observationConvention,
+            ObjectProvider<ToolExecutionEligibilityPredicate> dashscopeToolExecutionEligibilityPredicate
+    ) {
 
-			var dashscopeApi = dashscopeChatApi(
-					commonProperties,
-					chatProperties,
-					restClientBuilderProvider.getIfAvailable(RestClient::builder),
-					webClientBuilderProvider.getIfAvailable(WebClient::builder),
-					responseErrorHandler,
-					"chat"
-			);
+        var dashscopeApi = dashscopeChatApi(
+                commonProperties,
+                chatProperties,
+                restClientBuilderProvider.getIfAvailable(RestClient::builder),
+                webClientBuilderProvider.getIfAvailable(WebClient::builder),
+                responseErrorHandler,
+                "chat"
+        );
 
-			var dashscopeModel = DashScopeChatModel.builder()
-					.dashScopeApi(dashscopeApi)
-					.retryTemplate(retryTemplate)
-					.toolCallingManager(toolCallingManager)
-					.defaultOptions(chatProperties.getOptions())
-					.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
-					.toolExecutionEligibilityPredicate(
-							dashscopeToolExecutionEligibilityPredicate.getIfUnique(DefaultToolExecutionEligibilityPredicate::new))
-					.build();
+        var dashscopeModel = DashScopeChatModel.builder()
+                .dashScopeApi(dashscopeApi)
+                .retryTemplate(retryTemplate)
+                .toolCallingManager(toolCallingManager)
+                .defaultOptions(chatProperties.getOptions())
+                .observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
+                .toolExecutionEligibilityPredicate(
+                        dashscopeToolExecutionEligibilityPredicate.getIfUnique(DefaultToolExecutionEligibilityPredicate::new))
+                .build();
 
-			observationConvention.ifAvailable(dashscopeModel::setObservationConvention);
+        observationConvention.ifAvailable(dashscopeModel::setObservationConvention);
 
-			return dashscopeModel;
-		}
+        return dashscopeModel;
+    }
 
-		private DashScopeApi dashscopeChatApi(
-				DashScopeConnectionProperties commonProperties,
-				DashScopeChatProperties chatProperties,
-				RestClient.Builder restClientBuilder,
-				WebClient.Builder webClientBuilder,
-				ResponseErrorHandler responseErrorHandler,
-				String modelType
-		) {
+    private DashScopeApi dashscopeChatApi(
+            DashScopeConnectionProperties commonProperties,
+            DashScopeChatProperties chatProperties,
+            RestClient.Builder restClientBuilder,
+            WebClient.Builder webClientBuilder,
+            ResponseErrorHandler responseErrorHandler,
+            String modelType
+    ) {
 
-			ResolvedConnectionProperties resolved = resolveConnectionProperties(
-					commonProperties,
-					chatProperties,
-					modelType
-			);
+        ResolvedConnectionProperties resolved = resolveConnectionProperties(
+                commonProperties,
+                chatProperties,
+                modelType
+        );
 
-			return DashScopeApi.builder()
-					.apiKey(resolved.apiKey())
-					.headers(resolved.headers())
-					.baseUrl(resolved.baseUrl())
-					.webClientBuilder(webClientBuilder)
-					.workSpaceId(resolved.workspaceId())
-					.restClientBuilder(restClientBuilder)
-					.responseErrorHandler(responseErrorHandler)
-					.build();
-		}
+        return DashScopeApi.builder()
+                .apiKey(resolved.apiKey())
+                .headers(resolved.headers())
+                .baseUrl(resolved.baseUrl())
+                .webClientBuilder(webClientBuilder)
+                .workSpaceId(resolved.workspaceId())
+                .restClientBuilder(restClientBuilder)
+                .responseErrorHandler(responseErrorHandler)
+                .completionsPath(resolved.completionsPath())
+                .build();
+    }
 }
 // @formatter:on

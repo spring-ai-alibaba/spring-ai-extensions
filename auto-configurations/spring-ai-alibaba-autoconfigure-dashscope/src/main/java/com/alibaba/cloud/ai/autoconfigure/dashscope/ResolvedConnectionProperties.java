@@ -24,9 +24,11 @@ import org.springframework.util.MultiValueMap;
 
 // @formatter:off
 public record ResolvedConnectionProperties(
-		String baseUrl,
-		String apiKey,
-		String workspaceId,
-		MultiValueMap<String, String> headers
+        String baseUrl,
+        String apiKey,
+        String workspaceId,
+        MultiValueMap<String, String> headers,
+        String completionsPath,
+        String embeddingsPath
 ) { }
 // @formatter:on

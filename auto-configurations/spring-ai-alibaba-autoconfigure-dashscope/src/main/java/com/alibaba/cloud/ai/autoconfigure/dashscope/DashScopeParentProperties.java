@@ -18,44 +18,64 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 class DashScopeParentProperties {
 
-	private String apiKey;
+    private String apiKey;
 
-	private String secretKey;
+    private String secretKey;
 
-	private String baseUrl;
+    private String baseUrl;
 
-	private String workspaceId;
+    private String workspaceId;
 
-	public String getApiKey() {
-		return apiKey;
-	}
+    private String completionsPath;
 
-	public void setApiKey(String apiKey) {
-		this.apiKey = apiKey;
-	}
+    private String embeddingsPath;
 
-	public String getSecretKey() {
-		return secretKey;
-	}
+    public String getApiKey() {
+        return apiKey;
+    }
 
-	public void setSecretKey(String secretKey) {
-		this.secretKey = secretKey;
-	}
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
 
-	public String getBaseUrl() {
-		return baseUrl;
-	}
+    public String getSecretKey() {
+        return secretKey;
+    }
 
-	public void setBaseUrl(String baseUrl) {
-		this.baseUrl = baseUrl;
-	}
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
+    }
 
-	public String getWorkspaceId() {
-		return workspaceId;
-	}
+    public String getBaseUrl() {
+        return baseUrl;
+    }
 
-	public void setWorkspaceId(String workspaceId) {
-		this.workspaceId = workspaceId;
-	}
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
+    public String getWorkspaceId() {
+        return workspaceId;
+    }
+
+    public void setWorkspaceId(String workspaceId) {
+        this.workspaceId = workspaceId;
+    }
+
+    public String getCompletionsPath() {
+        return completionsPath;
+    }
+
+    public void setCompletionsPath(String completionsPath) {
+        this.completionsPath = completionsPath;
+    }
+
+    public String getEmbeddingsPath() {
+        return embeddingsPath;
+    }
+
+    public void setEmbeddingsPath(String embeddingsPath) {
+        this.embeddingsPath = embeddingsPath;
+    }
 
 }

@@ -47,53 +47,54 @@ import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUt
  */
 
 @AutoConfiguration(after = { RestClientAutoConfiguration.class, WebClientAutoConfiguration.class,
-		SpringAiRetryAutoConfiguration.class })
+        SpringAiRetryAutoConfiguration.class })
 @ConditionalOnClass(DashScopeApi.class)
 @ConditionalOnDashScopeEnabled
 @ConditionalOnProperty(name = SpringAIModelProperties.EMBEDDING_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
-		matchIfMissing = true)
+        matchIfMissing = true)
 @EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeEmbeddingProperties.class })
 @ImportAutoConfiguration(classes = { SpringAiRetryAutoConfiguration.class, RestClientAutoConfiguration.class,
-		WebClientAutoConfiguration.class })
+        WebClientAutoConfiguration.class })
 public class DashScopeEmbeddingAutoConfiguration {
 
-	@Bean
-	@ConditionalOnMissingBean
-	public DashScopeEmbeddingModel dashscopeEmbeddingModel(DashScopeConnectionProperties commonProperties,
-			DashScopeEmbeddingProperties embeddingProperties,
-			ObjectProvider<WebClient.Builder> webClientBuilderProvider,
-			ObjectProvider<RestClient.Builder> restClientBuilderProvider, RetryTemplate retryTemplate,
-			ResponseErrorHandler responseErrorHandler, ObjectProvider<ObservationRegistry> observationRegistry,
-			ObjectProvider<EmbeddingModelObservationConvention> observationConvention) {
+    @Bean
+    @ConditionalOnMissingBean
+    public DashScopeEmbeddingModel dashscopeEmbeddingModel(DashScopeConnectionProperties commonProperties,
+                                                           DashScopeEmbeddingProperties embeddingProperties,
+                                                           ObjectProvider<WebClient.Builder> webClientBuilderProvider,
+                                                           ObjectProvider<RestClient.Builder> restClientBuilderProvider, RetryTemplate retryTemplate,
+                                                           ResponseErrorHandler responseErrorHandler, ObjectProvider<ObservationRegistry> observationRegistry,
+                                                           ObjectProvider<EmbeddingModelObservationConvention> observationConvention) {
 
-		var dashScopeApi = dashscopeEmbeddingApi(commonProperties, embeddingProperties,
-				restClientBuilderProvider.getIfAvailable(RestClient::builder),
-				webClientBuilderProvider.getIfAvailable(WebClient::builder), responseErrorHandler);
+        var dashScopeApi = dashscopeEmbeddingApi(commonProperties, embeddingProperties,
+                restClientBuilderProvider.getIfAvailable(RestClient::builder),
+                webClientBuilderProvider.getIfAvailable(WebClient::builder), responseErrorHandler);
 
-		var embeddingModel = new DashScopeEmbeddingModel(dashScopeApi, embeddingProperties.getMetadataMode(),
-				embeddingProperties.getOptions(), retryTemplate,
-				observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP));
+        var embeddingModel = new DashScopeEmbeddingModel(dashScopeApi, embeddingProperties.getMetadataMode(),
+                embeddingProperties.getOptions(), retryTemplate,
+                observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP));
 
-		observationConvention.ifAvailable(embeddingModel::setObservationConvention);
+        observationConvention.ifAvailable(embeddingModel::setObservationConvention);
 
-		return embeddingModel;
-	}
+        return embeddingModel;
+    }
 
-	private DashScopeApi dashscopeEmbeddingApi(DashScopeConnectionProperties commonProperties,
-			DashScopeEmbeddingProperties embeddingProperties, RestClient.Builder restClientBuilder,
-			WebClient.Builder webClientBuilder, ResponseErrorHandler responseErrorHandler) {
-		ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties, embeddingProperties,
-				"embedding");
+    private DashScopeApi dashscopeEmbeddingApi(DashScopeConnectionProperties commonProperties,
+                                               DashScopeEmbeddingProperties embeddingProperties, RestClient.Builder restClientBuilder,
+                                               WebClient.Builder webClientBuilder, ResponseErrorHandler responseErrorHandler) {
+        ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties, embeddingProperties,
+                "embedding");
 
-		return DashScopeApi.builder()
-			.apiKey(resolved.apiKey())
-			.headers(resolved.headers())
-			.baseUrl(resolved.baseUrl())
-			.webClientBuilder(webClientBuilder)
-			.workSpaceId(resolved.workspaceId())
-			.restClientBuilder(restClientBuilder)
-			.responseErrorHandler(responseErrorHandler)
-			.build();
-	}
+        return DashScopeApi.builder()
+                .apiKey(resolved.apiKey())
+                .headers(resolved.headers())
+                .baseUrl(resolved.baseUrl())
+                .webClientBuilder(webClientBuilder)
+                .workSpaceId(resolved.workspaceId())
+                .restClientBuilder(restClientBuilder)
+                .responseErrorHandler(responseErrorHandler)
+                .embeddingsPath(resolved.embeddingsPath())
+                .build();
+    }
 
 }

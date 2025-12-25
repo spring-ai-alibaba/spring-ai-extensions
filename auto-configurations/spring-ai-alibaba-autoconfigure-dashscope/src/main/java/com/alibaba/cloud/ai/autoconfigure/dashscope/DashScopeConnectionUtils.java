@@ -34,41 +34,51 @@ import java.util.Objects;
 // @formatter:off
 public final class DashScopeConnectionUtils {
 
-	private DashScopeConnectionUtils() {
-	}
+    private DashScopeConnectionUtils() {
+    }
 
-	public static @NotNull ResolvedConnectionProperties resolveConnectionProperties(
-			DashScopeParentProperties commonProperties, DashScopeParentProperties modelProperties, String modelType) {
+    public static @NotNull ResolvedConnectionProperties resolveConnectionProperties(
+            DashScopeParentProperties commonProperties, DashScopeParentProperties modelProperties, String modelType) {
 
-		String baseUrl = StringUtils.hasText(modelProperties.getBaseUrl()) ? modelProperties.getBaseUrl()
-				: commonProperties.getBaseUrl();
-		String apiKey = StringUtils.hasText(modelProperties.getApiKey()) ? modelProperties.getApiKey()
-				: commonProperties.getApiKey();
-		String workspaceId = StringUtils.hasText(modelProperties.getWorkspaceId()) ? modelProperties.getWorkspaceId()
-				: commonProperties.getWorkspaceId();
+        String baseUrl = StringUtils.hasText(modelProperties.getBaseUrl()) ? modelProperties.getBaseUrl()
+                : commonProperties.getBaseUrl();
+        String apiKey = StringUtils.hasText(modelProperties.getApiKey()) ? modelProperties.getApiKey()
+                : commonProperties.getApiKey();
+        String workspaceId = StringUtils.hasText(modelProperties.getWorkspaceId()) ? modelProperties.getWorkspaceId()
+                : commonProperties.getWorkspaceId();
+        String completionsPath = null;
+        String embeddingsPath = null;
 
-		Map<String, List<String>> connectionHeaders = new HashMap<>();
-		if (StringUtils.hasText(workspaceId)) {
-			connectionHeaders.put("DashScope-Workspace", List.of(workspaceId));
-		}
+        if ("chat".equals(modelType)) {
+            completionsPath = StringUtils.hasText(modelProperties.getCompletionsPath()) ? modelProperties.getCompletionsPath()
+                    : commonProperties.getCompletionsPath();
+        } else if ("embedding".equals(modelType)) {
+            embeddingsPath = StringUtils.hasText(modelProperties.getEmbeddingsPath()) ? modelProperties.getEmbeddingsPath()
+                    : commonProperties.getEmbeddingsPath();
+        }
 
-		// Get apikey from system env.
-		if (Objects.isNull(apiKey)) {
-			if (Objects.nonNull(System.getenv(DashScopeApiConstants.AI_DASHSCOPE_API_KEY))) {
-				apiKey = System.getenv(DashScopeApiConstants.AI_DASHSCOPE_API_KEY);
-			}
-		}
+        Map<String, List<String>> connectionHeaders = new HashMap<>();
+        if (StringUtils.hasText(workspaceId)) {
+            connectionHeaders.put("DashScope-Workspace", List.of(workspaceId));
+        }
 
-		Assert.hasText(baseUrl,
-				"DashScope base URL must be set.  Use the connection property: spring.ai.dashscope.base-url or spring.ai.dashscope."
-						+ modelType + ".base-url property.");
-		Assert.hasText(apiKey,
-				"DashScope API key must be set. Use the connection property: spring.ai.dashscope.api-key or spring.ai.dashscope."
-						+ modelType + ".api-key property.");
+        // Get apikey from system env.
+        if (Objects.isNull(apiKey)) {
+            if (Objects.nonNull(System.getenv(DashScopeApiConstants.AI_DASHSCOPE_API_KEY))) {
+                apiKey = System.getenv(DashScopeApiConstants.AI_DASHSCOPE_API_KEY);
+            }
+        }
 
-		return new ResolvedConnectionProperties(baseUrl, apiKey, workspaceId,
-				CollectionUtils.toMultiValueMap(connectionHeaders));
-	}
+        Assert.hasText(baseUrl,
+                "DashScope base URL must be set.  Use the connection property: spring.ai.dashscope.base-url or spring.ai.dashscope."
+                        + modelType + ".base-url property.");
+        Assert.hasText(apiKey,
+                "DashScope API key must be set. Use the connection property: spring.ai.dashscope.api-key or spring.ai.dashscope."
+                        + modelType + ".api-key property.");
+
+        return new ResolvedConnectionProperties(baseUrl, apiKey, workspaceId,
+                CollectionUtils.toMultiValueMap(connectionHeaders), completionsPath, embeddingsPath);
+    }
 
 }
 // @formatter:on

@@ -29,84 +29,105 @@ import org.springframework.ai.embedding.EmbeddingOptions;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 
-	private @JsonProperty("model") String model;
+    private @JsonProperty("model") String model;
 
-	private @JsonProperty("text_type") String textType;
+    private @JsonProperty("text_type") String textType;
 
-	private @JsonProperty("dimensions") Integer dimensions;
+    private @JsonProperty("dimensions") Integer dimensions;
 
-	public static Builder builder() {
-		return new Builder();
-	}
+    @JsonProperty
+    private String embeddingsPath;
 
-	@Override
-	public String getModel() {
-		return this.model;
-	}
+    public static Builder builder() {
+        return new Builder();
+    }
 
-	public void setModel(String model) {
-		this.model = model;
-	}
+    @Override
+    public String getModel() {
+        return this.model;
+    }
 
-	@Override
-	public Integer getDimensions() {
-		return this.dimensions;
-	}
+    public void setModel(String model) {
+        this.model = model;
+    }
 
-	public void setDimensions(Integer dimensions) {
-		this.dimensions = dimensions;
-	}
+    @Override
+    public Integer getDimensions() {
+        return this.dimensions;
+    }
 
-	public String getTextType() {
-		return this.textType;
-	}
+    public void setDimensions(Integer dimensions) {
+        this.dimensions = dimensions;
+    }
 
-	public void setTextType(String textType) {
-		this.textType = textType;
-	}
+    public String getTextType() {
+        return this.textType;
+    }
 
-	public static class Builder {
+    public void setTextType(String textType) {
+        this.textType = textType;
+    }
 
-		protected DashScopeEmbeddingOptions options;
+    public String getEmbeddingsPath() {
+        return embeddingsPath;
+    }
 
-		public Builder() {
-			this.options = new DashScopeEmbeddingOptions();
-		}
+    public void setEmbeddingsPath(String embeddingsPath) {
+        this.embeddingsPath = embeddingsPath;
+    }
 
-		public Builder model(String model) {
-			this.options.setModel(model);
-			return this;
-		}
+    public static class Builder {
 
-		@Deprecated
-		public Builder withModel(String model) {
-			return model(model);
-		}
+        protected DashScopeEmbeddingOptions options;
 
-		public Builder dimensions(Integer dimensions) {
-			this.options.setDimensions(dimensions);
-			return this;
-		}
+        public Builder() {
+            this.options = new DashScopeEmbeddingOptions();
+        }
 
-		@Deprecated
-		public Builder withDimensions(Integer dimensions) {
-			return dimensions(dimensions);
-		}
+        public Builder model(String model) {
+            this.options.setModel(model);
+            return this;
+        }
 
-		public Builder textType(String textType) {
-			this.options.setTextType(textType);
-			return this;
-		}
+        @Deprecated
+        public Builder withModel(String model) {
+            return model(model);
+        }
 
-		@Deprecated
-		public Builder withTextType(String textType) {
-			return textType(textType);
-		}
+        public Builder dimensions(Integer dimensions) {
+            this.options.setDimensions(dimensions);
+            return this;
+        }
 
-		public DashScopeEmbeddingOptions build() {
-			return this.options;
-		}
+        @Deprecated
+        public Builder withDimensions(Integer dimensions) {
+            return dimensions(dimensions);
+        }
 
-	}
+        public Builder textType(String textType) {
+            this.options.setTextType(textType);
+            return this;
+        }
+
+        @Deprecated
+        public Builder withTextType(String textType) {
+            return textType(textType);
+        }
+
+        public Builder embeddingsPath(String embeddingsPath) {
+            this.options.setEmbeddingsPath(embeddingsPath);
+            return this;
+        }
+
+        @Deprecated
+        public Builder withEmbeddingsPath(String embeddingsPath) {
+            return embeddingsPath(embeddingsPath);
+        }
+
+        public DashScopeEmbeddingOptions build() {
+            return this.options;
+        }
+
+    }
 
 }
