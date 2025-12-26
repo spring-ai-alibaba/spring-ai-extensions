@@ -19,6 +19,7 @@ import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.model.CommandResult;
 import com.aliyun.agentbay.model.DeleteResult;
 import com.aliyun.agentbay.model.SessionResult;
+import com.aliyun.agentbay.model.code.EnhancedCodeExecutionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
@@ -30,9 +31,9 @@ import org.slf4j.LoggerFactory;
 import java.util.function.Function;
 
 /**
- * AgentBay Tool Service - 统一的 AgentBay 工具服务
+ * AgentBay Tool Service - Unified AgentBay tool service
  *
- * 提供三个核心工具：创建会话、删除会话、执行Shell命令
+ * Provides core tools: create session, delete session, execute shell commands
  *
  * @author Spring AI Alibaba
  */
@@ -57,7 +58,7 @@ public class AgentBayToolService {
 		return null;
 	}
 
-	// ==================== 创建会话工具 ====================
+	// ==================== Create Session Tool ====================
 
 	public Function<CreateSessionRequest, CreateSessionResponse> createSessionTool() {
 		return request -> {
@@ -90,18 +91,18 @@ public class AgentBayToolService {
 		};
 	}
 
-	@JsonClassDescription("创建一个新的 AgentBay 云端沙箱会话")
+	@JsonClassDescription("Create a new AgentBay cloud sandbox session")
 	public record CreateSessionRequest(
-			@JsonProperty(value = "imageId") @JsonPropertyDescription("运行时镜像ID，如 'code_latest', 'browser_latest', 'linux_latest'。可选，默认为 'code_latest'") String imageId) {
+			@JsonProperty(value = "imageId") @JsonPropertyDescription("Runtime image ID, such as 'code_latest', 'browser_latest', 'linux_latest'. Optional, defaults to 'code_latest'") String imageId) {
 	}
 
 	public record CreateSessionResponse(
-			@JsonProperty("sessionId") @JsonPropertyDescription("会话唯一标识符") String sessionId,
-			@JsonProperty("success") @JsonPropertyDescription("是否成功") boolean success,
-			@JsonProperty("message") @JsonPropertyDescription("附加信息或错误消息") String message) {
+			@JsonProperty("sessionId") @JsonPropertyDescription("Unique session identifier") String sessionId,
+			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
+			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
 
-	// ==================== 删除会话工具 ====================
+	// ==================== Delete Session Tool ====================
 
 	public Function<DeleteSessionRequest, DeleteSessionResponse> deleteSessionTool() {
 		return request -> {
@@ -140,17 +141,17 @@ public class AgentBayToolService {
 		};
 	}
 
-	@JsonClassDescription("删除一个现有的 AgentBay 会话并清理资源")
+	@JsonClassDescription("Delete an existing AgentBay session and clean up resources")
 	public record DeleteSessionRequest(
-			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("要删除的会话ID") String sessionId) {
+			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("Session ID to delete") String sessionId) {
 	}
 
 	public record DeleteSessionResponse(
-			@JsonProperty("success") @JsonPropertyDescription("是否成功") boolean success,
-			@JsonProperty("message") @JsonPropertyDescription("附加信息或错误消息") String message) {
+			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
+			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
 
-	// ==================== 执行Shell命令工具 ====================
+	// ==================== Execute Shell Command Tool ====================
 
 	public Function<ExecuteShellRequest, ExecuteShellResponse> executeShellTool() {
 		return request -> {
@@ -183,7 +184,6 @@ public class AgentBayToolService {
 			try {
 				String command = request.command;
 
-				// 执行命令
 				log.info("Executing command in session {}: {}", sessionId, command);
 
 				CommandResult cmdResult = session.getCommand().executeCommand(command, 30000);
@@ -218,21 +218,21 @@ public class AgentBayToolService {
 		};
 	}
 
-	@JsonClassDescription("在 AgentBay 会话中执行 Shell 命令")
+	@JsonClassDescription("Execute a shell command in an AgentBay session")
 	public record ExecuteShellRequest(
-			@JsonProperty(required = true, value = "command") @JsonPropertyDescription("要执行的Shell命令。单行命令，如需多条命令请用 && 或 ; 连接") String command,
-			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("使用的会话ID（必填）。必须先使用 createSessionTool 创建会话") String sessionId,
-			@JsonProperty(value = "autoCleanup") @JsonPropertyDescription("执行后是否自动删除会话（可选）。默认为 false") Boolean autoCleanup) {
+			@JsonProperty(required = true, value = "command") @JsonPropertyDescription("Shell command to execute. Single-line command. Use && or ; to connect multiple commands") String command,
+			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("Session ID to use (required). Must create a session first using createSessionTool") String sessionId,
+			@JsonProperty(value = "autoCleanup") @JsonPropertyDescription("Whether to automatically delete the session after execution (optional). Defaults to false") Boolean autoCleanup) {
 	}
 
-	public record ExecuteShellResponse(@JsonProperty("output") @JsonPropertyDescription("命令输出") String output,
-			@JsonProperty("exitCode") @JsonPropertyDescription("命令退出码") int exitCode,
-			@JsonProperty("success") @JsonPropertyDescription("是否成功") boolean success,
-			@JsonProperty("sessionId") @JsonPropertyDescription("使用的会话ID") String sessionId,
-			@JsonProperty("message") @JsonPropertyDescription("附加信息或错误消息") String message) {
+	public record ExecuteShellResponse(@JsonProperty("output") @JsonPropertyDescription("Command output") String output,
+			@JsonProperty("exitCode") @JsonPropertyDescription("Command exit code") int exitCode,
+			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
+			@JsonProperty("sessionId") @JsonPropertyDescription("Session ID used") String sessionId,
+			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
 
-	// ==================== 获取公网链接工具 ====================
+	// ==================== Get Public Link Tool ====================
 
 	public Function<GetLinkRequest, GetLinkResponse> getLinkTool() {
 		return request -> {
@@ -286,18 +286,18 @@ public class AgentBayToolService {
 		};
 	}
 
-	@JsonClassDescription("获取沙箱端口的公网 HTTP 链接")
+	@JsonClassDescription("Get public HTTP link for sandbox port")
 	public record GetLinkRequest(
-			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("会话ID（必填）") String sessionId,
-			@JsonProperty(required = true, value = "port") @JsonPropertyDescription("端口号（必填），范围 30100-30199") Integer port) {
+			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("Session ID (required)") String sessionId,
+			@JsonProperty(required = true, value = "port") @JsonPropertyDescription("Port number (required), range 30100-30199") Integer port) {
 	}
 
-	public record GetLinkResponse(@JsonProperty("url") @JsonPropertyDescription("公网访问链接") String url,
-			@JsonProperty("success") @JsonPropertyDescription("是否成功") boolean success,
-			@JsonProperty("message") @JsonPropertyDescription("附加信息或错误消息") String message) {
+	public record GetLinkResponse(@JsonProperty("url") @JsonPropertyDescription("Public access URL") String url,
+			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
+			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
 
-	// ==================== 读取文件工具 ====================
+	// ==================== Read File Tool ====================
 
 	public Function<ReadFileRequest, ReadFileResponse> readFileTool() {
 		return request -> {
@@ -347,18 +347,18 @@ public class AgentBayToolService {
 		};
 	}
 
-	@JsonClassDescription("读取沙箱中的文件内容")
+	@JsonClassDescription("Read file content from sandbox")
 	public record ReadFileRequest(
-			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("会话ID（必填）") String sessionId,
-			@JsonProperty(required = true, value = "path") @JsonPropertyDescription("文件路径（必填）") String path) {
+			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("Session ID (required)") String sessionId,
+			@JsonProperty(required = true, value = "path") @JsonPropertyDescription("File path (required)") String path) {
 	}
 
-	public record ReadFileResponse(@JsonProperty("content") @JsonPropertyDescription("文件内容") String content,
-			@JsonProperty("success") @JsonPropertyDescription("是否成功") boolean success,
-			@JsonProperty("message") @JsonPropertyDescription("附加信息或错误消息") String message) {
+	public record ReadFileResponse(@JsonProperty("content") @JsonPropertyDescription("File content") String content,
+			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
+			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
 
-	// ==================== 写入文件工具 ====================
+	// ==================== Write File Tool ====================
 
 	public Function<WriteFileRequest, WriteFileResponse> writeFileTool() {
 		return request -> {
@@ -411,18 +411,18 @@ public class AgentBayToolService {
 		};
 	}
 
-	@JsonClassDescription("写入内容到沙箱中的文件")
+	@JsonClassDescription("Write content to a file in sandbox")
 	public record WriteFileRequest(
-			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("会话ID（必填）") String sessionId,
-			@JsonProperty(required = true, value = "path") @JsonPropertyDescription("文件路径（必填）") String path,
-			@JsonProperty(required = true, value = "content") @JsonPropertyDescription("文件内容（必填）") String content) {
+			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("Session ID (required)") String sessionId,
+			@JsonProperty(required = true, value = "path") @JsonPropertyDescription("File path (required)") String path,
+			@JsonProperty(required = true, value = "content") @JsonPropertyDescription("File content (required)") String content) {
 	}
 
-	public record WriteFileResponse(@JsonProperty("success") @JsonPropertyDescription("是否成功") boolean success,
-			@JsonProperty("message") @JsonPropertyDescription("附加信息或错误消息") String message) {
+	public record WriteFileResponse(@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
+			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
 
-	// ==================== 列出文件工具 ====================
+	// ==================== List Files Tool ====================
 
 	public Function<ListFilesRequest, ListFilesResponse> listFilesTool() {
 		return request -> {
@@ -488,15 +488,81 @@ public class AgentBayToolService {
 		};
 	}
 
-	@JsonClassDescription("列出沙箱目录中的文件和子目录")
+	@JsonClassDescription("List files and subdirectories in sandbox directory")
 	public record ListFilesRequest(
-			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("会话ID（必填）") String sessionId,
-			@JsonProperty(value = "path") @JsonPropertyDescription("目录路径（可选，默认为当前目录）") String path) {
+			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("Session ID (required)") String sessionId,
+			@JsonProperty(value = "path") @JsonPropertyDescription("Directory path (optional, defaults to current directory)") String path) {
 	}
 
-	public record ListFilesResponse(@JsonProperty("listing") @JsonPropertyDescription("目录列表") String listing,
-			@JsonProperty("success") @JsonPropertyDescription("是否成功") boolean success,
-			@JsonProperty("message") @JsonPropertyDescription("附加信息或错误消息") String message) {
+	public record ListFilesResponse(@JsonProperty("listing") @JsonPropertyDescription("Directory listing") String listing,
+			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
+			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
+	}
+
+	public Function<RunCodeRequest, RunCodeResponse> runCodeTool() {
+		return request -> {
+			if (request.sessionId == null || request.sessionId.trim().isEmpty()) {
+				return new RunCodeResponse(null, null, false, "Session ID is required");
+			}
+
+			if (request.code == null || request.code.trim().isEmpty()) {
+				return new RunCodeResponse(null, null, false, "Code cannot be empty");
+			}
+
+			if (request.language == null || request.language.trim().isEmpty()) {
+				return new RunCodeResponse(null, null, false, "Language is required");
+			}
+
+			String sessionId = request.sessionId;
+			Session session;
+			try {
+				session = getSession(sessionId);
+			}
+			catch (Exception e) {
+				return new RunCodeResponse(null, null, false,
+						"Error getting session: " + e.getMessage());
+			}
+
+			if (session == null) {
+				return new RunCodeResponse(null, null, false,
+						"Session not found: " + sessionId + ". Please create a session first.");
+			}
+
+			try {
+				log.info("Executing {} code in session {}", request.language, sessionId);
+
+                EnhancedCodeExecutionResult result = session.getCode()
+						.runCode(request.code, request.language);
+
+				if (result.isSuccess()) {
+					log.info("Code executed successfully in session {}", sessionId);
+					return new RunCodeResponse(result.getResult(), result.getRequestId(), true,
+							"Code executed successfully");
+				}
+				else {
+					log.error("Code execution failed in session {}: {}", sessionId, result.getErrorMessage());
+					return new RunCodeResponse(null, result.getRequestId(), false,
+							"Code execution failed: " + result.getErrorMessage());
+				}
+			}
+			catch (Exception e) {
+				log.error("Error executing code in session", e);
+				return new RunCodeResponse(null, null, false, "Error executing code: " + e.getMessage());
+			}
+		};
+	}
+
+	@JsonClassDescription("Execute code in sandbox (supports Python, JavaScript.)")
+	public record RunCodeRequest(
+			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("Session ID (required)") String sessionId,
+			@JsonProperty(required = true, value = "code") @JsonPropertyDescription("Code to execute (required)") String code,
+			@JsonProperty(required = true, value = "language") @JsonPropertyDescription("Programming language (required, e.g., 'python', 'javascript')") String language) {
+	}
+
+	public record RunCodeResponse(@JsonProperty("output") @JsonPropertyDescription("Code execution output") String output,
+			@JsonProperty("requestId") @JsonPropertyDescription("Request ID") String requestId,
+			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
+			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
 
 }
