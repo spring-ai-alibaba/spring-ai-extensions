@@ -36,17 +36,8 @@ spring.ai.alibaba.agentbay.tool.api-key=your-api-key
 
 # 可选配置
 spring.ai.alibaba.agentbay.tool.enabled=true
-spring.ai.alibaba.agentbay.tool.region-id=cn-hangzhou
-spring.ai.alibaba.agentbay.tool.endpoint=wuyingai.cn-hangzhou.aliyuncs.com
 spring.ai.alibaba.agentbay.tool.default-image-id=code_latest
 spring.ai.alibaba.agentbay.tool.timeout-ms=300000
-spring.ai.alibaba.agentbay.tool.auto-cleanup=true
-```
-
-或者通过环境变量设置API Key：
-
-```bash
-export AGENTBAY_API_KEY=your-api-key
 ```
 
 ### 3. 使用示例
@@ -58,10 +49,10 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AgentService {
-    
+
     @Autowired
     private ChatClient chatClient;
-    
+
     public String executeCommand(String userPrompt) {
         return chatClient.prompt()
             .user(userPrompt)
@@ -182,8 +173,6 @@ public class AgentService {
 
 1. 请妥善保管您的 AgentBay API Key
 2. 建议在使用完会话后及时删除以节省资源
-3. 默认的 `auto-cleanup` 设置为 `true`，会自动清理临时会话
-4. 执行长时间运行的任务时，请适当调整 `timeout-ms` 配置
 
 ## 获取 API Key
 
@@ -192,6 +181,4 @@ public class AgentService {
 ## 参考链接
 
 - [AgentBay 官方文档](https://agentbay.console.aliyun.com/)
-- [Spring AI 文档](https://docs.spring.io/spring-ai/reference/)
-- [Spring AI Alibaba](https://github.com/alibaba/spring-ai-alibaba)
 
