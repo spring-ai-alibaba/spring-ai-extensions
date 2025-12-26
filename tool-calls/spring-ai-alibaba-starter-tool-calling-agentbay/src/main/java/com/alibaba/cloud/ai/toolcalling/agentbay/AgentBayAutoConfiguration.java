@@ -134,4 +134,12 @@ public class AgentBayAutoConfiguration {
 			.build();
 	}
 
+	@Bean(name = "run_code")
+	public ToolCallback runCodeCallback(AgentBayToolService service) {
+		return FunctionToolCallback.builder("run_code", service.runCodeTool())
+			.description("Execute code in sandbox. Supports Python, JavaScript, Java, and other languages.")
+			.inputType(AgentBayToolService.RunCodeRequest.class)
+			.build();
+	}
+
 }
