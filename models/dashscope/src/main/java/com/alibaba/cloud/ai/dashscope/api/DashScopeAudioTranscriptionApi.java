@@ -40,8 +40,6 @@ import org.springframework.ai.util.JacksonUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import reactor.core.publisher.Flux;
@@ -67,7 +65,7 @@ public class DashScopeAudioTranscriptionApi {
 
 	private final String webSocketUrl;
 
-	private final MultiValueMap<String, String> headers;
+	private final HttpHeaders headers;
 
 	private final DashScopeWebSocketClient webSocketClient;
 
@@ -83,7 +81,7 @@ public class DashScopeAudioTranscriptionApi {
         ApiKey apiKey,
 		String model,
 		String workSpaceId,
-		MultiValueMap<String, String> headers,
+		HttpHeaders headers,
 		String webSocketUrl,
 		RestClient.Builder restClientBuilder,
 		ResponseErrorHandler responseErrorHandler) {
@@ -475,7 +473,7 @@ public class DashScopeAudioTranscriptionApi {
 		return this.webSocketUrl;
 	}
 
-	public MultiValueMap<String, String> getHeaders() {
+	public HttpHeaders getHeaders() {
 		return headers;
 	}
 
@@ -493,7 +491,7 @@ public class DashScopeAudioTranscriptionApi {
 
 		private ApiKey apiKey;
 
-		private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+		private HttpHeaders headers = new HttpHeaders();
 
 		private String webSocketUrl = DashScopeApiConstants.DEFAULT_WEBSOCKET_URL;
 
@@ -508,7 +506,7 @@ public class DashScopeAudioTranscriptionApi {
 			this.baseUrl = api.getBaseUrl();
 			this.apiKey = api.getApiKey();
 			this.model = api.getModel();
-			this.headers = new LinkedMultiValueMap<>(api.getHeaders());
+            this.headers = api.getHeaders();
 			this.webSocketUrl = api.webSocketUrl;
 			this.restClientBuilder =
 				api.restClient != null ? api.restClient.mutate() : RestClient.builder();
@@ -545,7 +543,7 @@ public class DashScopeAudioTranscriptionApi {
 			return this;
 		}
 
-		public Builder headers(MultiValueMap<String, String> headers) {
+		public Builder headers(HttpHeaders headers) {
 			this.headers = headers;
 			return this;
 		}

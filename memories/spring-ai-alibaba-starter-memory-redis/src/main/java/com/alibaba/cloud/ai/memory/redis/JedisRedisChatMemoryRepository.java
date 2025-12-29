@@ -38,6 +38,7 @@ import javax.net.ssl.SSLParameters;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -145,9 +146,9 @@ public class JedisRedisChatMemoryRepository extends BaseRedisChatMemoryRepositor
 				sslBuilder.sslSocketFactory(sslBundle.createSslContext().getSocketFactory());
 				SslOptions sslOptions = sslBundle.getOptions();
 				SSLParameters sslParameters = new SSLParameters();
-				PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-				map.from(sslOptions.getCiphers()).to(sslParameters::setCipherSuites);
-				map.from(sslOptions.getEnabledProtocols()).to(sslParameters::setProtocols);
+				PropertyMapper map = PropertyMapper.get();
+				map.from(sslOptions.getCiphers()).when(Objects::nonNull).to(sslParameters::setCipherSuites);
+				map.from(sslOptions.getEnabledProtocols()).when(Objects::nonNull).to(sslParameters::setProtocols);
 				sslBuilder.sslParameters(sslParameters);
 			}
 			// apply pool

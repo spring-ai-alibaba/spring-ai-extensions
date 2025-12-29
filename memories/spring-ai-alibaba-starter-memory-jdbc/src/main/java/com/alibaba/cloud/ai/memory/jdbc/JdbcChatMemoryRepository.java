@@ -15,7 +15,7 @@
  */
 package com.alibaba.cloud.ai.memory.jdbc;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.*;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -75,13 +75,13 @@ public abstract class JdbcChatMemoryRepository implements ChatMemoryRepository {
 	}
 
 	@Override
-	public List<Message> findByConversationId(@NotNull String conversationId) {
+	public List<Message> findByConversationId(@NonNull String conversationId) {
 		Assert.hasText(conversationId, "conversationId cannot be null or empty");
 		return this.jdbcTemplate.query(getGetSql(), new JdbcChatMemoryRepository.MessageRowMapper(), conversationId);
 	}
 
 	@Override
-	public void saveAll(@NotNull String conversationId, @NotNull List<Message> messages) {
+	public void saveAll(@NonNull String conversationId, @NonNull List<Message> messages) {
 		Assert.hasText(conversationId, "conversationId cannot be null or empty");
 		Assert.notNull(messages, "messages cannot be null");
 		Assert.noNullElements(messages, "messages cannot contain null elements");
@@ -91,7 +91,7 @@ public abstract class JdbcChatMemoryRepository implements ChatMemoryRepository {
 	}
 
 	@Override
-	public void deleteByConversationId(@NotNull String conversationId) {
+	public void deleteByConversationId(@NonNull String conversationId) {
 		Assert.hasText(conversationId, "conversationId cannot be null or empty");
 		this.jdbcTemplate.update(QUERY_CLEAR, conversationId);
 	}

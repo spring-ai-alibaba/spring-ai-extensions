@@ -27,7 +27,7 @@ import org.springframework.ai.audio.tts.TextToSpeechPrompt;
 import org.springframework.ai.audio.tts.TextToSpeechResponse;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
-import org.springframework.retry.support.RetryTemplate;
+import org.springframework.core.retry.RetryTemplate;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -85,12 +85,12 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
 			DashScopeWebSocketClient.EventType.RUN_TASK);
 
 		logger.info("send run-task");
-		return this.retryTemplate.execute(ctx -> this.audioSpeechApi.streamBinaryOut(runTaskRequest)
-			.map(byteBuffer -> {
-				byte[] data = new byte[byteBuffer.remaining()];
-				byteBuffer.get(data);
-				return new TextToSpeechResponse(List.of(new Speech(data)));
-			}));
+		return RetryUtils.execute(this.retryTemplate, () -> this.audioSpeechApi.streamBinaryOut(runTaskRequest))
+                .map(byteBuffer -> {
+                    byte[] data = new byte[byteBuffer.remaining()];
+                    byteBuffer.get(data);
+                    return new TextToSpeechResponse(List.of(new Speech(data)));
+                });
 	}
 
 	public DashScopeAudioSpeechApi.Request createRequest(TextToSpeechPrompt prompt,

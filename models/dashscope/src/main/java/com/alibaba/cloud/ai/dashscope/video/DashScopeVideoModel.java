@@ -23,8 +23,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.TransientAiException;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.Assert;
 
 import java.util.Objects;
@@ -84,28 +84,28 @@ public class DashScopeVideoModel implements VideoModel {
 
 		// todo: add observation
 		logger.warn("Video generation task submitted with taskId: {}", taskId);
-		return this.retryTemplate.execute(context -> {
+		return RetryUtils.execute(this.retryTemplate, () -> {
 
-			var resp = getVideoTask(taskId);
-			if (Objects.nonNull(resp)) {
+            var resp = getVideoTask(taskId);
+            if (Objects.nonNull(resp)) {
 
-				logger.debug(String.valueOf(resp));
+                logger.debug(String.valueOf(resp));
 
-				String status = resp.getOutput().getTaskStatus();
-				switch (status) {
-					// status enum SUCCEEDED, FAILED, PENDING, RUNNING
-					case "SUCCEEDED" -> {
-						logger.info("Video generation task completed successfully: {}", taskId);
-						return toVideoResponse(resp);
-					}
-					case "FAILED" -> {
-						logger.error("Video generation task failed: {}", resp.getOutput());
-						return new VideoResponse(null);
-					}
-				}
-			}
-			throw new TransientAiException("Video generation still pending, retry ...");
-		});
+                String status = resp.getOutput().getTaskStatus();
+                switch (status) {
+                    // status enum SUCCEEDED, FAILED, PENDING, RUNNING
+                    case "SUCCEEDED" -> {
+                        logger.info("Video generation task completed successfully: {}", taskId);
+                        return toVideoResponse(resp);
+                    }
+                    case "FAILED" -> {
+                        logger.error("Video generation task failed: {}", resp.getOutput());
+                        return new VideoResponse(null);
+                    }
+                }
+            }
+            throw new TransientAiException("Video generation still pending, retry ...");
+        });
 	}
 
 	/**

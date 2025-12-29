@@ -32,9 +32,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.Assert;
 
 /**
@@ -85,8 +85,8 @@ public class DashScopeRerankModel implements RerankModel {
 		DashScopeRerankOptions requestOptions = mergeOptions(request.getOptions(), this.defaultOptions);
         DashScopeApiSpec.RerankRequest rerankRequest = createRequest(request, requestOptions);
 
-		ResponseEntity<DashScopeApiSpec.RerankResponse> responseEntity = this.retryTemplate
-			.execute(ctx -> this.dashscopeApi.rerankEntity(rerankRequest));
+		ResponseEntity<DashScopeApiSpec.RerankResponse> responseEntity = RetryUtils.execute(this.retryTemplate,
+                () -> this.dashscopeApi.rerankEntity(rerankRequest));
 
 		var response = responseEntity.getBody();
 

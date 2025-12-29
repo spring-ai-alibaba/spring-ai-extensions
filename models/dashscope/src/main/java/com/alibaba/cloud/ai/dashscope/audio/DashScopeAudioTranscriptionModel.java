@@ -34,8 +34,8 @@ import org.springframework.ai.retry.TransientAiException;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
@@ -96,35 +96,34 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 			return new AudioTranscriptionResponse(new AudioTranscription(null), metadata);
 		}
 
-		AudioTranscriptionResponse response = this.retryTemplate
-			.execute(ctx -> {
-				DashScopeAudioTranscriptionApi.Response taskResultResponse = this.audioTranscriptionApi.queryTaskResult(taskId)
-					.getBody();
+        AudioTranscriptionResponse response = RetryUtils.execute(this.retryTemplate, () -> {
+            DashScopeAudioTranscriptionApi.Response taskResultResponse = this.audioTranscriptionApi.queryTaskResult(taskId)
+                    .getBody();
 
-				DashScopeAudioTranscriptionApi.TaskStatus taskStatus = Optional.ofNullable(taskResultResponse)
-					.map(DashScopeAudioTranscriptionApi.Response::output)
-					.map(DashScopeAudioTranscriptionApi.Response.Output::taskStatus)
-					.orElse(null);
+            DashScopeAudioTranscriptionApi.TaskStatus taskStatus = Optional.ofNullable(taskResultResponse)
+                    .map(DashScopeAudioTranscriptionApi.Response::output)
+                    .map(DashScopeAudioTranscriptionApi.Response.Output::taskStatus)
+                    .orElse(null);
 
-				if (taskStatus == null) {
-					logger.warn("No taskStatus returned for request: {}", request);
-					AudioTranscriptionResponseMetadata metadata = new AudioTranscriptionResponseMetadata();
-					metadata.put("taskStatus", "NO_TASK_STATUS");
-					return new AudioTranscriptionResponse(new AudioTranscription(null), metadata);
-				}
+            if (taskStatus == null) {
+                logger.warn("No taskStatus returned for request: {}", request);
+                AudioTranscriptionResponseMetadata metadata = new AudioTranscriptionResponseMetadata();
+                metadata.put("taskStatus", "NO_TASK_STATUS");
+                return new AudioTranscriptionResponse(new AudioTranscription(null), metadata);
+            }
 
-				switch (taskStatus) {
-					case FAILED, CANCELED, UNKNOWN -> {
-						logger.error("task failed");
-						return this.toResponse(taskResultResponse);
-					}
-					case SUCCEEDED -> {
-						logger.info("task succeeded");
-						return this.toResponse(taskResultResponse);
-					}
-					default -> throw new TransientAiException("Audio generation still pending");
-				}
-			});
+            switch (taskStatus) {
+                case FAILED, CANCELED, UNKNOWN -> {
+                    logger.error("task failed");
+                    return this.toResponse(taskResultResponse);
+                }
+                case SUCCEEDED -> {
+                    logger.info("task succeeded");
+                    return this.toResponse(taskResultResponse);
+                }
+                default -> throw new TransientAiException("Audio generation still pending");
+            }
+        });
 
 		return response;
 	}

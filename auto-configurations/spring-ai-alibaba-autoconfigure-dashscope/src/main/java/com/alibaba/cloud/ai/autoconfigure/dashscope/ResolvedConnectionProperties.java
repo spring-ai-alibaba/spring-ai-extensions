@@ -15,7 +15,7 @@
  */
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
-import org.springframework.util.MultiValueMap;
+import org.springframework.http.HttpHeaders;
 
 /**
  * @author yuluo
@@ -27,6 +27,6 @@ public record ResolvedConnectionProperties(
 		String baseUrl,
 		String apiKey,
 		String workspaceId,
-		MultiValueMap<String, String> headers
+		HttpHeaders headers
 ) { }
 // @formatter:on
