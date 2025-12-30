@@ -33,9 +33,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.retry.support.RetryTemplate;
 
 /**
  * Test cases for DashScopeImageModel. Tests cover basic image generation, custom options,
