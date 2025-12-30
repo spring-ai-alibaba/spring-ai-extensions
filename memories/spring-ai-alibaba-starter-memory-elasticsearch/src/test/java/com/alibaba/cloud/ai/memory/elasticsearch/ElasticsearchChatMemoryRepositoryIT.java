@@ -15,6 +15,10 @@
  */
 package com.alibaba.cloud.ai.memory.elasticsearch;
 
+import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
+import org.apache.hc.core5.http.HttpHost;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,11 +40,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.apache.http.HttpHost;
 
 import java.util.List;
 import java.util.UUID;
@@ -287,10 +287,10 @@ class ElasticsearchChatMemoryRepositoryIT {
 
 		@Bean
 		ChatMemoryRepository chatMemoryRepository() {
-			RestClientBuilder restClientBuilder = RestClient.builder(
-					new HttpHost(elasticsearchContainer.getHost(), elasticsearchContainer.getMappedPort(9200), "http"));
-			RestClient restClient = restClientBuilder.build();
-			RestClientTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
+			Rest5ClientBuilder restClientBuilder = Rest5Client.builder(
+					new HttpHost("http", elasticsearchContainer.getHost(), elasticsearchContainer.getMappedPort(9200)));
+			Rest5Client restClient = restClientBuilder.build();
+			Rest5ClientTransport transport = new Rest5ClientTransport(restClient, new JacksonJsonpMapper());
 			ElasticsearchClient client = new ElasticsearchClient(transport);
 			return new ElasticsearchChatMemoryRepository(client);
 		}

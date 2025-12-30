@@ -53,7 +53,7 @@ public class MicroSoftTranslateService
 		if (request == null || !StringUtils.hasText(request.text) || !StringUtils.hasText(request.targetLanguage)) {
 			return null;
 		}
-		String uri = UriComponentsBuilder.fromHttpUrl(TRANSLATE_PATH)
+		String uri = UriComponentsBuilder.fromPath(TRANSLATE_PATH)
 			.queryParam("to", request.targetLanguage)
 			.toUriString();
 		logger.info("Request uri: {}", uri);
