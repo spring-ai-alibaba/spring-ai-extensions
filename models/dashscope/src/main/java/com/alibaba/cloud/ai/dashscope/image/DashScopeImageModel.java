@@ -15,6 +15,12 @@
  */
 package com.alibaba.cloud.ai.dashscope.image;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.image.observation.DashScopeImageModelObservationConvention;
@@ -26,13 +32,6 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncR
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.image.Image;
@@ -49,8 +48,8 @@ import org.springframework.ai.image.observation.ImageModelObservationDocumentati
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.TransientAiException;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
@@ -156,28 +155,24 @@ public class DashScopeImageModel implements ImageModel {
 
         Observation observation = ImageModelObservationDocumentation.IMAGE_MODEL_OPERATION.observation(observationConvention, new DefaultImageModelObservationConvention(), () -> observationContext, this.observationRegistry);
 
-        return Objects.requireNonNull(observation.observe(() -> retryTemplate.execute(ctx -> {
-            observation.lowCardinalityKeyValue("retry.attempt", String.valueOf(ctx.getRetryCount()));
+        return Objects.requireNonNull(observation.observe(
+                () -> RetryUtils.execute(this.retryTemplate, () -> {
+                    DashScopeApiSpec.DashScopeImageAsyncResponse resp = getImageGenTask(taskId);
+                    if (resp != null) {
+                        String status = resp.output().taskStatus();
+                        observation.lowCardinalityKeyValue("task.status", status);
 
-            DashScopeApiSpec.DashScopeImageAsyncResponse resp = getImageGenTask(taskId);
-            if (resp != null) {
-                String status = resp.output().taskStatus();
-                observation.lowCardinalityKeyValue("task.status", status);
-
-                switch (status) {
-                    case "SUCCEEDED" -> {
-                        return toImageResponse(resp);
+                        switch (status) {
+                            case "SUCCEEDED" -> {
+                                return toImageResponse(resp);
+                            }
+                            case "FAILED", "UNKNOWN" -> {
+                                return new ImageResponse(List.of(), toMetadata(resp));
+                            }
+                        }
                     }
-                    case "FAILED", "UNKNOWN" -> {
-                        return new ImageResponse(List.of(), toMetadata(resp));
-                    }
-                }
-            }
-            throw new TransientAiException("Image generation still pending");
-        }, context -> {
-            observation.lowCardinalityKeyValue("timeout", "true");
-            return new ImageResponse(List.of(), toMetadataTimeout(taskId));
-        })));
+                    throw new TransientAiException("Image generation still pending");
+                })));
     }
 
     public String submitImageGenTask(ImagePrompt request) {
