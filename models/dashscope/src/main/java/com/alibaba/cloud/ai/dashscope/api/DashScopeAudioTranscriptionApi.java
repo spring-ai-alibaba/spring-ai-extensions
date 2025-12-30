@@ -64,7 +64,6 @@ import org.springframework.ai.util.JacksonUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
@@ -101,68 +100,68 @@ public class DashScopeAudioTranscriptionApi {
 
     private final String workSpaceId;
 
-    private final MultiValueMap<String, String> headers;
+    private final HttpHeaders headers;
 
-	private final DashScopeWebSocketClient webSocketClient;
+    private final DashScopeWebSocketClient webSocketClient;
 
-	private final RestClient restClient;
+    private final RestClient restClient;
 
     private final WebClient webClient;
 
-	private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-	public DashScopeAudioTranscriptionApi(
-        String baseUrl,
-        String  websocketUrl,
-        ApiKey apiKey,
-		String workSpaceId,
-		MultiValueMap<String, String> headers,
-		RestClient.Builder restClientBuilder,
-        WebClient.Builder webClientBuilder,
-		ResponseErrorHandler responseErrorHandler) {
+    public DashScopeAudioTranscriptionApi(
+            String baseUrl,
+            String  websocketUrl,
+            ApiKey apiKey,
+            String workSpaceId,
+            HttpHeaders headers,
+            RestClient.Builder restClientBuilder,
+            WebClient.Builder webClientBuilder,
+            ResponseErrorHandler responseErrorHandler) {
         this.baseUrl = baseUrl;
         this.websocketUrl = websocketUrl;
         this.apiKey = apiKey;
         this.workSpaceId = workSpaceId;
         this.headers = headers;
 
-		Consumer<HttpHeaders> authHeaders = h -> {
-			h.addAll(headers);
-			if (!(apiKey instanceof NoopApiKey)) {
-				h.setBearerAuth(apiKey.getValue());
-			}
+        Consumer<HttpHeaders> authHeaders = h -> {
+            h.addAll(headers);
+            if (!(apiKey instanceof NoopApiKey)) {
+                h.setBearerAuth(apiKey.getValue());
+            }
             h.add("Content-Type", "application/json");
-		};
+        };
 
-		this.restClient = restClientBuilder.clone()
+        this.restClient = restClientBuilder.clone()
                 .baseUrl(baseUrl)
                 .defaultHeaders(authHeaders)
                 .defaultStatusHandler(responseErrorHandler)
                 .build();
 
         this.webClient = webClientBuilder.clone()
-			    .baseUrl(baseUrl)
-			    .defaultHeaders(authHeaders)
+                .baseUrl(baseUrl)
+                .defaultHeaders(authHeaders)
                 .build();
 
-		this.webSocketClient = new DashScopeWebSocketClient(
-			DashScopeWebSocketClientOptions.builder()
-				.apiKey(apiKey.getValue())
-				.workSpaceId(workSpaceId)
-                    .url(websocketUrl)
-				.build());
+        this.webSocketClient = new DashScopeWebSocketClient(
+                DashScopeWebSocketClientOptions.builder()
+                        .apiKey(apiKey.getValue())
+                        .workSpaceId(workSpaceId)
+                        .url(websocketUrl)
+                        .build());
 
-		this.objectMapper = JsonMapper.builder()
-			// Deserialization configuration
-			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-			// Serialization configuration
-			.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-			.serializationInclusion(JsonInclude.Include.NON_NULL)
-			// Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
-			.addModules(JacksonUtils.instantiateAvailableModules())
-			.build();
-	}
+        this.objectMapper = JsonMapper.builder()
+                // Deserialization configuration
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                // Serialization configuration
+                .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .serializationInclusion(JsonInclude.Include.NON_NULL)
+                // Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
+                .addModules(JacksonUtils.instantiateAvailableModules())
+                .build();
+    }
 
     public AudioTranscriptionResponse callLiveTranslate(
             DashScopeAudioTranscriptionPrompt prompt,
@@ -466,24 +465,24 @@ public class DashScopeAudioTranscriptionApi {
     }
 
     public String getBaseUrl() {
-		return this.baseUrl;
-	}
+        return this.baseUrl;
+    }
 
     public String getWebsocketUrl() {
-		return this.websocketUrl;
-	}
+        return this.websocketUrl;
+    }
 
     public ApiKey getApiKey() {
-		return this.apiKey;
-	}
+        return this.apiKey;
+    }
 
     public String getWorkSpaceId() {
-		return this.workSpaceId;
-	}
+        return this.workSpaceId;
+    }
 
-    public MultiValueMap<String, String> getHeaders() {
-		return this.headers;
-	}
+    public HttpHeaders getHeaders() {
+        return this.headers;
+    }
 
     public static Builder builder() {
         return new Builder();
@@ -491,7 +490,7 @@ public class DashScopeAudioTranscriptionApi {
 
     public static class Builder {
 
-		private String baseUrl = DashScopeApiConstants.DEFAULT_BASE_URL;
+        private String baseUrl = DashScopeApiConstants.DEFAULT_BASE_URL;
 
         private String websocketUrl = DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL;
 
@@ -499,16 +498,16 @@ public class DashScopeAudioTranscriptionApi {
 
         private String workSpaceId;
 
-		private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        private HttpHeaders headers = new HttpHeaders();
 
-		private RestClient.Builder restClientBuilder = RestClient.builder();
+        private RestClient.Builder restClientBuilder = RestClient.builder();
 
         private WebClient.Builder webClientBuilder = WebClient.builder();
 
-		private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
+        private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
 
-		public Builder() {
-		}
+        public Builder() {
+        }
 
         public Builder(DashScopeAudioTranscriptionApi api) {
             this.baseUrl = api.getBaseUrl();
@@ -516,66 +515,66 @@ public class DashScopeAudioTranscriptionApi {
             this.apiKey = api.getApiKey();
             this.workSpaceId = api.getWorkSpaceId();
             this.headers = api.getHeaders();
-		}
+        }
 
-		public Builder baseUrl(String baseUrl) {
-			this.baseUrl = baseUrl;
-			return this;
-		}
+        public Builder baseUrl(String baseUrl) {
+            this.baseUrl = baseUrl;
+            return this;
+        }
 
         public Builder websocketUrl(String websocketUrl) {
-			this.websocketUrl = websocketUrl;
-			return this;
-		}
+            this.websocketUrl = websocketUrl;
+            return this;
+        }
 
-		public Builder workSpaceId(String workSpaceId) {
-			this.workSpaceId = workSpaceId;
-			return this;
-		}
+        public Builder workSpaceId(String workSpaceId) {
+            this.workSpaceId = workSpaceId;
+            return this;
+        }
 
-		public Builder apiKey(ApiKey apiKey) {
-			this.apiKey = apiKey;
-			return this;
-		}
+        public Builder apiKey(ApiKey apiKey) {
+            this.apiKey = apiKey;
+            return this;
+        }
 
-		public Builder headers(MultiValueMap<String, String> headers) {
-			this.headers = headers;
-			return this;
-		}
+        public Builder headers(HttpHeaders headers) {
+            this.headers = headers;
+            return this;
+        }
 
-		public Builder restClientBuilder(RestClient.Builder restClientBuilder) {
-			this.restClientBuilder = restClientBuilder;
-			return this;
-		}
+        public Builder restClientBuilder(RestClient.Builder restClientBuilder) {
+            this.restClientBuilder = restClientBuilder;
+            return this;
+        }
 
         public Builder webClientBuilder(WebClient.Builder webClientBuilder) {
-			this.webClientBuilder = webClientBuilder;
-			return this;
-		}
+            this.webClientBuilder = webClientBuilder;
+            return this;
+        }
 
-		public Builder responseErrorHandler(ResponseErrorHandler responseErrorHandler) {
-			this.responseErrorHandler = responseErrorHandler;
-			return this;
-		}
+        public Builder responseErrorHandler(ResponseErrorHandler responseErrorHandler) {
+            this.responseErrorHandler = responseErrorHandler;
+            return this;
+        }
 
-		public DashScopeAudioTranscriptionApi build() {
-			Assert.hasText(this.baseUrl, "baseUrl cannot be null or empty");
+        public DashScopeAudioTranscriptionApi build() {
+            Assert.hasText(this.baseUrl, "baseUrl cannot be null or empty");
             Assert.hasText(this.websocketUrl, "websocketUrl cannot be null or empty");
-			Assert.notNull(this.apiKey, "apiKey must be set");
-			Assert.notNull(this.headers, "headers cannot be null");
-			Assert.notNull(this.restClientBuilder, "restClientBuilder cannot be null");
+            Assert.notNull(this.apiKey, "apiKey must be set");
+            Assert.notNull(this.headers, "headers cannot be null");
+            Assert.notNull(this.restClientBuilder, "restClientBuilder cannot be null");
             Assert.notNull(this.webClientBuilder, "webClientBuilder cannot be null");
-			Assert.notNull(this.responseErrorHandler, "responseErrorHandler cannot be null");
+            Assert.notNull(this.responseErrorHandler, "responseErrorHandler cannot be null");
 
-			return new DashScopeAudioTranscriptionApi(
-				this.baseUrl,
-                this.websocketUrl,
-				this.apiKey,
-				this.workSpaceId,
-				this.headers,
-				this.restClientBuilder,
-                this.webClientBuilder,
-				this.responseErrorHandler);
-		}
-	}
+            return new DashScopeAudioTranscriptionApi(
+                    this.baseUrl,
+                    this.websocketUrl,
+                    this.apiKey,
+                    this.workSpaceId,
+                    this.headers,
+                    this.restClientBuilder,
+                    this.webClientBuilder,
+                    this.responseErrorHandler);
+        }
+    }
 }

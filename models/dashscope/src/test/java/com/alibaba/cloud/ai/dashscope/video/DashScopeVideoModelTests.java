@@ -28,8 +28,8 @@ import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoResponse.VideoUs
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.retry.support.RetryTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -75,7 +75,7 @@ class DashScopeVideoModelTests {
                 .parameters(ParametersOptions.builder().size("832*480").promptExtend(true).build())
                 .build();
 
-        videoModel = new DashScopeVideoModel(dashScopeVideoApi, defaultOptions, RetryTemplate.builder().build());
+        videoModel = new DashScopeVideoModel(dashScopeVideoApi, defaultOptions, RetryUtils.DEFAULT_RETRY_TEMPLATE);
     }
 
     @Test
@@ -167,7 +167,7 @@ class DashScopeVideoModelTests {
         DashScopeVideoModel builtModel = DashScopeVideoModel.builder()
                 .videoApi(dashScopeVideoApi)
                 .defaultOptions(defaultOptions)
-                .retryTemplate(RetryTemplate.builder().build())
+                .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
                 .build();
 
         assertThat(builtModel).isNotNull();
