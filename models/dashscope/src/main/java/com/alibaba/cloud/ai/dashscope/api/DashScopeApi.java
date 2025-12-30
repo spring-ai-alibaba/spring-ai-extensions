@@ -15,6 +15,19 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
+import java.io.File;
+import java.net.URI;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.common.ErrorCodeEnum;
 import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetrieverOptions;
@@ -39,47 +52,32 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
-import java.time.Duration;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ADD_FILE_CATEGORY_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_BASE_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_PARSER_NAME;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DELETE_PIPELINE_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DOCUMENT_SPLITER_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DOWNLOAD_LEASE_CATEGORY_RESTFUL_URL;
-import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MANAGED_INGEST_PIPELINE_RESTFUL_URL;
-import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.PIPELINE_RESTFUL_URL;
-import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.PIPELINE_SIMPLE_RESTFUL_URL;
-import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.QUERY_CATEGORY_RESTFUL_URL;
-import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_BASE_URL;
-import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_PARSER_NAME;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ENABLED;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_SSE;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_WORK_SPACE_ID;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MANAGED_INGEST_PIPELINE_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MULTIMODAL_GENERATION_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.PIPELINE_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.PIPELINE_SIMPLE_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.QUERY_CATEGORY_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.RETRIEVE_PIPELINE_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.TEXT_EMBEDDING_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.TEXT_GENERATION_RESTFUL_URL;
@@ -109,7 +107,7 @@ public class DashScopeApi {
 
 	private final String rerankPath;
 
-	private final MultiValueMap<String, String> headers;
+	private final HttpHeaders headers;
 
 	/**
 	 * Default chat model
@@ -160,7 +158,7 @@ public class DashScopeApi {
 	public DashScopeApi(
 			String baseUrl,
 			ApiKey apiKey,
-			MultiValueMap<String, String> header,
+			HttpHeaders header,
 			String workSpaceId,
 			String completionsPath,
 			String embeddingsPath,
@@ -500,7 +498,7 @@ public class DashScopeApi {
 	 */
 	public ResponseEntity<DashScopeApiSpec.ChatCompletion> chatCompletionEntity(DashScopeApiSpec.ChatCompletionRequest chatRequest) {
 
-        return chatCompletionEntity(chatRequest, new LinkedMultiValueMap<>());
+        return chatCompletionEntity(chatRequest, new HttpHeaders());
 	}
 
 	/**
@@ -512,7 +510,7 @@ public class DashScopeApi {
 	 * and headers.
 	 */
 	public ResponseEntity<DashScopeApiSpec.ChatCompletion> chatCompletionEntity(DashScopeApiSpec.ChatCompletionRequest chatRequest,
-																				MultiValueMap<String, String> additionalHttpHeader) {
+																				HttpHeaders additionalHttpHeader) {
 
 		Assert.notNull(chatRequest, "The request body can not be null.");
 		Assert.isTrue(!chatRequest.stream(), "Request must set the stream property to false.");
@@ -538,7 +536,7 @@ public class DashScopeApi {
 
 	private void addDefaultHeadersIfMissing(HttpHeaders headers) {
 
-		if (!headers.containsKey(HttpHeaders.AUTHORIZATION) && !(this.apiKey instanceof NoopApiKey)) {
+		if (!headers.containsHeader(HttpHeaders.AUTHORIZATION) && !(this.apiKey instanceof NoopApiKey)) {
 			headers.setBearerAuth(this.apiKey.getValue());
 		}
 	}
@@ -563,7 +561,7 @@ public class DashScopeApi {
 	 * @return Returns a {@link Flux} stream from chat completion chunks.
 	 */
 	public Flux<DashScopeApiSpec.ChatCompletionChunk> chatCompletionStream(DashScopeApiSpec.ChatCompletionRequest chatRequest,
-																		   MultiValueMap<String, String> additionalHttpHeader) {
+																		   HttpHeaders additionalHttpHeader) {
 
 		Assert.notNull(chatRequest, "The request body can not be null.");
 		Assert.isTrue(chatRequest.stream(), "Request must set the stream property to true.");
@@ -649,7 +647,7 @@ public class DashScopeApi {
 		return this.apiKey;
 	}
 
-	MultiValueMap<String, String> getHeaders() {
+	HttpHeaders getHeaders() {
 		return this.headers;
 	}
 
@@ -665,7 +663,7 @@ public class DashScopeApi {
 
         private String workSpaceId;
 
-        private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        private HttpHeaders headers = new HttpHeaders();
 
         private String completionsPath = TEXT_GENERATION_RESTFUL_URL;
 
@@ -749,7 +747,7 @@ public class DashScopeApi {
 		public Builder(DashScopeApi api) {
 			this.baseUrl = api.getBaseUrl();
 			this.apiKey = api.getApiKey();
-			this.headers = new LinkedMultiValueMap<>(api.getHeaders());
+			this.headers = api.getHeaders();
 			this.workSpaceId = api.workSpaceId;
 			this.completionsPath = api.completionsPath;
             this.embeddingsPath = api.embeddingsPath;
@@ -781,7 +779,7 @@ public class DashScopeApi {
 			return this;
 		}
 
-		public Builder headers(MultiValueMap<String, String> headers) {
+		public Builder headers(HttpHeaders headers) {
 			Assert.notNull(headers, "Headers cannot be null");
 			this.headers = headers;
 			return this;
