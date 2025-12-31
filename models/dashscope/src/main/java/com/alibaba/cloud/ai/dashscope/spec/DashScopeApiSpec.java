@@ -1072,7 +1072,8 @@ public class DashScopeApiSpec {
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Choice(@JsonProperty("finish_reason") ChatCompletionFinishReason finishReason,
                              @JsonProperty("message") ChatCompletionMessage message,
-                             @JsonProperty("logprobs") ChatCompletionLogprobs logprobs) {
+                             @JsonProperty("logprobs") ChatCompletionLogprobs logprobs,
+                             @JsonProperty("index") Integer index) {
         }
     }
 

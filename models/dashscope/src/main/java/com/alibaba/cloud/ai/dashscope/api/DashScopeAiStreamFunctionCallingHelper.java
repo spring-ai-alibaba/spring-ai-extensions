@@ -97,8 +97,10 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		ChatCompletionMessage message = merge(previous.message(), current.message());
 		DashScopeApiSpec.ChatCompletionLogprobs logprobs = (current.logprobs() != null ? current.logprobs()
 				: previous.logprobs());
+		Integer index= (current.index() != null ? current.index()
+				: previous.index());
 
-		return new Choice(finishReason, message, logprobs);
+		return new Choice(finishReason, message, logprobs, index);
 	}
 
 	private ChatCompletionMessage merge(ChatCompletionMessage previous, ChatCompletionMessage current) {

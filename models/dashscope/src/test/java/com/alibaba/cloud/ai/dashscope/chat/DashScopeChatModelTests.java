@@ -107,7 +107,7 @@ class DashScopeChatModelTests {
 
         // Mock API response
         ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
-        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
@@ -137,9 +137,9 @@ class DashScopeChatModelTests {
         ChatCompletionMessage chunkMessage2 = new ChatCompletionMessage("doing ", ChatCompletionMessage.Role.ASSISTANT);
         ChatCompletionMessage chunkMessage3 = new ChatCompletionMessage("well!", ChatCompletionMessage.Role.ASSISTANT);
 
-        Choice choice1 = new Choice(null, chunkMessage1, null);
-        Choice choice2 = new Choice(null, chunkMessage2, null);
-        Choice choice3 = new Choice(ChatCompletionFinishReason.STOP, chunkMessage3, null);
+        Choice choice1 = new Choice(null, chunkMessage1, null, 0);
+        Choice choice2 = new Choice(null, chunkMessage2, null, 0);
+        Choice choice3 = new Choice(ChatCompletionFinishReason.STOP, chunkMessage3, null, 0);
 
         ChatCompletionOutput output1 = new ChatCompletionOutput("I'm ", List.of(choice1), null);
         ChatCompletionOutput output2 = new ChatCompletionOutput("doing ", List.of(choice2), null);
@@ -174,7 +174,7 @@ class DashScopeChatModelTests {
         // Mock API response
         String response = "Hello! How can I help you today?";
         ChatCompletionMessage responseMessage = new ChatCompletionMessage(response, ChatCompletionMessage.Role.ASSISTANT);
-        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         ChatCompletionOutput output = new ChatCompletionOutput(response, List.of(choice), null);
 
         // Add non-null TokenUsage with zero values
@@ -216,7 +216,7 @@ class DashScopeChatModelTests {
         // Mock API responses for tool call
         String toolCallResponse = "{\"name\": \"get_weather\", \"arguments\": \"{\\\"location\\\": \\\"Beijing\\\"}\"}";
         ChatCompletionMessage toolMessage = new ChatCompletionMessage(toolCallResponse, ChatCompletionMessage.Role.ASSISTANT);
-        Choice toolChoice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, toolMessage, null);
+        Choice toolChoice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, toolMessage, null, 0);
 
         // Add non-null TokenUsage with zero values
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
@@ -265,9 +265,9 @@ class DashScopeChatModelTests {
         ChatCompletionMessage message2 = new ChatCompletionMessage(chunk2, ChatCompletionMessage.Role.ASSISTANT);
         ChatCompletionMessage message3 = new ChatCompletionMessage(chunk3, ChatCompletionMessage.Role.ASSISTANT);
 
-        Choice choice1 = new Choice(null, message1, null);
-        Choice choice2 = new Choice(null, message2, null);
-        Choice choice3 = new Choice(ChatCompletionFinishReason.TOOL_CALLS, message3, null);
+        Choice choice1 = new Choice(null, message1, null, 0);
+        Choice choice2 = new Choice(null, message2, null, 0);
+        Choice choice3 = new Choice(ChatCompletionFinishReason.TOOL_CALLS, message3, null, 0);
 
         ChatCompletionChunk chunk1Response = new ChatCompletionChunk("test-id", new ChatCompletionOutput(chunk1, List.of(choice1), null), null, null);
         ChatCompletionChunk chunk2Response = new ChatCompletionChunk("test-id", new ChatCompletionOutput(chunk2, List.of(choice2), null), null, null);
@@ -344,7 +344,7 @@ class DashScopeChatModelTests {
         Prompt prompt = new Prompt(List.of(message));
 
         ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
-        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
@@ -389,7 +389,7 @@ class DashScopeChatModelTests {
         UserMessage userMessage2 = new UserMessage("What's the weather?");
 
         ChatCompletionMessage responseMessage = new ChatCompletionMessage("It's sunny today!", ChatCompletionMessage.Role.ASSISTANT);
-        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         ChatCompletionOutput output = new ChatCompletionOutput("It's sunny today!", List.of(choice), null);
         // Add non-null TokenUsage with zero values
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
@@ -483,7 +483,7 @@ class DashScopeChatModelTests {
         ToolCall nullNameToolCall = new ToolCall("tool-call-id", "function", nullNameFunction, null);
 
         ChatCompletionMessage nullNameToolMessage = new ChatCompletionMessage("", ChatCompletionMessage.Role.ASSISTANT, null, null, List.of(nullNameToolCall), null, null, null, null, null);
-        Choice nullNameChoice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, nullNameToolMessage, null);
+        Choice nullNameChoice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, nullNameToolMessage, null, 0);
 
         // Add non-null TokenUsage with correct parameters - 9 parameters total
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
@@ -576,7 +576,7 @@ class DashScopeChatModelTests {
         var message = UserMessage.builder().text(TEST_PROMPT).build();
         var prompt = Prompt.builder().messages(message).chatOptions(defaultOptions).build();
         var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
-        var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
+        var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         var usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
@@ -596,7 +596,7 @@ class DashScopeChatModelTests {
         var message = UserMessage.builder().text(TEST_PROMPT).build();
         var prompt = Prompt.builder().messages(message).chatOptions(defaultOptions).build();
         var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
-        var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
+        var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         var usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
@@ -617,7 +617,7 @@ class DashScopeChatModelTests {
         var message = UserMessage.builder().text(TEST_PROMPT).build();
         var prompt = Prompt.builder().messages(message).chatOptions(defaultOptions).build();
         var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
-        var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null);
+        var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         var usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);

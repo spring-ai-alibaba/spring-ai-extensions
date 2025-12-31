@@ -216,7 +216,7 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 	private ChatCompletionChunk createSimpleChunk(String requestId, String content, Role role,
 			ChatCompletionFinishReason finishReason) {
 		ChatCompletionMessage message = new ChatCompletionMessage(content, role);
-		Choice choice = new Choice(finishReason, message, null);
+		Choice choice = new Choice(finishReason, message, null, 0);
 		ChatCompletionOutput output = new ChatCompletionOutput(null, List.of(choice), null);
 		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
 		return new ChatCompletionChunk(requestId, output, usage, null);
@@ -235,7 +235,7 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 		ToolCall toolCall = new ToolCall(toolId, "function", function, null);
 		ChatCompletionMessage message = new ChatCompletionMessage("", Role.ASSISTANT, null, null, List.of(toolCall),
 				null, null, null, null, null);
-		Choice choice = new Choice(finishReason, message, null);
+		Choice choice = new Choice(finishReason, message, null, 0);
 		ChatCompletionOutput output = new ChatCompletionOutput(null, List.of(choice), null);
 		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
 		return new ChatCompletionChunk(requestId, output, usage, null);
@@ -249,7 +249,7 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 		ToolCall toolCall2 = new ToolCall("tool-2", "function", function2, null);
 		ChatCompletionMessage message = new ChatCompletionMessage("", Role.ASSISTANT, null, null,
 				List.of(toolCall1, toolCall2), null, null, null, null, null);
-		Choice choice = new Choice(null, message, null);
+		Choice choice = new Choice(null, message, null, 0);
 		ChatCompletionOutput output = new ChatCompletionOutput(null, List.of(choice), null);
 		TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
 		return new ChatCompletionChunk(requestId, output, usage, null);
@@ -260,13 +260,13 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 		// Test merging of partial flag in streaming scenario
 		ChatCompletionMessage previousMessage = new ChatCompletionMessage("def fibonacci(n):\n", Role.ASSISTANT,
 				null, null, null, null, true, null, null, null);
-		Choice previousChoice = new Choice(null, previousMessage, null);
+		Choice previousChoice = new Choice(null, previousMessage, null, 0);
 		ChatCompletionOutput previousOutput = new ChatCompletionOutput(null, List.of(previousChoice), null);
 		ChatCompletionChunk previous = new ChatCompletionChunk("request-1", previousOutput, null, null);
 
 		ChatCompletionMessage currentMessage = new ChatCompletionMessage("    if n <= 1:\n", Role.ASSISTANT,
 				null, null, null, null, null, null, null, null);
-		Choice currentChoice = new Choice(null, currentMessage, null);
+		Choice currentChoice = new Choice(null, currentMessage, null, 0);
 		ChatCompletionOutput currentOutput = new ChatCompletionOutput(null, List.of(currentChoice), null);
 		ChatCompletionChunk current = new ChatCompletionChunk("request-1", currentOutput, null, null);
 
@@ -284,13 +284,13 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 		// Test when current chunk has partial flag (current takes precedence)
 		ChatCompletionMessage previousMessage = new ChatCompletionMessage("def fibonacci(n):\n", Role.ASSISTANT,
 				null, null, null, null, null, null, null, null);
-		Choice previousChoice = new Choice(null, previousMessage, null);
+		Choice previousChoice = new Choice(null, previousMessage, null, 0);
 		ChatCompletionOutput previousOutput = new ChatCompletionOutput(null, List.of(previousChoice), null);
 		ChatCompletionChunk previous = new ChatCompletionChunk("request-1", previousOutput, null, null);
 
 		ChatCompletionMessage currentMessage = new ChatCompletionMessage("    if n <= 1:\n", Role.ASSISTANT,
 				null, null, null, null, true, null, null, null);
-		Choice currentChoice = new Choice(null, currentMessage, null);
+		Choice currentChoice = new Choice(null, currentMessage, null, 0);
 		ChatCompletionOutput currentOutput = new ChatCompletionOutput(null, List.of(currentChoice), null);
 		ChatCompletionChunk current = new ChatCompletionChunk("request-1", currentOutput, null, null);
 
