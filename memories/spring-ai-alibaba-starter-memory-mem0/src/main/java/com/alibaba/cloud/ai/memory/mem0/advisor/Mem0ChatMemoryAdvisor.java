@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 					         {query}
 					         ---------------------
 					         Use the long term conversation memory from the LONG_TERM_MEMORY section to provide accurate answers.
-					
+
 					         LONG_TERM_MEMORY is a dictionary containing the search results, typically under a "results" type, and potentially "relations" type if graph store is enabled.
 					         Example:
 					         ```text
@@ -92,7 +92,7 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 					             \\}
 					         ]
 					         ```
-					
+
 					         ---------------------
 					         LONG_TERM_MEMORY:
 					         {long_term_memory}

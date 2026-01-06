@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,9 +84,9 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 	private McpServerProperties mcpServerProperties;
 
 	private McpServerSseProperties mcpServerSseProperties;
-	
+
 	private ApplicationContext applicationContext;
-	
+
 	private McpServerStreamableHttpProperties mcpServerStreamableHttpProperties;
 
 	private NacosMcpOperationService nacosMcpOperationService;
@@ -200,7 +200,7 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 				if (StringUtils.isBlank(contextPath)) {
 					contextPath = "";
 				}
-				
+
 				if (StringUtils.equals(this.type, AiConstants.Mcp.MCP_PROTOCOL_SSE)) {
 					remoteServerConfigInfo.setExportPath(contextPath + this.mcpServerSseProperties.getBaseUrl()
 							+ this.mcpServerSseProperties.getSseEndpoint());
@@ -493,6 +493,6 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 		}
 		return changed;
 	}
-	
+
 
 }

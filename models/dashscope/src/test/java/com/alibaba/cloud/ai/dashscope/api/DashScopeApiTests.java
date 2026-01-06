@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ class DashScopeApiTests {
 		EmbeddingRequestInputParameters params = EmbeddingRequestInputParameters.builder()
 				.textType(null)
 				.build();
-		
+
 		// Should default to "document" when textType is null
 		assertEquals("document", params.textType(), "Null textType should default to 'document'");
 	}
@@ -101,7 +101,7 @@ class DashScopeApiTests {
 		EmbeddingRequestInputParameters params = EmbeddingRequestInputParameters.builder()
 				.textType("")
 				.build();
-		
+
 		// Empty string should be preserved (not converted to null)
 		assertEquals("", params.textType(), "Empty textType should be preserved");
 	}
@@ -128,10 +128,10 @@ class DashScopeApiTests {
 				.textType(null)
 				.build();
 		EmbeddingRequest request = new EmbeddingRequest("test-model", input, params);
-		
+
 		// Verify the request was created successfully with default textType
 		assertNotNull(request, "EmbeddingRequest should be created successfully");
-		assertEquals("document", request.parameters().textType(), 
+		assertEquals("document", request.parameters().textType(),
 				"Request should have default textType 'document' when null is provided");
 	}
 

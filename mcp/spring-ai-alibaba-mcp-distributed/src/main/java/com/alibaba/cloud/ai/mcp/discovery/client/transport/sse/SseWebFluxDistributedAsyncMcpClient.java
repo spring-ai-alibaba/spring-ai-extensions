@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,8 +86,8 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
     // Link Tracking Filters
     private final ExchangeFilterFunction traceFilter;
 
-    public SseWebFluxDistributedAsyncMcpClient(String serverName, String version, 
-                                               NacosMcpOperationService nacosMcpOperationService, 
+    public SseWebFluxDistributedAsyncMcpClient(String serverName, String version,
+                                               NacosMcpOperationService nacosMcpOperationService,
                                                ApplicationContext applicationContext, boolean lazyInit) {
         Assert.notNull(serverName, "serviceName cannot be null");
         Assert.notNull(version, "version cannot be null");
@@ -500,7 +500,7 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
         }
 
         public SseWebFluxDistributedAsyncMcpClient build() {
-            return new SseWebFluxDistributedAsyncMcpClient(this.serverName, this.version, 
+            return new SseWebFluxDistributedAsyncMcpClient(this.serverName, this.version,
                 this.nacosMcpOperationService, this.applicationContext, this.lazyInit);
         }
 
