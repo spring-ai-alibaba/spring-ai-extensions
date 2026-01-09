@@ -22,8 +22,10 @@ import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;
 import com.alibaba.cloud.ai.dashscope.rerank.DashScopeRerankModel;
+import com.alibaba.cloud.ai.tool.DashScopeAsyncToolCallingManager;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
@@ -348,5 +350,27 @@ class DashScopeModelConfigurationTests {
 				assertThat(context.getBeansOfType(DashScopeRerankModel.class)).isNotEmpty();
 			});
 	}
+
+    @Test
+    public void testAsyncToolCalling() {
+
+        // Test not enabled by default
+        this.contextRunner
+                .withConfiguration(AutoConfigurations.of(DashScopeAsyncToolCallingManagerAutoConfiguration.class))
+                .run(context -> {
+                    assertThat(context.getBeansOfType(DashScopeAsyncToolCallingManagerAutoConfiguration.class)).isEmpty();
+                });
+
+        // Test enabled
+        this.contextRunner
+                .withConfiguration(AutoConfigurations.of(DashScopeAsyncToolCallingManagerAutoConfiguration.class))
+                .withPropertyValues("spring.ai.alibaba.tool.async.enabled=true")
+                .run(context -> {
+                    assertThat(context.getBeansOfType(DashScopeAsyncToolCallingManagerAutoConfiguration.class)).isNotEmpty();
+
+                    // Test chat use toolCallingManager is DashScopeAsyncToolCallingManager
+                    assertThat(context.getBean(ToolCallingManager.class)).isInstanceOf(DashScopeAsyncToolCallingManager.class);
+                });
+    }
 
 }
