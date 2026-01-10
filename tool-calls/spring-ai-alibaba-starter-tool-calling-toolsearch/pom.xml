@@ -115,21 +115,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- 测试示例所需的依赖 -->
-        <dependency>
-            <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-dashscope</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-agent-framework</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-
     </dependencies>
 
 </project>
