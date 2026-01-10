@@ -60,7 +60,7 @@ public class DashScopeMultimodalEmbeddingApi {
 			String baseUrl,
 			ApiKey apiKey,
 			String multimodalPath,
-			MultiValueMap<String, String> headers,
+			HttpHeaders headers,
 			RestClient.Builder restClientBuilder,
 			ResponseErrorHandler responseErrorHandler
 	) {
@@ -105,7 +105,7 @@ public class DashScopeMultimodalEmbeddingApi {
 
 		private String multimodalPath = MULTIMODAL_EMBEDDING_RESTFUL_URL;
 
-		private final MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+		private final HttpHeaders headers = new HttpHeaders();
 
 		private RestClient.Builder restClientBuilder = RestClient.builder();
 
@@ -138,7 +138,7 @@ public class DashScopeMultimodalEmbeddingApi {
 			return this;
 		}
 
-		public Builder headers(MultiValueMap<String, String> headers) {
+		public Builder headers(HttpHeaders headers) {
 			if (headers != null) {
 				this.headers.addAll(headers);
 			}
