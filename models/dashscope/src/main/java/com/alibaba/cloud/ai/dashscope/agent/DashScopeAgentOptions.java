@@ -246,19 +246,9 @@ public class DashScopeAgentOptions implements ChatOptions {
             return this;
         }
 
-        @Deprecated
-        public Builder withAppId(String appId) {
-            return appId(appId);
-        }
-
         public Builder sessionId(String sessionId) {
             this.options.sessionId = sessionId;
             return this;
-        }
-
-        @Deprecated
-        public Builder withSessionId(String sessionId) {
-            return sessionId(sessionId);
         }
 
         public Builder memoryId(String memoryId) {
@@ -266,19 +256,9 @@ public class DashScopeAgentOptions implements ChatOptions {
             return this;
         }
 
-        @Deprecated
-        public Builder withMemoryId(String memoryId) {
-            return memoryId(memoryId);
-        }
-
         public Builder incrementalOutput(Boolean incrementalOutput) {
             this.options.incrementalOutput = incrementalOutput;
             return this;
-        }
-
-        @Deprecated
-        public Builder withIncrementalOutput(Boolean incrementalOutput) {
-            return incrementalOutput(incrementalOutput);
         }
 
         public Builder hasThoughts(Boolean hasThoughts) {
@@ -286,19 +266,9 @@ public class DashScopeAgentOptions implements ChatOptions {
             return this;
         }
 
-        @Deprecated
-        public Builder withHasThoughts(Boolean hasThoughts) {
-            return hasThoughts(hasThoughts);
-        }
-
         public Builder images(List<String> images) {
             this.options.images = images;
             return this;
-        }
-
-        @Deprecated
-        public Builder withImages(List<String> images) {
-            return images(images);
         }
 
         public Builder bizParams(JsonNode bizParams) {
@@ -306,19 +276,9 @@ public class DashScopeAgentOptions implements ChatOptions {
             return this;
         }
 
-        @Deprecated
-        public Builder withBizParams(JsonNode bizParams) {
-            return bizParams(bizParams);
-        }
-
         public Builder ragOptions(DashScopeAgentRagOptions ragOptions) {
             this.options.ragOptions = ragOptions;
             return this;
-        }
-
-        @Deprecated
-        public Builder withRagOptions(DashScopeAgentRagOptions ragOptions) {
-            return ragOptions(ragOptions);
         }
 
         public Builder flowStreamMode(DashScopeAgentFlowStreamMode flowStreamMode) {
@@ -326,18 +286,13 @@ public class DashScopeAgentOptions implements ChatOptions {
             return this;
         }
 
-        @Deprecated
-        public Builder withFlowStreamMode(DashScopeAgentFlowStreamMode flowStreamMode) {
-            return flowStreamMode(flowStreamMode);
+        public Builder enableThinking(Boolean enableThinking) {
+            this.options.enableThinking = enableThinking;
+            return this;
         }
 
         public Builder modelId(String modelId) {
             this.options.modelId = modelId;
-            return this;
-        }
-
-        public Builder enableThinking(Boolean enableThinking) {
-            this.options.enableThinking = enableThinking;
             return this;
         }
 

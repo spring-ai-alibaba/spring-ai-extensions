@@ -97,11 +97,6 @@ public class DashScopeApiSpec {
     public record EmbeddingRequestInputParameters(@JsonProperty("text_type") String textType,
                                                   @JsonProperty("dimension") Integer dimension) {
 
-        @Deprecated
-        public EmbeddingRequestInputParameters(String textType) {
-            this(textType == null ? DEFAULT_EMBEDDING_TEXT_TYPE : textType, null);
-        }
-
         public static Builder builder() {
             return new Builder();
         }
@@ -142,42 +137,6 @@ public class DashScopeApiSpec {
     public record EmbeddingRequest(@JsonProperty("model") String model,
                                    @JsonProperty("input") EmbeddingRequestInput input,
                                    @JsonProperty("parameters") EmbeddingRequestInputParameters parameters) {
-
-        @Deprecated
-        public EmbeddingRequest(String text) {
-            this(DEFAULT_EMBEDDING_MODEL, new EmbeddingRequestInput(List.of(text)),
-                    new EmbeddingRequestInputParameters(DEFAULT_EMBEDDING_TEXT_TYPE));
-        }
-
-        @Deprecated
-        public EmbeddingRequest(String text, String model) {
-            this(model, new EmbeddingRequestInput(List.of(text)),
-                    new EmbeddingRequestInputParameters(DEFAULT_EMBEDDING_TEXT_TYPE));
-        }
-
-        @Deprecated
-        public EmbeddingRequest(String text, String model, String textType) {
-            this(model, new EmbeddingRequestInput(List.of(text)), new EmbeddingRequestInputParameters(
-                    textType == null ? DEFAULT_EMBEDDING_TEXT_TYPE : textType));
-        }
-
-        @Deprecated
-        public EmbeddingRequest(List<String> texts) {
-            this(DEFAULT_EMBEDDING_MODEL, new EmbeddingRequestInput(texts),
-                    new EmbeddingRequestInputParameters(DEFAULT_EMBEDDING_TEXT_TYPE));
-        }
-
-        @Deprecated
-        public EmbeddingRequest(List<String> texts, String model) {
-            this(model, new EmbeddingRequestInput(texts),
-                    new EmbeddingRequestInputParameters(DEFAULT_EMBEDDING_TEXT_TYPE));
-        }
-
-        @Deprecated
-        public EmbeddingRequest(List<String> texts, String model, String textType) {
-            this(model, new EmbeddingRequestInput(texts), new EmbeddingRequestInputParameters(
-                    textType == null ? DEFAULT_EMBEDDING_TEXT_TYPE : textType));
-        }
 
         public static Builder builder() {
             return new Builder();
