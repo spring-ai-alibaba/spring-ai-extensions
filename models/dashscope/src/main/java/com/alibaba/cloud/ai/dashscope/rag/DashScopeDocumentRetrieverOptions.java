@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.dashscope.rag;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 import java.util.Map;
 
@@ -27,221 +28,170 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashScopeDocumentRetrieverOptions {
 
-  private @JsonProperty("index_name") String indexName;
+    private @JsonProperty("index_name") String indexName;
 
-  private @JsonProperty("dense_similarity_top_k") int denseSimilarityTopK = 100;
+    private @JsonProperty("dense_similarity_top_k") int denseSimilarityTopK = 100;
 
-  private @JsonProperty("sparse_similarity_top_k") int sparseSimilarityTopK = 100;
+    private @JsonProperty("sparse_similarity_top_k") int sparseSimilarityTopK = 100;
 
-  private @JsonProperty("enable_rewrite") boolean enableRewrite = false;
+    private @JsonProperty("enable_rewrite") boolean enableRewrite = false;
 
-  private @JsonProperty("model_name") String rewriteModelName = "conv-rewrite-qwen-1.8b";
+    private @JsonProperty("model_name") String rewriteModelName = "conv-rewrite-qwen-1.8b";
 
-  private @JsonProperty("enable_reranking") boolean enableReranking = true;
+    private @JsonProperty("enable_reranking") boolean enableReranking = true;
 
-  private @JsonProperty("model_name") String rerankModelName = "gte-rerank-hybrid";
+    private @JsonProperty("model_name") String rerankModelName = "gte-rerank-hybrid";
 
-  private @JsonProperty("rerank_min_score") float rerankMinScore = 0.01f;
+    private @JsonProperty("rerank_min_score") float rerankMinScore = 0.01f;
 
-  private @JsonProperty("rerank_top_n") int rerankTopN = 5;
+    private @JsonProperty("rerank_top_n") int rerankTopN = 5;
 
-  private @JsonProperty("search_filters") List<Map<String, Object>> searchFilters;
+    private @JsonProperty("search_filters") List<Map<String, Object>> searchFilters;
 
-  public static DashScopeDocumentRetrieverOptions.Builder builder() {
-    return new DashScopeDocumentRetrieverOptions.Builder();
-  }
-
-  public String getIndexName() {
-    return indexName;
-  }
-
-  public void setIndexName(String indexName) {
-    this.indexName = indexName;
-  }
-
-  public int getDenseSimilarityTopK() {
-    return denseSimilarityTopK;
-  }
-
-  public void setDenseSimilarityTopK(int denseSimilarityTopK) {
-    this.denseSimilarityTopK = denseSimilarityTopK;
-  }
-
-  public int getSparseSimilarityTopK() {
-    return sparseSimilarityTopK;
-  }
-
-  public void setSparseSimilarityTopK(int sparseSimilarityTopK) {
-    this.sparseSimilarityTopK = sparseSimilarityTopK;
-  }
-
-  public boolean isEnableRewrite() {
-    return enableRewrite;
-  }
-
-  public void setEnableRewrite(boolean enableRewrite) {
-    this.enableRewrite = enableRewrite;
-  }
-
-  public String getRewriteModelName() {
-    return rewriteModelName;
-  }
-
-  public void setRewriteModelName(String rewriteModelName) {
-    this.rewriteModelName = rewriteModelName;
-  }
-
-  public boolean isEnableReranking() {
-    return enableReranking;
-  }
-
-  public void setEnableReranking(boolean enableReranking) {
-    this.enableReranking = enableReranking;
-  }
-
-  public String getRerankModelName() {
-    return rerankModelName;
-  }
-
-  public void setRerankModelName(String rerankModelName) {
-    this.rerankModelName = rerankModelName;
-  }
-
-  public float getRerankMinScore() {
-    return rerankMinScore;
-  }
-
-  public void setRerankMinScore(float rerankMinScore) {
-    this.rerankMinScore = rerankMinScore;
-  }
-
-  public int getRerankTopN() {
-    return rerankTopN;
-  }
-
-  public void setRerankTopN(int rerankTopN) {
-    this.rerankTopN = rerankTopN;
-  }
-
-  public void setSearchFilters(List<Map<String, Object>> searchFilters) {
-    this.searchFilters = searchFilters;
-  }
-
-  public List<Map<String, Object>> getSearchFilters() {
-    return searchFilters;
-  }
-
-  public static class Builder {
-
-    protected DashScopeDocumentRetrieverOptions options;
-
-    public Builder() {
-      this.options = new DashScopeDocumentRetrieverOptions();
+    public static DashScopeDocumentRetrieverOptions.Builder builder() {
+        return new DashScopeDocumentRetrieverOptions.Builder();
     }
 
-    public Builder indexName(String indexName) {
-      this.options.setIndexName(indexName);
-      return this;
+    public String getIndexName() {
+        return indexName;
     }
 
-    @Deprecated
-    public Builder withIndexName(String indexName) {
-      return indexName(indexName);
+    public void setIndexName(String indexName) {
+        this.indexName = indexName;
     }
 
-    public Builder denseSimilarityTopK(Integer denseSimilarityTopK) {
-      this.options.setDenseSimilarityTopK(denseSimilarityTopK);
-      return this;
+    public int getDenseSimilarityTopK() {
+        return denseSimilarityTopK;
     }
 
-    @Deprecated
-    public Builder withDenseSimilarityTopK(Integer denseSimilarityTopK) {
-      return denseSimilarityTopK(denseSimilarityTopK);
+    public void setDenseSimilarityTopK(int denseSimilarityTopK) {
+        this.denseSimilarityTopK = denseSimilarityTopK;
     }
 
-    public Builder sparseSimilarityTopK(int sparseSimilarityTopK) {
-      this.options.setSparseSimilarityTopK(sparseSimilarityTopK);
-      return this;
+    public int getSparseSimilarityTopK() {
+        return sparseSimilarityTopK;
     }
 
-    @Deprecated
-    public Builder withSparseSimilarityTopK(int sparseSimilarityTopK) {
-      return sparseSimilarityTopK(sparseSimilarityTopK);
+    public void setSparseSimilarityTopK(int sparseSimilarityTopK) {
+        this.sparseSimilarityTopK = sparseSimilarityTopK;
     }
 
-    public Builder enableRewrite(boolean enableRewrite) {
-      this.options.setEnableRewrite(enableRewrite);
-      return this;
+    public boolean isEnableRewrite() {
+        return enableRewrite;
     }
 
-    @Deprecated
-    public Builder withEnableRewrite(boolean enableRewrite) {
-      return enableRewrite(enableRewrite);
+    public void setEnableRewrite(boolean enableRewrite) {
+        this.enableRewrite = enableRewrite;
     }
 
-    public Builder rewriteModelName(String rewriteModelName) {
-      this.options.setRewriteModelName(rewriteModelName);
-      return this;
+    public String getRewriteModelName() {
+        return rewriteModelName;
     }
 
-    @Deprecated
-    public Builder withRewriteModelName(String rewriteModelName) {
-      return rewriteModelName(rewriteModelName);
+    public void setRewriteModelName(String rewriteModelName) {
+        this.rewriteModelName = rewriteModelName;
     }
 
-    public Builder enableReranking(boolean enableReranking) {
-      this.options.setEnableReranking(enableReranking);
-      return this;
+    public boolean isEnableReranking() {
+        return enableReranking;
     }
 
-    @Deprecated
-    public Builder withEnableReranking(boolean enableReranking) {
-      this.options.setEnableReranking(enableReranking);
-      return this;
+    public void setEnableReranking(boolean enableReranking) {
+        this.enableReranking = enableReranking;
     }
 
-    public Builder rerankModelName(String textType) {
-      this.options.setRerankModelName(textType);
-      return this;
+    public String getRerankModelName() {
+        return rerankModelName;
     }
 
-    @Deprecated
-    public Builder withRerankModelName(String textType) {
-      return rerankModelName(textType);
+    public void setRerankModelName(String rerankModelName) {
+        this.rerankModelName = rerankModelName;
     }
 
-    public Builder rerankMinScore(float rerankMinScore) {
-      this.options.setRerankMinScore(rerankMinScore);
-      return this;
+    public float getRerankMinScore() {
+        return rerankMinScore;
     }
 
-    @Deprecated
-    public Builder withRerankMinScore(float rerankMinScore) {
-      return rerankMinScore(rerankMinScore);
+    public void setRerankMinScore(float rerankMinScore) {
+        this.rerankMinScore = rerankMinScore;
     }
 
-    public Builder rerankTopN(int rerankTopN) {
-      this.options.setRerankTopN(rerankTopN);
-      return this;
+    public int getRerankTopN() {
+        return rerankTopN;
     }
 
-    @Deprecated
-    public Builder withRerankTopN(int rerankTopN) {
-      return rerankTopN(rerankTopN);
+    public void setRerankTopN(int rerankTopN) {
+        this.rerankTopN = rerankTopN;
     }
 
-    public Builder searchFilters(List<Map<String, Object>> searchFilters) {
-      this.options.setSearchFilters(searchFilters);
-      return this;
+    public void setSearchFilters(List<Map<String, Object>> searchFilters) {
+        this.searchFilters = searchFilters;
     }
 
-    @Deprecated
-    public Builder withSearchFilters(List<Map<String, Object>> searchFilters) {
-      return searchFilters(searchFilters);
+    public List<Map<String, Object>> getSearchFilters() {
+        return searchFilters;
     }
 
-    public DashScopeDocumentRetrieverOptions build() {
-      return this.options;
+    public static class Builder {
+
+        protected DashScopeDocumentRetrieverOptions options;
+
+        public Builder() {
+            this.options = new DashScopeDocumentRetrieverOptions();
+        }
+
+        public Builder indexName(String indexName) {
+            this.options.setIndexName(indexName);
+            return this;
+        }
+
+        public Builder denseSimilarityTopK(Integer denseSimilarityTopK) {
+            this.options.setDenseSimilarityTopK(denseSimilarityTopK);
+            return this;
+        }
+
+        public Builder sparseSimilarityTopK(int sparseSimilarityTopK) {
+            this.options.setSparseSimilarityTopK(sparseSimilarityTopK);
+            return this;
+        }
+
+        public Builder enableRewrite(boolean enableRewrite) {
+            this.options.setEnableRewrite(enableRewrite);
+            return this;
+        }
+
+        public Builder rewriteModelName(String rewriteModelName) {
+            this.options.setRewriteModelName(rewriteModelName);
+            return this;
+        }
+
+        public Builder enableReranking(boolean enableReranking) {
+            this.options.setEnableReranking(enableReranking);
+            return this;
+        }
+
+        public Builder rerankModelName(String textType) {
+            this.options.setRerankModelName(textType);
+            return this;
+        }
+
+        public Builder rerankMinScore(float rerankMinScore) {
+            this.options.setRerankMinScore(rerankMinScore);
+            return this;
+        }
+
+        public Builder rerankTopN(int rerankTopN) {
+            this.options.setRerankTopN(rerankTopN);
+            return this;
+        }
+
+        public Builder searchFilters(List<Map<String, Object>> searchFilters) {
+            this.options.setSearchFilters(searchFilters);
+            return this;
+        }
+
+        public DashScopeDocumentRetrieverOptions build() {
+            return this.options;
+        }
     }
-  }
 }
