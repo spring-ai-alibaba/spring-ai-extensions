@@ -338,7 +338,11 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 					Map<String, Object> metadataJson = objectMapper.readValue(metadata.get(METADATA_FIELD_NAME),
 							new TypeReference<HashMap<String, Object>>() {
 							});
-					Document doc = new Document(pageContent, metadataJson);
+					Document doc = Document.builder()
+                            .text(pageContent)
+                            .metadata(metadataJson)
+                            .score(match.getScore())
+                            .build();
 					documents.add(doc);
 				}
 			}
