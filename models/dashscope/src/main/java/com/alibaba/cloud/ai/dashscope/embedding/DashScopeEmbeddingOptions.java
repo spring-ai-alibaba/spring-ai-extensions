@@ -78,29 +78,14 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 			return this;
 		}
 
-		@Deprecated
-		public Builder withModel(String model) {
-			return model(model);
-		}
-
 		public Builder dimensions(Integer dimensions) {
 			this.options.setDimensions(dimensions);
 			return this;
 		}
 
-		@Deprecated
-		public Builder withDimensions(Integer dimensions) {
-			return dimensions(dimensions);
-		}
-
 		public Builder textType(String textType) {
 			this.options.setTextType(textType);
 			return this;
-		}
-
-		@Deprecated
-		public Builder withTextType(String textType) {
-			return textType(textType);
 		}
 
 		public DashScopeEmbeddingOptions build() {
