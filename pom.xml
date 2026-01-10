@@ -149,6 +149,7 @@
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-tavilysearch</module>
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-tencentmap</module>
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-time</module>
+        <module>tool-calls/spring-ai-alibaba-starter-tool-calling-toolsearch</module>
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-toutiaonews</module>
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-tripadvisor</module>
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-tushare</module>
