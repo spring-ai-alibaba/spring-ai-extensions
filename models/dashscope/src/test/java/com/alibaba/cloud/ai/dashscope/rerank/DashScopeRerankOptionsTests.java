@@ -104,9 +104,9 @@ class DashScopeRerankOptionsTests {
 	@Test
 	void testDeprecatedWithMethods() {
 		DashScopeRerankOptions options = DashScopeRerankOptions.builder()
-			.withModel(TEST_MODEL)
-			.withTopN(TEST_TOP_N)
-			.withReturnDocuments(TEST_RETURN_DOCUMENTS)
+			.model(TEST_MODEL)
+			.topN(TEST_TOP_N)
+			.returnDocuments(TEST_RETURN_DOCUMENTS)
 			.build();
 
 		assertThat(options.getModel()).isEqualTo(TEST_MODEL);

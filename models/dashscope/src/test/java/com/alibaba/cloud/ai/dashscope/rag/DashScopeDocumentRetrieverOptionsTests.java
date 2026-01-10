@@ -149,16 +149,16 @@ class DashScopeDocumentRetrieverOptionsTests {
 	void testDeprecatedWithMethods() {
 		List<Map<String, Object>> searchFilters = List.of(Map.of("type", "doc"));
 		DashScopeDocumentRetrieverOptions options = DashScopeDocumentRetrieverOptions.builder()
-			.withIndexName(TEST_INDEX_NAME)
-			.withDenseSimilarityTopK(TEST_DENSE_TOP_K)
-			.withSparseSimilarityTopK(TEST_SPARSE_TOP_K)
-			.withEnableRewrite(true)
-			.withRewriteModelName(TEST_REWRITE_MODEL)
-			.withEnableReranking(false)
-			.withRerankModelName(TEST_RERANK_MODEL)
-			.withRerankMinScore(TEST_RERANK_MIN_SCORE)
-			.withRerankTopN(TEST_RERANK_TOP_N)
-			.withSearchFilters(searchFilters)
+			.indexName(TEST_INDEX_NAME)
+			.denseSimilarityTopK(TEST_DENSE_TOP_K)
+			.sparseSimilarityTopK(TEST_SPARSE_TOP_K)
+			.enableRewrite(true)
+			.rewriteModelName(TEST_REWRITE_MODEL)
+			.enableReranking(false)
+			.rerankModelName(TEST_RERANK_MODEL)
+			.rerankMinScore(TEST_RERANK_MIN_SCORE)
+			.rerankTopN(TEST_RERANK_TOP_N)
+			.searchFilters(searchFilters)
 			.build();
 
 		assertThat(options.getIndexName()).isEqualTo(TEST_INDEX_NAME);
