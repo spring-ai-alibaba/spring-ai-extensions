@@ -87,7 +87,7 @@ public class ToolIndexer implements ApplicationListener<ContextRefreshedEvent> {
 
 			log.info("Successfully auto-indexed {} tools", tools.size());
 
-			// 打印索引的工具列表（调试用）
+			// 打印索引的工具列表
 			if (log.isDebugEnabled()) {
 				tools.forEach(tool -> log.debug("  - {}: {}", tool.getToolDefinition().name(),
 						tool.getToolDefinition().description()));
