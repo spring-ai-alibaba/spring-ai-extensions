@@ -126,11 +126,11 @@ class DashScopeDocumentTransformerOptionsTests {
 	@Test
 	void testDeprecatedWithMethods() {
 		DashScopeDocumentTransformerOptions options = DashScopeDocumentTransformerOptions.builder()
-			.withChunkSize(TEST_CHUNK_SIZE)
-			.withOverlapSize(TEST_OVERLAP_SIZE)
-			.withSeparator(TEST_SEPARATOR)
-			.withFileType(TEST_FILE_TYPE)
-			.withLanguage(TEST_LANGUAGE)
+			.chunkSize(TEST_CHUNK_SIZE)
+			.overlapSize(TEST_OVERLAP_SIZE)
+			.separator(TEST_SEPARATOR)
+			.fileType(TEST_FILE_TYPE)
+			.language(TEST_LANGUAGE)
 			.build();
 
 		assertThat(options.getChunkSize()).isEqualTo(TEST_CHUNK_SIZE);

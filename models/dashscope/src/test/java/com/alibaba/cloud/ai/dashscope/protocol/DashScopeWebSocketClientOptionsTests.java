@@ -34,9 +34,9 @@ class DashScopeWebSocketClientOptionsTests {
 	@Test
 	void testBuilderAndDeprecatedWithMethods() {
 		DashScopeWebSocketClientOptions options = DashScopeWebSocketClientOptions.builder()
-			.withUrl("wss://example.test/ws")
-			.withApiKey("ak-test")
-			.withWorkSpaceId("ws-1")
+			.url("wss://example.test/ws")
+			.apiKey("ak-test")
+			.workSpaceId("ws-1")
 			.build();
 
 		assertThat(options.getUrl()).isEqualTo("wss://example.test/ws");

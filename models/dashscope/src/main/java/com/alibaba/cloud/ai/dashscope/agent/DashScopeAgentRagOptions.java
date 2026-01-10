@@ -114,36 +114,6 @@ public class DashScopeAgentRagOptions {
 			this.options = options;
 		}
 
-        @Deprecated
-        public Builder withPipelineIds(List<String> pipelineIds) {
-            return this.pipelineIds(pipelineIds);
-        }
-
-        @Deprecated
-        public Builder withFileIds(List<String> fileIds) {
-            return this.fileIds(fileIds);
-        }
-
-        @Deprecated
-        public Builder withTags(List<String> tags) {
-            return this.tags(tags);
-        }
-
-        @Deprecated
-        public Builder withMetadataFilter(JsonNode metadataFilter) {
-            return this.metadataFilter(metadataFilter);
-        }
-
-        @Deprecated
-        public Builder withStructuredFilter(JsonNode structuredFilter) {
-            return this.structuredFilter(structuredFilter);
-        }
-
-        @Deprecated
-        public Builder withSessionFileIds(List<String> sessionFileIds) {
-            return this.sessionFileIds(sessionFileIds);
-        }
-
 		public Builder pipelineIds(List<String> pipelineIds) {
 			this.options.pipelineIds = pipelineIds;
 			return this;
