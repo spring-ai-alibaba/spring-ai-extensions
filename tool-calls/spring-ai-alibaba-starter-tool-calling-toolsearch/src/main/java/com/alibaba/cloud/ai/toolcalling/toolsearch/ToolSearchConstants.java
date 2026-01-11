@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,42 +18,42 @@ package com.alibaba.cloud.ai.toolcalling.toolsearch;
 import com.alibaba.cloud.ai.toolcalling.common.CommonToolCallConstants;
 
 /**
- * Tool Search 工具常量定义
+ * Constants definition for Tool Search functionality.
  */
 public class ToolSearchConstants {
 
 	/**
-	 * 配置前缀
+	 * Configuration prefix.
 	 */
 	public static final String CONFIG_PREFIX = CommonToolCallConstants.TOOL_CALLING_CONFIG_PREFIX + ".toolsearch";
 
 	/**
-	 * 工具名称
+	 * Tool name.
 	 */
 	public static final String TOOL_NAME = "tool_search";
 
 	/**
-	 * 默认最大搜索结果数
+	 * Default maximum number of search results.
 	 */
 	public static final int DEFAULT_MAX_RESULTS = 5;
 
 	/**
-	 * 默认最大递归深度
+	 * Default maximum recursion depth.
 	 */
 	public static final int DEFAULT_MAX_RECURSION_DEPTH = 3;
 
 	/**
-	 * 默认字段权重 - 名称
+	 * Default field weight - name.
 	 */
 	public static final float DEFAULT_NAME_BOOST = 3.0f;
 
 	/**
-	 * 默认字段权重 - 描述
+	 * Default field weight - description.
 	 */
 	public static final float DEFAULT_DESCRIPTION_BOOST = 2.0f;
 
 	/**
-	 * 默认字段权重 - 参数
+	 * Default field weight - parameters.
 	 */
 	public static final float DEFAULT_PARAMETERS_BOOST = 1.0f;
 

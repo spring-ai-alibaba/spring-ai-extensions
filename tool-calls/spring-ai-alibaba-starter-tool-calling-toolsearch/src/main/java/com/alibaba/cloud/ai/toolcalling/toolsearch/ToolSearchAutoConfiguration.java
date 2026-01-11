@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Description;
 
 /**
- * Tool Search 自动配置类
+ * Auto-configuration class for Tool Search functionality.
  */
 @Configuration
 @ConditionalOnClass(ToolSearchService.class)
@@ -34,7 +34,7 @@ import org.springframework.context.annotation.Description;
 public class ToolSearchAutoConfiguration {
 
 	/**
-	 * 创建默认的 Lucene 工具搜索器
+	 * Creates default Lucene tool searcher.
 	 */
 	@Bean
 	@ConditionalOnMissingBean(ToolSearcher.class)
@@ -47,19 +47,19 @@ public class ToolSearchAutoConfiguration {
 	}
 
 	/**
-	 * 创建工具搜索服务
+	 * Creates tool search service.
 	 */
 	@Bean(name = ToolSearchConstants.TOOL_NAME)
 	@ConditionalOnMissingBean
 	@Description("Search and discover available tools dynamically based on query keywords. "
-			+ "使用关键词动态搜索和发现可用工具。")
+			+ "Dynamically search and discover available tools using keywords.")
 	public ToolSearchService toolSearchService(ToolSearcher toolSearcher, ToolSearchProperties properties) {
 		return new ToolSearchService(toolSearcher, properties.getMaxResults());
 	}
 
 	/**
-	 * 创建工具自动索引器
-	 * 在应用启动时自动发现并索引所有可用的 ToolCallback
+	 * Creates automatic tool indexer.
+	 * Automatically discovers and indexes all available ToolCallback on application startup.
 	 */
 	@Bean
 	@ConditionalOnMissingBean

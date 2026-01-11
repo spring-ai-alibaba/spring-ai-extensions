@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 基于Lucene的工具搜索器实现
+ * Lucene-based tool searcher implementation.
  */
 public class LuceneToolSearcher implements ToolSearcher, Closeable {
 
@@ -94,10 +94,10 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 
 		synchronized (indexLock) {
 			try {
-				// 关闭旧的 reader
+				// Close old reader
 				closeReader();
 
-				// 配置为覆盖模式，避免重复索引
+				// Configure to overwrite mode to avoid duplicate indexing
 				IndexWriterConfig config = new IndexWriterConfig(analyzer);
 				config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 				IndexWriter indexWriter = new IndexWriter(indexDirectory, config);
@@ -113,21 +113,21 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 						}
 					}
 
-					// 生成并缓存 schema
+					// Generate and cache schema
 					String schema = generateSchema(tool);
 					schemaCache.put(definition.name(), schema);
 					doc.add(new StoredField("schema", schema));
 
 					indexWriter.addDocument(doc);
 
-					// 缓存 ToolCallback
+					// Cache ToolCallback
 					toolCallbackMap.put(definition.name(), tool);
 				}
 
 				indexWriter.commit();
 				indexWriter.close();
 
-				// 创建新的搜索器
+				// Create new searcher
 				indexReader = DirectoryReader.open(indexDirectory);
 				this.indexSearcher = new IndexSearcher(indexReader);
 
@@ -140,7 +140,7 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 	}
 
 	/**
-	 * 关闭旧的 DirectoryReader
+	 * Close old DirectoryReader.
 	 */
 	private void closeReader() {
 		if (indexReader != null) {
@@ -155,7 +155,7 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 	}
 
 	/**
-	 * 从 ToolDefinition 中获取指定字段的值
+	 * Get the value of the specified field from ToolDefinition.
 	 */
 	private String getFieldValue(ToolDefinition definition, String fieldName) {
 		switch (fieldName) {
@@ -177,24 +177,24 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 		}
 
 		try {
-			// 使用配置的字段和权重构建多字段查询
+			// Build multi-field query using configured fields and weights
 			String[] fields = indexFields.toArray(new String[0]);
 			MultiFieldQueryParser parser = new MultiFieldQueryParser(fields, analyzer, fieldBoosts);
 
-			// 转义特殊字符
+			// Escape special characters
 			String escapedQuery = QueryParser.escape(query);
 			Query luceneQuery = parser.parse(escapedQuery);
 
-			// 执行搜索
+			// Execute search
 			TopDocs topDocs = indexSearcher.search(luceneQuery, maxResults);
 
-			// 转换为 ToolCallback
+			// Convert to ToolCallback
 			List<ToolCallback> results = new ArrayList<>();
 			for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
 				Document doc = indexSearcher.doc(scoreDoc.doc);
 				String toolName = doc.get("name");
 
-				// 从缓存中获取 ToolCallback
+				// Get ToolCallback from cache
 				ToolCallback tool = toolCallbackMap.get(toolName);
 				if (tool != null) {
 					results.add(tool);
@@ -217,13 +217,13 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 	}
 
 	/**
-	 * 生成工具的 JSON Schema
+	 * Generate JSON Schema for the tool.
 	 */
 	private String generateSchema(ToolCallback tool) {
 		try {
 			ToolDefinition definition = tool.getToolDefinition();
 
-			// 构建 JSON Schema
+			// Build JSON Schema
 			Map<String, Object> schema = new HashMap<>();
 			schema.put("type", "function");
 
@@ -231,7 +231,7 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 			function.put("name", definition.name());
 			function.put("description", definition.description());
 
-			// 尝试解析参数 Schema
+			// Try to parse parameter Schema
 			String inputTypeSchema = definition.inputSchema();
 			if (inputTypeSchema != null && !inputTypeSchema.isEmpty()) {
 				try {

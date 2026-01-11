@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,28 +20,28 @@ import org.springframework.ai.tool.ToolCallback;
 import java.util.List;
 
 /**
- * 工具搜索器接口
+ * Tool searcher interface for indexing and searching tools.
  */
 public interface ToolSearcher {
 
 	/**
-	 * 索引工具列表
-	 * @param tools 要索引的工具列表
+	 * Index a list of tools.
+	 * @param tools the list of tools to index
 	 */
 	void indexTools(List<ToolCallback> tools);
 
 	/**
-	 * 搜索工具
-	 * @param query 搜索查询
-	 * @param maxResults 最大返回结果数
-	 * @return 匹配的工具列表
+	 * Search for tools.
+	 * @param query the search query
+	 * @param maxResults maximum number of results to return
+	 * @return list of matching tools
 	 */
 	List<ToolCallback> search(String query, int maxResults);
 
 	/**
-	 * 获取工具的 JSON Schema
-	 * @param tool 工具回调
-	 * @return JSON Schema 字符串
+	 * Get the JSON Schema of a tool.
+	 * @param tool the tool callback
+	 * @return JSON Schema string
 	 */
 	String getToolSchema(ToolCallback tool);
 

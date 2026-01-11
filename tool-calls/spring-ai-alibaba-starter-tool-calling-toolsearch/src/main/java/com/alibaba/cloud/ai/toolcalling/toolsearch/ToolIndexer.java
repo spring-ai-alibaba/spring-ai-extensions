@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 工具自动索引器
+ * Automatic tool indexer that indexes all available ToolCallback beans on application startup.
  */
 public class ToolIndexer implements ApplicationListener<ContextRefreshedEvent> {
 
@@ -46,7 +46,7 @@ public class ToolIndexer implements ApplicationListener<ContextRefreshedEvent> {
 
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
-		// 避免重复索引
+		// Avoid duplicate indexing
 		if (indexed) {
 			log.debug("Tools already indexed, skipping");
 			return;
@@ -60,7 +60,7 @@ public class ToolIndexer implements ApplicationListener<ContextRefreshedEvent> {
 		ApplicationContext context = event.getApplicationContext();
 
 		try {
-			// 收集所有 ToolCallback beans
+			// Collect all ToolCallback beans
 			Map<String, ToolCallback> toolBeans = context.getBeansOfType(ToolCallback.class);
 
 			if (toolBeans.isEmpty()) {
@@ -70,7 +70,7 @@ public class ToolIndexer implements ApplicationListener<ContextRefreshedEvent> {
 
 			List<ToolCallback> tools = new ArrayList<>(toolBeans.values());
 
-			// 过滤掉 tool_search 自身，避免循环引用
+			// Filter out tool_search itself to avoid circular reference
 			tools.removeIf(tool -> ToolSearchConstants.TOOL_NAME.equals(tool.getToolDefinition().name()));
 
 			if (tools.isEmpty()) {
@@ -80,14 +80,14 @@ public class ToolIndexer implements ApplicationListener<ContextRefreshedEvent> {
 
 			log.info("Auto-indexing {} tools...", tools.size());
 
-			// 索引所有工具
+			// Index all tools
 			toolSearcher.indexTools(tools);
 
 			indexed = true;
 
 			log.info("Successfully auto-indexed {} tools", tools.size());
 
-			// 打印索引的工具列表
+			// Print the list of indexed tools
 			if (log.isDebugEnabled()) {
 				tools.forEach(tool -> log.debug("  - {}: {}", tool.getToolDefinition().name(),
 						tool.getToolDefinition().description()));

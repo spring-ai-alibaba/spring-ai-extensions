@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.function.FunctionToolCallback;
 
 /**
- * 工具搜索工具构建器
+ * Tool search tool builder for creating tool search functionality.
  */
 public class ToolSearchTool {
 
@@ -33,21 +33,13 @@ public class ToolSearchTool {
 			- "weather" - find weather-related tools
 			- "database query" - find tools for querying databases
 			- "file operations" - find file manipulation tools
-
-			使用关键词或描述搜索可用工具。
-			当你需要某个工具但当前不可用时使用此工具。
-
-			示例查询：
-			- "天气" - 查找天气相关工具
-			- "数据库查询" - 查找数据库查询工具
-			- "文件操作" - 查找文件操作工具
 			""";
 
 	/**
-	 * 创建工具搜索工具的构建器
+	 * Create a builder for the tool search tool.
 	 *
-	 * @param toolSearcher 工具搜索器
-	 * @return 构建器实例
+	 * @param toolSearcher the tool searcher
+	 * @return builder instance
 	 */
 	public static Builder builder(ToolSearcher toolSearcher) {
 		return new Builder(toolSearcher);
@@ -83,9 +75,9 @@ public class ToolSearchTool {
 		}
 
 		/**
-		 * 构建 ToolCallback
+		 * Build the ToolCallback.
 		 *
-		 * @return ToolCallback 实例
+		 * @return ToolCallback instance
 		 */
 		public ToolCallback build() {
 			ToolSearchService service = new ToolSearchService(toolSearcher, maxResults);

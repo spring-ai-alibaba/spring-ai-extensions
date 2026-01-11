@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 工具搜索服务
+ * Tool search service for searching and discovering available tools.
  */
 public class ToolSearchService implements Function<ToolSearchService.Request, ToolSearchService.Response> {
 
@@ -45,14 +45,14 @@ public class ToolSearchService implements Function<ToolSearchService.Request, To
 
 	@Override
 	public Response apply(Request request) {
-		// 输入验证
+		// Input validation
 		if (request.query() == null || request.query().trim().isEmpty()) {
 			log.warn("Empty query received");
 			return new Response(List.of(), 0, "Query cannot be empty");
 		}
 
 		String query = request.query().trim();
-		// 限制最大结果数，防止过大请求
+		// Limit maximum results to prevent overly large requests
 		int limit = request.maxResults() > 0 ? Math.min(request.maxResults(), 100) : maxResults;
 
 		try {
@@ -80,40 +80,40 @@ public class ToolSearchService implements Function<ToolSearchService.Request, To
 	}
 
 	/**
-	 * 工具搜索请求
+	 * Tool search request.
 	 */
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@JsonClassDescription("Tool search request")
 	public record Request(
-			@JsonProperty(required = true, value = "query") @JsonPropertyDescription("搜索查询关键词，用于查找相关工具 Search query keywords to find relevant tools") String query,
+			@JsonProperty(required = true, value = "query") @JsonPropertyDescription("Search query keywords to find relevant tools") String query,
 
-			@JsonProperty(required = false, value = "max_results") @JsonPropertyDescription("最大返回结果数，默认为5 Maximum number of results to return, default is 5") int maxResults) {
+			@JsonProperty(required = false, value = "max_results") @JsonPropertyDescription("Maximum number of results to return, default is 5") int maxResults) {
 	}
 
 	/**
-	 * 工具搜索响应
+	 * Tool search response.
 	 */
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@JsonClassDescription("Tool search response")
 	public record Response(
-			@JsonProperty(value = "tools") @JsonPropertyDescription("找到的工具列表 List of found tools") List<ToolInfo> tools,
+			@JsonProperty(value = "tools") @JsonPropertyDescription("List of found tools") List<ToolInfo> tools,
 
-			@JsonProperty(value = "total") @JsonPropertyDescription("找到的工具总数 Total number of tools found") int total,
+			@JsonProperty(value = "total") @JsonPropertyDescription("Total number of tools found") int total,
 
-			@JsonProperty(value = "error") @JsonPropertyDescription("错误信息（如果有） Error message if any") String error) {
+			@JsonProperty(value = "error") @JsonPropertyDescription("Error message if any") String error) {
 	}
 
 	/**
-	 * 工具信息
+	 * Tool information.
 	 */
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@JsonClassDescription("Tool information")
 	public record ToolInfo(
-			@JsonProperty(value = "name") @JsonPropertyDescription("工具名称 Tool name") String name,
+			@JsonProperty(value = "name") @JsonPropertyDescription("Tool name") String name,
 
-			@JsonProperty(value = "description") @JsonPropertyDescription("工具描述 Tool description") String description,
+			@JsonProperty(value = "description") @JsonPropertyDescription("Tool description") String description,
 
-			@JsonProperty(value = "schema") @JsonPropertyDescription("工具JSON Schema Tool JSON schema") String schema) {
+			@JsonProperty(value = "schema") @JsonPropertyDescription("Tool JSON schema") String schema) {
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,38 +18,38 @@ package com.alibaba.cloud.ai.toolcalling.toolsearch;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Tool Search 工具配置属性
+ * Configuration properties for Tool Search functionality.
  */
 @ConfigurationProperties(prefix = ToolSearchConstants.CONFIG_PREFIX)
 public class ToolSearchProperties {
 
 	/**
-	 * 是否启用工具搜索功能
+	 * Whether to enable tool search functionality.
 	 */
 	private boolean enabled = true;
 
 	/**
-	 * 默认最大搜索结果数
+	 * Default maximum number of search results.
 	 */
 	private int maxResults = ToolSearchConstants.DEFAULT_MAX_RESULTS;
 
 	/**
-	 * 字段权重配置 - 名称字段
+	 * Field weight configuration - name field.
 	 */
 	private float nameBoost = ToolSearchConstants.DEFAULT_NAME_BOOST;
 
 	/**
-	 * 字段权重配置 - 描述字段
+	 * Field weight configuration - description field.
 	 */
 	private float descriptionBoost = ToolSearchConstants.DEFAULT_DESCRIPTION_BOOST;
 
 	/**
-	 * 字段权重配置 - 参数字段
+	 * Field weight configuration - parameters field.
 	 */
 	private float parametersBoost = ToolSearchConstants.DEFAULT_PARAMETERS_BOOST;
 
 	/**
-	 * 是否在应用启动时自动索引所有可用工具
+	 * Whether to automatically index all available tools on application startup.
 	 */
 	private boolean autoIndex = true;
 
