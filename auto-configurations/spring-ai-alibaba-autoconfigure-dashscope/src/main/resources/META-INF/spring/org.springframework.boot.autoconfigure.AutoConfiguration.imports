@@ -6,3 +6,4 @@ com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeAudioSpeechAutoConfigurati
 com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeAudioTranscriptionAutoConfiguration
 com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeRerankAutoConfiguration
 com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeEmbeddingAutoConfiguration
+com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeAsyncToolCallingManagerAutoConfiguration
