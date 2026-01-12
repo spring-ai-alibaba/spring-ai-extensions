@@ -307,12 +307,18 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 	public List<Document> doSimilaritySearch(SearchRequest searchRequest) {
 		double scoreThreshold = searchRequest.getSimilarityThreshold();
 		boolean includeValues = searchRequest.hasFilterExpression();
+        String query = searchRequest.getQuery();
 		int topK = searchRequest.getTopK();
 		String filterExpress = null;
 		if (includeValues) {
 			filterExpress = (searchRequest.getFilterExpression() != null)
 					? this.filterExpressionConverter.convertExpression(searchRequest.getFilterExpression()) : "";
 		}
+
+        float[] embeddings = this.embeddingModel.embed(query);
+        List<Double> vector = IntStream.range(0, embeddings.length)
+                .mapToObj(i -> (double) embeddings[i])
+                .toList();
 
 		QueryCollectionDataRequest request = new QueryCollectionDataRequest()
 			.setDBInstanceId(this.config.getDbInstanceId())
@@ -322,8 +328,8 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 			.setCollection(this.collectionName)
 			.setIncludeValues(includeValues)
 			.setMetrics(this.config.getMetrics())
-			.setVector(null)
-			.setContent(searchRequest.getQuery())
+			.setVector(vector)
+			.setContent(query)
 			.setTopK((long) topK)
 			.setFilter(filterExpress);
 		try {
