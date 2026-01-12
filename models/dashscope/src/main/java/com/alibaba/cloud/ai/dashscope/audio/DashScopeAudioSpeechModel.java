@@ -30,6 +30,7 @@ import org.springframework.ai.retry.RetryUtils;
 import org.springframework.retry.support.RetryTemplate;
 import reactor.core.publisher.Flux;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,11 +72,30 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
 
 	@Override
 	public TextToSpeechResponse call(TextToSpeechPrompt prompt) {
-		Flux<TextToSpeechResponse> flux = this.stream(prompt);
-		return flux.flatMapIterable(TextToSpeechResponse::getResults)
-			.collectList()
-			.map(TextToSpeechResponse::new)
-			.block();
+        String taskId = UUID.randomUUID().toString();
+        DashScopeAudioSpeechApi.Request runTaskRequest = this.createRequest(prompt, taskId,
+                DashScopeWebSocketClient.EventType.RUN_TASK);
+
+        logger.info("send run-task");
+        return this.retryTemplate.execute(ctx -> this.audioSpeechApi.streamBinaryOut(runTaskRequest)
+                .collectList()
+                .map(byteBuffers -> {
+                    // combine all byte buffers
+                    ByteBuffer combined = ByteBuffer.allocate(byteBuffers.stream()
+                            .mapToInt(ByteBuffer::remaining)
+                            .sum());
+
+                    for (ByteBuffer byteBuffer : byteBuffers) {
+                        combined.put(byteBuffer);
+                    }
+
+                    combined.flip();
+
+                    byte[] data = new byte[combined.remaining()];
+                    combined.get(data);
+                    return new TextToSpeechResponse(List.of(new Speech(data)));
+                })
+                .block());
 	}
 
 	@Override
