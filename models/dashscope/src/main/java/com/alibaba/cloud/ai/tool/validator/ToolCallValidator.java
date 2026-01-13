@@ -24,7 +24,7 @@ import java.util.List;
  * Strategy interface for validating tool calls.
  *
  * This interface allows different validation strategies to be applied
- * based on the context (sync vs streaming, different finish reasons, etc.). *
+ * based on the context (sync vs streaming, different finish reasons, etc.).
  *
  * @author gccszs
  * @since 2026/01/13
