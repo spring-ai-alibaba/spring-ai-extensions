@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,13 @@ import org.springframework.core.env.Environment;
  */
 @ConfigurationProperties(prefix = NacosMcpRegisterProperties.CONFIG_PREFIX)
 public class NacosMcpRegisterProperties {
-	
+
 	private static final Logger log = LoggerFactory.getLogger(NacosMcpRegisterProperties.class);
 
 	public static final String CONFIG_PREFIX = "spring.ai.alibaba.mcp.nacos.register";
-	
+
 	String host;
-	
+
 	int port = -1;
 
 	String serviceGroup;
@@ -91,23 +91,23 @@ public class NacosMcpRegisterProperties {
 	public void setServiceName(String serviceName) {
 		this.serviceName = serviceName;
 	}
-	
+
 	public String getHost() {
 		return host;
 	}
-	
+
 	public void setHost(String host) {
 		this.host = host;
 	}
-	
+
 	public int getPort() {
 		return port;
 	}
-	
+
 	public void setPort(int port) {
 		this.port = port;
 	}
-	
+
 	@PostConstruct
 	public void init() throws Exception {
 		if (StringUtils.isBlank(this.sseExportContextPath)) {
@@ -116,7 +116,7 @@ public class NacosMcpRegisterProperties {
 				this.sseExportContextPath = path;
 			}
 		}
-		
+
 		String  ipFromEnv = environment.getProperty("NACOS_MCP_SERVER_HOST","");
 		if(!StringUtils.isEmpty(ipFromEnv)){
 			this.host = ipFromEnv;

@@ -24,7 +24,7 @@
     <dependency>
       <groupId>com.alibaba.cloud.ai</groupId>
       <artifactId>spring-ai-extensions-bom</artifactId>
-      <version>1.1.0.0-RC2</version>
+      <version>1.1.2.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>

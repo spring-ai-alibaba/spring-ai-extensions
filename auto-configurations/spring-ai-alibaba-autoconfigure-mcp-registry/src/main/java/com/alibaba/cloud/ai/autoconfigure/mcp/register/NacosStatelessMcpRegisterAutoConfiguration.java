@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ import java.util.Properties;
 @Conditional({ McpServerStdioDisabledCondition.class,
         McpServerStatelessAutoConfiguration.EnabledStatelessServerCondition.class })
 public class NacosStatelessMcpRegisterAutoConfiguration {
-    
+
     @Bean
     @ConditionalOnMissingBean(NacosMcpOperationService.class)
     public NacosMcpOperationService nacosMcpOperationService(NacosMcpProperties nacosMcpProperties) {
@@ -62,7 +62,7 @@ public class NacosStatelessMcpRegisterAutoConfiguration {
             throw new RuntimeException(e);
         }
     }
-    
+
     @Bean
     @ConditionalOnProperty(prefix = McpServerProperties.CONFIG_PREFIX, name = "type", havingValue = "SYNC",
             matchIfMissing = true)
@@ -77,7 +77,7 @@ public class NacosStatelessMcpRegisterAutoConfiguration {
         return getNacosMcpRegister(nacosMcpOperationService, mcpStatelessAsyncServer, nacosMcpProperties,
                 nacosMcpRegistryProperties, mcpServerProperties, mcpServerSseProperties, applicationContext);
     }
-    
+
     @Bean
     //	@ConditionalOnBean(McpAsyncServer.class)
     @ConditionalOnProperty(prefix = McpServerProperties.CONFIG_PREFIX, name = "type", havingValue = "ASYNC")
@@ -88,8 +88,8 @@ public class NacosStatelessMcpRegisterAutoConfiguration {
         return getNacosMcpRegister(nacosMcpOperationService, mcpStatelessAsyncServer, nacosMcpProperties,
                 nacosMcpRegistryProperties, mcpServerProperties, mcpServerSseProperties, applicationContext);
     }
-    
-    
+
+
     private NacosStatelessMcpRegister getNacosMcpRegister(NacosMcpOperationService nacosMcpOperationService,
             McpStatelessAsyncServer mcpStatelessAsyncServer, NacosMcpProperties nacosMcpProperties,
             NacosMcpRegisterProperties nacosMcpRegistryProperties, McpServerProperties mcpServerProperties, McpServerSseProperties mcpServerSseProperties,
@@ -97,5 +97,5 @@ public class NacosStatelessMcpRegisterAutoConfiguration {
         return new NacosStatelessMcpRegister(nacosMcpOperationService, mcpStatelessAsyncServer, nacosMcpProperties, nacosMcpRegistryProperties,
                 mcpServerProperties, mcpServerSseProperties, applicationContext ,AiConstants.Mcp.MCP_PROTOCOL_STREAMABLE);
     }
-    
+
 }

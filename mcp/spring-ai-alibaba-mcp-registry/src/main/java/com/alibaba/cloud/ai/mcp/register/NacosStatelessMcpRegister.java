@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,39 +59,39 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 public class NacosStatelessMcpRegister implements ApplicationListener<WebServerInitializedEvent> {
-    
+
     private static final Logger log = LoggerFactory.getLogger(NacosMcpRegister.class);
-    
+
     private String type;
-    
+
     private NacosMcpRegisterProperties nacosMcpRegistryProperties;
-    
+
     private NacosMcpProperties nacosMcpProperties;
-    
+
     private McpSchema.Implementation serverInfo;
-    
+
     private McpStatelessAsyncServer mcpStatelessAsyncServer;
-    
+
     private CopyOnWriteArrayList<McpStatelessServerFeatures.AsyncToolSpecification> tools;
-    
+
     private Map<String, McpToolMeta> toolsMeta;
-    
+
     private McpSchema.ServerCapabilities serverCapabilities;
-    
+
     private McpServerProperties mcpServerProperties;
-    
+
     private McpServerSseProperties mcpServerSseProperties;
-    
+
     private ApplicationContext applicationContext;
-    
+
     private McpServerStreamableHttpProperties mcpServerStreamableHttpProperties;
-    
+
     private NacosMcpOperationService nacosMcpOperationService;
-    
+
     private McpServerDetailInfo serverDetailInfo;
-    
+
     private boolean success = false;
-    
+
     public NacosStatelessMcpRegister(NacosMcpOperationService nacosMcpOperationService,
             McpStatelessAsyncServer mcpStatelessAsyncServer, NacosMcpProperties nacosMcpProperties,
             NacosMcpRegisterProperties nacosMcpRegistryProperties, McpServerProperties mcpServerProperties,
@@ -107,22 +107,22 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
         this.applicationContext = applicationContext;
         this.mcpServerStreamableHttpProperties = this.applicationContext.getBean(
                 McpServerStreamableHttpProperties.class);
-        
+
         try {
             if (StringUtils.isBlank(this.mcpServerProperties.getVersion())) {
                 throw new IllegalArgumentException(
                         "[Nacos MCP Register] The version number of Mcp Server is empty; you need to specify a version number.");
             }
-            
+
             this.serverInfo = mcpStatelessAsyncServer.getServerInfo();
             this.serverCapabilities = mcpStatelessAsyncServer.getServerCapabilities();
-            
+
             Field toolsField = McpStatelessAsyncServer.class.getDeclaredField("tools");
             toolsField.setAccessible(true);
             this.tools = (CopyOnWriteArrayList<McpStatelessServerFeatures.AsyncToolSpecification>) toolsField.get(
                     this.mcpStatelessAsyncServer);
             this.toolsMeta = new HashMap<>();
-            
+
             McpServerDetailInfo serverDetailInfo = null;
             try {
                 serverDetailInfo = this.nacosMcpOperationService.getServerDetail(this.serverInfo.name(),
@@ -153,7 +153,7 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
                 this.success = true;
                 return;
             }
-            
+
             McpToolSpecification mcpToolSpec = new McpToolSpecification();
             if (this.serverCapabilities.tools() != null) {
                 List<McpSchema.Tool> toolsNeedtoRegister = this.tools.stream()
@@ -173,7 +173,7 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
                 description = this.serverInfo.name();
             }
             serverBasicInfo.setDescription(description);
-            
+
             McpEndpointSpec endpointSpec = new McpEndpointSpec();
             if (StringUtils.equals(this.type, AiConstants.Mcp.MCP_PROTOCOL_STDIO)) {
                 serverBasicInfo.setProtocol(AiConstants.Mcp.MCP_PROTOCOL_STDIO);
@@ -187,13 +187,13 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
                                 : this.nacosMcpRegistryProperties.getServiceGroup();
                 endpointSpecData.put("groupName", groupName);
                 endpointSpec.setData(endpointSpecData);
-                
+
                 McpServerRemoteServiceConfig remoteServerConfigInfo = new McpServerRemoteServiceConfig();
                 String contextPath = this.nacosMcpRegistryProperties.getSseExportContextPath();
                 if (StringUtils.isBlank(contextPath)) {
                     contextPath = "";
                 }
-                
+
                 if (StringUtils.equals(this.type, AiConstants.Mcp.MCP_PROTOCOL_SSE)) {
                     remoteServerConfigInfo.setExportPath(contextPath + this.mcpServerSseProperties.getSseEndpoint());
                     serverBasicInfo.setRemoteServerConfig(remoteServerConfigInfo);
@@ -241,7 +241,7 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
             log.error("[Nacos MCP Register] Failed to register mcp server to nacos", e);
         }
     }
-    
+
     private void subscribe() {
         nacosMcpOperationService.subscribeNacosMcpServer(this.serverInfo.name() + "::" + this.serverInfo.version(),
                 (mcpServerDetailInfo) -> {
@@ -254,7 +254,7 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
                     }
                 });
     }
-    
+
     private void updateToolDescription(McpStatelessServerFeatures.AsyncToolSpecification localToolRegistration,
             McpSchema.Tool toolInNacos,
             List<McpStatelessServerFeatures.AsyncToolSpecification> toolsRegistrationNeedToUpdate) {
@@ -267,12 +267,12 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
         Map<String, Object> localInputSchemaMap = JacksonUtils.toObj(localInputSchemaString, new TypeReference<>() {
         });
         Map<String, Object> localProperties = (Map<String, Object>) localInputSchemaMap.get("properties");
-        
+
         String nacosInputSchemaString = JacksonUtils.toJson(toolInNacos.inputSchema());
         Map<Object, Object> nacosInputSchemaMap = JacksonUtils.toObj(nacosInputSchemaString, new TypeReference<>() {
         });
         Map<String, Object> nacosProperties = (Map<String, Object>) nacosInputSchemaMap.get("properties");
-        
+
         for (String key : localProperties.keySet()) {
             if (nacosProperties.containsKey(key)) {
                 Map<String, Object> localProperty = (Map<String, Object>) localProperties.get(key);
@@ -285,7 +285,7 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
                 }
             }
         }
-        
+
         McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema("object", localInputSchemaMap, localToolRegistration.tool().inputSchema()
                 .required(), localToolRegistration.tool().inputSchema().additionalProperties(), localToolRegistration.tool().inputSchema().defs(),
                 localToolRegistration.tool().inputSchema().definitions());
@@ -300,9 +300,9 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
             toolsRegistrationNeedToUpdate.add(new McpStatelessServerFeatures.AsyncToolSpecification(toolNeededUpdate,
                     localToolRegistration.callHandler()));
         }
-        
+
     }
-    
+
     private void updateTools(McpServerDetailInfo mcpServerDetailInfo) {
         try {
             boolean changed = false;
@@ -352,12 +352,12 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
             log.error("[Nacos MCP Register] Failed to update local tools according to nacos", e);
         }
     }
-    
+
     public void notifyToolsChanged() {
         return;
     }
-    
-    
+
+
     @Override
     public void onApplicationEvent(WebServerInitializedEvent event) {
         if ("stdio".equals(this.type) || !nacosMcpRegistryProperties.isServiceRegister() || !this.success) {
@@ -398,9 +398,9 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
         } catch (NacosException e) {
             log.error("[Nacos MCP Register] Failed to register mcp server endpoint to nacos", e);
         }
-        
+
     }
-    
+
     private CheckCompatibleResult checkToolsCompatible(McpServerDetailInfo serverDetailInfo) {
         if (serverDetailInfo.getToolSpec() == null || serverDetailInfo.getToolSpec().getTools() == null
                 || serverDetailInfo.getToolSpec().getTools().isEmpty()) {
@@ -426,7 +426,7 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
         }
         return new CheckCompatibleResult(true);
     }
-    
+
     private CheckCompatibleResult checkCompatible(McpServerDetailInfo serverDetailInfo) {
         log.info("[Nacos MCP Register] Checking compatible for mcp server");
         if (!StringUtils.equals(this.serverInfo.version(), serverDetailInfo.getVersionDetail().getVersion())) {
@@ -447,7 +447,7 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
         }
         return new CheckCompatibleResult(true);
     }
-    
+
     private boolean isServiceRefSame(McpServiceRef serviceRef) {
         if (!StringUtils.isBlank(this.nacosMcpRegistryProperties.getServiceName()) && !StringUtils.equals(
                 serviceRef.getServiceName(), this.nacosMcpRegistryProperties.getServiceName())) {
@@ -459,12 +459,12 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
         }
         return StringUtils.equals(serviceRef.getNamespaceId(), this.nacosMcpProperties.getNamespace());
     }
-    
+
     private String getRegisterServiceName() {
         return StringUtils.isBlank(this.nacosMcpRegistryProperties.getServiceName()) ? this.serverInfo.name() + "::"
                 + this.serverInfo.version() : this.nacosMcpRegistryProperties.getServiceName();
     }
-    
+
     private boolean compareToolsMeta(Map<String, McpToolMeta> toolsMeta) {
         boolean changed = false;
         if (this.toolsMeta == null && toolsMeta != null || this.toolsMeta != null && toolsMeta == null) {
@@ -483,5 +483,5 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
         }
         return changed;
     }
-    
+
 }

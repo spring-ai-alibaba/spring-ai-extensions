@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -307,12 +307,18 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 	public List<Document> doSimilaritySearch(SearchRequest searchRequest) {
 		double scoreThreshold = searchRequest.getSimilarityThreshold();
 		boolean includeValues = searchRequest.hasFilterExpression();
+        String query = searchRequest.getQuery();
 		int topK = searchRequest.getTopK();
 		String filterExpress = null;
 		if (includeValues) {
 			filterExpress = (searchRequest.getFilterExpression() != null)
 					? this.filterExpressionConverter.convertExpression(searchRequest.getFilterExpression()) : "";
 		}
+
+        float[] embeddings = this.embeddingModel.embed(query);
+        List<Double> vector = IntStream.range(0, embeddings.length)
+                .mapToObj(i -> (double) embeddings[i])
+                .toList();
 
 		QueryCollectionDataRequest request = new QueryCollectionDataRequest()
 			.setDBInstanceId(this.config.getDbInstanceId())
@@ -322,8 +328,8 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 			.setCollection(this.collectionName)
 			.setIncludeValues(includeValues)
 			.setMetrics(this.config.getMetrics())
-			.setVector(null)
-			.setContent(searchRequest.getQuery())
+			.setVector(vector)
+			.setContent(query)
 			.setTopK((long) topK)
 			.setFilter(filterExpress);
 		try {
@@ -338,7 +344,11 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 					Map<String, Object> metadataJson = objectMapper.readValue(metadata.get(METADATA_FIELD_NAME),
 							new TypeReference<HashMap<String, Object>>() {
 							});
-					Document doc = new Document(pageContent, metadataJson);
+					Document doc = Document.builder()
+                            .text(pageContent)
+                            .metadata(metadataJson)
+                            .score(match.getScore())
+                            .build();
 					documents.add(doc);
 				}
 			}
