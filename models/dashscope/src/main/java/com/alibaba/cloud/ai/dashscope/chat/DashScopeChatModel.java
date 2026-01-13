@@ -31,8 +31,8 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionReques
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.FunctionTool;
 import com.alibaba.cloud.ai.dashscope.chat.observation.DashScopeChatModelObservationConvention;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
-import com.alibaba.cloud.ai.dashscope.validator.DefaultToolCallValidator;
-import com.alibaba.cloud.ai.dashscope.validator.ToolCallValidator;
+import com.alibaba.cloud.ai.tool.DefaultToolCallValidator;
+import com.alibaba.cloud.ai.tool.ToolCallValidator;
 import com.alibaba.cloud.ai.tool.observation.inner.ToolCallReactiveContextHolder;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
