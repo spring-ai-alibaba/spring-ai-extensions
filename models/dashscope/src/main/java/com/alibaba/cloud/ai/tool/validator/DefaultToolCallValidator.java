@@ -18,9 +18,9 @@ package com.alibaba.cloud.ai.tool.validator;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionFinishReason;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ToolCall;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.util.json.JsonParser;
 
 import java.util.List;
 
@@ -37,7 +37,6 @@ public class DefaultToolCallValidator implements ToolCallValidator {
 
 	private static final Logger logger = LoggerFactory.getLogger(DefaultToolCallValidator.class);
 
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 	@Override
 	public List<ToolCall> validate(List<ToolCall> toolCalls, ChatCompletionFinishReason finishReason) {
@@ -97,7 +96,7 @@ public class DefaultToolCallValidator implements ToolCallValidator {
 		}
 
 		try {
-			OBJECT_MAPPER.readTree(json);
+			JsonParser.getObjectMapper().readTree(json);
 			return true;
 		}
 		catch (JsonProcessingException e) {

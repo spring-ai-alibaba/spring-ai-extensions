@@ -126,16 +126,18 @@ public class DashScopeChatModel implements ChatModel {
 
 	private final ToolCallingManager toolCallingManager;
 
+    /**
+     * The tool call validator used to filter out invalid tool calls.
+     */
+    private final ToolCallValidator toolCallingValidator;
+
 	/**
 	 * The tool execution eligibility predicate used to determine if a tool can be
 	 * executed.
 	 */
 	private final ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate;
 
-	/**
-	 * The tool call validator used to filter out invalid tool calls.
-	 */
-	private final ToolCallValidator toolCallValidator;
+
 
 	/**
 	 * Conventions to use for generating observations.
@@ -160,7 +162,7 @@ public class DashScopeChatModel implements ChatModel {
 
 	public DashScopeChatModel(DashScopeApi dashscopeApi, DashScopeChatOptions defaultOptions,
 			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
-			ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate, ToolCallValidator toolCallValidator) {
+			ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate, ToolCallValidator toolCallingValidator) {
 
 		Assert.notNull(dashscopeApi, "dashscopeApi cannot be null");
 		Assert.notNull(defaultOptions, "defaultOptions cannot be null");
@@ -168,7 +170,7 @@ public class DashScopeChatModel implements ChatModel {
 		Assert.notNull(retryTemplate, "retryTemplate cannot be null");
 		Assert.notNull(observationRegistry, "observationRegistry cannot be null");
 		Assert.notNull(toolExecutionEligibilityPredicate, "toolExecutionEligibilityPredicate cannot be null");
-		Assert.notNull(toolCallValidator, "toolCallValidator cannot be null");
+		Assert.notNull(toolCallingValidator, "toolCallingValidator cannot be null");
 
 		this.dashscopeApi = dashscopeApi;
 		this.defaultOptions = defaultOptions;
@@ -176,7 +178,7 @@ public class DashScopeChatModel implements ChatModel {
 		this.retryTemplate = retryTemplate;
 		this.observationRegistry = observationRegistry;
 		this.toolExecutionEligibilityPredicate = toolExecutionEligibilityPredicate;
-		this.toolCallValidator = toolCallValidator;
+		this.toolCallingValidator = toolCallingValidator;
 	}
 
 	@Override
@@ -352,7 +354,7 @@ public class DashScopeChatModel implements ChatModel {
 					"search_info", Objects.isNull(searchInfo) ? "" : searchInfo
 			);
 			// @formatter:on
-			return buildGeneration(choice, metadata, request, toolCallValidator);
+			return buildGeneration(choice, metadata, request);
 		}).toList();
 
         DashScopeApiSpec.TokenUsage usage = chatCompletion.usage();
@@ -370,11 +372,11 @@ public class DashScopeChatModel implements ChatModel {
 		this.defaultOptions = options;
 	}
 
-	private static Generation buildGeneration(Choice choice, Map<String, Object> metadata,
-			ChatCompletionRequest request, ToolCallValidator toolCallValidator) {
+	private Generation buildGeneration(Choice choice, Map<String, Object> metadata,
+			ChatCompletionRequest request) {
 		// Use the validator to filter and validate tool calls
 		List<DashScopeApiSpec.ChatCompletionMessage.ToolCall> validatedToolCalls =
-				toolCallValidator.validate(choice.message().toolCalls(), choice.finishReason());
+				toolCallingValidator.validate(choice.message().toolCalls(), choice.finishReason());
 
 		List<AssistantMessage.ToolCall> toolCalls = validatedToolCalls.stream()
 				.map(toolCall -> new AssistantMessage.ToolCall(toolCall.id(), "function",
@@ -389,6 +391,7 @@ public class DashScopeChatModel implements ChatModel {
 			.properties(metadata)
 			.toolCalls(toolCalls)
 			.build();
+
 		return new Generation(assistantMessage, generationMetadataBuilder.build());
 	}
 
@@ -750,7 +753,7 @@ public class DashScopeChatModel implements ChatModel {
 			this.retryTemplate = dashScopeChatModel.retryTemplate;
 			this.observationRegistry = dashScopeChatModel.observationRegistry;
 			this.toolExecutionEligibilityPredicate = dashScopeChatModel.toolExecutionEligibilityPredicate;
-			this.toolCallValidator = dashScopeChatModel.toolCallValidator;
+			this.toolCallValidator = dashScopeChatModel.toolCallingValidator;
 		}
 
 		private DashScopeApi dashScopeApi;
