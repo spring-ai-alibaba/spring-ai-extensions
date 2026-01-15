@@ -20,9 +20,13 @@ on:
   push:
     branches:
       - main
+      - 1.1.x
+      - 2.x
   pull_request:
     branches:
       - main
+      - 1.1.x
+      - 2.x
 
 jobs:
   license-check:
