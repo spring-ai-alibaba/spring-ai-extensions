@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.AudioTranscriptionModel;
@@ -132,17 +133,18 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	@Override
 	public Flux<AudioTranscriptionResponse> stream(AudioTranscriptionPrompt prompt) {
 		String taskId = UUID.randomUUID().toString();
-		DashScopeAudioTranscriptionApi.RealtimeRequest runTaskRequest = this.createRealtimeRequest(prompt, taskId,
-			DashScopeWebSocketClient.EventType.RUN_TASK);
 
         // Ensure WebSocket connection is established before sending run-task
         logger.info("Ensuring WebSocket connection is ready, taskId={}", taskId);
         try {
-            this.audioTranscriptionApi.ensureWebSocketConnectionReady(10, java.util.concurrent.TimeUnit.SECONDS);
+            this.audioTranscriptionApi.ensureWebSocketConnectionReady(10, TimeUnit.SECONDS);
         } catch (DashScopeException e) {
-            logger.error("Failed to establish WebSocket connection: {}", e.getMessage());
+            logger.error("Failed to establish WebSocket connection", e);
             return Flux.error(e);
         }
+
+        DashScopeAudioTranscriptionApi.RealtimeRequest runTaskRequest = this.createRealtimeRequest(prompt, taskId,
+                DashScopeWebSocketClient.EventType.RUN_TASK);
 
 		logger.info("send run-task, taskId={}", taskId);
 		this.audioTranscriptionApi.realtimeSendTask(runTaskRequest);

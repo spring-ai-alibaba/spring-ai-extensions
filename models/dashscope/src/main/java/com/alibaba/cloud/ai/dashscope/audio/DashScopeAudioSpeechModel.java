@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.audio;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClient;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ import reactor.core.publisher.Flux;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Audio Speech: input text, output audio.
@@ -101,6 +103,16 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
 	@Override
 	public Flux<TextToSpeechResponse> stream(TextToSpeechPrompt prompt) {
 		String taskId = UUID.randomUUID().toString();
+
+        // Ensure WebSocket connection is established before sending run-task
+        logger.info("Ensuring WebSocket connection is ready, taskId={}", taskId);
+        try {
+            this.audioSpeechApi.ensureWebSocketConnectionReady(10, TimeUnit.SECONDS);
+        } catch (DashScopeException e) {
+            logger.error("Failed to establish WebSocket connection", e);
+            return Flux.error(e);
+        }
+
 		DashScopeAudioSpeechApi.Request runTaskRequest = this.createRequest(prompt, taskId,
 			DashScopeWebSocketClient.EventType.RUN_TASK);
 

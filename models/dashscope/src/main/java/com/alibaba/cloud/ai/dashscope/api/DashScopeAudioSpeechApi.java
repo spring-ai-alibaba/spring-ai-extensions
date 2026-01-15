@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
+import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClient;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,6 +30,7 @@ import reactor.core.publisher.Flux;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_WEBSOCKET_URL;
 
@@ -69,6 +71,14 @@ public class DashScopeAudioSpeechApi {
 				.build();
 	}
 
+    public void ensureWebSocketConnectionReady(long timeout, TimeUnit unit) {
+        try {
+            this.webSocketClient.ensureConnectionReady(timeout, unit);
+        } catch (Exception e) {
+            throw new DashScopeException("Failed to establish WebSocket connection", e);
+        }
+    }
+
 	public Flux<ByteBuffer> streamBinaryOut(Request request) {
 		try {
 			String message = this.objectMapper.writeValueAsString(request);
@@ -79,7 +89,7 @@ public class DashScopeAudioSpeechApi {
 		}
 	}
 
-	// @formatter:off
+    // @formatter:off
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record Request(
 			@JsonProperty("header") RequestHeader header,

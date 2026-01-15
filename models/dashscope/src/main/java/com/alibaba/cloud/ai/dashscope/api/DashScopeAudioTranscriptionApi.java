@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
@@ -143,6 +144,14 @@ public class DashScopeAudioTranscriptionApi {
 		return new Builder();
 	}
 
+    public void ensureWebSocketConnectionReady(long timeout, TimeUnit unit) {
+        try {
+            this.webSocketClient.ensureConnectionReady(timeout, unit);
+        } catch (Exception e) {
+            throw new DashScopeException("Failed to establish WebSocket connection", e);
+        }
+    }
+
 	public ResponseEntity<Response> submitTask(DashScopeAudioTranscriptionApi.Request request) {
 		return this.restClient.post()
 			.uri(DashScopeApiConstants.AUDIO_TRANSCRIPTION_RESTFUL_URL)
@@ -166,14 +175,6 @@ public class DashScopeAudioTranscriptionApi {
 			throw new RuntimeException(e);
 		}
 	}
-
-    public void ensureWebSocketConnectionReady(long timeout, java.util.concurrent.TimeUnit unit) {
-        try {
-            this.webSocketClient.ensureConnectionReady(timeout, unit);
-        } catch (Exception e) {
-            throw new DashScopeException("Failed to establish WebSocket connection", e);
-        }
-    }
 
 	public Flux<RealtimeResponse> realtimeStream(Flux<ByteBuffer> audio) {
 		return this.webSocketClient.streamTextOut(audio)
