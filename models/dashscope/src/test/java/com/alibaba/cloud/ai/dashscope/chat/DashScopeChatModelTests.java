@@ -29,6 +29,8 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessag
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput.Choice;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionRequest;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchInfo;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchResult;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -697,6 +699,168 @@ class DashScopeChatModelTests {
         assertThat(jsonRequest).contains("\"enable_thinking\":" + true);
         assertThat(jsonRequest).contains("\"thinking_budget\":" + 50);
 
+    }
+
+    // for mock
+    private SearchInfo createMockSearchInfo() {
+        SearchResult searchResult = new SearchResult(
+                "Example Site",
+                "https://example.com/favicon.ico",
+                1,
+                "Example Title",
+                "https://example.com/page"
+        );
+        return new SearchInfo(List.of(searchResult), null);
+    }
+
+    @Test
+    void testCallPreservesSearchInfo() {
+
+        // Test that call() method preserves searchInfo in metadata
+        SearchInfo searchInfo = createMockSearchInfo();
+
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(
+                TEST_RESPONSE,
+                ChatCompletionMessage.Role.ASSISTANT
+        );
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
+        // Include searchInfo in the output
+        ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), searchInfo);
+        TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+        ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
+        ResponseEntity<ChatCompletion> responseEntity = ResponseEntity.ok(chatCompletion);
+
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any()))
+                .thenReturn(responseEntity);
+
+        // Create prompt
+        UserMessage message = UserMessage.builder().text(TEST_PROMPT).build();
+        Prompt prompt = new Prompt(message);
+
+        // Call the chat model
+        ChatResponse response = chatModel.call(prompt);
+
+        // Verify response
+        assertThat(response).isNotNull();
+        assertThat(response.getResult()).isNotNull();
+        assertThat(response.getResult().getOutput()).isNotNull();
+
+        // Verify searchInfo is preserved in metadata
+        Object searchInfoFromMetadata = response.getResult().getOutput().getMetadata().get("search_info");
+        assertThat(searchInfoFromMetadata)
+                .as("searchInfo should be present in call() response metadata")
+                .isNotNull()
+                .isInstanceOf(SearchInfo.class);
+
+        SearchInfo retrievedSearchInfo = (SearchInfo) searchInfoFromMetadata;
+        assertThat(retrievedSearchInfo.searchResults())
+                .as("searchInfo should contain search results")
+                .isNotEmpty();
+        assertThat(retrievedSearchInfo.searchResults().get(0).title())
+                .isEqualTo("Example Title");
+    }
+
+    @Test
+    void testStreamPreservesSearchInfo() {
+        // Test that stream() method preserves searchInfo in metadata
+        SearchInfo searchInfo = createMockSearchInfo();
+
+        // First chunk - partial response without searchInfo
+        ChatCompletionMessage chunkMessage1 = new ChatCompletionMessage(
+                "Hello ",
+                ChatCompletionMessage.Role.ASSISTANT
+        );
+        Choice choice1 = new Choice(null, chunkMessage1, null, 0);
+        ChatCompletionOutput output1 = new ChatCompletionOutput("Hello ", List.of(choice1), null);
+        ChatCompletionChunk chunk1 = new ChatCompletionChunk(TEST_REQUEST_ID, output1, null, null);
+
+        // Second chunk - final response WITH searchInfo
+        ChatCompletionMessage chunkMessage2 = new ChatCompletionMessage(
+                "World!",
+                ChatCompletionMessage.Role.ASSISTANT
+        );
+        Choice choice2 = new Choice(ChatCompletionFinishReason.STOP, chunkMessage2, null, 0);
+        // Include searchInfo in the final chunk's output
+        ChatCompletionOutput output2 = new ChatCompletionOutput("World!", List.of(choice2), searchInfo);
+        TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+        ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2, usage, null);
+
+        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any()))
+                .thenReturn(Flux.just(chunk1, chunk2));
+
+        // Create prompt
+        UserMessage message = UserMessage.builder().text(TEST_PROMPT).build();
+        Prompt prompt = new Prompt(message);
+
+        // Call the streaming API and verify
+        StepVerifier.create(chatModel.stream(prompt))
+                .assertNext(response -> {
+                    // First chunk - searchInfo is null, converted to empty string
+                    assertThat(response.getResult().getOutput().getText()).isEqualTo("Hello ");
+                    Object si = response.getResult().getOutput().getMetadata().get("search_info");
+                    assertThat(si).isEqualTo("");
+                })
+                .assertNext(response -> {
+                    // Second chunk should have searchInfo
+                    assertThat(response.getResult().getOutput().getText()).isEqualTo("World!");
+                    Object si = response.getResult().getOutput().getMetadata().get("search_info");
+                    assertThat(si)
+                            .as("searchInfo should be present in stream() response metadata")
+                            .isNotNull()
+                            .isNotEqualTo("")
+                            .isInstanceOf(SearchInfo.class);
+
+                    SearchInfo searchInfoResult = (SearchInfo) si;
+                    assertThat(searchInfoResult.searchResults()).isNotEmpty();
+                    assertThat(searchInfoResult.searchResults().get(0).title())
+                            .isEqualTo("Example Title");
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void testChunkToChatCompletionPreservesSearchInfo() {
+        // Test that chunk to completion conversion preserves searchInfo
+        SearchInfo searchInfo = createMockSearchInfo();
+
+        ChatCompletionMessage message = new ChatCompletionMessage(
+                TEST_RESPONSE,
+                ChatCompletionMessage.Role.ASSISTANT
+        );
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, message, null, 0);
+        ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), searchInfo);
+        TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+        ChatCompletionChunk chunk = new ChatCompletionChunk(TEST_REQUEST_ID, output, usage, null);
+
+        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any()))
+                .thenReturn(Flux.just(chunk));
+
+        // Create prompt
+        UserMessage userMessage = UserMessage.builder().text(TEST_PROMPT).build();
+        Prompt prompt = new Prompt(userMessage);
+
+        // Call the streaming API and collect all responses
+        List<ChatResponse> responses = chatModel.stream(prompt).collectList().block();
+
+        assertThat(responses)
+                .as("Should have received responses")
+                .isNotNull()
+                .isNotEmpty();
+
+        // Check the response contains searchInfo
+        ChatResponse lastResponse = responses.get(responses.size() - 1);
+        Object searchInfoFromMetadata = lastResponse.getResult().getOutput().getMetadata().get("search_info");
+
+        assertThat(searchInfoFromMetadata)
+                .as("searchInfo should be preserved after chunk to completion conversion")
+                .isNotNull()
+                .isNotEqualTo("")
+                .isInstanceOf(SearchInfo.class);
+
+        SearchInfo retrievedSearchInfo = (SearchInfo) searchInfoFromMetadata;
+        assertThat(retrievedSearchInfo.searchResults()).isNotEmpty();
+        assertThat(retrievedSearchInfo.searchResults().get(0).url())
+                .isEqualTo("https://example.com/page");
     }
 
 }

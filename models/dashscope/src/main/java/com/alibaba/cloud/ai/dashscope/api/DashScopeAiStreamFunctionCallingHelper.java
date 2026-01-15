@@ -68,20 +68,25 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		Choice currentChoice0 = current.output() == null ? null
 				: CollectionUtils.isEmpty(current.output().choices()) ? null : current.output().choices().get(0);
 
+		// Preserve searchInfo from current or previous chunk
+		DashScopeApiSpec.SearchInfo searchInfo = (current.output() != null && current.output().searchInfo() != null)
+				? current.output().searchInfo()
+				: (previous.output() != null ? previous.output().searchInfo() : null);
+
 		// compatibility of incremental_output false for streaming function call
 		if (!incrementalOutput && isStreamingToolFunctionCall(current)) {
 			if (!isStreamingToolFunctionCallFinish(current)) {
-				return new ChatCompletionChunk(id, new ChatCompletionOutput(null, List.of(), null), usage, null);
+				return new ChatCompletionChunk(id, new ChatCompletionOutput(null, List.of(), searchInfo), usage, null);
 			}
 			else {
 				List<Choice> choices = currentChoice0 == null ? List.of() : List.of(currentChoice0);
-				return new ChatCompletionChunk(id, new ChatCompletionOutput(null, choices, null), usage, null);
+				return new ChatCompletionChunk(id, new ChatCompletionOutput(null, choices, searchInfo), usage, null);
 			}
 		}
 
 		Choice choice = merge(previousChoice0, currentChoice0);
 		List<Choice> chunkChoices = choice == null ? List.of() : List.of(choice);
-		return new ChatCompletionChunk(id, new ChatCompletionOutput(null, chunkChoices, null), usage, null);
+		return new ChatCompletionChunk(id, new ChatCompletionOutput(null, chunkChoices, searchInfo), usage, null);
 	}
 
 	private Choice merge(Choice previous, Choice current) {

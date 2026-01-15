@@ -31,6 +31,7 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionReques
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.FunctionTool;
 import com.alibaba.cloud.ai.dashscope.chat.observation.DashScopeChatModelObservationConvention;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.tool.observation.inner.ToolCallReactiveContextHolder;
 import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
 import com.alibaba.cloud.ai.tool.validator.ToolCallValidator;
@@ -249,12 +250,18 @@ public class DashScopeChatModel implements ChatModel {
 		return this.internalStream(requestPrompt, null);
 	}
 
+    // @formatter:off
 	public Flux<ChatResponse> internalStream(Prompt prompt, ChatResponse previousChatResponse) {
-		return Flux.deferContextual(contextView -> {
+
+        return Flux.deferContextual(contextView -> {
 			ChatCompletionRequest request = createRequest(prompt, true);
 
 			Flux<ChatCompletionChunk> completionChunks = this.retryTemplate
-				.execute(ctx -> this.dashscopeApi.chatCompletionStream(request, getAdditionalHttpHeaders(prompt)));
+                    .execute(ctx -> this.dashscopeApi.chatCompletionStream(
+                            request,
+                            getAdditionalHttpHeaders(prompt)
+                    )
+            );
 
 			// For chunked responses, only the first chunk contains the choice role.
 			// The rest of the chunks with same ID share the same role.
@@ -266,62 +273,86 @@ public class DashScopeChatModel implements ChatModel {
 				.build();
 
 			Observation observation = ChatModelObservationDocumentation.CHAT_MODEL_OPERATION.observation(
-					this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
-					this.observationRegistry);
+					this.observationConvention,
+                    DEFAULT_OBSERVATION_CONVENTION,
+                    () -> observationContext,
+					this.observationRegistry
+            );
 
-			observation.parentObservation(contextView.getOrDefault(ObservationThreadLocalAccessor.KEY, null)).start();
+			observation.parentObservation(contextView.getOrDefault(
+                    ObservationThreadLocalAccessor.KEY,
+                    null)
+            ).start();
 
 			// Convert the ChatCompletionChunk into a ChatCompletion to be able to reuse
 			// the function call handling logic.
-			Flux<ChatResponse> chatResponse = completionChunks.map(this::chunkToChatCompletion)
-				.switchMap(chatCompletion -> Mono.just(chatCompletion)
-					.map(chatCompletion2 -> toChatResponse(chatCompletion2, previousChatResponse, request, roleMap)));
+			Flux<ChatResponse> chatResponse = completionChunks.map(this::chunkToChatCompletion).switchMap(
+                    chatCompletion -> Mono.just(chatCompletion)
+                            .map(chatCompletion2 -> toChatResponse(
+                                    chatCompletion2,
+                                    previousChatResponse,
+                                    request,
+                                    roleMap
+                            ))
+            );
 
-			// @formatter:off
 			Flux<ChatResponse> flux = chatResponse.flatMap(response -> {
 					if (toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
+
 						return Flux.deferContextual((ctx) -> {
+
 							ToolExecutionResult toolExecutionResult;
+
 							try {
 								ToolCallReactiveContextHolder.setContext(ctx);
 								toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
 							} finally {
 								ToolCallReactiveContextHolder.clearContext();
 							}
+
 							if (toolExecutionResult.returnDirect()) {
+
 								// Return tool execution result directly to the client.
 								return Flux.just(ChatResponse.builder().from(response)
 										.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
 										.build());
 							} else {
 								// Send the tool execution result back to the model.
-								return this.internalStream(new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions()),
-										response);
+								return this.internalStream(
+                                        new Prompt(
+                                                toolExecutionResult.conversationHistory(),
+                                                prompt.getOptions()
+                                        ),
+										response
+                                );
 							}
 						}).subscribeOn(Schedulers.boundedElastic());
-					}
-					else {
+					} else {
 						return Flux.just(response);
 					}
-				})
-				.doOnError(observation::error)
+				}).doOnError(observation::error)
 				.doFinally(s -> observation.stop())
 				.contextWrite(ctx -> ctx.put(ObservationThreadLocalAccessor.KEY, observation));
-			// @formatter:on
 
 			return new MessageAggregator().aggregate(flux, observationContext::setResponse);
 		});
 	}
 
 	private static String finishReasonToMetadataValue(DashScopeApiSpec.ChatCompletionFinishReason finishReason) {
-		if (finishReason == null || finishReason == DashScopeApiSpec.ChatCompletionFinishReason.NULL) {
+
+        if (finishReason == null || finishReason == DashScopeApiSpec.ChatCompletionFinishReason.NULL) {
 			return "";
 		}
+
 		return finishReason.name();
 	}
 
-	private ChatResponse toChatResponse(ChatCompletion chatCompletion, ChatResponse previousChatResponse,
-			ChatCompletionRequest request, ConcurrentHashMap<String, String> roleMap) {
+	private ChatResponse toChatResponse(
+            ChatCompletion chatCompletion,
+            ChatResponse previousChatResponse,
+			ChatCompletionRequest request,
+            ConcurrentHashMap<String, String> roleMap
+    ) {
 
 		if (chatCompletion == null) {
 			logger.warn("Null chat completion returned");
@@ -363,6 +394,7 @@ public class DashScopeChatModel implements ChatModel {
 
 		return new ChatResponse(generations, this.from(chatCompletion, accumulatedUsage));
 	}
+    // @formatter:on
 
 	public DashScopeChatOptions getDashScopeChatOptions() {
 		return this.defaultOptions;
@@ -404,12 +436,11 @@ public class DashScopeChatModel implements ChatModel {
 
 		// check chunk
 		if (Objects.isNull(chunk) || Objects.isNull(chunk.output())) {
-			throw new RuntimeException("LLM response chunk is null.");
+			throw new DashScopeException("LLM response chunk is null.");
 		}
 
-		return new ChatCompletion(chunk.requestId(),
-				new ChatCompletionOutput(chunk.output().text(), chunk.output().choices(), chunk.output().searchInfo()),
-				chunk.usage());
+		// Directly use chunk.output() to preserve all fields including searchInfo
+		return new ChatCompletion(chunk.requestId(), chunk.output(), chunk.usage());
 	}
 
 	private ChatResponseMetadata from(ChatCompletion result, Usage usage) {
