@@ -29,6 +29,7 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessag
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput.Choice;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionRequest;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchOptions;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchInfo;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchResult;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
@@ -861,6 +862,36 @@ class DashScopeChatModelTests {
         assertThat(retrievedSearchInfo.searchResults()).isNotEmpty();
         assertThat(retrievedSearchInfo.searchResults().get(0).url())
                 .isEqualTo("https://example.com/page");
+    }
+
+    @Test
+    void testCreateRequestWithStreamOptions() {
+        SearchOptions searchOptions = SearchOptions.builder()
+                .enableSource(false)
+                .enableCitation(false)
+                .citationFormat("[<number>]")
+                .forcedSearch(true)
+                .searchStrategy("turbo")
+                .enableSearchExtension(true)
+                .prependSearchResult(true)
+                .build();
+        DashScopeChatOptions runtimeOptions = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .searchOptions(searchOptions)
+                .build();
+        ChatCompletionRequest request = chatModel.createRequest(Prompt.builder()
+                .content(TEST_PROMPT)
+                .chatOptions(runtimeOptions)
+                .build(), true);
+
+        assertThat(request.model()).isEqualTo(TEST_MODEL);
+        assertThat(request.parameters().searchOptions().enableSource()).isFalse();
+        assertThat(request.parameters().searchOptions().enableCitation()).isFalse();
+        assertThat(request.parameters().searchOptions().citationFormat()).isEqualTo("[<number>]");
+        assertThat(request.parameters().searchOptions().forcedSearch()).isTrue();
+        assertThat(request.parameters().searchOptions().searchStrategy()).isEqualTo("turbo");
+        assertThat(request.parameters().searchOptions().enableSearchExtension()).isTrue();
+        assertThat(request.parameters().searchOptions().prependSearchResult()).isTrue();
     }
 
 }

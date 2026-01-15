@@ -1262,8 +1262,11 @@ public class DashScopeApiSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record SearchOptions(@JsonProperty("enable_source") Boolean enableSource,
                                 @JsonProperty("enable_citation") Boolean enableCitation,
-                                @JsonProperty("citation_format") String citationFormat, @JsonProperty("forced_search") Boolean forcedSearch,
-                                @JsonProperty("search_strategy") String searchStrategy) {
+                                @JsonProperty("citation_format") String citationFormat,
+                                @JsonProperty("forced_search") Boolean forcedSearch,
+                                @JsonProperty("search_strategy") String searchStrategy,
+                                @JsonProperty("enable_search_extension") Boolean enableSearchExtension,
+                                @JsonProperty("prepend_search_result") Boolean prependSearchResult) {
 
         public static Builder builder() {
             return new Builder();
@@ -1280,6 +1283,10 @@ public class DashScopeApiSpec {
             private Boolean forcedSearch;
 
             private String searchStrategy;
+
+            private Boolean enableSearchExtension;
+
+            private Boolean prependSearchResult;
 
             public Builder enableSource(Boolean enableSource) {
                 this.enableSource = enableSource;
@@ -1306,8 +1313,19 @@ public class DashScopeApiSpec {
                 return this;
             }
 
+            public Builder enableSearchExtension(Boolean enableSearchExtension) {
+                this.enableSearchExtension = enableSearchExtension;
+                return this;
+            }
+
+            public Builder prependSearchResult(Boolean prependSearchResult) {
+                this.prependSearchResult = prependSearchResult;
+                return this;
+            }
+
             public SearchOptions build() {
-                return new SearchOptions(enableSource, enableCitation, citationFormat, forcedSearch, searchStrategy);
+                return new SearchOptions(enableSource, enableCitation, citationFormat, forcedSearch,
+                        searchStrategy, enableSearchExtension, prependSearchResult);
             }
 
         }
