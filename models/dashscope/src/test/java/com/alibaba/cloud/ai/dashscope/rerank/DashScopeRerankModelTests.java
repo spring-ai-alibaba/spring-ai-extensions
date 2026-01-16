@@ -218,7 +218,9 @@ class DashScopeRerankModelTests {
 
     @Test
     void testBuilder() {
-        DashScopeRerankModel model1 = DashScopeRerankModel.builder().build();
+        DashScopeRerankModel model1 = DashScopeRerankModel.builder()
+                .dashScopeApi(dashScopeApi)
+                .build();
 
         DashScopeRerankModel model2 = DashScopeRerankModel.builder()
             .dashScopeApi(dashScopeApi)

@@ -191,7 +191,9 @@ class DashScopeImageModelTests {
 
     @Test
     void testBuilder() {
-        DashScopeImageModel model1 = DashScopeImageModel.builder().build();
+        DashScopeImageModel model1 = DashScopeImageModel.builder()
+                .dashScopeApi(dashScopeImageApi)
+                .build();
         DashScopeImageModel model2 = DashScopeImageModel.builder()
             .dashScopeApi(dashScopeImageApi)
             .defaultOptions(defaultOptions)
