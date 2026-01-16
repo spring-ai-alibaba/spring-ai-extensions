@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel.Builder;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletion;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionChunk;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionFinishReason;
@@ -33,8 +34,10 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchOptions;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchInfo;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchResult;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
+import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -45,6 +48,8 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.model.tool.ToolCallingManager;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
 import org.springframework.http.ResponseEntity;
@@ -894,4 +899,34 @@ class DashScopeChatModelTests {
         assertThat(request.parameters().searchOptions().prependSearchResult()).isTrue();
     }
 
+    @Test
+    void testBuilder() {
+        DashScopeChatModel model1 = DashScopeChatModel.builder()
+                .dashScopeApi(dashScopeApi)
+                .build();
+
+        DashScopeChatModel model2 = DashScopeChatModel.builder()
+                .dashScopeApi(dashScopeApi)
+                .defaultOptions(DashScopeChatOptions.builder()
+                        .model(TEST_MODEL)
+                        .build())
+                .toolCallingManager(ToolCallingManager.builder().build())
+                .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
+                .observationRegistry(ObservationRegistry.NOOP)
+                .toolCallValidator(new DefaultToolCallValidator())
+                .build();
+
+        DashScopeChatModel clone1 = model1.clone();
+        DashScopeChatModel clone2 = model2.clone();
+
+        Builder mutate1 = model1.mutate();
+        Builder mutate2 = model2.mutate();
+
+        assertThat(model1).isNotNull();
+        assertThat(model2).isNotNull();
+        assertThat(clone1).isNotNull();
+        assertThat(clone2).isNotNull();
+        assertThat(mutate1).isNotNull();
+        assertThat(mutate2).isNotNull();
+    }
 }

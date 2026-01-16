@@ -269,4 +269,77 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 		return this.call(new EmbeddingRequest(texts, defaultOptions));
 	}
 
+    /**
+     * Returns a builder pre-populated with the current configuration for mutation.
+     */
+    public Builder mutate() {
+        return new Builder(this);
+    }
+
+    @Override
+    public DashScopeEmbeddingModel clone() {
+        return this.mutate().build();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder {
+
+        private DashScopeApi dashScopeApi;
+
+        private MetadataMode metadataMode = MetadataMode.EMBED;
+
+        private DashScopeEmbeddingOptions defaultOptions = DashScopeEmbeddingOptions.builder()
+					.model(DashScopeApi.DEFAULT_EMBEDDING_MODEL)
+					.textType(DashScopeApi.DEFAULT_EMBEDDING_TEXT_TYPE)
+					.build();
+
+        private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
+
+        private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
+
+        private Builder() {
+        }
+
+        private Builder(DashScopeEmbeddingModel embeddingModel) {
+            this.dashScopeApi = embeddingModel.dashScopeApi;
+            this.metadataMode = embeddingModel.metadataMode;
+            this.defaultOptions = embeddingModel.defaultOptions;
+            this.retryTemplate = embeddingModel.retryTemplate;
+            this.observationRegistry = embeddingModel.observationRegistry;
+        }
+
+        public Builder dashScopeApi(DashScopeApi dashScopeApi) {
+            this.dashScopeApi = dashScopeApi;
+            return this;
+        }
+
+        public Builder metadataMode(MetadataMode metadataMode) {
+            this.metadataMode = metadataMode;
+            return this;
+        }
+
+        public Builder defaultOptions(DashScopeEmbeddingOptions defaultOptions) {
+            this.defaultOptions = defaultOptions;
+            return this;
+        }
+
+        public Builder retryTemplate(RetryTemplate retryTemplate) {
+            this.retryTemplate = retryTemplate;
+            return this;
+        }
+
+        public Builder observationRegistry(ObservationRegistry observationRegistry) {
+            this.observationRegistry = observationRegistry;
+            return this;
+        }
+
+        public DashScopeEmbeddingModel build() {
+            return new DashScopeEmbeddingModel(this.dashScopeApi, this.metadataMode, this.defaultOptions,
+                    this.retryTemplate, this.observationRegistry);
+        }
+    }
+
 }

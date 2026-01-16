@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.rerank.DashScopeRerankModel.Builder;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.RerankResponse;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.RerankResponseOutput;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.RerankResponseOutputResult;
@@ -37,6 +38,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -214,4 +216,27 @@ class DashScopeRerankModelTests {
 		assertThat(response.getResults().get(0).getScore()).isEqualTo(TEST_SCORE);
 	}
 
+    @Test
+    void testBuilder() {
+        DashScopeRerankModel model1 = DashScopeRerankModel.builder().build();
+
+        DashScopeRerankModel model2 = DashScopeRerankModel.builder()
+            .dashScopeApi(dashScopeApi)
+            .defaultOptions(defaultOptions)
+            .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
+            .build();
+
+        DashScopeRerankModel clone1 = model1.clone();
+        DashScopeRerankModel clone2 = model2.clone();
+
+        Builder mutate1 = model1.mutate();
+        Builder mutate2 = model2.mutate();
+
+        assertThat(model1).isNotNull();
+        assertThat(model2).isNotNull();
+        assertThat(clone1).isNotNull();
+        assertThat(clone2).isNotNull();
+        assertThat(mutate1).isNotNull();
+        assertThat(mutate2).isNotNull();
+    }
 }

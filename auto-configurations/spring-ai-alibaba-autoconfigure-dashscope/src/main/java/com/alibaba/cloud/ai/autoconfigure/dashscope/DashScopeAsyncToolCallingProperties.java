@@ -17,7 +17,7 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(DashScopeConnectionProperties.CONFIG_PREFIX)
+@ConfigurationProperties(DashScopeAsyncToolCallingProperties.CONFIG_PREFIX)
 public class DashScopeAsyncToolCallingProperties {
 
     /**

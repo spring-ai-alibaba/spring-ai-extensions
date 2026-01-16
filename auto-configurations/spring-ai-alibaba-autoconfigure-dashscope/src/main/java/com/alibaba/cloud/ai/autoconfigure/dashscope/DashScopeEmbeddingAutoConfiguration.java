@@ -70,9 +70,13 @@ public class DashScopeEmbeddingAutoConfiguration {
 				restClientBuilderProvider.getIfAvailable(RestClient::builder),
 				webClientBuilderProvider.getIfAvailable(WebClient::builder), responseErrorHandler);
 
-		var embeddingModel = new DashScopeEmbeddingModel(dashScopeApi, embeddingProperties.getMetadataMode(),
-				embeddingProperties.getOptions(), retryTemplate,
-				observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP));
+		var embeddingModel = DashScopeEmbeddingModel.builder()
+                .dashScopeApi(dashScopeApi)
+                .metadataMode(embeddingProperties.getMetadataMode())
+                .defaultOptions(embeddingProperties.getOptions())
+                .retryTemplate(retryTemplate)
+                .observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
+                .build();
 
 		observationConvention.ifAvailable(embeddingModel::setObservationConvention);
 

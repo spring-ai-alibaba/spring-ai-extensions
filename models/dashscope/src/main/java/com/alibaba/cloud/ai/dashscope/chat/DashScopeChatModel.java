@@ -777,7 +777,7 @@ public class DashScopeChatModel implements ChatModel {
 		private Builder() {
 		}
 
-		public Builder(DashScopeChatModel dashScopeChatModel) {
+		private Builder(DashScopeChatModel dashScopeChatModel) {
 			this.dashScopeApi = dashScopeChatModel.dashscopeApi;
 			this.defaultOptions = dashScopeChatModel.defaultOptions;
 			this.toolCallingManager = dashScopeChatModel.toolCallingManager;
@@ -795,7 +795,7 @@ public class DashScopeChatModel implements ChatModel {
 
 		private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
 
-		private ToolCallingManager toolCallingManager;
+		private ToolCallingManager toolCallingManager = ToolCallingManager.builder().build();
 
 		private ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate = new DefaultToolExecutionEligibilityPredicate();
 
@@ -841,16 +841,11 @@ public class DashScopeChatModel implements ChatModel {
 
 		public DashScopeChatModel build() {
 
-			if (this.toolCallingManager != null) {
-				return new DashScopeChatModel(this.dashScopeApi, this.defaultOptions, this.toolCallingManager,
-						this.retryTemplate, this.observationRegistry, this.toolExecutionEligibilityPredicate,
-						this.toolCallValidator);
-			}
+            return new DashScopeChatModel(this.dashScopeApi, this.defaultOptions, this.toolCallingManager,
+                    this.retryTemplate, this.observationRegistry, this.toolExecutionEligibilityPredicate,
+                    this.toolCallValidator);
 
-			return new DashScopeChatModel(this.dashScopeApi, this.defaultOptions, DEFAULT_TOOL_CALLING_MANAGER,
-					this.retryTemplate, this.observationRegistry, this.toolExecutionEligibilityPredicate,
-					this.toolCallValidator);
-		}
+        }
 
 	}
 

@@ -53,17 +53,21 @@ public class DashScopeAudioSpeechAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public DashScopeAudioSpeechModel dashScopeSpeechSynthesisModel(DashScopeConnectionProperties commonProperties,
-			DashScopeAudioSpeechSynthesisProperties speechProperties, RetryTemplate retryTemplate) {
+			DashScopeAudioSpeechSynthesisProperties audioSpeechProperties, RetryTemplate retryTemplate) {
 
-		var dashScopeSpeechSynthesisApi = dashScopeSpeechSynthesisApi(commonProperties, speechProperties);
+		var dashScopeSpeechSynthesisApi = audioSpeechApi(commonProperties, audioSpeechProperties);
 
-		return new DashScopeAudioSpeechModel(dashScopeSpeechSynthesisApi, speechProperties.getOptions(), retryTemplate);
+		return DashScopeAudioSpeechModel.builder()
+                .audioSpeechApi(dashScopeSpeechSynthesisApi)
+                .defaultOptions(audioSpeechProperties.getOptions())
+                .retryTemplate(retryTemplate)
+                .build();
 	}
 
-	private DashScopeAudioSpeechApi dashScopeSpeechSynthesisApi(DashScopeConnectionProperties commonProperties,
-			DashScopeAudioSpeechSynthesisProperties speechSynthesisProperties) {
+	private DashScopeAudioSpeechApi audioSpeechApi(DashScopeConnectionProperties commonProperties,
+			DashScopeAudioSpeechSynthesisProperties audioSpeechProperties) {
 
-		ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties, speechSynthesisProperties,
+		ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties, audioSpeechProperties,
 				"audio.synthesis");
 
 		return new DashScopeAudioSpeechApi(resolved.apiKey(), resolved.workspaceId());

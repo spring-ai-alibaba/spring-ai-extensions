@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.audio;
 import java.nio.ByteBuffer;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
+import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechModel.Builder;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -164,6 +165,32 @@ class DashScopeAudioSpeechModelTests {
         assertThat(request).isNotNull();
         assertThat(request.payload()).isNotNull();
         assertThat(request.payload().parameters()).isNotNull();
+    }
+
+    @Test
+    void testBuilder() {
+        DashScopeAudioSpeechModel model1 = DashScopeAudioSpeechModel.builder()
+                .audioSpeechApi(audioSpeechApi)
+                .build();
+
+        DashScopeAudioSpeechModel model2 = DashScopeAudioSpeechModel.builder()
+                .audioSpeechApi(audioSpeechApi)
+                .defaultOptions(defaultOptions)
+                .retryTemplate(RetryTemplate.builder().build())
+                .build();
+
+        DashScopeAudioSpeechModel clone1 = model1.clone();
+        DashScopeAudioSpeechModel clone2 = model2.clone();
+
+        Builder mutate1 = model1.mutate();
+        Builder mutate2 = model2.mutate();
+
+        assertThat(model1).isNotNull();
+        assertThat(model2).isNotNull();
+        assertThat(clone1).isNotNull();
+        assertThat(clone2).isNotNull();
+        assertThat(mutate1).isNotNull();
+        assertThat(mutate2).isNotNull();
     }
 
     private void mockSuccessfulSpeechGeneration() {

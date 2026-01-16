@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel.Builder;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult;
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.retry.support.RetryTemplate;
 
@@ -187,4 +189,27 @@ class DashScopeImageModelTests {
 		when(dashScopeImageApi.getImageGenTaskResult(TEST_TASK_ID)).thenReturn(ResponseEntity.ok(pendingResponse));
 	}
 
+    @Test
+    void testBuilder() {
+        DashScopeImageModel model1 = DashScopeImageModel.builder().build();
+        DashScopeImageModel model2 = DashScopeImageModel.builder()
+            .dashScopeApi(dashScopeImageApi)
+            .defaultOptions(defaultOptions)
+            .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
+            .observationRegistry(ObservationRegistry.NOOP)
+            .build();
+
+        DashScopeImageModel clone1 = model1.clone();
+        DashScopeImageModel clone2 = model2.clone();
+
+        Builder mutate1 = model1.mutate();
+        Builder mutate2 = model2.mutate();
+
+        assertThat(model1).isNotNull();
+        assertThat(model2).isNotNull();
+        assertThat(clone1).isNotNull();
+        assertThat(clone2).isNotNull();
+        assertThat(mutate1).isNotNull();
+        assertThat(mutate2).isNotNull();
+    }
 }

@@ -50,7 +50,7 @@ public class DashScopeRerankModel implements RerankModel {
 	private static final Logger logger = LoggerFactory.getLogger(DashScopeRerankModel.class);
 
 	/** Low-level access to the DashScope API */
-	private final DashScopeApi dashscopeApi;
+	private final DashScopeApi dashScopeApi;
 
 	/** The retry template used to retry the OpenAI API calls. */
 	private final RetryTemplate retryTemplate;
@@ -58,21 +58,21 @@ public class DashScopeRerankModel implements RerankModel {
 	/** rerank options */
 	private final DashScopeRerankOptions defaultOptions;
 
-	public DashScopeRerankModel(DashScopeApi dashscopeApi) {
-		this(dashscopeApi, DashScopeRerankOptions.builder().build());
+	public DashScopeRerankModel(DashScopeApi dashScopeApi) {
+		this(dashScopeApi, DashScopeRerankOptions.builder().build());
 	}
 
-	public DashScopeRerankModel(DashScopeApi dashscopeApi, DashScopeRerankOptions defaultOptions) {
-		this(dashscopeApi, defaultOptions, RetryUtils.DEFAULT_RETRY_TEMPLATE);
+	public DashScopeRerankModel(DashScopeApi dashScopeApi, DashScopeRerankOptions defaultOptions) {
+		this(dashScopeApi, defaultOptions, RetryUtils.DEFAULT_RETRY_TEMPLATE);
 	}
 
-	public DashScopeRerankModel(DashScopeApi dashscopeApi, DashScopeRerankOptions defaultOptions,
-			RetryTemplate retryTemplate) {
-		Assert.notNull(dashscopeApi, "DashScopeApi must not be null");
+	public DashScopeRerankModel(DashScopeApi dashScopeApi, DashScopeRerankOptions defaultOptions,
+                                RetryTemplate retryTemplate) {
+		Assert.notNull(dashScopeApi, "DashScopeApi must not be null");
 		Assert.notNull(defaultOptions, "Options must not be null");
 		Assert.notNull(retryTemplate, "RetryTemplate must not be null");
 
-		this.dashscopeApi = dashscopeApi;
+		this.dashScopeApi = dashScopeApi;
 		this.defaultOptions = defaultOptions;
 		this.retryTemplate = retryTemplate;
 	}
@@ -86,7 +86,7 @@ public class DashScopeRerankModel implements RerankModel {
         DashScopeApiSpec.RerankRequest rerankRequest = createRequest(request, requestOptions);
 
 		ResponseEntity<DashScopeApiSpec.RerankResponse> responseEntity = this.retryTemplate
-			.execute(ctx -> this.dashscopeApi.rerankEntity(rerankRequest));
+			.execute(ctx -> this.dashScopeApi.rerankEntity(rerankRequest));
 
 		var response = responseEntity.getBody();
 
@@ -137,5 +137,58 @@ public class DashScopeRerankModel implements RerankModel {
 					defaultOptions.getReturnDocuments()))
 			.build();
 	}
+
+    /**
+     * Returns a builder pre-populated with the current configuration for mutation.
+     */
+    public Builder mutate() {
+        return new Builder(this);
+    }
+
+    @Override
+    public DashScopeRerankModel clone() {
+        return this.mutate().build();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder {
+
+        private DashScopeApi dashScopeApi;
+
+        private DashScopeRerankOptions defaultOptions = DashScopeRerankOptions.builder().build();
+
+        private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
+
+        private Builder() {
+        }
+
+        private Builder(DashScopeRerankModel rerankModel) {
+            this.dashScopeApi = rerankModel.dashScopeApi;
+            this.defaultOptions = rerankModel.defaultOptions;
+            this.retryTemplate = rerankModel.retryTemplate;
+        }
+
+        public Builder dashScopeApi(DashScopeApi dashscopeApi) {
+            this.dashScopeApi = dashscopeApi;
+            return this;
+        }
+
+        public Builder defaultOptions(DashScopeRerankOptions defaultOptions) {
+            this.defaultOptions = defaultOptions;
+            return this;
+        }
+
+        public Builder retryTemplate(RetryTemplate retryTemplate) {
+            this.retryTemplate = retryTemplate;
+            return this;
+        }
+
+        public DashScopeRerankModel build() {
+            return new DashScopeRerankModel(this.dashScopeApi, this.defaultOptions, this.retryTemplate);
+        }
+    }
 
 }

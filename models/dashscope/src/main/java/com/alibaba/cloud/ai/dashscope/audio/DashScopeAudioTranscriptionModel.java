@@ -328,4 +328,59 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 		return new AudioTranscriptionResponse(result, responseMetadata);
 	}
 
+    /**
+     * Returns a builder pre-populated with the current configuration for mutation.
+     */
+    public Builder mutate() {
+        return new Builder(this);
+    }
+
+    @Override
+    public DashScopeAudioTranscriptionModel clone() {
+        return this.mutate().build();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private DashScopeAudioTranscriptionApi audioTranscriptionApi;
+
+        private DashScopeAudioTranscriptionOptions defaultOptions = DashScopeAudioTranscriptionOptions.builder()
+                .model(DashScopeModel.AudioModel.PARAFORMER_V2.getValue())
+                .build();;
+
+        private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
+
+        private Builder() {
+        }
+
+        private Builder(DashScopeAudioTranscriptionModel model) {
+            this.audioTranscriptionApi = model.audioTranscriptionApi;
+            this.defaultOptions = model.defaultOptions;
+            this.retryTemplate = model.retryTemplate;
+        }
+
+        public Builder audioTranscriptionApi(DashScopeAudioTranscriptionApi audioTranscriptionApi) {
+            this.audioTranscriptionApi = audioTranscriptionApi;
+            return this;
+        }
+
+        public Builder defaultOptions(DashScopeAudioTranscriptionOptions defaultOptions) {
+            this.defaultOptions = defaultOptions;
+            return this;
+        }
+
+        public Builder retryTemplate(RetryTemplate retryTemplate) {
+            this.retryTemplate = retryTemplate;
+            return this;
+        }
+
+        public DashScopeAudioTranscriptionModel build() {
+            return new DashScopeAudioTranscriptionModel(this.audioTranscriptionApi, this.defaultOptions, this.retryTemplate);
+        }
+    }
+
 }

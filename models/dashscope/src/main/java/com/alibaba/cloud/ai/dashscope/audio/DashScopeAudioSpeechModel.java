@@ -75,6 +75,11 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
 	@Override
 	public TextToSpeechResponse call(TextToSpeechPrompt prompt) {
         String taskId = UUID.randomUUID().toString();
+
+        // Ensure WebSocket connection is established before sending run-task
+        logger.info("Ensuring WebSocket connection is ready, taskId={}", taskId);
+        this.audioSpeechApi.ensureWebSocketConnectionReady(10, TimeUnit.SECONDS);
+
         DashScopeAudioSpeechApi.Request runTaskRequest = this.createRequest(prompt, taskId,
                 DashScopeWebSocketClient.EventType.RUN_TASK);
 
@@ -152,5 +157,63 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
 
 		return ModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioSpeechOptions.class);
 	}
+
+    /**
+     * Returns a builder pre-populated with the current configuration for mutation.
+     */
+    public Builder mutate() {
+        return new Builder(this);
+    }
+
+    @Override
+    public DashScopeAudioSpeechModel clone() {
+        return this.mutate().build();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private DashScopeAudioSpeechApi audioSpeechApi;
+
+        private DashScopeAudioSpeechOptions defaultOptions = DashScopeAudioSpeechOptions.builder()
+                .model(DashScopeModel.AudioModel.COSYVOICE_V1.getValue())
+                .voice("longhua")
+                .speed(1.0)
+                .responseFormat(DashScopeAudioSpeechApi.ResponseFormat.MP3)
+                .build();
+
+        private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
+
+        private Builder() {
+        }
+
+        private Builder(DashScopeAudioSpeechModel audioSpeechModel) {
+            this.audioSpeechApi = audioSpeechModel.audioSpeechApi;
+            this.defaultOptions = audioSpeechModel.defaultOptions;
+            this.retryTemplate = audioSpeechModel.retryTemplate;
+        }
+
+        public Builder audioSpeechApi(DashScopeAudioSpeechApi audioSpeechApi) {
+            this.audioSpeechApi = audioSpeechApi;
+            return this;
+        }
+
+        public Builder defaultOptions(DashScopeAudioSpeechOptions defaultOptions) {
+            this.defaultOptions = defaultOptions;
+            return this;
+        }
+
+        public Builder retryTemplate(RetryTemplate retryTemplate) {
+            this.retryTemplate = retryTemplate;
+            return this;
+        }
+
+        public DashScopeAudioSpeechModel build() {
+            return new DashScopeAudioSpeechModel(this.audioSpeechApi, this.defaultOptions, this.retryTemplate);
+        }
+    }
 
 }

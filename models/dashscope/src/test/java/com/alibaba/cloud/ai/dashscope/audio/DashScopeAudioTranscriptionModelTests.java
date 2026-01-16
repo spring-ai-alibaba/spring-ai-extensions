@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.audio;
 import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
+import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionModel.Builder;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.junit.jupiter.api.BeforeEach;
@@ -198,6 +199,32 @@ class DashScopeAudioTranscriptionModelTests {
 
         assertThat(response).isNotNull();
         assertThat(response.getResult()).isNotNull();
+    }
+
+    @Test
+    void testBuilder() {
+        DashScopeAudioTranscriptionModel model1 = DashScopeAudioTranscriptionModel.builder()
+                .audioTranscriptionApi(audioTranscriptionApi)
+                .build();
+
+        DashScopeAudioTranscriptionModel model2 = DashScopeAudioTranscriptionModel.builder()
+                .audioTranscriptionApi(audioTranscriptionApi)
+                .defaultOptions(defaultOptions)
+                .retryTemplate(RetryTemplate.builder().build())
+                .build();
+
+        DashScopeAudioTranscriptionModel clone1 = model1.clone();
+        DashScopeAudioTranscriptionModel clone2 = model2.clone();
+
+        Builder mutate1 = model1.mutate();
+        Builder mutate2 = model2.mutate();
+
+        assertThat(model1).isNotNull();
+        assertThat(model2).isNotNull();
+        assertThat(clone1).isNotNull();
+        assertThat(clone2).isNotNull();
+        assertThat(mutate1).isNotNull();
+        assertThat(mutate2).isNotNull();
     }
 
     private void mockSuccessfulTranscription() {

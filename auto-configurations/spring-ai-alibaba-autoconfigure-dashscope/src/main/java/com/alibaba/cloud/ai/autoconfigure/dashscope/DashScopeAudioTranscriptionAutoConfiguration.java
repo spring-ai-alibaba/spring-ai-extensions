@@ -82,8 +82,11 @@ public class DashScopeAudioTranscriptionAutoConfiguration {
 			.responseErrorHandler(responseErrorHandle)
 			.build();
 
-		return new DashScopeAudioTranscriptionModel(dashScopeAudioTranscriptionApi,
-				audioTranscriptionProperties.getOptions(), retryTemplate);
+		return DashScopeAudioTranscriptionModel.builder()
+                .audioTranscriptionApi(dashScopeAudioTranscriptionApi)
+                .defaultOptions(audioTranscriptionProperties.getOptions())
+                .retryTemplate(retryTemplate)
+                .build();
 	}
 
 }

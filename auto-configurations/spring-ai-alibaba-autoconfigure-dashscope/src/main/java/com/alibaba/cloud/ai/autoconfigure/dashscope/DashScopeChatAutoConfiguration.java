@@ -18,6 +18,8 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
+import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
+import com.alibaba.cloud.ai.tool.validator.ToolCallValidator;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.model.SpringAIModelProperties;
@@ -85,7 +87,8 @@ public class DashScopeChatAutoConfiguration {
 				ObjectProvider<WebClient.Builder> webClientBuilderProvider,
 				ObjectProvider<RestClient.Builder> restClientBuilderProvider,
 				ObjectProvider<ChatModelObservationConvention> observationConvention,
-				ObjectProvider<ToolExecutionEligibilityPredicate> dashscopeToolExecutionEligibilityPredicate
+				ObjectProvider<ToolExecutionEligibilityPredicate> dashscopeToolExecutionEligibilityPredicate,
+				ObjectProvider<ToolCallValidator> toolCallValidatorProvider
 		) {
 
 			var dashscopeApi = dashscopeChatApi(
@@ -105,6 +108,7 @@ public class DashScopeChatAutoConfiguration {
 					.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
 					.toolExecutionEligibilityPredicate(
 							dashscopeToolExecutionEligibilityPredicate.getIfUnique(DefaultToolExecutionEligibilityPredicate::new))
+                    .toolCallValidator(toolCallValidatorProvider.getIfUnique(DefaultToolCallValidator::new))
 					.build();
 
 			observationConvention.ifAvailable(dashscopeModel::setObservationConvention);

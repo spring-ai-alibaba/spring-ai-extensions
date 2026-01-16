@@ -17,7 +17,6 @@
 package com.alibaba.cloud.ai.dashscope.video;
 
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -25,15 +24,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  * @author dashscope
  * @author yuluo
+ * @author guanxu
  * @since 1.0.0.3
  */
-
 public class DashScopeVideoOptions implements VideoOptions {
-
-	/**
-	 * Default video model.
-	 */
-	public static final String DEFAULT_MODEL = DashScopeModel.VideoModel.WANX2_1_T2V_TURBO.getValue();
 
 	@JsonProperty("model")
 	private String model;
@@ -57,7 +51,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 	 * and does not support modification. The model will always generate 5-second videos.
 	 */
 	@JsonProperty("duration")
-	private Integer duration = 5;
+	private Integer duration;
 
 	@JsonProperty("prompt_extend")
 	private Boolean promptExtend;
@@ -87,23 +81,6 @@ public class DashScopeVideoOptions implements VideoOptions {
 	@JsonProperty("last_frame_url")
 	private String lastFrameUrl;
 
-	public DashScopeVideoOptions(String imageUrl, Long seed, String prompt, String firstFrameUrl, String lastFrameUrl,
-			String resolution, String model, String size, Boolean promptExtend, String negativePrompt,
-                                 DashScopeApiSpec.VideoTemplate template) {
-
-		this.imageUrl = imageUrl;
-		this.prompt = prompt;
-		this.firstFrameUrl = firstFrameUrl;
-		this.lastFrameUrl = lastFrameUrl;
-		this.resolution = resolution;
-		this.size = size;
-		this.model = model;
-		this.promptExtend = promptExtend;
-		this.negativePrompt = negativePrompt;
-		this.seed = seed;
-		this.template = template;
-	}
-
 	@Override
 	public String getModel() {
 		return this.model;
@@ -114,7 +91,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 	}
 
 	public String getImageUrl() {
-		return imageUrl;
+		return this.imageUrl;
 	}
 
 	public void setImageUrl(String imageUrl) {
@@ -135,14 +112,6 @@ public class DashScopeVideoOptions implements VideoOptions {
 
 	public void setDuration(Integer duration) {
 		this.duration = duration;
-	}
-
-	public Boolean getPrompt() {
-		return this.promptExtend;
-	}
-
-	public void setPrompt(Boolean promptExtend) {
-		this.promptExtend = promptExtend;
 	}
 
 	public Long getSeed() {
@@ -169,12 +138,16 @@ public class DashScopeVideoOptions implements VideoOptions {
 		this.template = template;
 	}
 
-	public void setPrompt(String prompt) {
+    public String getPrompt() {
+        return this.prompt;
+    }
+
+    public void setPrompt(String prompt) {
 		this.prompt = prompt;
 	}
 
 	public Boolean getPromptExtend() {
-		return promptExtend;
+		return this.promptExtend;
 	}
 
 	public void setPromptExtend(Boolean promptExtend) {
@@ -182,7 +155,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 	}
 
 	public String getResolution() {
-		return resolution;
+		return this.resolution;
 	}
 
 	public void setResolution(String resolution) {
@@ -190,7 +163,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 	}
 
 	public String getFirstFrameUrl() {
-		return firstFrameUrl;
+		return this.firstFrameUrl;
 	}
 
 	public void setFirstFrameUrl(String firstFrameUrl) {
@@ -198,7 +171,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 	}
 
 	public String getLastFrameUrl() {
-		return lastFrameUrl;
+		return this.lastFrameUrl;
 	}
 
 	public void setLastFrameUrl(String lastFrameUrl) {
@@ -227,98 +200,75 @@ public class DashScopeVideoOptions implements VideoOptions {
 	 */
 	public static class Builder {
 
-		private String model = DEFAULT_MODEL;
-
-		private String size = "832*480";
-
-		private String prompt;
-
-		private String imageUrl;
-
-		private Integer duration = 5;
-
-		private Boolean promptExtend = false;
-
-		private Long seed;
-
-		private String negativePrompt;
-
-		private String resolution;
-
-		private String firstFrameUrl;
-
-		private String lastFrameUrl;
-
-		private DashScopeApiSpec.VideoTemplate template;
+		private final DashScopeVideoOptions options;
 
 		public Builder() {
+            this.options = new DashScopeVideoOptions();
 		}
 
 		public Builder prompt(String prompt) {
-			this.prompt = prompt;
+			this.options.prompt = prompt;
 			return this;
 		}
 
 		public Builder imageUrl(String imageUrl) {
-			this.imageUrl = imageUrl;
+			this.options.imageUrl = imageUrl;
 			return this;
 		}
 
 		public Builder firstFrameUrl(String firstFrameUrl) {
-			this.firstFrameUrl = firstFrameUrl;
+			this.options.firstFrameUrl = firstFrameUrl;
 			return this;
 		}
 
 		public Builder lastFrameUrl(String lastFrameUrl) {
-			this.lastFrameUrl = lastFrameUrl;
+			this.options.lastFrameUrl = lastFrameUrl;
 			return this;
 		}
 
 		public Builder resolution(String resolution) {
-			this.resolution = resolution;
+			this.options.resolution = resolution;
 			return this;
 		}
 
 		public Builder model(String model) {
-			this.model = model;
+			this.options.model = model;
 			return this;
 		}
 
 		public Builder size(String size) {
-			this.size = size;
+			this.options.size = size;
 			return this;
 		}
 
 		public Builder duration(Integer duration) {
-			this.duration = duration;
+			this.options.duration = duration;
 			return this;
 		}
 
 		public Builder promptExtend(Boolean promptExtend) {
-			this.promptExtend = promptExtend;
+			this.options.promptExtend = promptExtend;
 			return this;
 		}
 
 		public Builder seed(Long seed) {
-			this.seed = seed;
+			this.options.seed = seed;
 			return this;
 		}
 
 		public Builder negativePrompt(String negativePrompt) {
-			this.negativePrompt = negativePrompt;
+			this.options.negativePrompt = negativePrompt;
 			return this;
 		}
 
 		public Builder template(DashScopeApiSpec.VideoTemplate template) {
-			this.template = template;
+			this.options.template = template;
 			return this;
 		}
 
 		public DashScopeVideoOptions build() {
 
-			return new DashScopeVideoOptions(this.imageUrl, this.seed, this.prompt, this.firstFrameUrl,
-					this.lastFrameUrl, this.resolution, this.model, this.size, this.promptExtend, this.negativePrompt,
-					this.template);
+			return this.options;
 		}
 
 	}

@@ -76,7 +76,11 @@ public class DashScopeRerankAutoConfiguration {
 			.responseErrorHandler(responseErrorHandler)
 			.build();
 
-		return new DashScopeRerankModel(dashScopeApi, rerankProperties.getOptions(), retryTemplate);
+		return DashScopeRerankModel.builder()
+                .dashScopeApi(dashScopeApi)
+                .defaultOptions(rerankProperties.getOptions())
+                .retryTemplate(retryTemplate)
+                .build();
 	}
 
 }

@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel.Builder;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.Embedding;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.EmbeddingList;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.EmbeddingUsage;
@@ -28,6 +29,8 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.Embeddings;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -35,6 +38,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.document.MetadataMode;
 import org.springframework.ai.embedding.EmbeddingRequest;
 import org.springframework.ai.embedding.EmbeddingResponse;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -255,5 +259,32 @@ class DashScopeEmbeddingModelTests {
 		assertThat(response.getResults().get(0).getOutput()).containsExactly(embeddingVector);
 		assertThat(response.getResults().get(0).getIndex()).isEqualTo(0);
 	}
+
+    @Test
+    void testBuilder() {
+        DashScopeEmbeddingModel model1 = DashScopeEmbeddingModel.builder()
+                .dashScopeApi(dashScopeApi)
+                .build();
+        DashScopeEmbeddingModel model2 = DashScopeEmbeddingModel.builder()
+            .dashScopeApi(dashScopeApi)
+            .metadataMode(MetadataMode.EMBED)
+            .defaultOptions(defaultOptions)
+            .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
+            .observationRegistry(ObservationRegistry.NOOP)
+            .build();
+
+        DashScopeEmbeddingModel clone1 = model1.clone();
+        DashScopeEmbeddingModel clone2 = model2.clone();
+
+        Builder mutate1 = model1.mutate();
+        Builder mutate2 = model2.mutate();
+
+        assertThat(model1).isNotNull();
+        assertThat(model2).isNotNull();
+        assertThat(clone1).isNotNull();
+        assertThat(clone2).isNotNull();
+        assertThat(mutate1).isNotNull();
+        assertThat(mutate2).isNotNull();
+    }
 
 }

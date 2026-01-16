@@ -359,14 +359,27 @@ class DashScopeModelConfigurationTests {
                 .withConfiguration(AutoConfigurations.of(DashScopeAsyncToolCallingManagerAutoConfiguration.class))
                 .run(context -> {
                     assertThat(context.getBeansOfType(DashScopeAsyncToolCallingManagerAutoConfiguration.class)).isEmpty();
+                    assertThat(context.getBeansOfType(DashScopeAsyncToolCallingProperties.class)).isEmpty();
                 });
 
         // Test enabled
         this.contextRunner
                 .withConfiguration(AutoConfigurations.of(DashScopeAsyncToolCallingManagerAutoConfiguration.class))
-                .withPropertyValues("spring.ai.alibaba.tool.async.enabled=true")
+                .withPropertyValues("spring.ai.alibaba.tool.async.enabled=true",
+                       "spring.ai.alibaba.tool.async.core-pool-size=5",
+                       "spring.ai.alibaba.tool.async.maximum-pool-size=10"
+                        )
                 .run(context -> {
                     assertThat(context.getBeansOfType(DashScopeAsyncToolCallingManagerAutoConfiguration.class)).isNotEmpty();
+                    assertThat(context.getBean(DashScopeAsyncToolCallingProperties.class)).isNotNull();
+                    assertThat(context.getBean(DashScopeAsyncToolCallingProperties.class)
+                            .getCorePoolSize()).isEqualTo(5);
+                    assertThat(context.getBean(DashScopeAsyncToolCallingProperties.class)
+                            .getMaximumPoolSize()).isEqualTo(10);
+                    assertThat(context.getBean(DashScopeAsyncToolCallingProperties.class)
+                            .getKeepAliveTime()).isEqualTo(60);
+                    assertThat(context.getBean(DashScopeAsyncToolCallingProperties.class)
+                            .getQueueCapacity()).isEqualTo(1000);
 
                     // Test chat use toolCallingManager is DashScopeAsyncToolCallingManager
                     assertThat(context.getBean(ToolCallingManager.class)).isInstanceOf(DashScopeAsyncToolCallingManager.class);

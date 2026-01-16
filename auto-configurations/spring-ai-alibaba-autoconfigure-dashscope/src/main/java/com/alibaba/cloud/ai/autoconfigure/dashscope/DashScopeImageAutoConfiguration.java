@@ -73,9 +73,12 @@ public class DashScopeImageAutoConfiguration {
 			.responseErrorHandler(responseErrorHandler)
 			.build();
 
-		DashScopeImageModel dashScopeImageModel = new DashScopeImageModel(dashScopeImageApi,
-				imageProperties.getOptions(), retryTemplate,
-				observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP));
+		var dashScopeImageModel = DashScopeImageModel.builder()
+                .dashScopeApi(dashScopeImageApi)
+                .defaultOptions(imageProperties.getOptions())
+                .retryTemplate(retryTemplate)
+                .observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
+                .build();
 
 		observationConvention.ifAvailable(dashScopeImageModel::setObservationConvention);
 
