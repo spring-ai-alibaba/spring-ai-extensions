@@ -103,8 +103,6 @@ public class DashScopeChatModel implements ChatModel {
 
 	private static final ChatModelObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DashScopeChatModelObservationConvention();
 
-	private static final ToolCallingManager DEFAULT_TOOL_CALLING_MANAGER = ToolCallingManager.builder().build();
-
 	/**
 	 * The default options used for the chat completion requests.
 	 */
@@ -137,8 +135,6 @@ public class DashScopeChatModel implements ChatModel {
 	 * executed.
 	 */
 	private final ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate;
-
-
 
 	/**
 	 * Conventions to use for generating observations.
