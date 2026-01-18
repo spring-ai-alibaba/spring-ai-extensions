@@ -16,7 +16,9 @@
 
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
+import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageOptions;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -30,36 +32,61 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 @ConfigurationProperties(DashScopeImageProperties.CONFIG_PREFIX)
 public class DashScopeImageProperties extends DashScopeParentProperties {
 
-  /** Spring AI Alibaba configuration prefix. */
-  public static final String CONFIG_PREFIX = "spring.ai.dashscope.image";
+    /**
+     * Spring AI Alibaba configuration prefix.
+     */
+    public static final String CONFIG_PREFIX = "spring.ai.dashscope.image";
 
-  /** Default DashScope Chat model. */
-  public static final String DEFAULT_IMAGES_MODEL_NAME = "wanx-v1";
+    /**
+     * Enable DashScope ai images client.
+     */
+    private boolean enabled = true;
 
-  /** Enable DashScope ai images client. */
-  private boolean enabled = true;
+    /**
+     * DashScope ai images restful url path.
+     */
+    private String imagesPath = DashScopeApiConstants.TEXT2IMAGE_RESTFUL_URL;
 
-  @NestedConfigurationProperty
-  private DashScopeImageOptions options =
-      DashScopeImageOptions.builder().model(DEFAULT_IMAGES_MODEL_NAME).n(1).build();
+    /**
+     * DashScope ai images query task result restful url path.
+     */
+    private String queryTaskPath = DashScopeApiConstants.QUERY_TASK_RESTFUL_URL;
 
-  public DashScopeImageOptions getOptions() {
+    @NestedConfigurationProperty
+    private DashScopeImageOptions options = DashScopeImageOptions.builder()
+            .model(DashScopeModel.ImageModel.WANX_V1.getValue())
+            .n(1)
+            .build();
 
-    return this.options;
-  }
+    public boolean isEnabled() {
+        return this.enabled;
+    }
 
-  public void setOptions(DashScopeImageOptions options) {
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
-    this.options = options;
-  }
+    public String getImagesPath() {
+        return this.imagesPath;
+    }
 
-  public boolean isEnabled() {
+    public void setImagesPath(String imagesPath) {
+        this.imagesPath = imagesPath;
+    }
 
-    return this.enabled;
-  }
+    public String getQueryTaskPath() {
+        return this.queryTaskPath;
+    }
 
-  public void setEnabled(boolean enabled) {
+    public void setQueryTaskPath(String queryTaskPath) {
+        this.queryTaskPath = queryTaskPath;
+    }
 
-    this.enabled = enabled;
-  }
+    public DashScopeImageOptions getOptions() {
+        return this.options;
+    }
+
+    public void setOptions(DashScopeImageOptions options) {
+        this.options = options;
+    }
 }

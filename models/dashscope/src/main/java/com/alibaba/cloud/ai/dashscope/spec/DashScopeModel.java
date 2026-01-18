@@ -430,6 +430,8 @@ public class DashScopeModel {
 
         QWEN_MT_IMAGE("qwen-mt-image"),
 
+        WANX_V1("wanx-v1"),
+
         WAN_2_2_T_2_I_PLUS("wan2.2-t2i-plus"),
 
         WAN_2_2_T_2_I_FLASH("wan2.2-t2i-flash"),

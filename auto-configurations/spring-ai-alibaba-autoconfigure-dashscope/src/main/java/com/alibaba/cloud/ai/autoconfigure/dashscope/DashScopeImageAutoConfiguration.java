@@ -68,6 +68,8 @@ public class DashScopeImageAutoConfiguration {
 		var dashScopeImageApi = DashScopeImageApi.builder()
 			.apiKey(resolved.apiKey())
 			.baseUrl(resolved.baseUrl())
+            .imagesPath(imageProperties.getImagesPath())
+            .queryTaskPath(imageProperties.getQueryTaskPath())
 			.workSpaceId(resolved.workspaceId())
 			.restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
 			.responseErrorHandler(responseErrorHandler)

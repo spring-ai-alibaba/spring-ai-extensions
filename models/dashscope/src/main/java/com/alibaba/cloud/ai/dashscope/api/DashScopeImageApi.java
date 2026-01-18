@@ -32,15 +32,8 @@ import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ENABLE
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_ASYNC;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.IMAGE2IMAGE_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MULTIMODAL_GENERATION_RESTFUL_URL;
-import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.QUERY_TASK_RESTFUL_URL;
-import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.TEXT2IMAGE_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_IMAGE;
-import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_IMAGE_EDIT;
 import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_MT_IMAGE;
-import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.WANX_2_1_IMAGEEDIT;
-import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.WAN_2_2_T_2_I_FLASH;
-import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.WAN_2_2_T_2_I_PLUS;
-import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.WAN_2_5_I_2_I_PREVIEW;
 
 /**
  * @author nuocheng.lxm
@@ -55,6 +48,10 @@ public class DashScopeImageApi {
 	private final String baseUrl;
 
 	private final ApiKey apiKey;
+
+    private final String imagesPath;
+
+    private final String queryTaskPath;
 
 	public static final String DEFAULT_IMAGE_MODEL = QWEN_IMAGE.getValue();
 
@@ -74,12 +71,14 @@ public class DashScopeImageApi {
 	}
 
 	// format: off
-	public DashScopeImageApi(String baseUrl, ApiKey apiKey, String workSpaceId, RestClient.Builder restClientBuilder,
-			ResponseErrorHandler responseErrorHandler) {
+	public DashScopeImageApi(String baseUrl, ApiKey apiKey, String imagesPath, String queryTaskPath, String workSpaceId,
+                             RestClient.Builder restClientBuilder, ResponseErrorHandler responseErrorHandler) {
 
 		this.baseUrl = baseUrl;
 		this.apiKey = apiKey;
-		this.responseErrorHandler = responseErrorHandler;
+        this.imagesPath = imagesPath;
+        this.queryTaskPath = queryTaskPath;
+        this.responseErrorHandler = responseErrorHandler;
 
 		Assert.notNull(apiKey, "ApiKey must not be null");
 		Assert.notNull(baseUrl, "Base URL must not be null");
@@ -94,25 +93,16 @@ public class DashScopeImageApi {
 	public ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> submitImageGenTask(DashScopeApiSpec.DashScopeImageRequest request) {
 
 		String model = request.model();
-        String uri;
+        String imagesUri = this.imagesPath;
 
-        if (model.equals(QWEN_IMAGE.getValue()) || model.equals(QWEN_IMAGE_EDIT.value)) {
-			uri = MULTIMODAL_GENERATION_RESTFUL_URL;
-        } else if (model.equals(QWEN_MT_IMAGE.getValue()) || model.equals(WANX_2_1_IMAGEEDIT.getValue())) {
-			uri = IMAGE2IMAGE_RESTFUL_URL;
-        } else if (model.equals(WAN_2_2_T_2_I_PLUS.getValue()) || model.equals(WAN_2_2_T_2_I_FLASH.getValue()) || model.equals(WAN_2_5_I_2_I_PREVIEW.getValue())) {
-			uri = TEXT2IMAGE_RESTFUL_URL;
-        } else {
-            logger.info("not match model, use default url");
-            if (model.contains("edit")) {
-				uri = IMAGE2IMAGE_RESTFUL_URL;
-            } else {
-				uri = TEXT2IMAGE_RESTFUL_URL;
-            }
+        if (model.startsWith("qwen-image") || model.startsWith("z-image")) {
+			imagesUri = MULTIMODAL_GENERATION_RESTFUL_URL;
+        } else if (model.equals(QWEN_MT_IMAGE.getValue()) || model.contains("edit")) {
+			imagesUri = IMAGE2IMAGE_RESTFUL_URL;
         }
 
 		return this.restClient.post()
-			.uri(uri)
+			.uri(imagesUri)
 			.header(HEADER_ASYNC, ENABLED)
 			.body(request)
 			.retrieve()
@@ -121,7 +111,7 @@ public class DashScopeImageApi {
 
 	public ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> getImageGenTaskResult(String taskId) {
 		return this.restClient.get()
-			.uri(QUERY_TASK_RESTFUL_URL, taskId)
+			.uri(this.queryTaskPath, taskId)
 			.retrieve()
 			.toEntity(DashScopeApiSpec.DashScopeImageAsyncResponse.class);
 	}
@@ -159,6 +149,10 @@ public class DashScopeImageApi {
 
 		private ApiKey apiKey;
 
+		private String imagesPath;
+
+		private String queryTaskPath;
+
 		private String workSpaceId;
 
 		private RestClient.Builder restClientBuilder = RestClient.builder();
@@ -187,6 +181,18 @@ public class DashScopeImageApi {
 			return this;
 		}
 
+        public DashScopeImageApi.Builder imagesPath(String imagesPath) {
+			Assert.notNull(imagesPath, "Images path cannot be null");
+			this.imagesPath = imagesPath;
+			return this;
+		}
+
+        public DashScopeImageApi.Builder queryTaskPath(String queryTaskPath) {
+			Assert.notNull(queryTaskPath, "Query task path cannot be null");
+			this.queryTaskPath = queryTaskPath;
+			return this;
+		}
+
 		public DashScopeImageApi.Builder restClientBuilder(RestClient.Builder restClientBuilder) {
 			Assert.notNull(restClientBuilder, "Rest client builder cannot be null");
 			this.restClientBuilder = restClientBuilder;
@@ -203,8 +209,8 @@ public class DashScopeImageApi {
 
 			Assert.notNull(apiKey, "API key cannot be null");
 
-			return new DashScopeImageApi(this.baseUrl, this.apiKey, this.workSpaceId, this.restClientBuilder,
-					this.responseErrorHandler);
+			return new DashScopeImageApi(this.baseUrl, this.apiKey, this.imagesPath, this.queryTaskPath,
+                    this.workSpaceId, this.restClientBuilder, this.responseErrorHandler);
 		}
 
 	}

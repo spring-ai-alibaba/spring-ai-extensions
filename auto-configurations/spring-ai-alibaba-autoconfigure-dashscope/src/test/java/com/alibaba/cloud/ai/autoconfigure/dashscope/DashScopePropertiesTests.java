@@ -332,6 +332,8 @@ public class DashScopePropertiesTests {
 		// @formatter:off
 						"spring.ai.dashscope.base-url=TEST_BASE_URL",
 						"spring.ai.dashscope.api-key=abc123_test",
+						"spring.ai.dashscope.image.images-path=/custom/images/path",
+						"spring.ai.dashscope.image.query-task-path=/custom/query-task/path",
 						"spring.ai.dashscope.image.options.model=MODEL_CUSTOM",
 						"spring.ai.dashscope.image.options.n=3")
 				// @formatter:on
@@ -345,6 +347,8 @@ public class DashScopePropertiesTests {
 
 				assertThat(imageProperties.getApiKey()).isNull();
 				assertThat(imageProperties.getBaseUrl()).isNull();
+                assertThat(imageProperties.getImagesPath()).isEqualTo("/custom/images/path");
+                assertThat(imageProperties.getQueryTaskPath()).isEqualTo("/custom/query-task/path");
 
 				assertThat(imageProperties.getOptions().getModel()).isEqualTo("MODEL_CUSTOM");
 				assertThat(imageProperties.getOptions().getN()).isEqualTo(3);
