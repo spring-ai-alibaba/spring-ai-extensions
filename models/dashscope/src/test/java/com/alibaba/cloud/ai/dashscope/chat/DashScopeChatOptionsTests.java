@@ -67,6 +67,7 @@ class DashScopeChatOptionsTests {
                 .seed(TEST_SEED)
                 .repetitionPenalty(TEST_REPETITION_PENALTY)
                 .stream(true)
+                .enableStreamToolCalls(true)
                 .enableSearch(true)
                 .incrementalOutput(true)
                 .vlHighResolutionImages(true)
@@ -84,6 +85,7 @@ class DashScopeChatOptionsTests {
         assertThat(options.getSeed()).isEqualTo(TEST_SEED);
         assertThat(options.getRepetitionPenalty()).isEqualTo(TEST_REPETITION_PENALTY);
         assertThat(options.getStream()).isTrue();
+        assertThat(options.getEnableStreamToolCalls()).isTrue();
         assertThat(options.getEnableSearch()).isTrue();
         assertThat(options.getIncrementalOutput()).isTrue();
         assertThat(options.getVlHighResolutionImages()).isTrue();
@@ -105,6 +107,7 @@ class DashScopeChatOptionsTests {
         options.setSeed(TEST_SEED);
         options.setRepetitionPenalty(TEST_REPETITION_PENALTY);
         options.setStream(true);
+        options.setEnableStreamToolCalls(true);
         options.setEnableSearch(true);
         options.setIncrementalOutput(true);
         options.setVlHighResolutionImages(true);
@@ -121,6 +124,7 @@ class DashScopeChatOptionsTests {
         assertThat(options.getSeed()).isEqualTo(TEST_SEED);
         assertThat(options.getRepetitionPenalty()).isEqualTo(TEST_REPETITION_PENALTY);
         assertThat(options.getStream()).isTrue();
+        assertThat(options.getEnableStreamToolCalls()).isTrue();
         assertThat(options.getEnableSearch()).isTrue();
         assertThat(options.getIncrementalOutput()).isTrue();
         assertThat(options.getVlHighResolutionImages()).isTrue();

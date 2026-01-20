@@ -548,7 +548,7 @@ public class DashScopeApi {
 	 */
 	public Flux<DashScopeApiSpec.ChatCompletionChunk> chatCompletionStream(DashScopeApiSpec.ChatCompletionRequest chatRequest) {
 
-		return this.chatCompletionStream(chatRequest, null);
+		return this.chatCompletionStream(chatRequest, null, false);
 	}
 
 	/**
@@ -560,12 +560,28 @@ public class DashScopeApi {
 	 * @return Returns a {@link Flux} stream from chat completion chunks.
 	 */
 	public Flux<DashScopeApiSpec.ChatCompletionChunk> chatCompletionStream(DashScopeApiSpec.ChatCompletionRequest chatRequest,
-																		   MultiValueMap<String, String> additionalHttpHeader) {
+															   MultiValueMap<String, String> additionalHttpHeader) {
+
+		return this.chatCompletionStream(chatRequest, additionalHttpHeader, false);
+	}
+
+	/**
+	 * Creates a streaming chat response for the given chat conversation.
+	 * @param chatRequest The chat completion request. Must have the stream property set
+	 * to true.
+	 * @param additionalHttpHeader Optional, additional HTTP headers to be added to the
+	 * request.
+	 * @param enableStreamToolCalls Whether to emit tool call chunks during streaming.
+	 * @return Returns a {@link Flux} stream from chat completion chunks.
+	 */
+	public Flux<DashScopeApiSpec.ChatCompletionChunk> chatCompletionStream(
+			DashScopeApiSpec.ChatCompletionRequest chatRequest,
+			MultiValueMap<String, String> additionalHttpHeader,
+			boolean enableStreamToolCalls) {
 
 		Assert.notNull(chatRequest, "The request body can not be null.");
 		Assert.isTrue(chatRequest.stream(), "Request must set the stream property to true.");
 
-		AtomicBoolean isInsideTool = new AtomicBoolean(false);
 		boolean incrementalOutput = chatRequest.parameters() != null
 				&& chatRequest.parameters().incrementalOutput() != null && chatRequest.parameters().incrementalOutput();
 		DashScopeAiStreamFunctionCallingHelper chunkMerger = new DashScopeAiStreamFunctionCallingHelper(
@@ -576,7 +592,7 @@ public class DashScopeApi {
 			chatCompletionUri = MULTIMODAL_GENERATION_RESTFUL_URL;
 		}
 
-		return this.webClient.post().uri(chatCompletionUri).headers(headers -> {
+		Flux<DashScopeApiSpec.ChatCompletionChunk> baseFlux = this.webClient.post().uri(chatCompletionUri).headers(headers -> {
 			headers.addAll(additionalHttpHeader);
 			// For DashScope stream
 			headers.add(HEADER_SSE, ENABLED);
@@ -599,7 +615,14 @@ public class DashScopeApi {
 				}
 				return chunk;
 			})
-			.map(chunk -> {
+			.map(chunk -> chunk);
+
+		if (enableStreamToolCalls) {
+			return baseFlux;
+		}
+
+		AtomicBoolean isInsideTool = new AtomicBoolean(false);
+		return baseFlux.map(chunk -> {
 				if (chunkMerger.isStreamingToolFunctionCall(chunk)) {
 					isInsideTool.set(true);
 				}

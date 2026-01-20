@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.dashscope.chat;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
+import com.alibaba.cloud.ai.dashscope.api.DashScopeAiStreamFunctionCallingHelper;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletion;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionChunk;
@@ -87,6 +88,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -250,15 +253,18 @@ public class DashScopeChatModel implements ChatModel {
     // @formatter:off
 	public Flux<ChatResponse> internalStream(Prompt prompt, ChatResponse previousChatResponse) {
 
-        return Flux.deferContextual(contextView -> {
+		return Flux.deferContextual(contextView -> {
 			ChatCompletionRequest request = createRequest(prompt, true);
+			DashScopeChatOptions requestOptions = (DashScopeChatOptions) prompt.getOptions();
+			boolean enableStreamToolCalls = requestOptions != null
+					&& Boolean.TRUE.equals(requestOptions.getEnableStreamToolCalls());
 
 			Flux<ChatCompletionChunk> completionChunks = this.retryTemplate
                     .execute(ctx -> this.dashscopeApi.chatCompletionStream(
                             request,
-                            getAdditionalHttpHeaders(prompt)
-                    )
-            );
+                            getAdditionalHttpHeaders(prompt),
+							enableStreamToolCalls
+                    ));
 
 			// For chunked responses, only the first chunk contains the choice role.
 			// The rest of the chunks with same ID share the same role.
@@ -281,58 +287,174 @@ public class DashScopeChatModel implements ChatModel {
                     null)
             ).start();
 
-			// Convert the ChatCompletionChunk into a ChatCompletion to be able to reuse
-			// the function call handling logic.
-			Flux<ChatResponse> chatResponse = completionChunks.map(this::chunkToChatCompletion).switchMap(
-                    chatCompletion -> Mono.just(chatCompletion)
-                            .map(chatCompletion2 -> toChatResponse(
-                                    chatCompletion2,
-                                    previousChatResponse,
-                                    request,
-                                    roleMap
-                            ))
-            );
+			Flux<ChatResponse> flux;
+			if (enableStreamToolCalls) {
+				boolean incrementalOutput = request.parameters() != null
+						&& Boolean.TRUE.equals(request.parameters().incrementalOutput());
+				DashScopeAiStreamFunctionCallingHelper toolChunkMerger =
+						new DashScopeAiStreamFunctionCallingHelper(incrementalOutput);
+				AtomicReference<ChatCompletionChunk> pendingToolChunk = new AtomicReference<>(null);
+				AtomicBoolean insideTool = new AtomicBoolean(false);
 
-			Flux<ChatResponse> flux = chatResponse.flatMap(response -> {
-					if (toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
+				Flux<StreamedResponse> streamedResponses = completionChunks.map(chunk -> {
+					ChatCompletionChunk mergedToolChunk = null;
+					boolean toolExecutionReady = false;
+
+					if (toolChunkMerger.isStreamingToolFunctionCall(chunk)) {
+						insideTool.set(true);
+					}
+
+					if (insideTool.get()) {
+						ChatCompletionChunk merged = toolChunkMerger.merge(pendingToolChunk.get(), chunk);
+						pendingToolChunk.set(merged);
+						if (toolChunkMerger.isStreamingToolFunctionCallFinish(chunk)) {
+							insideTool.set(false);
+							toolExecutionReady = true;
+							mergedToolChunk = merged;
+							pendingToolChunk.set(null);
+						}
+					}
+
+					ChatResponse response = toChatResponse(
+							chunkToChatCompletion(chunk),
+							previousChatResponse,
+							request,
+							roleMap
+					);
+					ChatResponse toolExecutionResponse = null;
+					if (toolExecutionReady && mergedToolChunk != null) {
+						toolExecutionResponse = toChatResponse(
+								toolChunkMerger.chunkToChatCompletion(mergedToolChunk),
+								previousChatResponse,
+								request,
+								roleMap
+						);
+					}
+
+					return new StreamedResponse(response, toolExecutionResponse, toolExecutionReady);
+				});
+
+				flux = streamedResponses.flatMap(streamed -> {
+					ChatResponse response = streamed.response();
+					ChatResponse toolExecutionResponse = streamed.toolExecutionResponse();
+
+					if (streamed.toolExecutionReady() && toolExecutionResponse != null
+							&& toolExecutionEligibilityPredicate.isToolExecutionRequired(
+									prompt.getOptions(), toolExecutionResponse)) {
 
 						return Flux.deferContextual((ctx) -> {
-
 							ToolExecutionResult toolExecutionResult;
-
 							try {
 								ToolCallReactiveContextHolder.setContext(ctx);
-								toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
+								toolExecutionResult =
+										this.toolCallingManager.executeToolCalls(prompt, toolExecutionResponse);
 							} finally {
 								ToolCallReactiveContextHolder.clearContext();
 							}
 
+							Flux<ChatResponse> toolResultFlux;
 							if (toolExecutionResult.returnDirect()) {
-
-								// Return tool execution result directly to the client.
-								return Flux.just(ChatResponse.builder().from(response)
+								toolResultFlux = Flux.just(ChatResponse.builder()
+										.from(toolExecutionResponse)
 										.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
 										.build());
 							} else {
-								// Send the tool execution result back to the model.
-								return this.internalStream(
+								toolResultFlux = this.internalStream(
+										new Prompt(
+												toolExecutionResult.conversationHistory(),
+												prompt.getOptions()
+										),
+										toolExecutionResponse
+								);
+							}
+							return Flux.concat(Flux.just(response), toolResultFlux);
+						}).subscribeOn(Schedulers.boundedElastic());
+					}
+
+					return Flux.just(response);
+				});
+			}
+			else {
+				// Convert the ChatCompletionChunk into a ChatCompletion to be able to reuse
+				// the function call handling logic.
+				Flux<ChatResponse> chatResponse = completionChunks.map(this::chunkToChatCompletion).switchMap(
+                        chatCompletion -> Mono.just(chatCompletion)
+                                .map(chatCompletion2 -> toChatResponse(
+                                        chatCompletion2,
+                                        previousChatResponse,
+                                        request,
+                                        roleMap
+                                ))
+                );
+
+				flux = chatResponse.flatMap(response -> {
+						if (toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
+
+							return Flux.deferContextual((ctx) -> {
+
+								ToolExecutionResult toolExecutionResult;
+
+								try {
+									ToolCallReactiveContextHolder.setContext(ctx);
+									toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
+								} finally {
+									ToolCallReactiveContextHolder.clearContext();
+								}
+
+								if (toolExecutionResult.returnDirect()) {
+
+									// Return tool execution result directly to the client.
+									return Flux.just(ChatResponse.builder().from(response)
+											.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
+											.build());
+								} else {
+									// Send the tool execution result back to the model.
+									return this.internalStream(
                                         new Prompt(
                                                 toolExecutionResult.conversationHistory(),
                                                 prompt.getOptions()
                                         ),
-										response
+											response
                                 );
-							}
-						}).subscribeOn(Schedulers.boundedElastic());
-					} else {
-						return Flux.just(response);
-					}
-				}).doOnError(observation::error)
+								}
+							}).subscribeOn(Schedulers.boundedElastic());
+						} else {
+							return Flux.just(response);
+						}
+					});
+			}
+
+			flux = flux.doOnError(observation::error)
 				.doFinally(s -> observation.stop())
 				.contextWrite(ctx -> ctx.put(ObservationThreadLocalAccessor.KEY, observation));
 
 			return new MessageAggregator().aggregate(flux, observationContext::setResponse);
 		});
+	}
+
+	private static final class StreamedResponse {
+		private final ChatResponse response;
+		private final ChatResponse toolExecutionResponse;
+		private final boolean toolExecutionReady;
+
+		private StreamedResponse(ChatResponse response, ChatResponse toolExecutionResponse,
+				boolean toolExecutionReady) {
+			this.response = response;
+			this.toolExecutionResponse = toolExecutionResponse;
+			this.toolExecutionReady = toolExecutionReady;
+		}
+
+		private ChatResponse response() {
+			return response;
+		}
+
+		private ChatResponse toolExecutionResponse() {
+			return toolExecutionResponse;
+		}
+
+		private boolean toolExecutionReady() {
+			return toolExecutionReady;
+		}
 	}
 
 	private static String finishReasonToMetadataValue(DashScopeApiSpec.ChatCompletionFinishReason finishReason) {
@@ -478,6 +600,9 @@ public class DashScopeChatModel implements ChatModel {
 			requestOptions.setInternalToolExecutionEnabled(
 					ModelOptionsUtils.mergeOption(runtimeOptions.getInternalToolExecutionEnabled(),
 							this.defaultOptions.getInternalToolExecutionEnabled()));
+			requestOptions.setEnableStreamToolCalls(
+					ModelOptionsUtils.mergeOption(runtimeOptions.getEnableStreamToolCalls(),
+							this.defaultOptions.getEnableStreamToolCalls()));
 			requestOptions.setToolNames(ToolCallingChatOptions.mergeToolNames(runtimeOptions.getToolNames(),
 					this.defaultOptions.getToolNames()));
 			requestOptions.setToolCallbacks(ToolCallingChatOptions.mergeToolCallbacks(runtimeOptions.getToolCallbacks(),
@@ -488,6 +613,7 @@ public class DashScopeChatModel implements ChatModel {
 		}
 		else {
 			requestOptions.setInternalToolExecutionEnabled(this.defaultOptions.getInternalToolExecutionEnabled());
+			requestOptions.setEnableStreamToolCalls(this.defaultOptions.getEnableStreamToolCalls());
 			requestOptions.setToolNames(this.defaultOptions.getToolNames());
 			requestOptions.setToolCallbacks(this.defaultOptions.getToolCallbacks());
 			requestOptions.setToolContext(this.defaultOptions.getToolContext());

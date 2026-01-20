@@ -57,6 +57,12 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
     private Boolean stream;
 
     /**
+     * Whether to emit tool call chunks during streaming responses.
+     */
+    @JsonIgnore
+    private Boolean enableStreamToolCalls = false;
+
+    /**
      * Used to control the degree of randomness and diversity.
      * Specifically, the temperature value smooths the probability distribution
      * of each candidate token during text generation. Higher temperature values
@@ -443,6 +449,14 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         this.stream = stream;
     }
 
+    public Boolean getEnableStreamToolCalls() {
+        return enableStreamToolCalls;
+    }
+
+    public void setEnableStreamToolCalls(Boolean enableStreamToolCalls) {
+        this.enableStreamToolCalls = enableStreamToolCalls;
+    }
+
     @Override
     public Double getTemperature() {
         return this.temperature;
@@ -819,6 +833,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
             return stream(stream);
         }
 
+        public DashScopeChatOptionsBuilder enableStreamToolCalls(Boolean enableStreamToolCalls) {
+            this.options.enableStreamToolCalls = enableStreamToolCalls;
+            return this;
+        }
+
         public DashScopeChatOptionsBuilder toolCallbacks(List<ToolCallback> toolCallbacks) {
             Assert.notNull(toolCallbacks, "toolCallbacks cannot be null");
             Assert.noNullElements(toolCallbacks, "toolCallbacks cannot contain null elements");
@@ -978,6 +997,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 .stop(fromOptions.stop)
                 .responseFormat(fromOptions.responseFormat)
                 .stream(fromOptions.stream)
+                .enableStreamToolCalls(fromOptions.enableStreamToolCalls)
                 .enableSearch(fromOptions.enableSearch)
                 .incrementalOutput(fromOptions.incrementalOutput)
                 .toolCallbacks(fromOptions.toolCallbacks)
@@ -1008,6 +1028,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         DashScopeChatOptions that = (DashScopeChatOptions) o;
 
         return Objects.equals(this.model, that.model) && Objects.equals(this.stream, that.stream)
+                && Objects.equals(this.enableStreamToolCalls, that.enableStreamToolCalls)
                 && Objects.equals(this.temperature, that.temperature) && Objects.equals(this.seed, that.seed)
                 && Objects.equals(this.topP, that.topP) && Objects.equals(this.topK, that.topK)
                 && Objects.equals(this.stop, that.stop) && Objects.equals(this.enableSearch, that.enableSearch)
@@ -1033,7 +1054,12 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.model, this.stream, this.temperature, this.seed, this.topP, this.topK, this.stop, this.enableSearch, this.responseFormat, this.incrementalOutput, this.repetitionPenalty, this.tools, this.toolChoice, this.vlHighResolutionImages, this.enableThinking, this.thinkingBudget, this.toolCallbacks, this.toolNames, this.internalToolExecutionEnabled, this.multiModel, this.searchOptions, this.parallelToolCalls, this.httpHeaders, this.toolContext, this.modalities, this.audio, this.streamOptions, this.extraBody);
+        return Objects.hash(this.model, this.stream, this.enableStreamToolCalls, this.temperature, this.seed, this.topP,
+                this.topK, this.stop, this.enableSearch, this.responseFormat, this.incrementalOutput,
+                this.repetitionPenalty, this.tools, this.toolChoice, this.vlHighResolutionImages, this.enableThinking,
+                this.thinkingBudget, this.toolCallbacks, this.toolNames, this.internalToolExecutionEnabled,
+                this.multiModel, this.searchOptions, this.parallelToolCalls, this.httpHeaders, this.toolContext,
+                this.modalities, this.audio, this.streamOptions, this.extraBody);
     }
 
     @Override

@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.chat;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MESSAGE_FORMAT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.when;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
@@ -293,7 +294,7 @@ public class DashScopeMultiModalChatTests {
             new TokenUsage(10, 5, 15, null, null, null, null, null, null, null),
             null);
 
-    when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any()))
+    when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), anyBoolean()))
         .thenReturn(Flux.just(chunk1, chunk2));
 
     // Create user message with resource media

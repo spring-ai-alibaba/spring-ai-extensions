@@ -60,6 +60,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -156,7 +157,8 @@ class DashScopeChatModelTests {
         ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2, null, null);
         ChatCompletionChunk chunk3 = new ChatCompletionChunk(TEST_REQUEST_ID, output3, new TokenUsage(10, 5, 15, null, null, null, null, null, null, null), null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any())).thenReturn(Flux.just(chunk1, chunk2, chunk3));
+        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), anyBoolean()))
+                .thenReturn(Flux.just(chunk1, chunk2, chunk3));
 
         // Execute test
         Flux<ChatResponse> responseFlux = chatModel.stream(prompt);
@@ -280,7 +282,8 @@ class DashScopeChatModelTests {
         ChatCompletionChunk chunk2Response = new ChatCompletionChunk("test-id", new ChatCompletionOutput(chunk2, List.of(choice2), null), null, null);
         ChatCompletionChunk chunk3Response = new ChatCompletionChunk("test-id", new ChatCompletionOutput(chunk3, List.of(choice3), null), new TokenUsage(10, 5, 15, null, null, null, null, null, null, null), null);
 
-        when(dashScopeApi.chatCompletionStream(any(), any())).thenReturn(Flux.just(chunk1Response, chunk2Response, chunk3Response));
+        when(dashScopeApi.chatCompletionStream(any(), any(), anyBoolean()))
+                .thenReturn(Flux.just(chunk1Response, chunk2Response, chunk3Response));
 
         Message message = new UserMessage("What's the weather like?");
         Prompt prompt = new Prompt(List.of(message), options);
@@ -644,7 +647,8 @@ class DashScopeChatModelTests {
         Message message = new UserMessage("Test error handling");
         Prompt prompt = new Prompt(List.of(message));
 
-        when(dashScopeApi.chatCompletionStream(any(), any())).thenReturn(Flux.error(new com.alibaba.cloud.ai.dashscope.common.DashScopeException("InvalidParameter  (requestId: error-request-123)")));
+        when(dashScopeApi.chatCompletionStream(any(), any(), anyBoolean()))
+                .thenReturn(Flux.error(new com.alibaba.cloud.ai.dashscope.common.DashScopeException("InvalidParameter  (requestId: error-request-123)")));
 
         Flux<ChatResponse> responseFlux = chatModel.stream(prompt);
 
@@ -790,7 +794,7 @@ class DashScopeChatModelTests {
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2, usage, null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any()))
+        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), anyBoolean()))
                 .thenReturn(Flux.just(chunk1, chunk2));
 
         // Create prompt
@@ -837,7 +841,7 @@ class DashScopeChatModelTests {
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletionChunk chunk = new ChatCompletionChunk(TEST_REQUEST_ID, output, usage, null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any()))
+        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), anyBoolean()))
                 .thenReturn(Flux.just(chunk));
 
         // Create prompt
