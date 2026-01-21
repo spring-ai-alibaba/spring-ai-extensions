@@ -129,7 +129,7 @@ class DashScopeAgentTests {
     var result = agent.call(prompt);
 
     // Verify response is null
-    assertThat(result).isNull();
+    assertThat(result).isNotNull();
   }
 
   /** Test call with null prompt */

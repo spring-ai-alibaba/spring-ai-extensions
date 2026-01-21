@@ -462,10 +462,10 @@ class DashScopeAgentApiTests {
 	 */
 	private DashScopeAgentApi.DashScopeAgentRequest createTestRequest() {
 		DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput input = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput(
-				TEST_PROMPT, null, null, null, null, null);
+				TEST_PROMPT, null, null, null, null, null, null);
 
 		DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters parameters = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters(
-				DashScopeAgentFlowStreamMode.FULL_THOUGHTS, false, false, null);
+				DashScopeAgentFlowStreamMode.FULL_THOUGHTS, false, false, null, null, null);
 
 		return new DashScopeAgentApi.DashScopeAgentRequest(TEST_APP_ID, input, parameters);
 	}
@@ -507,10 +507,10 @@ class DashScopeAgentApiTests {
 	 */
 	private DashScopeAgentApi.DashScopeAgentRequest createCustomParametersRequest() {
 		DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput input = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput(
-				TEST_PROMPT, null, "custom-session", "custom-memory", null, null);
+				TEST_PROMPT, null, "custom-session", "custom-memory", null, null, null);
 
 		DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters parameters = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters(
-				DashScopeAgentFlowStreamMode.FULL_THOUGHTS, true, true, null);
+				DashScopeAgentFlowStreamMode.FULL_THOUGHTS, true, true, null, null, null);
 
 		return new DashScopeAgentApi.DashScopeAgentRequest(TEST_APP_ID, input, parameters);
 	}
@@ -520,10 +520,10 @@ class DashScopeAgentApiTests {
 	 */
 	private DashScopeAgentApi.DashScopeAgentRequest createRequestWithThoughts() {
 		DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput input = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput(
-				TEST_PROMPT, null, null, null, null, null);
+				TEST_PROMPT, null, null, null, null, null, null);
 
 		DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters parameters = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters(
-				DashScopeAgentFlowStreamMode.FULL_THOUGHTS, true, false, null);
+				DashScopeAgentFlowStreamMode.FULL_THOUGHTS, true, false, null, null, null);
 
 		return new DashScopeAgentApi.DashScopeAgentRequest(TEST_APP_ID, input, parameters);
 	}

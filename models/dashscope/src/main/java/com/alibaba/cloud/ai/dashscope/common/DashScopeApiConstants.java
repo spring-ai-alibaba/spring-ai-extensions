@@ -102,6 +102,8 @@ public final class DashScopeApiConstants {
 
 	public static final String USAGE = "usage";
 
+    public static final String THOUGHTS = "thoughts";
+
 	public static final String OUTPUT = "output";
 
 	public static final String DEFAULT_PARSER_NAME = "DASHSCOPE_DOCMIND";

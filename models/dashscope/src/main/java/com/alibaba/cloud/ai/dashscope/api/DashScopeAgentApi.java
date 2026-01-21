@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.dashscope.api;
 
 import com.alibaba.cloud.ai.dashscope.agent.DashScopeAgentFlowStreamMode;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,10 +28,12 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_BASE_URL;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author linkesheng.lks
@@ -92,12 +95,18 @@ public class DashScopeAgentApi {
 	public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest request) {
 		return webClient.post()
 			.uri(DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL, request.appId())
-			.body(Mono.just(request), DashScopeAgentResponse.class)
+			.body(Mono.just(request), DashScopeAgentRequest.class)
 			.retrieve()
-			.bodyToFlux(DashScopeAgentResponse.class)
-			.handle((data, sink) -> {
-				sink.next(data);
-			});
+			.bodyToFlux( DashScopeAgentResponse.class)
+            .filter(Objects::nonNull)
+            .map(response -> {
+                if (response.code() != null && !response.code().isBlank()) {
+                    throw new DashScopeException(String.format("[%s] %s (requestId: %s)",
+                            response.code(), response.message(), response.requestId()));
+                }
+                return response;
+            })
+            .subscribeOn(Schedulers.boundedElastic());
 	}
 
 	// @formatter:off
@@ -113,6 +122,7 @@ public class DashScopeAgentApi {
 				@JsonProperty("session_id") String sessionId,
 				@JsonProperty("memory_id") String memoryId,
 				@JsonProperty("image_list") List<String> images,
+				@JsonProperty("file_list") List<String> files,
 				@JsonProperty("biz_params") JsonNode bizParams) {
 			@JsonInclude(JsonInclude.Include.NON_NULL)
 			public record DashScopeAgentRequestMessage(
@@ -125,7 +135,9 @@ public class DashScopeAgentApi {
 		public record DashScopeAgentRequestParameters(
 				@JsonProperty("flow_stream_mode") DashScopeAgentFlowStreamMode flowStreamMode,
 				@JsonProperty("has_thoughts") Boolean hasThoughts,
+				@JsonProperty("enable_thinking") Boolean enableThinking,
 				@JsonProperty("incremental_output") Boolean incrementalOutput,
+                @JsonProperty("model_id") String modelId,
 				@JsonProperty("rag_options") DashScopeAgentRequestRagOptions ragOptions
 		) {
 			@JsonInclude(JsonInclude.Include.NON_NULL)

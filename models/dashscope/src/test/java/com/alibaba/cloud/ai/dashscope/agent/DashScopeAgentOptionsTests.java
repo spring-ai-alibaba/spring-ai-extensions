@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 /**
  * Test cases for DashScopeAgentOptions.
  *
@@ -33,133 +35,164 @@ import org.junit.jupiter.api.Test;
  */
 class DashScopeAgentOptionsTests {
 
-  private static final String TEST_APP_ID = "test-app-id";
+    private static final String TEST_APP_ID = "test-app-id";
 
-  private static final String TEST_SESSION_ID = "test-session-id";
+    private static final String TEST_SESSION_ID = "test-session-id";
 
-  private static final String TEST_MEMORY_ID = "test-memory-id";
+    private static final String TEST_MEMORY_ID = "test-memory-id";
 
-  private ObjectMapper objectMapper;
+    private static final String TEST_MODEL_ID = "qwen-plus";
 
-  private JsonNode testBizParams;
+    private ObjectMapper objectMapper;
 
-  @BeforeEach
-  void setUp() {
-    // Initialize ObjectMapper and create test bizParams
-    objectMapper = new ObjectMapper();
-    ObjectNode bizParams = objectMapper.createObjectNode();
-    bizParams.put("key1", "value1");
-    bizParams.put("key2", "value2");
-    testBizParams = bizParams;
-  }
+    private JsonNode testBizParams;
 
-  /** Test builder pattern for creating DashScopeAgentOptions */
-  @Test
-  void testBuilder() {
-    // Create options using builder
-    DashScopeAgentOptions options =
-        DashScopeAgentOptions.builder()
-            .appId(TEST_APP_ID)
-            .sessionId(TEST_SESSION_ID)
-            .memoryId(TEST_MEMORY_ID)
-            .incrementalOutput(true)
-            .hasThoughts(true)
-            .bizParams(testBizParams)
-            .build();
+    @BeforeEach
+    void setUp() {
+        // Initialize ObjectMapper and create test bizParams
+        objectMapper = new ObjectMapper();
+        ObjectNode bizParams = objectMapper.createObjectNode();
+        bizParams.put("key1", "value1");
+        bizParams.put("key2", "value2");
+        testBizParams = bizParams;
+    }
 
-    // Verify all fields are set correctly
-    assertThat(options.getAppId()).isEqualTo(TEST_APP_ID);
-    assertThat(options.getSessionId()).isEqualTo(TEST_SESSION_ID);
-    assertThat(options.getMemoryId()).isEqualTo(TEST_MEMORY_ID);
-    assertThat(options.getIncrementalOutput()).isTrue();
-    assertThat(options.getHasThoughts()).isTrue();
-    assertThat(options.getBizParams()).isEqualTo(testBizParams);
-  }
+    /**
+     * Test builder pattern for creating DashScopeAgentOptions
+     */
+    @Test
+    void testBuilder() {
+        // Create options using builder
+        DashScopeAgentOptions options = DashScopeAgentOptions.builder()
+                .appId(TEST_APP_ID)
+                .sessionId(TEST_SESSION_ID)
+                .memoryId(TEST_MEMORY_ID)
+                .modelId(TEST_MODEL_ID)
+                .incrementalOutput(true)
+                .enableThinking(true)
+                .hasThoughts(true)
+                .bizParams(testBizParams)
+                .files(List.of("file-123"))
+                .images(List.of("image-123"))
+                .build();
 
-  /** Test copy functionality of DashScopeAgentOptions */
-  @Test
-  void testCopy() {
-    // Create original options
-    DashScopeAgentOptions original =
-        DashScopeAgentOptions.builder()
-            .appId(TEST_APP_ID)
-            .sessionId(TEST_SESSION_ID)
-            .incrementalOutput(true)
-            .hasThoughts(true)
-            .bizParams(testBizParams)
-            .build();
+        // Verify all fields are set correctly
+        assertThat(options.getAppId()).isEqualTo(TEST_APP_ID);
+        assertThat(options.getSessionId()).isEqualTo(TEST_SESSION_ID);
+        assertThat(options.getMemoryId()).isEqualTo(TEST_MEMORY_ID);
+        assertThat(options.getIncrementalOutput()).isTrue();
+        assertThat(options.getHasThoughts()).isTrue();
+        assertThat(options.getEnableThinking()).isTrue();
+        assertThat(options.getBizParams()).isEqualTo(testBizParams);
+        assertThat(options.getFiles()).isEqualTo(List.of("file-123"));
+        assertThat(options.getImages()).isEqualTo(List.of("image-123"));
+    }
 
-    // Create copy using copy() method
-    DashScopeAgentOptions copy = (DashScopeAgentOptions) original.copy();
+    /**
+     * Test copy functionality of DashScopeAgentOptions
+     */
+    @Test
+    void testCopy() {
+        // Create original options
+        DashScopeAgentOptions original = DashScopeAgentOptions.builder()
+                .appId(TEST_APP_ID)
+                .sessionId(TEST_SESSION_ID)
+                .modelId(TEST_MODEL_ID)
+                .incrementalOutput(true)
+                .hasThoughts(true)
+                .enableThinking(true)
+                .bizParams(testBizParams)
+                .files(List.of("file-123"))
+                .images(List.of("image-123"))
+                .build();
 
-    // Verify copied options match original
-    assertThat(copy.getAppId()).isEqualTo(original.getAppId());
-    assertThat(copy.getSessionId()).isEqualTo(original.getSessionId());
-    assertThat(copy.getIncrementalOutput()).isEqualTo(original.getIncrementalOutput());
-    assertThat(copy.getHasThoughts()).isEqualTo(original.getHasThoughts());
-    assertThat(copy.getBizParams()).isEqualTo(original.getBizParams());
-  }
+        // Create copy using copy() method
+        DashScopeAgentOptions copy = (DashScopeAgentOptions) original.copy();
 
-  /** Test default values of ChatOptions interface methods */
-  @Test
-  void testChatOptionsDefaults() {
-    DashScopeAgentOptions options = DashScopeAgentOptions.builder().build();
+        // Verify copied options match original
+        assertThat(copy.getAppId()).isEqualTo(original.getAppId());
+        assertThat(copy.getSessionId()).isEqualTo(original.getSessionId());
+        assertThat(copy.getModelId()).isEqualTo(original.getModelId());
+        assertThat(copy.getIncrementalOutput()).isEqualTo(original.getIncrementalOutput());
+        assertThat(copy.getHasThoughts()).isEqualTo(original.getHasThoughts());
+        assertThat(copy.getEnableThinking()).isEqualTo(original.getEnableThinking());
+        assertThat(copy.getBizParams()).isEqualTo(original.getBizParams());
+        assertThat(copy.getFiles()).isEqualTo(original.getFiles());
+        assertThat(copy.getImages()).isEqualTo(original.getImages());
+    }
 
-    // Verify default values for ChatOptions interface methods
-    assertThat(options.getModel()).isNull();
-    assertThat(options.getFrequencyPenalty()).isNull();
-    assertThat(options.getMaxTokens()).isNull();
-    assertThat(options.getPresencePenalty()).isNull();
-    assertThat(options.getStopSequences()).isNull();
-    assertThat(options.getTemperature()).isEqualTo(0d);
-    assertThat(options.getTopP()).isEqualTo(0d);
-    assertThat(options.getTopK()).isEqualTo(0);
-  }
+    /**
+     * Test default values of ChatOptions interface methods
+     */
+    @Test
+    void testChatOptionsDefaults() {
+        DashScopeAgentOptions options = DashScopeAgentOptions.builder().build();
 
-  /** Test toString method for proper string representation */
-  @Test
-  void testToString() {
-    DashScopeAgentOptions options =
-        DashScopeAgentOptions.builder()
-            .appId(TEST_APP_ID)
-            .sessionId(TEST_SESSION_ID)
-            .memoryId(TEST_MEMORY_ID)
-            .incrementalOutput(true)
-            .hasThoughts(false)
-            .bizParams(testBizParams)
-            .build();
+        // Verify default values for ChatOptions interface methods
+        assertThat(options.getModel()).isNull();
+        assertThat(options.getFrequencyPenalty()).isNull();
+        assertThat(options.getMaxTokens()).isNull();
+        assertThat(options.getPresencePenalty()).isNull();
+        assertThat(options.getStopSequences()).isNull();
+        assertThat(options.getTemperature()).isEqualTo(0d);
+        assertThat(options.getTopP()).isEqualTo(0d);
+        assertThat(options.getTopK()).isEqualTo(0);
+    }
 
-    String toString = options.toString();
+    /**
+     * Test toString method for proper string representation
+     */
+    @Test
+    void testToString() {
+        DashScopeAgentOptions options = DashScopeAgentOptions.builder()
+                .appId(TEST_APP_ID)
+                .sessionId(TEST_SESSION_ID)
+                .memoryId(TEST_MEMORY_ID)
+                .modelId(TEST_MODEL_ID)
+                .incrementalOutput(true)
+                .hasThoughts(false)
+                .enableThinking(false)
+                .bizParams(testBizParams)
+                .build();
 
-    // Verify toString contains all field values
-    assertThat(toString)
-        .contains(TEST_APP_ID)
-        .contains(TEST_SESSION_ID)
-        .contains(TEST_MEMORY_ID)
-        .contains("incrementalOutput=true")
-        .contains("hasThoughts=false")
-        .contains(testBizParams.toString());
-  }
+        String toString = options.toString();
 
-  /** Test setters for all fields */
-  @Test
-  void testSetters() {
-    DashScopeAgentOptions options = new DashScopeAgentOptions();
+        // Verify toString contains all field values
+        assertThat(toString).contains(TEST_APP_ID)
+                .contains(TEST_SESSION_ID)
+                .contains(TEST_MEMORY_ID)
+                .contains(TEST_MODEL_ID)
+                .contains("incrementalOutput=true")
+                .contains("hasThoughts=false")
+                .contains("enableThinking=false")
+                .contains(testBizParams.toString());
+    }
 
-    // Set values using setters
-    options.setAppId(TEST_APP_ID);
-    options.setSessionId(TEST_SESSION_ID);
-    options.setMemoryId(TEST_MEMORY_ID);
-    options.setIncrementalOutput(true);
-    options.setHasThoughts(true);
-    options.setBizParams(testBizParams);
+    /**
+     * Test setters for all fields
+     */
+    @Test
+    void testSetters() {
+        DashScopeAgentOptions options = new DashScopeAgentOptions();
 
-    // Verify all values are set correctly
-    assertThat(options.getAppId()).isEqualTo(TEST_APP_ID);
-    assertThat(options.getSessionId()).isEqualTo(TEST_SESSION_ID);
-    assertThat(options.getMemoryId()).isEqualTo(TEST_MEMORY_ID);
-    assertThat(options.getIncrementalOutput()).isTrue();
-    assertThat(options.getHasThoughts()).isTrue();
-    assertThat(options.getBizParams()).isEqualTo(testBizParams);
-  }
+        // Set values using setters
+        options.setAppId(TEST_APP_ID);
+        options.setSessionId(TEST_SESSION_ID);
+        options.setMemoryId(TEST_MEMORY_ID);
+        options.setModelId(TEST_MODEL_ID);
+        options.setIncrementalOutput(true);
+        options.setHasThoughts(true);
+        options.setEnableThinking(true);
+        options.setBizParams(testBizParams);
+
+        // Verify all values are set correctly
+        assertThat(options.getAppId()).isEqualTo(TEST_APP_ID);
+        assertThat(options.getSessionId()).isEqualTo(TEST_SESSION_ID);
+        assertThat(options.getMemoryId()).isEqualTo(TEST_MEMORY_ID);
+        assertThat(options.getModelId()).isEqualTo(TEST_MODEL_ID);
+        assertThat(options.getIncrementalOutput()).isTrue();
+        assertThat(options.getHasThoughts()).isTrue();
+        assertThat(options.getEnableThinking()).isTrue();
+        assertThat(options.getBizParams()).isEqualTo(testBizParams);
+    }
 }
