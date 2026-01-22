@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.chat;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletion;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionChunk;
@@ -41,12 +42,13 @@ import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccess
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
-import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.metadata.EmptyUsage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -208,7 +210,6 @@ public class DashScopeChatModel implements ChatModel {
 					.execute(ctx -> dashscopeApi.chatCompletionEntity(request, getAdditionalHttpHeaders(prompt)));
 
 				var completionResponse = completionEntity.getBody();
-
 				ChatResponse chatResponse = toChatResponse(completionResponse, previousChatResponse, request, null);
 
 				observationContext.setResponse(chatResponse);
@@ -385,10 +386,11 @@ public class DashScopeChatModel implements ChatModel {
 		}).toList();
 
         DashScopeApiSpec.TokenUsage usage = chatCompletion.usage();
-		Usage currentChatResponseUsage = usage != null ? this.getDefaultUsage(usage) : new EmptyUsage();
-		Usage accumulatedUsage = UsageCalculator.getCumulativeUsage(currentChatResponseUsage, previousChatResponse);
+		Usage currentChatResponseUsage = usage != null ? DashScopeAiUsage.from(usage) : new EmptyUsage();
+		// Keep cumulative calculation for backward compatibility, but don't let it overwrite native usage.
+		UsageCalculator.getCumulativeUsage(currentChatResponseUsage, previousChatResponse);
 
-		return new ChatResponse(generations, this.from(chatCompletion, accumulatedUsage));
+		return new ChatResponse(generations, this.from(chatCompletion, currentChatResponseUsage));
 	}
     // @formatter:on
 
@@ -443,18 +445,6 @@ public class DashScopeChatModel implements ChatModel {
 		Assert.notNull(result, "DashScopeAi ChatCompletionResult must not be null");
 		return ChatResponseMetadata.builder().id(result.requestId()).usage(usage).model("").build();
 	}
-
-    private DefaultUsage getDefaultUsage(DashScopeApiSpec.TokenUsage usage) {
-        if (usage == null) {
-            return new DefaultUsage(0, 0, 0);
-        }
-
-        int promptTokens = usage.inputTokens() != null ? usage.inputTokens() : 0;
-        int generationTokens = usage.outputTokens() != null ? usage.outputTokens() : 0;
-        int totalTokens = usage.totalTokens() != null ? usage.totalTokens() : 0;
-
-        return new DefaultUsage(promptTokens, generationTokens, totalTokens);
-    }
 
 	Prompt buildRequestPrompt(Prompt prompt) {
 		// Process runtime options
@@ -517,10 +507,20 @@ public class DashScopeChatModel implements ChatModel {
 		List<ChatCompletionMessage> chatCompletionMessages = prompt.getInstructions().stream().map(message -> {
 			if (message.getMessageType() == MessageType.USER || message.getMessageType() == MessageType.SYSTEM) {
 				Object content = message.getText();
+				Map<String, String> cacheControl = extractCacheControl(message);
+
 				if (message instanceof UserMessage userMessage) {
 					if (!CollectionUtils.isEmpty(userMessage.getMedia())) {
-						content = convertMediaContent(userMessage);
+						content = convertMediaContent(userMessage, cacheControl);
 					}
+					else if (cacheControl != null) {
+						// Convert text to MediaContent with cache_control
+						content = List.of(new MediaContent(message.getText(), cacheControl));
+					}
+				}
+				else if (message instanceof SystemMessage && cacheControl != null) {
+					// Convert system message text to MediaContent with cache_control
+					content = List.of(new MediaContent(message.getText(), cacheControl));
 				}
 
 				return List.of(new ChatCompletionMessage(content,
@@ -595,7 +595,38 @@ public class DashScopeChatModel implements ChatModel {
 				headers.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> List.of(e.getValue()))));
 	}
 
-	private List<MediaContent> convertMediaContent(UserMessage message) {
+	/**
+	 * Extract cache_control from message metadata.
+	 * @param message The message to extract cache_control from.
+	 * @return A Map containing cache control settings, or null if not present.
+	 */
+	@SuppressWarnings("unchecked")
+	private Map<String, String> extractCacheControl(Message message) {
+		if (message.getMetadata() == null) {
+			return null;
+		}
+		Object cacheControlObj = message.getMetadata().get(DashScopeApiConstants.CACHE_CONTROL);
+		if (cacheControlObj instanceof Map) {
+			try {
+				Map<?, ?> rawMap = (Map<?, ?>) cacheControlObj;
+				Map<String, String> cacheControl = new HashMap<>();
+				for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+					if (entry.getKey() instanceof String && entry.getValue() instanceof String) {
+						cacheControl.put((String) entry.getKey(), (String) entry.getValue());
+					}
+				}
+				if (!cacheControl.isEmpty()) {
+					return cacheControl;
+				}
+			}
+			catch (ClassCastException e) {
+				logger.warn("DashScopeChatModel extractCacheControl Invalid cache_control format in message metadata");
+			}
+		}
+		return null;
+	}
+
+	private List<MediaContent> convertMediaContent(UserMessage message, Map<String, String> cacheControl) {
 		MessageFormat format = MessageFormat.IMAGE;
 		if (message.getMetadata().get(DashScopeApiConstants.MESSAGE_FORMAT) instanceof MessageFormat messageFormat) {
 			format = messageFormat;
@@ -610,7 +641,8 @@ public class DashScopeChatModel implements ChatModel {
 
 			contentList.add(new MediaContent("video", null, null, mediaList));
 
-			MediaContent mediaContent = new MediaContent(message.getText());
+			// Apply cache_control to the text content (last content part)
+			MediaContent mediaContent = new MediaContent(message.getText(), cacheControl);
 			contentList.add(mediaContent);
 		}
 		else if (format == MessageFormat.AUDIO) {
@@ -620,7 +652,8 @@ public class DashScopeChatModel implements ChatModel {
 						this.fromMediaData(media.getMimeType(), media.getData())))
 				.toList());
 
-			MediaContent mediaContent = new MediaContent(message.getText());
+			// Apply cache_control to the text content (last content part)
+			MediaContent mediaContent = new MediaContent(message.getText(), cacheControl);
 			contentList.add(mediaContent);
 		}
 		else {
@@ -630,7 +663,8 @@ public class DashScopeChatModel implements ChatModel {
 						null))
 				.toList());
 
-			MediaContent mediaContent = new MediaContent(message.getText());
+			// Apply cache_control to the text content (last content part)
+			MediaContent mediaContent = new MediaContent(message.getText(), cacheControl);
 			contentList.add(mediaContent);
 		}
 

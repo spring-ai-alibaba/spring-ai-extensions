@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.dashscope.metadata;
 
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.CacheCreation;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.PromptTokenDetailed;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
 import org.junit.jupiter.api.Test;
 
@@ -22,8 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Test cases for DashScopeAiUsage. Tests cover factory method, token calculations, and
- * null handling.
+ * Test cases for DashScopeAiUsage. Tests cover factory method, token calculations,
+ * native usage and null handling.
  *
  * @author yuluo
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
@@ -82,6 +84,79 @@ class DashScopeAiUsageTests {
 		// Verify toString contains token usage information
 		String toString = usage.toString();
 		assertThat(toString).isEqualTo(tokenUsage.toString());
+	}
+
+	@Test
+	void testGetNativeUsageReturnsTokenUsage() {
+		// Test that getNativeUsage returns the original TokenUsage object
+		TokenUsage tokenUsage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+		DashScopeAiUsage usage = DashScopeAiUsage.from(tokenUsage);
+
+		// Verify getNativeUsage returns the same TokenUsage instance
+		assertThat(usage.getNativeUsage()).isSameAs(tokenUsage);
+	}
+
+	@Test
+	void testGetNativeUsageWithCacheDetails() {
+		// Test that getNativeUsage returns TokenUsage with cache details accessible
+		CacheCreation cacheCreation = new CacheCreation(1024);
+		PromptTokenDetailed promptTokenDetailed = new PromptTokenDetailed(
+				128,           // cachedTokens
+				cacheCreation, // cacheCreation
+				1024,          // cacheCreationInputTokens
+				"ephemeral_5m" // cacheType
+		);
+
+		TokenUsage tokenUsage = new TokenUsage(
+				10,    // outputTokens
+				20,    // inputTokens
+				30,    // totalTokens
+				null,  // imageTokens
+				null,  // videoTokens
+				null,  // audioTokens
+				null,  // seconds
+				null,  // inputTokensDetails
+				null,  // outputTokensDetails
+				promptTokenDetailed
+		);
+
+		DashScopeAiUsage usage = DashScopeAiUsage.from(tokenUsage);
+
+		// Verify getNativeUsage returns TokenUsage with cache fields
+		assertThat(usage.getNativeUsage()).isSameAs(tokenUsage);
+
+		// Verify cache details are accessible via native usage
+		TokenUsage nativeUsage = (TokenUsage) usage.getNativeUsage();
+		assertThat(nativeUsage.promptTokenDetailed()).isNotNull();
+		assertThat(nativeUsage.promptTokenDetailed().cachedTokens()).isEqualTo(128);
+		assertThat(nativeUsage.promptTokenDetailed().cacheType()).isEqualTo("ephemeral_5m");
+		assertThat(nativeUsage.promptTokenDetailed().cacheCreationInputTokens()).isEqualTo(1024);
+		assertThat(nativeUsage.promptTokenDetailed().cacheCreation().ephemeral_5m_input_tokens()).isEqualTo(1024);
+	}
+
+	@Test
+	void testGetNativeUsageWithMediaTokens() {
+		// Test that getNativeUsage returns TokenUsage with media tokens accessible
+		TokenUsage tokenUsage = new TokenUsage(
+				10,   // outputTokens
+				20,   // inputTokens
+				30,   // totalTokens
+				100,  // imageTokens
+				200,  // videoTokens
+				50,   // audioTokens
+				null, // seconds
+				null, // inputTokensDetails
+				null, // outputTokensDetails
+				null  // promptTokenDetailed
+		);
+
+		DashScopeAiUsage usage = DashScopeAiUsage.from(tokenUsage);
+
+		// Verify media tokens are accessible via native usage
+		TokenUsage nativeUsage = (TokenUsage) usage.getNativeUsage();
+		assertThat(nativeUsage.imageTokens()).isEqualTo(100);
+		assertThat(nativeUsage.videoTokens()).isEqualTo(200);
+		assertThat(nativeUsage.audioTokens()).isEqualTo(50);
 	}
 
 }

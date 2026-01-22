@@ -938,21 +938,37 @@ public class DashScopeApiSpec {
          * @param video The image list of video. by adding multiple image_url content
          * parts. Image input is only supported when using the glm-4v model.
          * @param audio The audio content of the message.
+         * @param cacheControl The cache control settings for explicit caching.
+         * When set to {"type": "ephemeral"}, the system will attempt to hit or create a cache.
          */
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record MediaContent(@JsonProperty("type") String type, @JsonProperty("text") String text,
                                    @JsonProperty("image") String image, @JsonProperty("video") List<String> video,
-                                   @JsonProperty("audio") String audio) {
+                                   @JsonProperty("audio") String audio,
+                                   @JsonProperty("cache_control") Map<String, String> cacheControl) {
             /**
              * Shortcut constructor for a text content.
              * @param text The text content of the message.
              */
             public MediaContent(String text) {
-                this("text", text, null, null);
+                this("text", text, null, null, null, null);
+            }
+
+            /**
+             * Constructor for a text content with cache control.
+             * @param text The text content of the message.
+             * @param cacheControl The cache control settings.
+             */
+            public MediaContent(String text, Map<String, String> cacheControl) {
+                this("text", text, null, null, null, cacheControl);
             }
 
             public MediaContent(String type, String text, String image, List<String> video) {
-                this(type, text, image, video, null);
+                this(type, text, image, video, null, null);
+            }
+
+            public MediaContent(String type, String text, String image, List<String> video, String audio) {
+                this(type, text, image, video, audio, null);
             }
         }
 

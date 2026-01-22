@@ -45,7 +45,6 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingManager;
@@ -323,7 +322,7 @@ class DashScopeChatModelTests {
         assertThat(response.getResults()).isEmpty();
         // Verify usage metadata
         assertThat(response.getMetadata().getUsage()).isNotNull();
-        DefaultUsage aiUsage = (DefaultUsage) response.getMetadata().getUsage();
+        var aiUsage = response.getMetadata().getUsage();
         assertThat(aiUsage.getPromptTokens()).isZero();
         assertThat(aiUsage.getCompletionTokens()).isZero();
         assertThat(aiUsage.getTotalTokens()).isZero();
@@ -364,10 +363,10 @@ class DashScopeChatModelTests {
 
         assertThat(response.getMetadata()).isNotNull();
         assertThat(response.getMetadata().getId()).isEqualTo(TEST_REQUEST_ID);
-        DefaultUsage aiUsage = (DefaultUsage) response.getMetadata().getUsage();
-        assertThat(aiUsage.getPromptTokens()).isEqualTo(5L);
+        var aiUsage = response.getMetadata().getUsage();
+        assertThat(aiUsage.getPromptTokens()).isEqualTo(5);
         assertThat(aiUsage.getCompletionTokens()).isEqualTo(10);
-        assertThat(aiUsage.getTotalTokens()).isEqualTo(15L);
+        assertThat(aiUsage.getTotalTokens()).isEqualTo(15);
     }
 
     @Test
@@ -928,5 +927,178 @@ class DashScopeChatModelTests {
         assertThat(clone2).isNotNull();
         assertThat(mutate1).isNotNull();
         assertThat(mutate2).isNotNull();
+    }
+
+    @Test
+    void testChatResponseUsageContainsDashScopeNativeUsage() {
+        // Test that ChatResponse.metadata.usage is DashScopeAiUsage with native TokenUsage
+        Message message = new UserMessage(TEST_PROMPT);
+        Prompt prompt = new Prompt(List.of(message));
+
+        // Build TokenUsage with prompt_tokens_details (explicit cache related fields)
+        var cacheCreation = new com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.CacheCreation(1024);
+        var promptTokenDetailed = new com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.PromptTokenDetailed(
+                128,           // cachedTokens
+                cacheCreation, // cacheCreation
+                1024,          // cacheCreationInputTokens
+                "ephemeral_5m" // cacheType
+        );
+        TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, promptTokenDetailed);
+
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
+        ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+        ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
+
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any())).thenReturn(ResponseEntity.ok(chatCompletion));
+
+        ChatResponse response = chatModel.call(prompt);
+
+        // Verify usage is DashScopeAiUsage instance
+        assertThat(response.getMetadata().getUsage()).isInstanceOf(com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage.class);
+
+        var dashScopeUsage = (com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage) response.getMetadata().getUsage();
+
+        // Verify getNativeUsage returns the original TokenUsage
+        assertThat(dashScopeUsage.getNativeUsage()).isSameAs(usage);
+
+        // Verify cache-related fields are accessible via native usage
+        TokenUsage nativeUsage = (TokenUsage) dashScopeUsage.getNativeUsage();
+        assertThat(nativeUsage.promptTokenDetailed()).isNotNull();
+        assertThat(nativeUsage.promptTokenDetailed().cachedTokens()).isEqualTo(128);
+        assertThat(nativeUsage.promptTokenDetailed().cacheType()).isEqualTo("ephemeral_5m");
+        assertThat(nativeUsage.promptTokenDetailed().cacheCreationInputTokens()).isEqualTo(1024);
+        assertThat(nativeUsage.promptTokenDetailed().cacheCreation().ephemeral_5m_input_tokens()).isEqualTo(1024);
+    }
+
+    @Test
+    void testUserMessageWithCacheControl() {
+        // Test that cache_control in UserMessage metadata is properly processed
+        Map<String, Object> cacheControl = Map.of("type", "ephemeral");
+        Message message = UserMessage.builder()
+                .text(TEST_PROMPT)
+                .metadata(Map.of("cache_control", cacheControl))
+                .build();
+        Prompt prompt = new Prompt(List.of(message));
+
+        // Mock API response
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
+        ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+        TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+        ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
+
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any())).thenReturn(ResponseEntity.ok(chatCompletion));
+
+        // Should not throw any exception
+        ChatResponse response = chatModel.call(prompt);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getResult().getOutput().getText()).isEqualTo(TEST_RESPONSE);
+    }
+
+    @Test
+    void testSystemMessageWithCacheControl() {
+        // Test that cache_control in SystemMessage metadata is properly processed
+        Map<String, Object> cacheControl = Map.of("type", "ephemeral");
+        Message systemMessage = SystemMessage.builder()
+                .text("You are a helpful assistant.")
+                .metadata(Map.of("cache_control", cacheControl))
+                .build();
+        Message userMessage = new UserMessage("Hello!");
+
+        // Mock API response
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
+        ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+        TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+        ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
+
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any())).thenReturn(ResponseEntity.ok(chatCompletion));
+
+        Prompt prompt = new Prompt(List.of(systemMessage, userMessage));
+        ChatResponse response = chatModel.call(prompt);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getResult().getOutput().getText()).isEqualTo(TEST_RESPONSE);
+    }
+
+    @Test
+    void testCreateRequestWithCacheControlInUserMessage() {
+        // Test that createRequest properly converts cache_control to MediaContent
+        Map<String, Object> cacheControl = Map.of("type", "ephemeral");
+        Message message = UserMessage.builder()
+                .text(TEST_PROMPT)
+                .metadata(Map.of("cache_control", cacheControl))
+                .build();
+        Prompt prompt = new Prompt(List.of(message), defaultOptions);
+
+        // Use createRequest directly for unit testing
+        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+
+        assertThat(request).isNotNull();
+        assertThat(request.input()).isNotNull();
+        assertThat(request.input().messages()).isNotEmpty();
+
+        // The message content should be converted to List<MediaContent> with cache_control
+        var firstMessage = request.input().messages().get(0);
+        assertThat(firstMessage.rawContent()).isInstanceOf(List.class);
+
+        @SuppressWarnings("unchecked")
+        List<com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.MediaContent> contentList =
+                (List<com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.MediaContent>) firstMessage.rawContent();
+
+        assertThat(contentList).hasSize(1);
+        assertThat(contentList.get(0).text()).isEqualTo(TEST_PROMPT);
+        assertThat(contentList.get(0).cacheControl()).isNotNull();
+        assertThat(contentList.get(0).cacheControl().get("type")).isEqualTo("ephemeral");
+    }
+
+    @Test
+    void testCreateRequestWithCacheControlInSystemMessage() {
+        // Test that createRequest properly converts cache_control in SystemMessage
+        Map<String, Object> cacheControl = Map.of("type", "ephemeral");
+        Message systemMessage = SystemMessage.builder()
+                .text("You are a helpful assistant.")
+                .metadata(Map.of("cache_control", cacheControl))
+                .build();
+        Message userMessage = new UserMessage("Hello!");
+        Prompt prompt = new Prompt(List.of(systemMessage, userMessage), defaultOptions);
+
+        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+
+        assertThat(request).isNotNull();
+        assertThat(request.input().messages()).hasSize(2);
+
+        // First message (system) should have cache_control
+        var firstMessage = request.input().messages().get(0);
+        assertThat(firstMessage.rawContent()).isInstanceOf(List.class);
+
+        @SuppressWarnings("unchecked")
+        List<com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.MediaContent> contentList =
+                (List<com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.MediaContent>) firstMessage.rawContent();
+
+        assertThat(contentList).hasSize(1);
+        assertThat(contentList.get(0).cacheControl()).isNotNull();
+        assertThat(contentList.get(0).cacheControl().get("type")).isEqualTo("ephemeral");
+
+        // Second message (user) should be plain text (no cache_control)
+        var secondMessage = request.input().messages().get(1);
+        assertThat(secondMessage.rawContent()).isInstanceOf(String.class);
+    }
+
+    @Test
+    void testCreateRequestWithoutCacheControl() {
+        // Test that message without cache_control stays as plain text
+        Message message = new UserMessage(TEST_PROMPT);
+        Prompt prompt = new Prompt(List.of(message), defaultOptions);
+
+        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+
+        assertThat(request).isNotNull();
+        var firstMessage = request.input().messages().get(0);
+        // Without cache_control, content should remain as plain String
+        assertThat(firstMessage.rawContent()).isInstanceOf(String.class);
+        assertThat(firstMessage.rawContent()).isEqualTo(TEST_PROMPT);
     }
 }

@@ -62,10 +62,14 @@ public class DashScopeAiUsage implements Usage {
 		}
 	}
 
+	/**
+	 * Returns the DashScope native {@link TokenUsage} object containing all original fields.
+	 */
 	@Override
 	public Object getNativeUsage() {
-		return null;
+		return this.usage;
 	}
+
 
 	@Override
 	public String toString() {

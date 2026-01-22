@@ -118,6 +118,12 @@ public final class DashScopeApiConstants {
 
 	public static final String MESSAGE_FORMAT = "messageFormat";
 
+	/**
+	 * Metadata key for cache control. When set to a Map containing {"type": "ephemeral"},
+	 * the system will create or hit an explicit cache for the message content.
+	 */
+	public static final String CACHE_CONTROL = "cache_control";
+
 	public static final int MAX_TRY_COUNT = 10;
 
 	public static String RETRIEVED_DOCUMENTS = "question_answer_context";
