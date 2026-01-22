@@ -100,7 +100,11 @@ public class DashScopeApi {
 
 	private final String completionsPath;
 
+	private final String workSpaceId;
+
 	private final String embeddingsPath;
+
+	private final String rerankPath;
 
 	private final MultiValueMap<String, String> headers;
 
@@ -119,6 +123,11 @@ public class DashScopeApi {
 
 	private final ResponseErrorHandler responseErrorHandler;
 
+    @Override
+    public DashScopeApi clone() {
+        return mutate().build();
+    }
+
 	/**
 	 * Returns a builder pre-populated with the current configuration for mutation.
 	 */
@@ -131,26 +140,28 @@ public class DashScopeApi {
 	}
 
 	/**
-	 * Create a new chat completion api.
-	 * @param baseUrl api base URL.
-	 * @param apiKey OpenAI apiKey.
-	 * @param header the http headers to use.
-	 * @param completionsPath the path to the chat completions endpoint.
-	 * @param embeddingsPath the path to the embeddings endpoint.
-	 * @param workSpaceId the workspace ID to use.
-	 * @param restClientBuilder RestClient builder.
-	 * @param webClientBuilder WebClient builder.
-	 * @param responseErrorHandler Response error handler.
-	 */
+     * Create a new chat completion api.
+     *
+     * @param baseUrl              api base URL.
+     * @param apiKey               OpenAI apiKey.
+     * @param header               the http headers to use.
+     * @param workSpaceId          the workspace ID to use.
+     * @param completionsPath      the path to the chat completions endpoint.
+     * @param embeddingsPath       the path to the embeddings endpoint.
+     * @param rerankPath           the path to the rerank endpoint.
+     * @param restClientBuilder    RestClient builder.
+     * @param webClientBuilder     WebClient builder.
+     * @param responseErrorHandler Response error handler.
+     */
 	// @formatter:off
 	public DashScopeApi(
 			String baseUrl,
 			ApiKey apiKey,
 			MultiValueMap<String, String> header,
+			String workSpaceId,
 			String completionsPath,
 			String embeddingsPath,
-			// Add request header.
-			String workSpaceId,
+            String rerankPath,
 			RestClient.Builder restClientBuilder,
 			WebClient.Builder webClientBuilder,
 			ResponseErrorHandler responseErrorHandler
@@ -159,8 +170,10 @@ public class DashScopeApi {
 		this.baseUrl = baseUrl;
 		this.apiKey = apiKey;
 		this.headers = header;
+        this.workSpaceId = workSpaceId;
 		this.completionsPath = completionsPath;
 		this.embeddingsPath = embeddingsPath;
+        this.rerankPath = rerankPath;
 		this.responseErrorHandler = responseErrorHandler;
 
 		// For DashScope API, the workspace ID is passed in the headers.
@@ -619,7 +632,7 @@ public class DashScopeApi {
 		Assert.notNull(rerankRequest, "The request body can not be null.");
 
 		return this.restClient.post()
-			.uri(TEXT_RERANK_RESTFUL_URL)
+			.uri(this.rerankPath)
 			.body(rerankRequest)
 			.retrieve()
 			.toEntity(DashScopeApiSpec.RerankResponse.class);
@@ -643,6 +656,26 @@ public class DashScopeApi {
 
 	public static class Builder {
 
+        private String baseUrl = DEFAULT_BASE_URL;
+
+        private ApiKey apiKey;
+
+        private String workSpaceId;
+
+        private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+
+        private String completionsPath = TEXT_GENERATION_RESTFUL_URL;
+
+        private String embeddingsPath = TEXT_EMBEDDING_RESTFUL_URL;
+
+        private String rerankPath = TEXT_RERANK_RESTFUL_URL;
+
+        private RestClient.Builder restClientBuilder = RestClient.builder();
+
+        private WebClient.Builder webClientBuilder = WebClient.builder();
+
+        private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
+
 		public Builder() {
 		}
 
@@ -651,28 +684,14 @@ public class DashScopeApi {
 			this.baseUrl = api.getBaseUrl();
 			this.apiKey = api.getApiKey();
 			this.headers = new LinkedMultiValueMap<>(api.getHeaders());
+			this.workSpaceId = api.workSpaceId;
+			this.completionsPath = api.completionsPath;
+            this.embeddingsPath = api.embeddingsPath;
+            this.rerankPath = api.rerankPath;
 			this.restClientBuilder = api.restClient != null ? api.restClient.mutate() : RestClient.builder();
 			this.webClientBuilder = api.webClient != null ? api.webClient.mutate() : WebClient.builder();
 			this.responseErrorHandler = api.getResponseErrorHandler();
 		}
-
-		private String baseUrl = DEFAULT_BASE_URL;
-
-		private ApiKey apiKey;
-
-		private String workSpaceId;
-
-		private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-
-		private String completionsPath = TEXT_GENERATION_RESTFUL_URL;
-
-		private String embeddingsPath = TEXT_EMBEDDING_RESTFUL_URL;
-
-		private RestClient.Builder restClientBuilder = RestClient.builder();
-
-		private WebClient.Builder webClientBuilder = WebClient.builder();
-
-		private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
 
 		public Builder baseUrl(String baseUrl) {
 
@@ -709,16 +728,22 @@ public class DashScopeApi {
 		}
 
 		public Builder completionsPath(String completionsPath) {
-            Assert.notNull(completionsPath, "completionsPath cannot be null");
+            Assert.hasText(completionsPath, "completionsPath cannot be null");
             this.completionsPath = completionsPath;
 			return this;
 		}
 
 		public Builder embeddingsPath(String embeddingsPath) {
-            Assert.notNull(embeddingsPath, "embeddingsPath cannot be null");
+            Assert.hasText(embeddingsPath, "embeddingsPath cannot be null");
 			this.embeddingsPath = embeddingsPath;
 			return this;
 		}
+
+        public Builder rerankPath(String rerankPath) {
+            Assert.hasText(rerankPath, "rerankPath cannot be null");
+            this.rerankPath = rerankPath;
+            return this;
+        }
 
 		public Builder webClientBuilder(WebClient.Builder webClientBuilder) {
 			Assert.notNull(webClientBuilder, "Web client builder cannot be null");
@@ -736,9 +761,9 @@ public class DashScopeApi {
 
 			Assert.notNull(apiKey, "API key cannot be null");
 
-			return new DashScopeApi(this.baseUrl, this.apiKey, this.headers, this.completionsPath, this.embeddingsPath,
-					// Add request header.
-					this.workSpaceId, this.restClientBuilder, this.webClientBuilder, this.responseErrorHandler);
+			return new DashScopeApi(this.baseUrl, this.apiKey, this.headers, this.workSpaceId,
+                    this.completionsPath, this.embeddingsPath, this.rerankPath,
+                    this.restClientBuilder, this.webClientBuilder, this.responseErrorHandler);
 		}
 
 	}

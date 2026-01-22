@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.agent;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -53,25 +54,13 @@ public final class DashScopeAgent extends Agent {
 
     private static final Logger logger = LoggerFactory.getLogger(DashScopeAgent.class);
 
-    private final DashScopeAgentOptions options;
+    private final DashScopeAgentOptions defaultOptions;
 
     private final DashScopeAgentApi dashScopeAgentApi;
 
-    public DashScopeAgent(DashScopeAgentApi dashScopeAgentApi) {
+    public DashScopeAgent(DashScopeAgentApi dashScopeAgentApi, DashScopeAgentOptions defaultOptions) {
         this.dashScopeAgentApi = dashScopeAgentApi;
-        this.options = DashScopeAgentOptions.builder()
-                .sessionId(null)
-                .memoryId(null)
-                .incrementalOutput(false)
-                .hasThoughts(false)
-                .images(null)
-                .bizParams(null)
-                .build();
-    }
-
-    public DashScopeAgent(DashScopeAgentApi dashScopeAgentApi, DashScopeAgentOptions options) {
-        this.dashScopeAgentApi = dashScopeAgentApi;
-        this.options = options;
+        this.defaultOptions = defaultOptions;
     }
 
     @Override
@@ -129,7 +118,7 @@ public final class DashScopeAgent extends Agent {
                 runtimeOptions.getFiles(), runtimeOptions.getBizParams());
         DashScopeAgentRequestParameters parameters = new DashScopeAgentRequestParameters(
                 runtimeOptions.getFlowStreamMode(), runtimeOptions.getHasThoughts(),
-                runtimeOptions.getHasThoughts() && runtimeOptions.getEnableThinking(),
+                Boolean.TRUE.equals(runtimeOptions.getHasThoughts()) && runtimeOptions.getEnableThinking(),
                 stream && runtimeOptions.getIncrementalOutput(), runtimeOptions.getModelId(),
                 ragOptions == null ? null : new DashScopeAgentRequestRagOptions(
                         ragOptions.getPipelineIds(), ragOptions.getFileIds(), ragOptions.getMetadataFilter(),
@@ -153,12 +142,12 @@ public final class DashScopeAgent extends Agent {
         }
 
         // @formatter:off
-        Map<String, Object> metadata = Map.of(
-                DashScopeApiConstants.REQUEST_ID, response.requestId(),
-                DashScopeApiConstants.USAGE, usage,
-                DashScopeApiConstants.THOUGHTS, output.thoughts(),
-                DashScopeApiConstants.OUTPUT, output
-        );
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put(DashScopeApiConstants.REQUEST_ID, response.requestId());
+        metadata.put(DashScopeApiConstants.USAGE, usage);
+        metadata.put(DashScopeApiConstants.THOUGHTS, output.thoughts());
+        metadata.put(DashScopeApiConstants.OUTPUT, output);
+
         var assistantMessage = AssistantMessage.builder()
                 .content(text)
                 .properties(metadata)
@@ -173,6 +162,50 @@ public final class DashScopeAgent extends Agent {
 
     private DashScopeAgentOptions mergeOptions(ChatOptions chatOptions) {
         DashScopeAgentOptions agentOptions = ModelOptionsUtils.copyToTarget(chatOptions, ChatOptions.class, DashScopeAgentOptions.class);
-        return ModelOptionsUtils.merge(agentOptions, this.options, DashScopeAgentOptions.class);
+        return ModelOptionsUtils.merge(agentOptions, this.defaultOptions, DashScopeAgentOptions.class);
     }
+
+    @Override
+    public DashScopeAgent clone() {
+        return mutate().build();
+    }
+
+    public Builder mutate() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private DashScopeAgentApi dashScopeAgentApi;
+
+        private DashScopeAgentOptions defaultOptions = DashScopeAgentOptions.builder().build();
+
+        public Builder() {
+        }
+
+        public Builder(DashScopeAgent agent) {
+            this.dashScopeAgentApi = agent.dashScopeAgentApi;
+            this.defaultOptions = agent.defaultOptions;
+        }
+
+        public Builder dashScopeAgentApi(DashScopeAgentApi dashScopeAgentApi) {
+            this.dashScopeAgentApi = dashScopeAgentApi;
+            return this;
+        }
+
+        public Builder defaultOptions(DashScopeAgentOptions defaultOptions) {
+            this.defaultOptions = defaultOptions;
+            return this;
+        }
+
+        public DashScopeAgent build() {
+            return new DashScopeAgent(dashScopeAgentApi, defaultOptions);
+        }
+
+    }
+
 }

@@ -54,9 +54,18 @@ public class DashScopeVideoApi {
 
 	private final ApiKey apiKey;
 
-	private final RestClient restClient;
+    private final String videoPath;
+
+    private final String queryTaskPath;
+
+    private final RestClient restClient;
 
 	private final ResponseErrorHandler responseErrorHandler;
+
+    @Override
+    public DashScopeVideoApi clone() {
+        return mutate().build();
+    }
 
 	public Builder mutate() {
 		return new Builder(this);
@@ -66,27 +75,34 @@ public class DashScopeVideoApi {
 		return new Builder();
 	}
 
-	public DashScopeVideoApi(String baseUrl, ApiKey apiKey, RestClient.Builder restClientBuilder,
-			ResponseErrorHandler responseErrorHandler) {
+    public DashScopeVideoApi(
+            String baseUrl,
+            ApiKey apiKey,
+            String videoPath,
+            String queryTaskPath,
+            RestClient.Builder restClientBuilder,
+            ResponseErrorHandler responseErrorHandler) {
 
-		this.baseUrl = baseUrl;
-		this.apiKey = apiKey;
-		this.responseErrorHandler = responseErrorHandler;
+        this.baseUrl = baseUrl;
+        this.apiKey = apiKey;
+        this.videoPath = videoPath;
+        this.queryTaskPath = queryTaskPath;
+        this.responseErrorHandler = responseErrorHandler;
 
-		// Check API Key in headers.
-		Consumer<HttpHeaders> finalHeaders = h -> {
-			if (!(apiKey instanceof NoopApiKey)) {
-				h.setBearerAuth(apiKey.getValue());
-			}
-			h.setContentType(MediaType.APPLICATION_JSON);
-		};
+        // Check API Key in headers.
+        Consumer<HttpHeaders> finalHeaders = h -> {
+            if (!(apiKey instanceof NoopApiKey)) {
+                h.setBearerAuth(apiKey.getValue());
+            }
+            h.setContentType(MediaType.APPLICATION_JSON);
+        };
 
-		this.restClient = restClientBuilder.clone()
-			.baseUrl(baseUrl)
-			.defaultHeaders(finalHeaders)
-			.defaultStatusHandler(responseErrorHandler)
-			.build();
-	}
+        this.restClient = restClientBuilder.clone()
+                .baseUrl(baseUrl)
+                .defaultHeaders(finalHeaders)
+                .defaultStatusHandler(responseErrorHandler)
+                .build();
+    }
 
 	/**
 	 * Submit video generation task.
@@ -94,10 +110,12 @@ public class DashScopeVideoApi {
     public ResponseEntity<DashScopeVideoResponse> submitVideoGenTask(DashScopeVideoRequest request) {
         logger.debug("Submitting video generation task with options: {}", request);
         String uri = DashScopeVideoApiConstants.getPathByModelName(request.getModel());
-        boolean detect = DashScopeVideoApiConstants.isDetect(request.getModel());
-
+        if (uri == null) {
+            uri = this.videoPath;
+        }
         var requestSpec = this.restClient.post().uri(uri).body(request);
 
+        boolean detect = DashScopeVideoApiConstants.isDetect(request.getModel());
         if (!detect) {
             requestSpec.header(HEADER_ASYNC, ENABLED);
         }
@@ -110,8 +128,9 @@ public class DashScopeVideoApi {
 	 */
     public ResponseEntity<DashScopeVideoResponse> queryVideoGenTask(String taskId) {
 		return this.restClient.get()
-			.uri(DashScopeApiConstants.QUERY_TASK_RESTFUL_URL, taskId)
-			.retrieve().toEntity(DashScopeVideoResponse.class);
+			.uri(this.queryTaskPath, taskId)
+			.retrieve()
+            .toEntity(DashScopeVideoResponse.class);
 	}
 
 	String getBaseUrl() {
@@ -132,6 +151,18 @@ public class DashScopeVideoApi {
 
 	public static class Builder {
 
+        private String baseUrl = DashScopeApiConstants.DEFAULT_BASE_URL;
+
+        private ApiKey apiKey;
+
+        private String videoPath = DashScopeVideoApiConstants.VIDEO_GENERATION_SYNTHESIS;
+
+        private String queryTaskPath = DashScopeApiConstants.QUERY_TASK_RESTFUL_URL;
+
+        private RestClient.Builder restClientBuilder = RestClient.builder();
+
+        private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
+
 		public Builder() {
 		}
 
@@ -139,50 +170,56 @@ public class DashScopeVideoApi {
 		public Builder(DashScopeVideoApi api) {
 			this.baseUrl = api.getBaseUrl();
 			this.apiKey = api.getApiKey();
+            this.videoPath = api.videoPath;
+            this.queryTaskPath = api.queryTaskPath;
 			this.restClientBuilder = api.restClient != null ? api.restClient.mutate() : RestClient.builder();
 			this.responseErrorHandler = api.getResponseErrorHandler();
 		}
 
-		private String baseUrl = DashScopeApiConstants.DEFAULT_BASE_URL;
+        public Builder baseUrl(String baseUrl) {
+            Assert.notNull(baseUrl, "Base URL cannot be null");
+            this.baseUrl = baseUrl;
+            return this;
+        }
 
-		private ApiKey apiKey;
+        public Builder apiKey(String simpleApiKey) {
+            Assert.notNull(simpleApiKey, "Simple api key cannot be null");
+            this.apiKey = new SimpleApiKey(simpleApiKey);
+            return this;
+        }
 
-		private RestClient.Builder restClientBuilder = RestClient.builder();
+        public Builder videoPath(String videoPath) {
+            Assert.hasText(videoPath, "Video path cannot be null");
+            this.videoPath = videoPath;
+            return this;
+        }
 
-		private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
+        public Builder queryTaskPath(String queryTaskPath) {
+            Assert.hasText(queryTaskPath, "Query task path cannot be null");
+            this.queryTaskPath = queryTaskPath;
+            return this;
+        }
 
-		public Builder baseUrl(String baseUrl) {
+        public Builder restClientBuilder(RestClient.Builder restClientBuilder) {
+            Assert.notNull(restClientBuilder, "Rest client builder cannot be null");
+            this.restClientBuilder = restClientBuilder;
+            return this;
+        }
 
-			Assert.notNull(baseUrl, "Base URL cannot be null");
-			this.baseUrl = baseUrl;
-			return this;
-		}
+        public Builder responseErrorHandler(ResponseErrorHandler responseErrorHandler) {
+            Assert.notNull(responseErrorHandler, "Response error handler cannot be null");
+            this.responseErrorHandler = responseErrorHandler;
+            return this;
+        }
 
-		public Builder apiKey(String simpleApiKey) {
-			Assert.notNull(simpleApiKey, "Simple api key cannot be null");
-			this.apiKey = new SimpleApiKey(simpleApiKey);
-			return this;
-		}
+        public DashScopeVideoApi build() {
 
-		public Builder restClientBuilder(RestClient.Builder restClientBuilder) {
-			Assert.notNull(restClientBuilder, "Rest client builder cannot be null");
-			this.restClientBuilder = restClientBuilder;
-			return this;
-		}
+            Assert.notNull(apiKey, "API key cannot be null");
 
-		public Builder responseErrorHandler(ResponseErrorHandler responseErrorHandler) {
-			Assert.notNull(responseErrorHandler, "Response error handler cannot be null");
-			this.responseErrorHandler = responseErrorHandler;
-			return this;
-		}
+            return new DashScopeVideoApi(this.baseUrl, this.apiKey, this.videoPath, this.queryTaskPath,
+                    this.restClientBuilder, this.responseErrorHandler);
+        }
 
-		public DashScopeVideoApi build() {
-
-			Assert.notNull(apiKey, "API key cannot be null");
-
-			return new DashScopeVideoApi(this.baseUrl, this.apiKey, this.restClientBuilder, this.responseErrorHandler);
-		}
-
-	}
+    }
 
 }

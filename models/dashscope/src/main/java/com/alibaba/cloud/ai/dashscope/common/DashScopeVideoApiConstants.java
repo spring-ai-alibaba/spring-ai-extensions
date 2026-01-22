@@ -31,7 +31,7 @@ public class DashScopeVideoApiConstants {
     static Map<String, String> model2Url = new HashMap<>();
 
     // 通义万相-图生视频-基于首帧；通义万相-参考生视频；通义万相-文生视频；通义万相-通用视频编辑；视频风格重绘
-    static final String VIDEO_GENERATION_SYNTHESIS = "/api/v1/services/aigc/video-generation/video-synthesis";
+    public static final String VIDEO_GENERATION_SYNTHESIS = "/api/v1/services/aigc/video-generation/video-synthesis";
 
     static final Map<String, List<String>> videoGenerationSynthesis2Model = Map.of(VIDEO_GENERATION_SYNTHESIS, List.of(
             // 通义万相-图生视频-基于首帧
@@ -46,7 +46,7 @@ public class DashScopeVideoApiConstants {
             DashScopeModel.VideoModel.VIDEO_STYLE_TRANSFORM.getName()));
 
     // 通义万相-图生视频-基于首尾帧；通义万相-图生动作；通义万相数字人-图像检测-视频生成；图声舞蹈视频-舞动人像-AnimateAnyone-视频生成；图生唱视频-悦动人像EMO-视频生成；VideoRetalk-视频生成
-    static final String IMAGE_2_VIDEO_SYNTHESIS = "/api/v1/services/aigc/image2video/video-synthesis";
+    public static final String IMAGE_2_VIDEO_SYNTHESIS = "/api/v1/services/aigc/image2video/video-synthesis";
 
     static final Map<String, List<String>> image2VideoSynthesis2Model = Map.of(IMAGE_2_VIDEO_SYNTHESIS, List.of(
             // 通义万相-图生视频-基于首尾帧
@@ -69,7 +69,7 @@ public class DashScopeVideoApiConstants {
             DashScopeModel.VideoModel.EMOJI_V1.getName()));
 
     // 通义万相数字人-图像检测；图生唱视频-悦动人像EMO-图像检测；图生播报视频-灵动人像-图像检测；图声表情包视频-表情包Emoji-图像检测
-    static final String IMAGE_2_VIDEO_FACE_DETECT = "/api/v1/services/aigc/image2video/face-detect";
+    public static final String IMAGE_2_VIDEO_FACE_DETECT = "/api/v1/services/aigc/image2video/face-detect";
 
     static final Map<String, List<String>> image2VideoFaceDetect2Model = Map.of(IMAGE_2_VIDEO_FACE_DETECT, List.of(
             // 通义万相数字人
@@ -82,14 +82,14 @@ public class DashScopeVideoApiConstants {
             DashScopeModel.VideoModel.EMOJI_DETECT_V1.getName()));
 
     // 图声舞蹈视频-舞动人像-AnimateAnyone-图像检测
-    static final String IMAGE_2_VIDEO_AA_DETECT = "/api/v1/services/aigc/image2video/aa-detect";
+    public static final String IMAGE_2_VIDEO_AA_DETECT = "/api/v1/services/aigc/image2video/aa-detect";
 
     static final Map<String, List<String>> image2VideoFaceAa2Model = Map.of(IMAGE_2_VIDEO_AA_DETECT, List.of(
             // AnimateAnyone人像检测
             DashScopeModel.VideoModel.ANIMATE_ANYONE_DETECT_GEN2.getName()));
 
     // 图声舞蹈视频-舞动人像-AnimateAnyone-动作模版生成
-    static final String IMAGE_2_VIDEO_AA_TEMPLATE_GENERATION = "/api/v1/services/aigc/image2video/aa-template-generation";
+    public static final String IMAGE_2_VIDEO_AA_TEMPLATE_GENERATION = "/api/v1/services/aigc/image2video/aa-template-generation";
 
     static final Map<String, List<String>> image2VideoAaTemplateGeneration2Model = Map.of(IMAGE_2_VIDEO_AA_TEMPLATE_GENERATION, List.of(
             // AnimateAnyone动作模板生成

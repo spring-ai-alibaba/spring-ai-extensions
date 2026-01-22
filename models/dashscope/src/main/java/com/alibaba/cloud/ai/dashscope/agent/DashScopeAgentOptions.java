@@ -221,20 +221,23 @@ public class DashScopeAgentOptions implements ChatOptions {
                 .build();
     }
 
-    public static DashScopeAgentOptions.Builder builder() {
+    public Builder mutate() {
+        return new Builder(this);
+    }
 
-        return new DashScopeAgentOptions.Builder();
+    public static Builder builder() {
+
+        return new Builder();
     }
 
     public static class Builder {
 
-        protected DashScopeAgentOptions options;
+        private DashScopeAgentOptions options = new DashScopeAgentOptions();
 
-        public Builder() {
-            this.options = new DashScopeAgentOptions();
+        private Builder() {
         }
 
-        public Builder(DashScopeAgentOptions options) {
+        private Builder(DashScopeAgentOptions options) {
             this.options = options;
         }
 

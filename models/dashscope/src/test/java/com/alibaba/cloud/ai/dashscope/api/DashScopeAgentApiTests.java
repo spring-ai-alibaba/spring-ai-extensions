@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
+import java.util.List;
+
 import com.alibaba.cloud.ai.dashscope.agent.DashScopeAgentFlowStreamMode;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,14 +24,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.model.SimpleApiKey;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -47,505 +49,526 @@ import static org.mockito.Mockito.lenient;
 @ExtendWith(MockitoExtension.class)
 class DashScopeAgentApiTests {
 
-	// Get values from environment variables with default values
-	private static final String TEST_API_KEY = System.getenv().getOrDefault("AI_DASHSCOPE_API_KEY", "test-api-key");
-
-	private static final String TEST_WORKSPACE_ID = System.getenv()
-		.getOrDefault("DASHSCOPE_WORKSPACE_ID", "test-workspace-id");
-
-	private static final String TEST_APP_ID = System.getenv().getOrDefault("DASHSCOPE_APP_ID", "test-app-id");
-
-	private static final String TEST_PROMPT = "Hello, AI!";
-
-	@Mock
-	private RestClient.Builder restClientBuilder;
-
-	@Mock
-	private WebClient.Builder webClientBuilder;
-
-	@Mock
-	private RestClient restClient;
-
-	@Mock
-	private WebClient webClient;
-
-	@Mock
-	private WebClient.RequestBodyUriSpec requestBodyUriSpec;
-
-	@Mock
-	private WebClient.RequestHeadersSpec<?> requestHeadersSpec;
-
-	@Mock
-	private WebClient.ResponseSpec responseSpec;
-
-	@Mock
-	private RestClient.RequestBodyUriSpec restRequestBodyUriSpec;
-
-	@Mock
-	private RestClient.ResponseSpec restResponseSpec;
-
-	private DashScopeAgentApi dashScopeAgentApi;
-
-	@BeforeEach
-	void setUp() {
-		// Setup WebClient mock chain
-		lenient().when(webClientBuilder.baseUrl(any())).thenReturn(webClientBuilder);
-		lenient().when(webClientBuilder.defaultHeaders(any())).thenReturn(webClientBuilder);
-		lenient().when(webClientBuilder.build()).thenReturn(webClient);
-		lenient().when(webClient.post()).thenReturn(requestBodyUriSpec);
-		lenient().when(requestBodyUriSpec.uri(any(String.class))).thenReturn(requestBodyUriSpec);
-		lenient().when(requestBodyUriSpec.body(any(), any(Class.class))).thenReturn(requestHeadersSpec);
-		lenient().when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-
-		// Setup RestClient mock chain
-		lenient().when(restClientBuilder.baseUrl(any(String.class))).thenReturn(restClientBuilder);
-		lenient().when(restClientBuilder.defaultHeaders(any())).thenReturn(restClientBuilder);
-		lenient().when(restClientBuilder.defaultStatusHandler(any())).thenReturn(restClientBuilder);
-		lenient().when(restClientBuilder.build()).thenReturn(restClient);
-
-		// Create test instance with mocked builders
-		dashScopeAgentApi = new DashScopeAgentApi(TEST_API_KEY) {
-			@Override
-			public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest request) {
-				if (request == null) {
-					return ResponseEntity.ok(null);
-				}
-				try {
-					// Use mock RestClient
-					return restClient.post()
-						.uri(DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL, request.appId())
-						.body(request)
-						.retrieve()
-						.toEntity(DashScopeAgentResponse.class);
-				}
-				catch (Exception e) {
-					// Handle possible exceptions, such as NullPointerException
-					return ResponseEntity.ok(null);
-				}
-			}
-
-			@Override
-			public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest request) {
-				if (request == null) {
-					return Flux.empty();
-				}
-				try {
-					// Use mock WebClient
-					return webClient.post()
-						.uri(DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL, request.appId())
-						.body(Mono.just(request), DashScopeAgentResponse.class)
-						.retrieve()
-						.bodyToFlux(DashScopeAgentResponse.class);
-				}
-				catch (Exception e) {
-					// Handle possible exceptions, such as NullPointerException
-					return Flux.empty();
-				}
-			}
-		};
-	}
-
-	/**
-	 * Test constructor with API key only
-	 */
-	@Test
-	void testConstructorWithApiKey() {
-		DashScopeAgentApi api = new DashScopeAgentApi(TEST_API_KEY);
-		assertThat(api).isNotNull();
-	}
-
-	/**
-	 * Test constructor with API key and workspace ID
-	 */
-	@Test
-	void testConstructorWithApiKeyAndWorkspaceId() {
-		DashScopeAgentApi api = new DashScopeAgentApi(TEST_API_KEY, TEST_WORKSPACE_ID);
-		assertThat(api).isNotNull();
-	}
-
-	/**
-	 * Test successful call
-	 */
-	@Test
-	void testSuccessfulCall() {
-		// Create test request and response
-		DashScopeAgentApi.DashScopeAgentRequest request = createTestRequest();
-		DashScopeAgentApi.DashScopeAgentResponse response = createTestResponse();
-
-		// Create a specific mock instance for this test
-		DashScopeAgentApi mockApi = new DashScopeAgentApi(TEST_API_KEY) {
-			@Override
-			public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest req) {
-				return ResponseEntity.ok(response);
-			}
-		};
-
-		// Execute test
-		ResponseEntity<DashScopeAgentApi.DashScopeAgentResponse> result = mockApi.call(request);
-
-		// Verify response structure
-		assertThat(result).isNotNull();
-		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().output()).isNotNull();
-	}
-
-	/**
-	 * Test successful stream
-	 */
-	@Test
-	void testSuccessfulStream() {
-		// Create test request and response
-		DashScopeAgentApi.DashScopeAgentRequest request = createTestRequest();
-		DashScopeAgentApi.DashScopeAgentResponse response = createTestResponse();
-
-		// Create a specific mock instance for this test
-		DashScopeAgentApi mockApi = new DashScopeAgentApi(TEST_API_KEY) {
-			@Override
-			public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest req) {
-				return Flux.just(response);
-			}
-		};
-
-		// Execute test
-		Flux<DashScopeAgentApi.DashScopeAgentResponse> resultFlux = mockApi.stream(request);
-
-		// Verify stream response structure
-		StepVerifier.create(resultFlux).assertNext(result -> {
-			assertThat(result).isNotNull();
-			assertThat(result.output()).isNotNull();
-		}).verifyComplete();
-	}
-
-	/**
-	 * Test call with error response
-	 */
-	@Test
-	void testCallWithErrorResponse() {
-		// Create test request and error response
-		DashScopeAgentApi.DashScopeAgentRequest request = createTestRequest();
-		DashScopeAgentApi.DashScopeAgentResponse errorResponse = createErrorResponse();
-
-		// Create a specific mock instance for this test
-		DashScopeAgentApi mockApi = new DashScopeAgentApi(TEST_API_KEY) {
-			@Override
-			public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest req) {
-				return ResponseEntity.ok(errorResponse);
-			}
-		};
-
-		// Execute test
-		ResponseEntity<DashScopeAgentApi.DashScopeAgentResponse> result = mockApi.call(request);
-
-		// Verify error response
-		assertThat(result).isNotNull();
-		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().code()).isEqualTo("error");
-		assertThat(result.getBody().message()).isEqualTo("Error occurred");
-	}
-
-	/**
-	 * Test stream with error response
-	 */
-	@Test
-	void testStreamWithErrorResponse() {
-		// Create test request and error response
-		DashScopeAgentApi.DashScopeAgentRequest request = createTestRequest();
-		DashScopeAgentApi.DashScopeAgentResponse errorResponse = createErrorResponse();
-
-		// Mock WebClient behavior - use lenient() to avoid unnecessary stubbing warnings
-		lenient().when(responseSpec.bodyToFlux(DashScopeAgentApi.DashScopeAgentResponse.class))
-			.thenReturn(Flux.just(errorResponse));
-
-		// Create a specific mock instance for this test
-		DashScopeAgentApi mockApi = new DashScopeAgentApi(TEST_API_KEY) {
-			@Override
-			public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest req) {
-				return Flux.just(errorResponse);
-			}
-		};
-
-		// Execute test
-		Flux<DashScopeAgentApi.DashScopeAgentResponse> resultFlux = mockApi.stream(request);
-
-		// Verify error stream response
-		StepVerifier.create(resultFlux).assertNext(result -> {
-			assertThat(result).isNotNull();
-			assertThat(result.code()).isEqualTo("error");
-			assertThat(result.message()).isEqualTo("Error occurred");
-		}).verifyComplete();
-	}
-
-	/**
-	 * Test call with null request
-	 */
-	@Test
-	void testCallWithNullRequest() {
-		// Create a specific mock instance for this test
-		DashScopeAgentApi mockApi = new DashScopeAgentApi(TEST_API_KEY) {
-			@Override
-			public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest req) {
-				if (req == null) {
-					return ResponseEntity.ok(null);
-				}
-				return ResponseEntity.ok(createTestResponse());
-			}
-		};
-
-		// Execute test and verify null response
-		ResponseEntity<DashScopeAgentApi.DashScopeAgentResponse> result = mockApi.call(null);
-		assertThat(result.getBody()).isNull();
-	}
-
-	/**
-	 * Test stream with null request
-	 */
-	@Test
-	void testStreamWithNullRequest() {
-		// Create a specific mock instance for this test
-		DashScopeAgentApi mockApi = new DashScopeAgentApi(TEST_API_KEY) {
-			@Override
-			public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest req) {
-				if (req == null) {
-					return Flux.empty();
-				}
-				return Flux.just(createTestResponse());
-			}
-		};
-
-		// Execute test
-		Flux<DashScopeAgentApi.DashScopeAgentResponse> resultFlux = mockApi.stream(null);
-
-		// Verify empty stream
-		StepVerifier.create(resultFlux).verifyComplete();
-	}
-
-	/**
-	 * Test call with empty response
-	 */
-	@Test
-	void testCallWithEmptyResponse() {
-		// Create test request
-		DashScopeAgentApi.DashScopeAgentRequest request = createTestRequest();
-
-		// Create empty response
-		DashScopeAgentApi.DashScopeAgentResponse emptyResponse = createEmptyResponse();
-
-		// Create a specific mock instance for this test
-		DashScopeAgentApi mockApi = new DashScopeAgentApi(TEST_API_KEY) {
-			@Override
-			public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest req) {
-				return ResponseEntity.ok(emptyResponse);
-			}
-		};
-
-		// Execute test
-		ResponseEntity<DashScopeAgentApi.DashScopeAgentResponse> result = mockApi.call(request);
-
-		// Verify empty response
-		assertThat(result).isNotNull();
-		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().output()).isNull();
-		assertThat(result.getBody().usage()).isNull();
-	}
-
-	/**
-	 * Test stream with empty response
-	 */
-	@Test
-	void testStreamWithEmptyResponse() {
-		// Create test request
-		DashScopeAgentApi.DashScopeAgentRequest request = createTestRequest();
-
-		// Create empty response
-		DashScopeAgentApi.DashScopeAgentResponse emptyResponse = createEmptyResponse();
-
-		// Create a specific mock instance for this test
-		DashScopeAgentApi mockApi = new DashScopeAgentApi(TEST_API_KEY) {
-			@Override
-			public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest req) {
-				return Flux.just(emptyResponse);
-			}
-		};
-
-		// Execute test
-		Flux<DashScopeAgentApi.DashScopeAgentResponse> resultFlux = mockApi.stream(request);
-
-		// Verify empty response stream
-		StepVerifier.create(resultFlux).assertNext(result -> {
-			assertThat(result).isNotNull();
-			assertThat(result.output()).isNull();
-			assertThat(result.usage()).isNull();
-		}).verifyComplete();
-	}
-
-	/**
-	 * Test call with custom parameters
-	 */
-	@Test
-	void testCallWithCustomParameters() {
-		// Create test request with custom parameters
-		DashScopeAgentApi.DashScopeAgentRequest request = createCustomParametersRequest();
-		DashScopeAgentApi.DashScopeAgentResponse response = createTestResponse();
-
-		// Create a specific mock instance for this test
-		DashScopeAgentApi mockApi = new DashScopeAgentApi(TEST_API_KEY) {
-			@Override
-			public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest req) {
-				return ResponseEntity.ok(response);
-			}
-		};
-
-		// Execute test
-		ResponseEntity<DashScopeAgentApi.DashScopeAgentResponse> result = mockApi.call(request);
-
-		// Verify response
-		assertThat(result).isNotNull();
-		assertThat(result.getBody()).isNotNull();
-	}
-
-	/**
-	 * Test stream with custom parameters
-	 */
-	@Test
-	void testStreamWithCustomParameters() {
-		// Create test request with custom parameters
-		DashScopeAgentApi.DashScopeAgentRequest request = createCustomParametersRequest();
-		DashScopeAgentApi.DashScopeAgentResponse response = createTestResponse();
-
-		// Create a specific mock instance for this test
-		DashScopeAgentApi mockApi = new DashScopeAgentApi(TEST_API_KEY) {
-			@Override
-			public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest req) {
-				return Flux.just(response);
-			}
-		};
-
-		// Execute test
-		Flux<DashScopeAgentApi.DashScopeAgentResponse> resultFlux = mockApi.stream(request);
-
-		// Verify stream response
-		StepVerifier.create(resultFlux).assertNext(result -> {
-			assertThat(result).isNotNull();
-		}).verifyComplete();
-	}
-
-	/**
-	 * Test call with thoughts enabled
-	 */
-	@Test
-	void testCallWithThoughtsEnabled() {
-		// Create test request with thoughts enabled
-		DashScopeAgentApi.DashScopeAgentRequest request = createRequestWithThoughts();
-		DashScopeAgentApi.DashScopeAgentResponse response = createResponseWithThoughts();
-
-		// Create a specific mock instance for this test
-		DashScopeAgentApi mockApi = new DashScopeAgentApi(TEST_API_KEY) {
-			@Override
-			public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest req) {
-				return ResponseEntity.ok(response);
-			}
-		};
-
-		// Execute test
-		ResponseEntity<DashScopeAgentApi.DashScopeAgentResponse> result = mockApi.call(request);
-
-		// Verify response structure
-		assertThat(result).isNotNull();
-		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().output()).isNotNull();
-		assertThat(result.getBody().output().thoughts()).isNotNull();
-		assertThat(result.getBody().output().thoughts()).hasSize(1);
-	}
-
-	/**
-	 * Helper method to create a test request
-	 */
-	private DashScopeAgentApi.DashScopeAgentRequest createTestRequest() {
-		DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput input = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput(
-				TEST_PROMPT, null, null, null, null, null, null);
-
-		DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters parameters = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters(
-				DashScopeAgentFlowStreamMode.FULL_THOUGHTS, false, false, null, null, null);
-
-		return new DashScopeAgentApi.DashScopeAgentRequest(TEST_APP_ID, input, parameters);
-	}
-
-	/**
-	 * Helper method to create a test response
-	 */
-	private DashScopeAgentApi.DashScopeAgentResponse createTestResponse() {
-		DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseOutput output = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseOutput(
-				"Hello, Human!", "stop", "test-session", null, null);
-
-		DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseUsage.DashScopeAgentResponseUsageModels model = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseUsage.DashScopeAgentResponseUsageModels(
-				"test-model", 10, 20);
-
-		DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseUsage usage = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseUsage(
-				java.util.List.of(model));
-
-		return new DashScopeAgentApi.DashScopeAgentResponse(200, "test-request-id", "success", "success", output,
-				usage);
-	}
-
-	/**
-	 * Helper method to create an error response
-	 */
-	private DashScopeAgentApi.DashScopeAgentResponse createErrorResponse() {
-		return new DashScopeAgentApi.DashScopeAgentResponse(400, "test-request-id", "error", "Error occurred", null,
-				null);
-	}
-
-	/**
-	 * Helper method to create an empty response
-	 */
-	private DashScopeAgentApi.DashScopeAgentResponse createEmptyResponse() {
-		return new DashScopeAgentApi.DashScopeAgentResponse(200, "test-request-id", "success", "success", null, null);
-	}
-
-	/**
-	 * Helper method to create a request with custom parameters
-	 */
-	private DashScopeAgentApi.DashScopeAgentRequest createCustomParametersRequest() {
-		DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput input = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput(
-				TEST_PROMPT, null, "custom-session", "custom-memory", null, null, null);
-
-		DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters parameters = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters(
-				DashScopeAgentFlowStreamMode.FULL_THOUGHTS, true, true, null, null, null);
-
-		return new DashScopeAgentApi.DashScopeAgentRequest(TEST_APP_ID, input, parameters);
-	}
-
-	/**
-	 * Helper method to create a request with thoughts enabled
-	 */
-	private DashScopeAgentApi.DashScopeAgentRequest createRequestWithThoughts() {
-		DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput input = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput(
-				TEST_PROMPT, null, null, null, null, null, null);
-
-		DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters parameters = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters(
-				DashScopeAgentFlowStreamMode.FULL_THOUGHTS, true, false, null, null, null);
-
-		return new DashScopeAgentApi.DashScopeAgentRequest(TEST_APP_ID, input, parameters);
-	}
-
-	/**
-	 * Helper method to create a response with thoughts
-	 */
-	private DashScopeAgentApi.DashScopeAgentResponse createResponseWithThoughts() {
-		var thought = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseOutput.DashScopeAgentResponseOutputThoughts(
-				"test thought", "test action type", "test action name", "test action", "test input stream",
-				"test input", "test response", "test observation", "test reasoning content");
-
-		var output = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseOutput("Hello, Human!", "stop",
-				"test-session", List.of(thought), null);
-
-		var model = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseUsage.DashScopeAgentResponseUsageModels(
-				"test-model", 10, 20);
-
-		var usage = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseUsage(List.of(model));
-
-		return new DashScopeAgentApi.DashScopeAgentResponse(200, "test-request-id", "success", "success", output,
-				usage);
-	}
+    // Get values from environment variables with default values
+    private static final String TEST_API_KEY = System.getenv().getOrDefault("AI_DASHSCOPE_API_KEY", "test-api-key");
+
+    private static final String TEST_WORKSPACE_ID = System.getenv()
+            .getOrDefault("DASHSCOPE_WORKSPACE_ID", "test-workspace-id");
+
+    private static final String TEST_APP_ID = System.getenv().getOrDefault("DASHSCOPE_APP_ID", "test-app-id");
+
+    private static final String TEST_PROMPT = "Hello, AI!";
+
+    @Mock
+    private RestClient.Builder restClientBuilder;
+
+    @Mock
+    private WebClient.Builder webClientBuilder;
+
+    @Mock
+    private RestClient restClient;
+
+    @Mock
+    private WebClient webClient;
+
+    @Mock
+    private WebClient.RequestBodyUriSpec requestBodyUriSpec;
+
+    @Mock
+    private WebClient.RequestHeadersSpec<?> requestHeadersSpec;
+
+    @Mock
+    private WebClient.ResponseSpec responseSpec;
+
+    @Mock
+    private RestClient.RequestBodyUriSpec restRequestBodyUriSpec;
+
+    @Mock
+    private RestClient.ResponseSpec restResponseSpec;
+
+    private DashScopeAgentApi dashScopeAgentApi;
+
+    @BeforeEach
+    void setUp() {
+        // Setup WebClient mock chain
+        lenient().when(webClientBuilder.baseUrl(any())).thenReturn(webClientBuilder);
+        lenient().when(webClientBuilder.defaultHeaders(any())).thenReturn(webClientBuilder);
+        lenient().when(webClientBuilder.build()).thenReturn(webClient);
+        lenient().when(webClient.post()).thenReturn(requestBodyUriSpec);
+        lenient().when(requestBodyUriSpec.uri(any(String.class))).thenReturn(requestBodyUriSpec);
+        lenient().when(requestBodyUriSpec.body(any(), any(Class.class))).thenReturn(requestHeadersSpec);
+        lenient().when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+
+        // Setup RestClient mock chain
+        lenient().when(restClientBuilder.baseUrl(any(String.class))).thenReturn(restClientBuilder);
+        lenient().when(restClientBuilder.defaultHeaders(any())).thenReturn(restClientBuilder);
+        lenient().when(restClientBuilder.defaultStatusHandler(any())).thenReturn(restClientBuilder);
+        lenient().when(restClientBuilder.build()).thenReturn(restClient);
+
+        // Create test instance with mocked builders
+        dashScopeAgentApi = new DashScopeAgentApi(DashScopeApiConstants.DEFAULT_BASE_URL, new SimpleApiKey(TEST_API_KEY),
+                null, DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL, RestClient.builder(),
+                WebClient.builder(), RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER) {
+
+            @Override
+            public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest request) {
+                if (request == null) {
+                    return ResponseEntity.ok(null);
+                }
+                try {
+                    // Use mock RestClient
+                    return restClient.post()
+                            .uri(DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL, request.appId())
+                            .body(request)
+                            .retrieve()
+                            .toEntity(DashScopeAgentResponse.class);
+                } catch (Exception e) {
+                    // Handle possible exceptions, such as NullPointerException
+                    return ResponseEntity.ok(null);
+                }
+            }
+
+            @Override
+            public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest request) {
+                if (request == null) {
+                    return Flux.empty();
+                }
+                try {
+                    // Use mock WebClient
+                    return webClient.post()
+                            .uri(DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL, request.appId())
+                            .body(Mono.just(request), DashScopeAgentResponse.class)
+                            .retrieve()
+                            .bodyToFlux(DashScopeAgentResponse.class);
+                } catch (Exception e) {
+                    // Handle possible exceptions, such as NullPointerException
+                    return Flux.empty();
+                }
+            }
+        };
+    }
+
+    /**
+     * Test constructor with API key only
+     */
+    @Test
+    void testConstructorWithApiKey() {
+        DashScopeAgentApi api = DashScopeAgentApi.builder().apiKey(TEST_API_KEY).build();
+        assertThat(api).isNotNull();
+    }
+
+    /**
+     * Test constructor with API key and workspace ID
+     */
+    @Test
+    void testConstructorWithApiKeyAndWorkspaceId() {
+        DashScopeAgentApi api = DashScopeAgentApi.builder().apiKey(TEST_API_KEY).workSpaceId(TEST_WORKSPACE_ID).build();
+        assertThat(api).isNotNull();
+    }
+
+    /**
+     * Test successful call
+     */
+    @Test
+    void testSuccessfulCall() {
+        // Create test request and response
+        DashScopeAgentApi.DashScopeAgentRequest request = createTestRequest();
+        DashScopeAgentApi.DashScopeAgentResponse response = createTestResponse();
+
+        // Create a specific mock instance for this test
+        DashScopeAgentApi mockApi = new DashScopeAgentApi(DashScopeApiConstants.DEFAULT_BASE_URL,
+                new SimpleApiKey(TEST_API_KEY), null, DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL,
+                RestClient.builder(), WebClient.builder(), RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER) {
+            @Override
+            public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest req) {
+                return ResponseEntity.ok(response);
+            }
+        };
+
+        // Execute test
+        ResponseEntity<DashScopeAgentApi.DashScopeAgentResponse> result = mockApi.call(request);
+
+        // Verify response structure
+        assertThat(result).isNotNull();
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().output()).isNotNull();
+    }
+
+    /**
+     * Test successful stream
+     */
+    @Test
+    void testSuccessfulStream() {
+        // Create test request and response
+        DashScopeAgentApi.DashScopeAgentRequest request = createTestRequest();
+        DashScopeAgentApi.DashScopeAgentResponse response = createTestResponse();
+
+        // Create a specific mock instance for this test
+        DashScopeAgentApi mockApi = new DashScopeAgentApi(DashScopeApiConstants.DEFAULT_BASE_URL,
+                new SimpleApiKey(TEST_API_KEY), null, DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL,
+                RestClient.builder(), WebClient.builder(), RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER) {
+            @Override
+            public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest req) {
+                return Flux.just(response);
+            }
+        };
+
+        // Execute test
+        Flux<DashScopeAgentApi.DashScopeAgentResponse> resultFlux = mockApi.stream(request);
+
+        // Verify stream response structure
+        StepVerifier.create(resultFlux).assertNext(result -> {
+            assertThat(result).isNotNull();
+            assertThat(result.output()).isNotNull();
+        }).verifyComplete();
+    }
+
+    /**
+     * Test call with error response
+     */
+    @Test
+    void testCallWithErrorResponse() {
+        // Create test request and error response
+        DashScopeAgentApi.DashScopeAgentRequest request = createTestRequest();
+        DashScopeAgentApi.DashScopeAgentResponse errorResponse = createErrorResponse();
+
+        // Create a specific mock instance for this test
+        DashScopeAgentApi mockApi = new DashScopeAgentApi(DashScopeApiConstants.DEFAULT_BASE_URL,
+                new SimpleApiKey(TEST_API_KEY), null, DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL,
+                RestClient.builder(), WebClient.builder(), RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER) {
+            @Override
+            public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest req) {
+                return ResponseEntity.ok(errorResponse);
+            }
+        };
+
+        // Execute test
+        ResponseEntity<DashScopeAgentApi.DashScopeAgentResponse> result = mockApi.call(request);
+
+        // Verify error response
+        assertThat(result).isNotNull();
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().code()).isEqualTo("error");
+        assertThat(result.getBody().message()).isEqualTo("Error occurred");
+    }
+
+    /**
+     * Test stream with error response
+     */
+    @Test
+    void testStreamWithErrorResponse() {
+        // Create test request and error response
+        DashScopeAgentApi.DashScopeAgentRequest request = createTestRequest();
+        DashScopeAgentApi.DashScopeAgentResponse errorResponse = createErrorResponse();
+
+        // Mock WebClient behavior - use lenient() to avoid unnecessary stubbing warnings
+        lenient().when(responseSpec.bodyToFlux(DashScopeAgentApi.DashScopeAgentResponse.class))
+                .thenReturn(Flux.just(errorResponse));
+
+        // Create a specific mock instance for this test
+        DashScopeAgentApi mockApi = new DashScopeAgentApi(DashScopeApiConstants.DEFAULT_BASE_URL,
+                new SimpleApiKey(TEST_API_KEY), null, DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL,
+                RestClient.builder(), WebClient.builder(), RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER) {
+            @Override
+            public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest req) {
+                return Flux.just(errorResponse);
+            }
+        };
+
+        // Execute test
+        Flux<DashScopeAgentApi.DashScopeAgentResponse> resultFlux = mockApi.stream(request);
+
+        // Verify error stream response
+        StepVerifier.create(resultFlux).assertNext(result -> {
+            assertThat(result).isNotNull();
+            assertThat(result.code()).isEqualTo("error");
+            assertThat(result.message()).isEqualTo("Error occurred");
+        }).verifyComplete();
+    }
+
+    /**
+     * Test call with null request
+     */
+    @Test
+    void testCallWithNullRequest() {
+        // Create a specific mock instance for this test
+        DashScopeAgentApi mockApi = new DashScopeAgentApi(DashScopeApiConstants.DEFAULT_BASE_URL,
+                new SimpleApiKey(TEST_API_KEY), null, DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL,
+                RestClient.builder(), WebClient.builder(), RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER) {
+            @Override
+            public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest req) {
+                if (req == null) {
+                    return ResponseEntity.ok(null);
+                }
+                return ResponseEntity.ok(createTestResponse());
+            }
+        };
+
+        // Execute test and verify null response
+        ResponseEntity<DashScopeAgentApi.DashScopeAgentResponse> result = mockApi.call(null);
+        assertThat(result.getBody()).isNull();
+    }
+
+    /**
+     * Test stream with null request
+     */
+    @Test
+    void testStreamWithNullRequest() {
+        // Create a specific mock instance for this test
+        DashScopeAgentApi mockApi = new DashScopeAgentApi(DashScopeApiConstants.DEFAULT_BASE_URL,
+                new SimpleApiKey(TEST_API_KEY), null, DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL,
+                RestClient.builder(), WebClient.builder(), RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER) {
+            @Override
+            public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest req) {
+                if (req == null) {
+                    return Flux.empty();
+                }
+                return Flux.just(createTestResponse());
+            }
+        };
+
+        // Execute test
+        Flux<DashScopeAgentApi.DashScopeAgentResponse> resultFlux = mockApi.stream(null);
+
+        // Verify empty stream
+        StepVerifier.create(resultFlux).verifyComplete();
+    }
+
+    /**
+     * Test call with empty response
+     */
+    @Test
+    void testCallWithEmptyResponse() {
+        // Create test request
+        DashScopeAgentApi.DashScopeAgentRequest request = createTestRequest();
+
+        // Create empty response
+        DashScopeAgentApi.DashScopeAgentResponse emptyResponse = createEmptyResponse();
+
+        // Create a specific mock instance for this test
+        DashScopeAgentApi mockApi = new DashScopeAgentApi(DashScopeApiConstants.DEFAULT_BASE_URL,
+                new SimpleApiKey(TEST_API_KEY), null, DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL,
+                RestClient.builder(), WebClient.builder(), RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER) {
+            @Override
+            public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest req) {
+                return ResponseEntity.ok(emptyResponse);
+            }
+        };
+
+        // Execute test
+        ResponseEntity<DashScopeAgentApi.DashScopeAgentResponse> result = mockApi.call(request);
+
+        // Verify empty response
+        assertThat(result).isNotNull();
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().output()).isNull();
+        assertThat(result.getBody().usage()).isNull();
+    }
+
+    /**
+     * Test stream with empty response
+     */
+    @Test
+    void testStreamWithEmptyResponse() {
+        // Create test request
+        DashScopeAgentApi.DashScopeAgentRequest request = createTestRequest();
+
+        // Create empty response
+        DashScopeAgentApi.DashScopeAgentResponse emptyResponse = createEmptyResponse();
+
+        // Create a specific mock instance for this test
+        DashScopeAgentApi mockApi = new DashScopeAgentApi(DashScopeApiConstants.DEFAULT_BASE_URL,
+                new SimpleApiKey(TEST_API_KEY), null, DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL,
+                RestClient.builder(), WebClient.builder(), RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER) {
+            @Override
+            public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest req) {
+                return Flux.just(emptyResponse);
+            }
+        };
+
+        // Execute test
+        Flux<DashScopeAgentApi.DashScopeAgentResponse> resultFlux = mockApi.stream(request);
+
+        // Verify empty response stream
+        StepVerifier.create(resultFlux).assertNext(result -> {
+            assertThat(result).isNotNull();
+            assertThat(result.output()).isNull();
+            assertThat(result.usage()).isNull();
+        }).verifyComplete();
+    }
+
+    /**
+     * Test call with custom parameters
+     */
+    @Test
+    void testCallWithCustomParameters() {
+        // Create test request with custom parameters
+        DashScopeAgentApi.DashScopeAgentRequest request = createCustomParametersRequest();
+        DashScopeAgentApi.DashScopeAgentResponse response = createTestResponse();
+
+        // Create a specific mock instance for this test
+        DashScopeAgentApi mockApi = new DashScopeAgentApi(DashScopeApiConstants.DEFAULT_BASE_URL,
+                new SimpleApiKey(TEST_API_KEY), null, DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL,
+                RestClient.builder(), WebClient.builder(), RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER) {
+            @Override
+            public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest req) {
+                return ResponseEntity.ok(response);
+            }
+        };
+
+        // Execute test
+        ResponseEntity<DashScopeAgentApi.DashScopeAgentResponse> result = mockApi.call(request);
+
+        // Verify response
+        assertThat(result).isNotNull();
+        assertThat(result.getBody()).isNotNull();
+    }
+
+    /**
+     * Test stream with custom parameters
+     */
+    @Test
+    void testStreamWithCustomParameters() {
+        // Create test request with custom parameters
+        DashScopeAgentApi.DashScopeAgentRequest request = createCustomParametersRequest();
+        DashScopeAgentApi.DashScopeAgentResponse response = createTestResponse();
+
+        // Create a specific mock instance for this test
+        DashScopeAgentApi mockApi = new DashScopeAgentApi(DashScopeApiConstants.DEFAULT_BASE_URL,
+                new SimpleApiKey(TEST_API_KEY), null, DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL,
+                RestClient.builder(), WebClient.builder(), RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER) {
+            @Override
+            public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest req) {
+                return Flux.just(response);
+            }
+        };
+
+        // Execute test
+        Flux<DashScopeAgentApi.DashScopeAgentResponse> resultFlux = mockApi.stream(request);
+
+        // Verify stream response
+        StepVerifier.create(resultFlux).assertNext(result -> {
+            assertThat(result).isNotNull();
+        }).verifyComplete();
+    }
+
+    /**
+     * Test call with thoughts enabled
+     */
+    @Test
+    void testCallWithThoughtsEnabled() {
+        // Create test request with thoughts enabled
+        DashScopeAgentApi.DashScopeAgentRequest request = createRequestWithThoughts();
+        DashScopeAgentApi.DashScopeAgentResponse response = createResponseWithThoughts();
+
+        // Create a specific mock instance for this test
+        DashScopeAgentApi mockApi = new DashScopeAgentApi(DashScopeApiConstants.DEFAULT_BASE_URL,
+                new SimpleApiKey(TEST_API_KEY), null, DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL,
+                RestClient.builder(), WebClient.builder(), RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER) {
+            @Override
+            public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest req) {
+                return ResponseEntity.ok(response);
+            }
+        };
+
+        // Execute test
+        ResponseEntity<DashScopeAgentApi.DashScopeAgentResponse> result = mockApi.call(request);
+
+        // Verify response structure
+        assertThat(result).isNotNull();
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().output()).isNotNull();
+        assertThat(result.getBody().output().thoughts()).isNotNull();
+        assertThat(result.getBody().output().thoughts()).hasSize(1);
+    }
+
+    /**
+     * Helper method to create a test request
+     */
+    private DashScopeAgentApi.DashScopeAgentRequest createTestRequest() {
+        DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput input = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput(
+                TEST_PROMPT, null, null, null, null, null, null);
+
+        DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters parameters = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters(
+                DashScopeAgentFlowStreamMode.FULL_THOUGHTS, false, false, null, null, null);
+
+        return new DashScopeAgentApi.DashScopeAgentRequest(TEST_APP_ID, input, parameters);
+    }
+
+    /**
+     * Helper method to create a test response
+     */
+    private DashScopeAgentApi.DashScopeAgentResponse createTestResponse() {
+        DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseOutput output = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseOutput(
+                "Hello, Human!", "stop", "test-session", null, null);
+
+        DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseUsage.DashScopeAgentResponseUsageModels model = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseUsage.DashScopeAgentResponseUsageModels(
+                "test-model", 10, 20);
+
+        DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseUsage usage = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseUsage(List.of(model));
+
+        return new DashScopeAgentApi.DashScopeAgentResponse(200, "test-request-id", "success", "success", output, usage);
+    }
+
+    /**
+     * Helper method to create an error response
+     */
+    private DashScopeAgentApi.DashScopeAgentResponse createErrorResponse() {
+        return new DashScopeAgentApi.DashScopeAgentResponse(400, "test-request-id", "error", "Error occurred", null, null);
+    }
+
+    /**
+     * Helper method to create an empty response
+     */
+    private DashScopeAgentApi.DashScopeAgentResponse createEmptyResponse() {
+        return new DashScopeAgentApi.DashScopeAgentResponse(200, "test-request-id", "success", "success", null, null);
+    }
+
+    /**
+     * Helper method to create a request with custom parameters
+     */
+    private DashScopeAgentApi.DashScopeAgentRequest createCustomParametersRequest() {
+        DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput input = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput(
+                TEST_PROMPT, null, "custom-session", "custom-memory", null, null, null);
+
+        DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters parameters = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters(
+                DashScopeAgentFlowStreamMode.FULL_THOUGHTS, true, true, null, null, null);
+
+        return new DashScopeAgentApi.DashScopeAgentRequest(TEST_APP_ID, input, parameters);
+    }
+
+    /**
+     * Helper method to create a request with thoughts enabled
+     */
+    private DashScopeAgentApi.DashScopeAgentRequest createRequestWithThoughts() {
+        DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput input = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput(
+                TEST_PROMPT, null, null, null, null, null, null);
+
+        DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters parameters = new DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters(
+                DashScopeAgentFlowStreamMode.FULL_THOUGHTS, true, false, null, null, null);
+
+        return new DashScopeAgentApi.DashScopeAgentRequest(TEST_APP_ID, input, parameters);
+    }
+
+    /**
+     * Helper method to create a response with thoughts
+     */
+    private DashScopeAgentApi.DashScopeAgentResponse createResponseWithThoughts() {
+        var thought = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseOutput.DashScopeAgentResponseOutputThoughts(
+                "test thought", "test action type", "test action name", "test action",
+                "test input stream", "test input", "test response", "test observation",
+                "test reasoning content");
+
+        var output = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseOutput(
+                "Hello, Human!", "stop", "test-session", List.of(thought), null);
+
+        var model = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseUsage.DashScopeAgentResponseUsageModels(
+                "test-model", 10, 20);
+
+        var usage = new DashScopeAgentApi.DashScopeAgentResponse.DashScopeAgentResponseUsage(List.of(model));
+
+        return new DashScopeAgentApi.DashScopeAgentResponse(
+                200, "test-request-id", "success", "success", output, usage);
+    }
 
 }

@@ -70,6 +70,7 @@ public class DashScopeRerankAutoConfiguration {
 			.apiKey(resolved.apiKey())
 			.headers(resolved.headers())
 			.baseUrl(resolved.baseUrl())
+            .rerankPath(rerankProperties.getRerankPath())
 			.webClientBuilder(webClientBuilderProvider.getIfAvailable(WebClient::builder))
 			.workSpaceId(resolved.workspaceId())
 			.restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))

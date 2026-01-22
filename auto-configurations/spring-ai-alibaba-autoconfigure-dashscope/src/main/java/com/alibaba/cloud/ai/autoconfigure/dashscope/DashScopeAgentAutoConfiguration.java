@@ -16,8 +16,8 @@
 
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
+import com.alibaba.cloud.ai.dashscope.agent.DashScopeAgent;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 
 import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
@@ -42,28 +42,41 @@ import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUt
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
  */
 
-@ConditionalOnClass(DashScopeApi.class)
 @ConditionalOnDashScopeEnabled
-@ConditionalOnProperty(prefix = DashScopeAgentProperties.CONFIG_PREFIX, name = "enabled", havingValue = "true",
-		matchIfMissing = true)
-@AutoConfiguration(after = { RestClientAutoConfiguration.class, SpringAiRetryAutoConfiguration.class,
-		ToolCallingAutoConfiguration.class })
-@ImportAutoConfiguration(classes = { SpringAiRetryAutoConfiguration.class, RestClientAutoConfiguration.class,
-		ToolCallingAutoConfiguration.class, WebClientAutoConfiguration.class })
-@EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeAgentProperties.class, })
+@ConditionalOnClass(DashScopeAgentApi.class)
+@ConditionalOnProperty(prefix = DashScopeAgentProperties.CONFIG_PREFIX, name = "enabled", havingValue = "true", matchIfMissing = true)
+@AutoConfiguration(after = {RestClientAutoConfiguration.class, SpringAiRetryAutoConfiguration.class, ToolCallingAutoConfiguration.class})
+@ImportAutoConfiguration(classes = {SpringAiRetryAutoConfiguration.class, RestClientAutoConfiguration.class, ToolCallingAutoConfiguration.class, WebClientAutoConfiguration.class})
+@EnableConfigurationProperties({DashScopeConnectionProperties.class, DashScopeAgentProperties.class})
 public class DashScopeAgentAutoConfiguration {
 
-	@Bean
-	@ConditionalOnMissingBean
-	public DashScopeAgentApi dashscopeAgentApi(DashScopeConnectionProperties commonProperties,
-			DashScopeAgentProperties agentProperties, ObjectProvider<RestClient.Builder> restClientBuilderProvider,
-			ObjectProvider<WebClient.Builder> webClientBuilderProvider, ResponseErrorHandler responseErrorHandler) {
+    @Bean
+    @ConditionalOnMissingBean
+    public DashScopeAgent dashScopeAgent(
+            DashScopeConnectionProperties commonProperties,
+            DashScopeAgentProperties agentProperties,
+            ObjectProvider<RestClient.Builder> restClientBuilderProvider,
+            ObjectProvider<WebClient.Builder> webClientBuilderProvider,
+            ResponseErrorHandler responseErrorHandler) {
 
-		ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties, agentProperties, "agent");
+        var resolved = resolveConnectionProperties(commonProperties, agentProperties, "agent");
 
-		return new DashScopeAgentApi(resolved.baseUrl(), resolved.apiKey(), resolved.workspaceId(),
-				restClientBuilderProvider.getIfAvailable(RestClient::builder),
-				webClientBuilderProvider.getIfAvailable(WebClient::builder), responseErrorHandler);
-	}
+        var dashScopeAgentApi = DashScopeAgentApi.builder()
+                .baseUrl(resolved.baseUrl())
+                .apiKey(resolved.apiKey())
+                .workSpaceId(resolved.workspaceId())
+                .agentPath(agentProperties.getAgentPath())
+                .restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
+                .webClientBuilder(webClientBuilderProvider.getIfAvailable(WebClient::builder))
+                .responseErrorHandler(responseErrorHandler)
+                .build();
+
+        var dashScopeAgent = DashScopeAgent.builder()
+                .dashScopeAgentApi(dashScopeAgentApi)
+                .defaultOptions(agentProperties.getOptions())
+                .build();
+
+        return dashScopeAgent;
+    }
 
 }

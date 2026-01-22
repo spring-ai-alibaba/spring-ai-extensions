@@ -42,6 +42,8 @@ import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.IMAGE2IMAGE_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.IMAGE_GENERATION_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MULTIMODAL_GENERATION_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.QUERY_TASK_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.TEXT2IMAGE_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_IMAGE;
 import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_MT_IMAGE;
 import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.WAN_2_6_IMAGE;
@@ -70,15 +72,20 @@ public class DashScopeImageApi {
 
 	private final ResponseErrorHandler responseErrorHandler;
 
+    @Override
+    public DashScopeImageApi clone() {
+        return mutate().build();
+    }
+
 	/**
 	 * Returns a builder pre-populated with the current configuration for mutation.
 	 */
-	public DashScopeImageApi.Builder mutate() {
-		return new DashScopeImageApi.Builder(this);
+	public Builder mutate() {
+		return new Builder(this);
 	}
 
-	public static DashScopeImageApi.Builder builder() {
-		return new DashScopeImageApi.Builder();
+	public static Builder builder() {
+		return new Builder();
 	}
 
 	// format: off
@@ -187,6 +194,20 @@ public class DashScopeImageApi {
 
 	public static class Builder {
 
+        private String baseUrl = DEFAULT_BASE_URL;
+
+        private ApiKey apiKey;
+
+        private String imagesPath = TEXT2IMAGE_RESTFUL_URL;
+
+        private String queryTaskPath = QUERY_TASK_RESTFUL_URL;
+
+        private String workSpaceId;
+
+        private RestClient.Builder restClientBuilder = RestClient.builder();
+
+        private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
+
 		public Builder() {
 		}
 
@@ -194,23 +215,11 @@ public class DashScopeImageApi {
 		public Builder(DashScopeImageApi api) {
 			this.baseUrl = api.getBaseUrl();
 			this.apiKey = api.getApiKey();
+            this.imagesPath = api.imagesPath;
+            this.queryTaskPath = api.queryTaskPath;
 			this.restClientBuilder = api.restClient != null ? api.restClient.mutate() : RestClient.builder();
 			this.responseErrorHandler = api.getResponseErrorHandler();
 		}
-
-		private String baseUrl = DEFAULT_BASE_URL;
-
-		private ApiKey apiKey;
-
-		private String imagesPath;
-
-		private String queryTaskPath;
-
-		private String workSpaceId;
-
-		private RestClient.Builder restClientBuilder = RestClient.builder();
-
-		private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
 
 		public DashScopeImageApi.Builder baseUrl(String baseUrl) {
 

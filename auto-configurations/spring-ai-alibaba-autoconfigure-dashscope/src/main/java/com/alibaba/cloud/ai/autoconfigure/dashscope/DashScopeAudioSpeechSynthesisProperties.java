@@ -40,7 +40,7 @@ public class DashScopeAudioSpeechSynthesisProperties extends DashScopeParentProp
 
 	private static final String DEFAULT_VOICE = "longhua";
 
-	private final DashScopeAudioSpeechApi.ResponseFormat DEFAULT_RESPONSE_FORMAT = DashScopeAudioSpeechApi.ResponseFormat.MP3;
+	private static final DashScopeAudioSpeechApi.ResponseFormat DEFAULT_RESPONSE_FORMAT = DashScopeAudioSpeechApi.ResponseFormat.MP3;
 
 	@NestedConfigurationProperty
 	private DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()

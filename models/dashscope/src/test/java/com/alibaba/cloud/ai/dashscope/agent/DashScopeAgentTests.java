@@ -199,7 +199,7 @@ class DashScopeAgentTests {
   @Test
   void testDefaultConstructor() {
     // Create agent with default constructor
-    DashScopeAgent defaultAgent = new DashScopeAgent(dashScopeAgentApi);
+    DashScopeAgent defaultAgent = DashScopeAgent.builder().dashScopeAgentApi(dashScopeAgentApi).build();
 
     // Verify default options are set
     Message message = new UserMessage(TEST_USER_MESSAGE);

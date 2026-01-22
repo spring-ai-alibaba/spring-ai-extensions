@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
+import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeVideoApiConstants;
 import com.alibaba.cloud.ai.dashscope.video.DashScopeVideoOptions;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -32,10 +34,30 @@ public class DashScopeVideoProperties extends DashScopeParentProperties {
 
 	public static final String CONFIG_PREFIX = "spring.ai.dashscope.video";
 
+    private String videoPath = DashScopeVideoApiConstants.VIDEO_GENERATION_SYNTHESIS;
+
+    private String queryTaskPath = DashScopeApiConstants.QUERY_TASK_RESTFUL_URL;
+
 	@NestedConfigurationProperty
     private DashScopeVideoOptions options = DashScopeVideoOptions.builder().build();
 
-	public DashScopeVideoOptions getOptions() {
+    public String getVideoPath() {
+        return videoPath;
+    }
+
+    public void setVideoPath(String videoPath) {
+        this.videoPath = videoPath;
+    }
+
+    public String getQueryTaskPath() {
+        return queryTaskPath;
+    }
+
+    public void setQueryTaskPath(String queryTaskPath) {
+        this.queryTaskPath = queryTaskPath;
+    }
+
+    public DashScopeVideoOptions getOptions() {
 		return this.options;
 	}
 

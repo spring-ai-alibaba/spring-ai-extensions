@@ -21,6 +21,8 @@ import com.alibaba.cloud.ai.dashscope.agent.DashScopeAgentOptions;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL;
+
 /**
  * @author yuluo
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
@@ -29,37 +31,46 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 @ConfigurationProperties(DashScopeAgentProperties.CONFIG_PREFIX)
 public class DashScopeAgentProperties extends DashScopeParentProperties {
 
-	/**
-	 * Spring AI Alibaba configuration prefix.
-	 */
-	public static final String CONFIG_PREFIX = "spring.ai.dashscope.agent";
+    /**
+     * Spring AI Alibaba configuration prefix.
+     */
+    public static final String CONFIG_PREFIX = "spring.ai.dashscope.agent";
 
-	/**
-	 * Enable DashScope ai agent client.
-	 */
-	private boolean enabled = true;
+    /**
+     * Enable DashScope ai agent client.
+     */
+    private boolean enabled = true;
 
-	@NestedConfigurationProperty
-	private DashScopeAgentOptions options = DashScopeAgentOptions.builder().build();
+    /**
+     * DashScope ai agent path.
+     */
+    private String agentPath = APPS_COMPLETION_RESTFUL_URL;
 
-	public DashScopeAgentOptions getOptions() {
+    @NestedConfigurationProperty
+    private DashScopeAgentOptions options = DashScopeAgentOptions.builder().build();
 
-		return this.options;
-	}
+    public boolean isEnabled() {
+        return this.enabled;
+    }
 
-	public void setOptions(DashScopeAgentOptions options) {
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
-		this.options = options;
-	}
+    public String getAgentPath() {
+        return this.agentPath;
+    }
 
-	public boolean isEnabled() {
+    public void setAgentPath(String agentPath) {
+        this.agentPath = agentPath;
+    }
 
-		return this.enabled;
-	}
+    public DashScopeAgentOptions getOptions() {
+        return this.options;
+    }
 
-	public void setEnabled(boolean enabled) {
-
-		this.enabled = enabled;
-	}
+    public void setOptions(DashScopeAgentOptions options) {
+        this.options = options;
+    }
 
 }

@@ -16,13 +16,15 @@
 package com.alibaba.cloud.ai.dashscope.api;
 
 import com.alibaba.cloud.ai.dashscope.agent.DashScopeAgentFlowStreamMode;
-import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.ai.model.ApiKey;
+import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.Assert;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -30,6 +32,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_BASE_URL;
 
 import java.util.List;
@@ -37,79 +40,78 @@ import java.util.Objects;
 
 /**
  * @author linkesheng.lks
+ * @author guanxu
  * @since 1.0.0-M2
  */
 public class DashScopeAgentApi {
 
-	private final RestClient restClient;
+    private final String baseUrl;
 
-	private final WebClient webClient;
+    private final ApiKey apiKey;
 
-	public DashScopeAgentApi(String apiKey) {
-		this(DEFAULT_BASE_URL, apiKey, RestClient.builder(), WebClient.builder(),
-				RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER);
-	}
+    private final String workSpaceId;
 
-	public DashScopeAgentApi(String apiKey, String workSpaceId) {
-		this(DEFAULT_BASE_URL, apiKey, workSpaceId, RestClient.builder(), WebClient.builder(),
-				RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER);
-	}
+    private final String agentPath;
 
-	public DashScopeAgentApi(String baseUrl, String apiKey, String workSpaceId) {
-		this(baseUrl, apiKey, workSpaceId, RestClient.builder(), WebClient.builder(),
-				RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER);
-	}
+    private final RestClient restClient;
 
-	public DashScopeAgentApi(String baseUrl, String apiKey, RestClient.Builder restClientBuilder,
-			WebClient.Builder webClientBuilder, ResponseErrorHandler responseErrorHandler) {
-		this.restClient = restClientBuilder.baseUrl(baseUrl)
-			.defaultHeaders(ApiUtils.getJsonContentHeaders(apiKey))
-			.defaultStatusHandler(responseErrorHandler)
-			.build();
+    private final WebClient webClient;
 
-		this.webClient = webClientBuilder.baseUrl(baseUrl)
-			.defaultHeaders(ApiUtils.getJsonContentHeaders(apiKey, null, true))
-			.build();
-	}
+    private final ResponseErrorHandler responseErrorHandler;
 
-	public DashScopeAgentApi(String baseUrl, String apiKey, String workSpaceId, RestClient.Builder restClientBuilder,
-			WebClient.Builder webClientBuilder, ResponseErrorHandler responseErrorHandler) {
-		this.restClient = restClientBuilder.baseUrl(baseUrl)
-			.defaultHeaders(ApiUtils.getJsonContentHeaders(apiKey, workSpaceId))
-			.defaultStatusHandler(responseErrorHandler)
-			.build();
+    public DashScopeAgentApi(
+            String baseUrl,
+            ApiKey apiKey,
+            String workSpaceId,
+            String agentPath,
+            RestClient.Builder restClientBuilder,
+            WebClient.Builder webClientBuilder,
+            ResponseErrorHandler responseErrorHandler) {
+        Assert.hasText(baseUrl, "Base URL cannot be null");
+        Assert.notNull(apiKey, "API key cannot be null");
+        Assert.hasText(agentPath, "Agent path cannot be null");
 
-		this.webClient = webClientBuilder.baseUrl(baseUrl)
-			.defaultHeaders(ApiUtils.getJsonContentHeaders(apiKey, workSpaceId, true))
-			.build();
-	}
+        this.baseUrl = baseUrl;
+        this.apiKey = apiKey;
+        this.workSpaceId = workSpaceId;
+        this.agentPath = agentPath;
+        this.responseErrorHandler = responseErrorHandler;
 
-	public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest request) {
-		return restClient.post()
-			.uri(DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL, request.appId())
-			.body(request)
-			.retrieve()
-			.toEntity(DashScopeAgentResponse.class);
-	}
+        this.restClient = restClientBuilder.baseUrl(baseUrl)
+                .defaultHeaders(ApiUtils.getJsonContentHeaders(apiKey.getValue(), workSpaceId))
+                .defaultStatusHandler(responseErrorHandler)
+                .build();
 
-	public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest request) {
-		return webClient.post()
-			.uri(DashScopeApiConstants.APPS_COMPLETION_RESTFUL_URL, request.appId())
-			.body(Mono.just(request), DashScopeAgentRequest.class)
-			.retrieve()
-			.bodyToFlux( DashScopeAgentResponse.class)
-            .filter(Objects::nonNull)
-            .map(response -> {
-                if (response.code() != null && !response.code().isBlank()) {
-                    throw new DashScopeException(String.format("[%s] %s (requestId: %s)",
-                            response.code(), response.message(), response.requestId()));
-                }
-                return response;
-            })
-            .subscribeOn(Schedulers.boundedElastic());
-	}
+        this.webClient = webClientBuilder.baseUrl(baseUrl)
+                .defaultHeaders(ApiUtils.getJsonContentHeaders(apiKey.getValue(), workSpaceId, true))
+                .build();
+    }
 
-	// @formatter:off
+    public ResponseEntity<DashScopeAgentResponse> call(DashScopeAgentRequest request) {
+        return restClient.post()
+                .uri(this.agentPath, request.appId())
+                .body(request)
+                .retrieve()
+                .toEntity(DashScopeAgentResponse.class);
+    }
+
+    public Flux<DashScopeAgentResponse> stream(DashScopeAgentRequest request) {
+        return webClient.post()
+                .uri(this.agentPath, request.appId())
+                .body(Mono.just(request), DashScopeAgentRequest.class)
+                .retrieve()
+                .bodyToFlux(DashScopeAgentResponse.class)
+                .filter(Objects::nonNull)
+                .map(response -> {
+                    if (response.code() != null && !response.code().isBlank()) {
+                        throw new DashScopeException(String.format("[%s] %s (requestId: %s)", response.code(), response.message(), response.requestId()));
+                    }
+                    return response;
+                })
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    // @formatter:off
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record DashScopeAgentRequest(
 			@JsonProperty("app_id") String appId,
@@ -204,4 +206,93 @@ public class DashScopeAgentApi {
 		}
 	}
 
+    @Override
+    public DashScopeAgentApi clone(){
+        return mutate().build();
+    }
+
+    public Builder mutate() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private String baseUrl = DEFAULT_BASE_URL;
+
+        private ApiKey apiKey;
+
+        private String workSpaceId;
+
+        private String agentPath = APPS_COMPLETION_RESTFUL_URL;
+
+        private RestClient.Builder restClientBuilder = RestClient.builder();
+
+        private WebClient.Builder webClientBuilder = WebClient.builder();
+
+        private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
+
+        public Builder() {
+        }
+
+        public Builder(DashScopeAgentApi api) {
+            this.baseUrl = api.baseUrl;
+            this.apiKey = api.apiKey;
+            this.workSpaceId = api.workSpaceId;
+            this.agentPath = api.agentPath;
+            this.restClientBuilder = api.restClient != null ? api.restClient.mutate() : RestClient.builder();
+            this.webClientBuilder = api.webClient != null ? api.webClient.mutate() : WebClient.builder();
+            this.responseErrorHandler = api.responseErrorHandler;
+        }
+
+        public Builder baseUrl(String baseUrl) {
+            Assert.hasText(baseUrl, "Base URL cannot be null");
+            this.baseUrl = baseUrl;
+            return this;
+        }
+
+        public Builder apiKey(String apiKey) {
+            Assert.hasText(apiKey, "API key cannot be null");
+            this.apiKey = new SimpleApiKey(apiKey);
+            return this;
+        }
+
+        public Builder workSpaceId(String workSpaceId) {
+            Assert.hasText(workSpaceId, "WorkSpaceId cannot be null");
+            this.workSpaceId = workSpaceId;
+            return this;
+        }
+
+        public Builder agentPath(String agentPath) {
+            Assert.hasText(agentPath, "Agent path cannot be null");
+            this.agentPath = agentPath;
+            return this;
+        }
+
+        public Builder restClientBuilder(RestClient.Builder restClientBuilder) {
+            Assert.notNull(restClientBuilder, "RestClient builder cannot be null");
+            this.restClientBuilder = restClientBuilder;
+            return this;
+        }
+
+        public Builder webClientBuilder(WebClient.Builder webClientBuilder) {
+            Assert.notNull(webClientBuilder, "WebClient builder cannot be null");
+            this.webClientBuilder = webClientBuilder;
+            return this;
+        }
+
+        public Builder responseErrorHandler(ResponseErrorHandler responseErrorHandler) {
+            Assert.notNull(responseErrorHandler, "ResponseErrorHandler cannot be null");
+            this.responseErrorHandler = responseErrorHandler;
+            return this;
+        }
+
+        public DashScopeAgentApi build() {
+            return new DashScopeAgentApi(this.baseUrl, this.apiKey, this.workSpaceId, this.agentPath,
+                    this.restClientBuilder, this.webClientBuilder, this.responseErrorHandler);
+        }
+    }
 }
