@@ -261,7 +261,6 @@ public class DashScopeAgentApi {
         }
 
         public Builder workSpaceId(String workSpaceId) {
-            Assert.hasText(workSpaceId, "WorkSpaceId cannot be null");
             this.workSpaceId = workSpaceId;
             return this;
         }
