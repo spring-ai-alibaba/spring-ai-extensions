@@ -44,14 +44,17 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
+import java.time.Duration;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -670,13 +673,76 @@ public class DashScopeApi {
 
         private String rerankPath = TEXT_RERANK_RESTFUL_URL;
 
-        private RestClient.Builder restClientBuilder = RestClient.builder();
+        private RestClient.Builder restClientBuilder = createDefaultRestClientBuilder();
 
-        private WebClient.Builder webClientBuilder = WebClient.builder();
+        private WebClient.Builder webClientBuilder = createDefaultWebClientBuilder();
 
         private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
 
 		public Builder() {
+		}
+
+		/**
+		 * Creates a default RestClient.Builder with configured request factory.
+		 */
+		private static RestClient.Builder createDefaultRestClientBuilder() {
+			SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+			requestFactory.setConnectTimeout(60 * 1000);
+			requestFactory.setReadTimeout(3 * 60 * 1000);
+			return RestClient.builder().requestFactory(requestFactory);
+		}
+
+		/**
+		 * Creates a default WebClient.Builder with configured Reactor Netty connection pool.
+		 * Falls back to simple WebClient.builder() if Reactor Netty classes are not available.
+		 */
+		private static WebClient.Builder createDefaultWebClientBuilder() {
+			try {
+				// Try to use Reactor Netty connection pool if available
+				Class<?> connectionProviderClass = Class.forName("reactor.netty.resources.ConnectionProvider");
+				Class<?> httpClientClass = Class.forName("reactor.netty.http.client.HttpClient");
+				Class<?> reactorConnectorClass = Class.forName("org.springframework.http.client.reactive.ReactorClientHttpConnector");
+
+				// Build ConnectionProvider
+				Object providerBuilder = connectionProviderClass.getMethod("builder", String.class)
+						.invoke(null, "dashscope-connection-provider");
+				// Actively close connections after 45 seconds of idle time to avoid reusing connections that have been closed by the server
+				providerBuilder = providerBuilder.getClass().getMethod("maxConnections", int.class)
+						.invoke(providerBuilder, 500);
+				providerBuilder = providerBuilder.getClass().getMethod("maxIdleTime", Duration.class)
+						.invoke(providerBuilder, Duration.ofSeconds(45));
+				providerBuilder = providerBuilder.getClass().getMethod("maxLifeTime", Duration.class)
+						.invoke(providerBuilder, Duration.ofMinutes(10));
+				providerBuilder = providerBuilder.getClass().getMethod("pendingAcquireTimeout", Duration.class)
+						.invoke(providerBuilder, Duration.ofSeconds(60));
+				providerBuilder = providerBuilder.getClass().getMethod("evictInBackground", Duration.class)
+						.invoke(providerBuilder, Duration.ofSeconds(30));
+				Object provider = providerBuilder.getClass().getMethod("build").invoke(providerBuilder);
+
+				// Build HttpClient
+				Object httpClient = httpClientClass.getMethod("create", connectionProviderClass)
+						.invoke(null, provider);
+				httpClient = httpClientClass.getMethod("compress", boolean.class).invoke(httpClient, true);
+				httpClient = httpClientClass.getMethod("keepAlive", boolean.class).invoke(httpClient, true);
+				httpClient = httpClientClass.getMethod("responseTimeout", Duration.class)
+						.invoke(httpClient, Duration.ofSeconds(60));
+
+				// Create ReactorClientHttpConnector
+				Object connector = reactorConnectorClass.getConstructor(httpClientClass)
+						.newInstance(httpClient);
+
+				// Build WebClient with connector
+				return WebClient.builder()
+						.clientConnector((ClientHttpConnector) connector);
+			}
+			catch (ClassNotFoundException | NoClassDefFoundError e) {
+				// Reactor Netty classes not available, fall back to simple builder
+				return WebClient.builder();
+			}
+			catch (Exception e) {
+				// Any other exception, fall back to simple builder
+				return WebClient.builder();
+			}
 		}
 
 		// Copy constructor for mutate()
