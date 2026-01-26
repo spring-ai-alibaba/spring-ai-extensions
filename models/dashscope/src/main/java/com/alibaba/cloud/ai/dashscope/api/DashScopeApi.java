@@ -614,8 +614,7 @@ public class DashScopeApi {
 					throw new DashScopeException("Failed to parse response content: " + content);
 				}
 				return chunk;
-			})
-			.map(chunk -> chunk);
+			});
 
 		if (enableStreamToolCalls) {
 			return baseFlux;
