@@ -52,13 +52,6 @@
         <url>https://github.com/alibaba/spring-ai-alibaba</url>
     </scm>
 
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <apache-tika.version>2.9.4</apache-tika.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
@@ -70,13 +63,11 @@
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
-            <version>${apache-tika.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers-standard-package</artifactId>
-            <version>${apache-tika.version}</version>
         </dependency>
 
         <!-- test dependencies -->

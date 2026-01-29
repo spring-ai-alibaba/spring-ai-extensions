@@ -54,7 +54,7 @@
 
     <properties>
         <mcp-spring.version>0.14.0</mcp-spring.version>
-      <json-schema-validator.version>1.5.3</json-schema-validator.version>
+        <json-schema-validator.version>1.5.3</json-schema-validator.version>
     </properties>
 
     <dependencies>
@@ -66,25 +66,25 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-mcp</artifactId>
-          <exclusions>
-            <exclusion>
-              <groupId>com.networknt</groupId>
-              <artifactId>json-schema-validator</artifactId>
-            </exclusion>
-          </exclusions>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.networknt</groupId>
+                    <artifactId>json-schema-validator</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
-      <!-- Manually add compatible version of json-schema-validator with Jackson exclusions -->
-      <dependency>
-        <groupId>com.networknt</groupId>
-        <artifactId>json-schema-validator</artifactId>
-        <version>${json-schema-validator.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
-          </exclusion>
-        </exclusions>
+        <!-- Manually add compatible version of json-schema-validator with Jackson exclusions -->
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>json-schema-validator</artifactId>
+            <version>${json-schema-validator.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.dataformat</groupId>
+                    <artifactId>jackson-dataformat-yaml</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
