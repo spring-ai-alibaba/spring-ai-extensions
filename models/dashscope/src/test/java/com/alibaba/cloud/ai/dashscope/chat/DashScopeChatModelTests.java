@@ -34,15 +34,12 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchOptions;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchInfo;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchResult;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
-import com.alibaba.cloud.ai.tool.MockWeatherService;
 import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.mockito.Mockito;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -54,7 +51,6 @@ import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
-import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -471,44 +467,6 @@ class DashScopeChatModelTests {
     // Object reasoningContent = response.getMetadata().get("reasoning_content");
     // assertThat(reasoningContent).isNotNull();
     // }
-
-    @Test
-    @Tag("integration")
-    @EnabledIfEnvironmentVariable(named = "AI_DASHSCOPE_API_KEY", matches = ".+")
-    void testStreamToolCallsWithRealApi() {
-        String apiKey = System.getenv("AI_DASHSCOPE_API_KEY");
-        DashScopeApi realApi = DashScopeApi.builder().apiKey(apiKey).build();
-
-        DashScopeChatOptions options = DashScopeChatOptions.builder()
-                .model(TEST_MODEL)
-                .stream(true)
-                .enableStreamToolCalls(true)
-                .internalToolExecutionEnabled(false)
-                .toolChoice(Map.of("type", "function", "function", Map.of("name", "getCurrentWeather")))
-                .toolCallbacks(List.of(FunctionToolCallback.builder("getCurrentWeather", new MockWeatherService())
-                        .description("Get the weather in location")
-                        .inputType(MockWeatherService.Request.class)
-                        .build()))
-                .build();
-
-        DashScopeChatModel realModel = DashScopeChatModel.builder()
-                .dashScopeApi(realApi)
-                .defaultOptions(options)
-                .build();
-
-        Message message = new UserMessage("What's the weather in San Francisco? Use the getCurrentWeather tool.");
-        Prompt prompt = new Prompt(List.of(message), options);
-
-        List<ChatResponse> responses = realModel.stream(prompt).collectList().block();
-
-        assertThat(responses).isNotNull();
-        assertThat(responses).isNotEmpty();
-        assertThat(responses).anySatisfy(response -> {
-            AssistantMessage assistantMessage = (AssistantMessage) response.getResult().getOutput();
-            assertThat(assistantMessage.getToolCalls()).isNotEmpty();
-            assertThat(assistantMessage.getToolCalls().get(0).name()).isEqualTo("getCurrentWeather");
-        });
-    }
 
     @Test
     void testNullToolNameHandling() {

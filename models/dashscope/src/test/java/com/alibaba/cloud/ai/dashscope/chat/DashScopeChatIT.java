@@ -18,16 +18,28 @@ package com.alibaba.cloud.ai.dashscope.chat;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.tool.MockWeatherService;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.ai.tool.function.FunctionToolCallback;
+import org.springframework.ai.tool.method.MethodToolCallback;
 import reactor.core.publisher.Flux;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Integration tests for DashScope Chat functionality. These tests will only run if
@@ -123,5 +135,42 @@ class DashScopeChatIT {
 		assertThat(finalResponse).isNotEmpty();
 		System.out.println("Final streaming response: " + finalResponse);
 	}
+
+    @Test
+    @DisplayName("Should stream with tool calls")
+    void testStreamToolCallsWithRealApi() {
+        String apiKey = System.getenv("AI_DASHSCOPE_API_KEY");
+        DashScopeApi realApi = DashScopeApi.builder().apiKey(apiKey).build();
+
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .stream(true)
+                .enableStreamToolCalls(true)
+                .internalToolExecutionEnabled(false)
+                .toolChoice(Map.of("type", "function", "function", Map.of("name", "getCurrentWeather")))
+                .toolCallbacks(List.of(FunctionToolCallback.builder("getCurrentWeather", new MockWeatherService())
+                        .description("Get the weather in location")
+                        .inputType(MockWeatherService.Request.class)
+                        .build()))
+                .build();
+
+        DashScopeChatModel realModel = DashScopeChatModel.builder()
+                .dashScopeApi(realApi)
+                .defaultOptions(options)
+                .build();
+
+        Message message = new UserMessage("What's the weather in San Francisco? Use the getCurrentWeather tool.");
+        Prompt prompt = new Prompt(List.of(message), options);
+
+        List<ChatResponse> responses = realModel.stream(prompt).collectList().block();
+
+        assertThat(responses).isNotNull();
+        assertThat(responses).isNotEmpty();
+        assertThat(responses).anySatisfy(response -> {
+            AssistantMessage assistantMessage = response.getResult().getOutput();
+            assertThat(assistantMessage.getToolCalls()).isNotEmpty();
+            assertThat(assistantMessage.getToolCalls().get(0).name()).isEqualTo("getCurrentWeather");
+        });
+    }
 
 }
