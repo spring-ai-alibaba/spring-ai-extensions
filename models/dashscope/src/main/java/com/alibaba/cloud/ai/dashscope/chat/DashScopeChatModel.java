@@ -315,12 +315,16 @@ public class DashScopeChatModel implements ChatModel {
 						}
 					}
 
-					ChatResponse response = toChatResponse(
-							chunkToChatCompletion(chunk),
-							previousChatResponse,
-							request,
-							roleMap
-					);
+					ChatResponse response = null;
+					boolean isToolCallChunk = insideTool.get() && !toolExecutionReady;
+					if (!isToolCallChunk) {
+						response = toChatResponse(
+								chunkToChatCompletion(chunk),
+								previousChatResponse,
+								request,
+								roleMap
+						);
+					}
 					ChatResponse toolExecutionResponse = null;
 					if (toolExecutionReady && mergedToolChunk != null) {
 						toolExecutionResponse = toChatResponse(
@@ -331,7 +335,7 @@ public class DashScopeChatModel implements ChatModel {
 						);
 					}
 
-					return new StreamedResponse(response, toolExecutionResponse, toolExecutionReady, insideTool.get());
+					return new StreamedResponse(response, toolExecutionResponse, toolExecutionReady, isToolCallChunk);
 				});
 
 				flux = streamedResponses.flatMap(streamed -> {
@@ -369,6 +373,10 @@ public class DashScopeChatModel implements ChatModel {
 							}
 							return Flux.concat(Flux.just(toolExecutionResponse), toolResultFlux);
 						}).subscribeOn(Schedulers.boundedElastic());
+					}
+
+					if (streamed.toolExecutionReady() && toolExecutionResponse != null) {
+						return Flux.just(toolExecutionResponse);
 					}
 
 					if (streamed.isToolCallChunk()) {

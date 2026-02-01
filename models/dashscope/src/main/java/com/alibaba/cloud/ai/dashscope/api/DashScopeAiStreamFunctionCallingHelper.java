@@ -207,7 +207,8 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		if (choice == null) {
 			return false;
 		}
-		return choice.finishReason() == ChatCompletionFinishReason.TOOL_CALLS;
+		return choice.finishReason() == ChatCompletionFinishReason.TOOL_CALLS ||
+				choice.finishReason() == ChatCompletionFinishReason.STOP;
 	}
 
 	/**
