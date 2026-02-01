@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.chat;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.tool.MockWeatherService;
@@ -165,7 +166,17 @@ class DashScopeChatIT {
         assertThat(responses).anySatisfy(response -> {
             AssistantMessage assistantMessage = response.getResult().getOutput();
             assertThat(assistantMessage.getToolCalls()).isNotEmpty();
-            assertThat(assistantMessage.getToolCalls().get(0).name()).isEqualTo("getCurrentWeather");
+
+            var toolCall = assistantMessage.getToolCalls().get(0);
+            assertThat(toolCall.name()).isEqualTo("getCurrentWeather");
+
+            assertThat(toolCall.arguments()).isNotEmpty();
+
+            assertThatCode(() -> {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(toolCall.arguments());
+                assertThat(json.has("location")).isTrue();
+            }).doesNotThrowAnyException();
         });
     }
 

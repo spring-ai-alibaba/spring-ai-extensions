@@ -331,7 +331,7 @@ public class DashScopeChatModel implements ChatModel {
 						);
 					}
 
-					return new StreamedResponse(response, toolExecutionResponse, toolExecutionReady);
+					return new StreamedResponse(response, toolExecutionResponse, toolExecutionReady, insideTool.get());
 				});
 
 				flux = streamedResponses.flatMap(streamed -> {
@@ -367,8 +367,12 @@ public class DashScopeChatModel implements ChatModel {
 										toolExecutionResponse
 								);
 							}
-							return Flux.concat(Flux.just(response), toolResultFlux);
+							return Flux.concat(Flux.just(toolExecutionResponse), toolResultFlux);
 						}).subscribeOn(Schedulers.boundedElastic());
+					}
+
+					if (streamed.isToolCallChunk()) {
+						return Flux.empty();
 					}
 
 					return Flux.just(response);
@@ -436,12 +440,14 @@ public class DashScopeChatModel implements ChatModel {
 		private final ChatResponse response;
 		private final ChatResponse toolExecutionResponse;
 		private final boolean toolExecutionReady;
+		private final boolean isToolCallChunk;
 
 		private StreamedResponse(ChatResponse response, ChatResponse toolExecutionResponse,
-				boolean toolExecutionReady) {
+				boolean toolExecutionReady, boolean isToolCallChunk) {
 			this.response = response;
 			this.toolExecutionResponse = toolExecutionResponse;
 			this.toolExecutionReady = toolExecutionReady;
+			this.isToolCallChunk = isToolCallChunk;
 		}
 
 		private ChatResponse response() {
@@ -454,6 +460,10 @@ public class DashScopeChatModel implements ChatModel {
 
 		private boolean toolExecutionReady() {
 			return toolExecutionReady;
+		}
+
+		private boolean isToolCallChunk() {
+			return isToolCallChunk;
 		}
 	}
 
