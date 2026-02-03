@@ -1097,7 +1097,7 @@ public class DashScopeApiSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ExtraToolInfo(
             @JsonProperty("result") String result,
-            @JsonProperty("tools") String tool
+            @JsonProperty("tool") String tool
     ) { }
 
 
