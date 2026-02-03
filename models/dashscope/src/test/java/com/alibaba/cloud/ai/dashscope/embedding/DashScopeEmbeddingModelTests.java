@@ -18,6 +18,10 @@ package com.alibaba.cloud.ai.dashscope.embedding;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
@@ -30,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.EmbeddingModel;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -285,6 +290,22 @@ class DashScopeEmbeddingModelTests {
         assertThat(clone2).isNotNull();
         assertThat(mutate1).isNotNull();
         assertThat(mutate2).isNotNull();
+    }
+
+    @Test
+    void testDimensions() {
+        DashScopeApi api = DashScopeApi.builder().apiKey("sk-123").build();
+        DashScopeEmbeddingModel model = DashScopeEmbeddingModel.builder()
+                .dashScopeApi(api)
+                .metadataMode(MetadataMode.EMBED)
+                .defaultOptions(DashScopeEmbeddingOptions.builder().model(EmbeddingModel.EMBEDDING_V3.getValue()).build())
+                .build();
+
+        DashScopeEmbeddingModel spyModel = spy(model);
+        int dimensions = spyModel.dimensions();
+
+        assertThat(dimensions).isEqualTo(1024);
+        verify(spyModel, never()).embed(anyString());
     }
 
 }
