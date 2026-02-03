@@ -147,15 +147,15 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
 	}
 
 	private DashScopeAudioSpeechOptions mergeOptions(TextToSpeechPrompt prompt) {
-		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder().build();
-		if (prompt.getOptions() != null) {
-			DashScopeAudioSpeechOptions runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(),
-				TextToSpeechOptions.class, DashScopeAudioSpeechOptions.class);
+		DashScopeAudioSpeechOptions runtimeOptions = null;
 
-			options = ModelOptionsUtils.merge(runtimeOptions, options, DashScopeAudioSpeechOptions.class);
+		if (prompt != null && prompt.getOptions() != null) {
+			runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(), TextToSpeechOptions.class,
+				DashScopeAudioSpeechOptions.class);
 		}
 
-		return ModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioSpeechOptions.class);
+		return (runtimeOptions == null) ? this.defaultOptions
+			: ModelOptionsUtils.merge(runtimeOptions, this.defaultOptions, DashScopeAudioSpeechOptions.class);
 	}
 
     /**
