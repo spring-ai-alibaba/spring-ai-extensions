@@ -23,32 +23,36 @@ import org.springframework.ai.tool.execution.ToolExecutionExceptionProcessor;
 import org.springframework.ai.tool.observation.ToolCallingObservationConvention;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-@Configuration
-@AutoConfigureBefore(ToolCallingAutoConfiguration.class)
-@EnableConfigurationProperties(DashScopeAsyncToolCallingProperties.class)
-@ImportAutoConfiguration(classes = {ToolCallingAutoConfiguration.class})
+/**
+ * Spring AI Alibaba DashScope Async ToolCallingManager Auto Configuration.
+ *
+ * @since 1.1.2.1
+ */
+@AutoConfiguration(before = ToolCallingAutoConfiguration.class)
+@ConditionalOnDashScopeEnabled
 @ConditionalOnProperty(prefix = DashScopeAsyncToolCallingProperties.CONFIG_PREFIX, name = "enabled", havingValue = "true")
+@ConditionalOnClass(DashScopeAsyncToolCallingManager.class)
+@EnableConfigurationProperties(DashScopeAsyncToolCallingProperties.class)
 public class DashScopeAsyncToolCallingManagerAutoConfiguration {
 
+    // @formatter:off
     @Bean
-    @Primary
-    ToolCallingManager toolCallingManager(ToolCallbackResolver toolCallbackResolver,
-                                          ToolExecutionExceptionProcessor toolExecutionExceptionProcessor,
-                                          ObjectProvider<ObservationRegistry> observationRegistry,
-                                          ObjectProvider<ToolCallingObservationConvention> observationConvention,
-                                          DashScopeAsyncToolCallingProperties dashScopeAsyncToolCallingProperties) {
+    ToolCallingManager toolCallingManager(
+            ToolCallbackResolver toolCallbackResolver,
+            ToolExecutionExceptionProcessor toolExecutionExceptionProcessor,
+            ObjectProvider<ObservationRegistry> observationRegistry,
+            ObjectProvider<ToolCallingObservationConvention> observationConvention,
+            DashScopeAsyncToolCallingProperties dashScopeAsyncToolCallingProperties) {
 
         // init toolCallingManager
         var toolCallingManager = DashScopeAsyncToolCallingManager.builder()
@@ -62,7 +66,6 @@ public class DashScopeAsyncToolCallingManagerAutoConfiguration {
         return toolCallingManager;
     }
 
-
     private ThreadPoolExecutor buildAsyncToolCallThreadPool(DashScopeAsyncToolCallingProperties asyncToolCallingProperties) {
         return new ThreadPoolExecutor(
                 asyncToolCallingProperties.getCorePoolSize(),
@@ -72,4 +75,5 @@ public class DashScopeAsyncToolCallingManagerAutoConfiguration {
                 new LinkedBlockingQueue<>(asyncToolCallingProperties.getQueueCapacity()),
                 new ThreadPoolExecutor.CallerRunsPolicy());
     }
+    // @formatter:on
 }

@@ -33,7 +33,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
-import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.ai.utils.SpringAiTestAutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import reactor.core.publisher.Flux;
 
@@ -60,7 +60,7 @@ public class DashScopeAutoConfigurationIT {
 	@Test
 	void chatCall() {
 
-		this.contextRunner.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+		this.contextRunner.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				DashScopeChatModel chatModel = context.getBean(DashScopeChatModel.class);
 				String response = chatModel.call("Hello");
@@ -69,26 +69,9 @@ public class DashScopeAutoConfigurationIT {
 			});
 	}
 
-	// https://github.com/alibaba/spring-ai-alibaba/issues/295
-	// @Test
-	// void transcribe() {
-	//
-	// this.contextRunner.run(context -> {
-	// DashScopeAudioTranscriptionModel transcriptionModel =
-	// context.getBean(DashScopeAudioTranscriptionModel.class);
-	// Resource audioFile = new ClassPathResource("/speech/jfk.flac");
-	// System.out.println(audioFile);
-	// String response = transcriptionModel.call(new
-	// AudioTranscriptionPrompt(audioFile)).getResult().getOutput();
-	// System.out.println(response);
-	// assertThat(response).isNotEmpty();
-	// logger.info("Response: " + response);
-	// });
-	// }
-
 	@Test
 	void speech() {
-		this.contextRunner.withConfiguration(AutoConfigurations.of(DashScopeAudioSpeechAutoConfiguration.class))
+		this.contextRunner.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeAudioSpeechAutoConfiguration.class))
 			.run(context -> {
 				DashScopeAudioSpeechModel speechModel = context.getBean(DashScopeAudioSpeechModel.class);
 				byte[] response = speechModel
@@ -108,7 +91,7 @@ public class DashScopeAutoConfigurationIT {
 
 	@Test
 	void generateStreaming() {
-		this.contextRunner.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+		this.contextRunner.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				DashScopeChatModel chatModel = context.getBean(DashScopeChatModel.class);
 				Flux<ChatResponse> responseFlux = chatModel.stream(new Prompt(new UserMessage("Hello")));
@@ -124,7 +107,7 @@ public class DashScopeAutoConfigurationIT {
 
 	@Test
 	void streamingWithTokenUsage() {
-		this.contextRunner.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+		this.contextRunner.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.withPropertyValues("spring.ai.dashscope.chat")
 			.run(context -> {
 				DashScopeChatModel chatModel = context.getBean(DashScopeChatModel.class);
@@ -151,7 +134,7 @@ public class DashScopeAutoConfigurationIT {
 
 	@Test
 	void embeddingV2() {
-		this.contextRunner.withConfiguration(AutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
+		this.contextRunner.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
 			.withPropertyValues("spring.ai.dashscope.embedding.options.model=text-embedding-v2")
 			.run(context -> {
 				DashScopeEmbeddingModel embeddingModel = context.getBean(DashScopeEmbeddingModel.class);
@@ -170,7 +153,7 @@ public class DashScopeAutoConfigurationIT {
 
 	@Test
 	void embeddingV3() {
-		this.contextRunner.withConfiguration(AutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
+		this.contextRunner.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
 			.withPropertyValues("spring.ai.dashscope.embedding.options.model=text-embedding-v3")
 			.withPropertyValues("spring.ai.dashscope.embedding.options.dimensions=512")
 			.run(context -> {
@@ -191,7 +174,7 @@ public class DashScopeAutoConfigurationIT {
 
 	@Test
 	void generateImage() {
-		this.contextRunner.withConfiguration(AutoConfigurations.of(DashScopeImageAutoConfiguration.class))
+		this.contextRunner.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeImageAutoConfiguration.class))
 			.withPropertyValues("spring.ai.dashscope.image.options.size=1024x1024")
 			.run(context -> {
 				DashScopeImageModel imageModel = context.getBean(DashScopeImageModel.class);
@@ -206,7 +189,7 @@ public class DashScopeAutoConfigurationIT {
 	@Test
 	void generateImageWithModel() {
 		// The 256x256 size is supported by dall-e-2, but not by dall-e-3.
-		this.contextRunner.withConfiguration(AutoConfigurations.of(DashScopeImageAutoConfiguration.class))
+		this.contextRunner.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeImageAutoConfiguration.class))
 			.withPropertyValues("spring.ai.dashscope.image.options.model=wanx-v1",
 					"spring.ai.dashscope.image.options.size=256x256")
 			.run(context -> {

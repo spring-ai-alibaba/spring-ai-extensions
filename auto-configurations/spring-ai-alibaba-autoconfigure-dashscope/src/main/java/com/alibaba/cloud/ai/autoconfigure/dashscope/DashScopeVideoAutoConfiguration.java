@@ -22,7 +22,6 @@ import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -36,7 +35,7 @@ import org.springframework.web.client.RestClient;
 import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUtils.resolveConnectionProperties;
 
 /**
- * DashScope Video Generation Auto Configuration.
+ * Spring AI Alibaba DashScope Video Auto Configuration.
  *
  * @author dashscope
  * @author yuluo
@@ -49,7 +48,6 @@ import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUt
 @ConditionalOnProperty(name = SpringAIAlibabaModelProperties.VIDEO_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
 		matchIfMissing = true)
 @EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeVideoProperties.class })
-@ImportAutoConfiguration(classes = { SpringAiRetryAutoConfiguration.class, RestClientAutoConfiguration.class, })
 public class DashScopeVideoAutoConfiguration {
 
 	@Bean

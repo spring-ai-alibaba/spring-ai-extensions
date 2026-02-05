@@ -21,14 +21,15 @@ import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionModel;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
 import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.model.SpringAIModelProperties;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.client.RestClientAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.retry.support.RetryTemplate;
@@ -38,24 +39,26 @@ import org.springframework.web.client.RestClient;
 import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUtils.resolveConnectionProperties;
 
 /**
+ * Spring AI Alibaba DashScope Audio Transcription Auto Configuration.
+ *
  * @author yuluo
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
  */
 
 // @formatter:off
-@ConditionalOnClass(DashScopeAudioTranscriptionApi.class)
-@ConditionalOnDashScopeEnabled
 @AutoConfiguration(after = {
-		RestClientAutoConfiguration.class,
-		SpringAiRetryAutoConfiguration.class })
-@ConditionalOnProperty(name = SpringAIModelProperties.AUDIO_TRANSCRIPTION_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
+        RestClientAutoConfiguration.class,
+        WebClientAutoConfiguration.class,
+        SpringAiRetryAutoConfiguration.class })
+@ConditionalOnDashScopeEnabled
+@ConditionalOnClass(DashScopeAudioTranscriptionApi.class)
+@ConditionalOnProperty(
+        name = SpringAIModelProperties.AUDIO_TRANSCRIPTION_MODEL,
+        havingValue = SpringAIAlibabaModels.DASHSCOPE,
 		matchIfMissing = true)
 @EnableConfigurationProperties({
 		DashScopeConnectionProperties.class,
 		DashScopeAudioTranscriptionProperties.class })
-@ImportAutoConfiguration(classes = {
-		SpringAiRetryAutoConfiguration.class,
-		RestClientAutoConfiguration.class })
 // @formatter:on
 public class DashScopeAudioTranscriptionAutoConfiguration {
 
@@ -65,9 +68,8 @@ public class DashScopeAudioTranscriptionAutoConfiguration {
 			DashScopeConnectionProperties commonProperties,
 			DashScopeAudioTranscriptionProperties audioTranscriptionProperties,
 			ObjectProvider<RestClient.Builder> restClientBuilderProvider,
-			RetryTemplate retryTemplate,
-			ResponseErrorHandler responseErrorHandle
-	) {
+			ObjectProvider<RetryTemplate> retryTemplate,
+			ObjectProvider<ResponseErrorHandler> responseErrorHandler) {
 
 		ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties,
 				audioTranscriptionProperties, "audio.transcription");
@@ -79,13 +81,13 @@ public class DashScopeAudioTranscriptionAutoConfiguration {
 			.workSpaceId(resolved.workspaceId())
 			.restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
 			.headers(resolved.headers())
-			.responseErrorHandler(responseErrorHandle)
+			.responseErrorHandler(responseErrorHandler.getIfAvailable(() -> RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER))
 			.build();
 
 		return DashScopeAudioTranscriptionModel.builder()
                 .audioTranscriptionApi(dashScopeAudioTranscriptionApi)
                 .defaultOptions(audioTranscriptionProperties.getOptions())
-                .retryTemplate(retryTemplate)
+                .retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
                 .build();
 	}
 

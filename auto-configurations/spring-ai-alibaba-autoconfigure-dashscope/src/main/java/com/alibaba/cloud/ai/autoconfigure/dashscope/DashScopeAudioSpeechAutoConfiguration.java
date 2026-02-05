@@ -20,9 +20,10 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechModel;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
 import org.springframework.ai.model.SpringAIModelProperties;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -35,32 +36,31 @@ import org.springframework.retry.support.RetryTemplate;
 import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUtils.resolveConnectionProperties;
 
 /**
+ * Spring AI Alibaba DashScope Audio Speech Auto Configuration.
+ *
  * @author yuluo
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
  */
 
-@AutoConfiguration(after = { RestClientAutoConfiguration.class, WebClientAutoConfiguration.class,
-		SpringAiRetryAutoConfiguration.class })
-@ConditionalOnClass(DashScopeAudioSpeechApi.class)
+@AutoConfiguration(after = {RestClientAutoConfiguration.class, WebClientAutoConfiguration.class,
+        SpringAiRetryAutoConfiguration.class })
 @ConditionalOnDashScopeEnabled
-@ConditionalOnProperty(name = SpringAIModelProperties.AUDIO_SPEECH_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
-		matchIfMissing = true)
-@EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeAudioSpeechSynthesisProperties.class })
-@ImportAutoConfiguration(classes = { SpringAiRetryAutoConfiguration.class, RestClientAutoConfiguration.class,
-		WebClientAutoConfiguration.class })
+@ConditionalOnClass(DashScopeAudioSpeechApi.class)
+@ConditionalOnProperty(name = SpringAIModelProperties.AUDIO_SPEECH_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE, matchIfMissing = true)
+@EnableConfigurationProperties({DashScopeConnectionProperties.class, DashScopeAudioSpeechSynthesisProperties.class})
 public class DashScopeAudioSpeechAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
 	public DashScopeAudioSpeechModel dashScopeSpeechSynthesisModel(DashScopeConnectionProperties commonProperties,
-			DashScopeAudioSpeechSynthesisProperties audioSpeechProperties, RetryTemplate retryTemplate) {
+			DashScopeAudioSpeechSynthesisProperties audioSpeechProperties, ObjectProvider<RetryTemplate> retryTemplate) {
 
 		var dashScopeSpeechSynthesisApi = audioSpeechApi(commonProperties, audioSpeechProperties);
 
 		return DashScopeAudioSpeechModel.builder()
                 .audioSpeechApi(dashScopeSpeechSynthesisApi)
                 .defaultOptions(audioSpeechProperties.getOptions())
-                .retryTemplate(retryTemplate)
+                .retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
                 .build();
 	}
 

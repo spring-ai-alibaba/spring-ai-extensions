@@ -32,7 +32,7 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import org.springframework.ai.model.ModelOptionsUtils;
-import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.ai.utils.SpringAiTestAutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -51,7 +51,7 @@ public class DashScopePropertiesTests {
                 .withPropertyValues(
                         "spring.ai.dashscope.api-key=sk-test-123",
                         "spring.ai.dashscope.chat.completions-path=/custom/v1/chat/completions")
-                .withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+                .withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
                 .run(context -> {
                     var chatProperties = context.getBean(DashScopeChatProperties.class);
                     var chatModel = context.getBean(DashScopeChatModel.class);
@@ -65,7 +65,7 @@ public class DashScopePropertiesTests {
     public void chatPropertiesDefaultCompletionsPath() {
         new ApplicationContextRunner()
                 .withPropertyValues("spring.ai.dashscope.api-key=sk-test-123")
-                .withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+                .withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
                 .run(context -> {
                     var chatProperties = context.getBean(DashScopeChatProperties.class);
                     var chatModel = context.getBean(DashScopeChatModel.class);
@@ -83,7 +83,7 @@ public class DashScopePropertiesTests {
                 .withPropertyValues(
                         "spring.ai.dashscope.api-key=sk-test-123",
                         "spring.ai.dashscope.embedding.embeddings-path=/custom/v1/embeddings")
-                .withConfiguration(AutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
+                .withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
                 .run(context -> {
                     var embeddingProperties = context.getBean(DashScopeEmbeddingProperties.class);
                     var embeddingModel = context.getBean(DashScopeEmbeddingModel.class);
@@ -97,7 +97,7 @@ public class DashScopePropertiesTests {
     public void embeddingPropertiesDefaultEmbeddingsPath() {
         new ApplicationContextRunner()
                 .withPropertyValues("spring.ai.dashscope.api-key=sk-test-123")
-                .withConfiguration(AutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
+                .withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
                 .run(context -> {
                     var embeddingProperties = context.getBean(DashScopeEmbeddingProperties.class);
                     var embeddingModel = context.getBean(DashScopeEmbeddingModel.class);
@@ -119,7 +119,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.chat.options.model=MODEL_CUSTOM",
 						"spring.ai.dashscope.chat.options.temperature=0.80")
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				var chatProperties = context.getBean(DashScopeChatProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -144,7 +144,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.api-key=abc123_test",
 						"spring.ai.dashscope.audio.transcription.options.model=MODEL_CUSTOM")
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeAudioTranscriptionAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeAudioTranscriptionAutoConfiguration.class))
 			.run(context -> {
 				var transcriptionProperties = context.getBean(DashScopeAudioTranscriptionProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -171,7 +171,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.chat.options.model=MODEL_CUSTOM",
 						"spring.ai.dashscope.chat.options.temperature=0.88")
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				var chatProperties = context.getBean(DashScopeChatProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -198,7 +198,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.audio.transcription.api-key=456",
 						"spring.ai.dashscope.audio.transcription.options.model=MODEL_CUSTOM")
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeAudioTranscriptionAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeAudioTranscriptionAutoConfiguration.class))
 			.run(context -> {
 				var transcriptionProperties = context.getBean(DashScopeAudioTranscriptionProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -225,7 +225,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.audio.synthesis.options.response-format=mp3",
 						"spring.ai.dashscope.audio.synthesis.options.speed=0.75")
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeAudioSpeechAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeAudioSpeechAutoConfiguration.class))
 			.run(context -> {
 				var speechProperties = context.getBean(DashScopeAudioSpeechSynthesisProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -257,7 +257,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.audio.synthesis.options.response-format=pcm",
 						"spring.ai.dashscope.audio.synthesis.options.speed=0.8")
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeAudioSpeechAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeAudioSpeechAutoConfiguration.class))
 			.run(context -> {
 				var speechProperties = context.getBean(DashScopeAudioSpeechSynthesisProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -285,7 +285,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.api-key=abc123_test",
 						"spring.ai.dashscope.embedding.options.model=MODEL_CUSTOM")
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
 			.run(context -> {
 				var embeddingProperties = context.getBean(DashScopeEmbeddingProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -311,7 +311,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.embedding.api-key=456",
 						"spring.ai.dashscope.embedding.options.model=MODEL_CUSTOM")
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
 			.run(context -> {
 				var embeddingProperties = context.getBean(DashScopeEmbeddingProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -337,7 +337,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.image.options.model=MODEL_CUSTOM",
 						"spring.ai.dashscope.image.options.n=3")
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeImageAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeImageAutoConfiguration.class))
 			.run(context -> {
 				var imageProperties = context.getBean(DashScopeImageProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -366,7 +366,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.image.options.model=MODEL_CUSTOM",
 						"spring.ai.dashscope.image.options.n=3")
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeImageAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeImageAutoConfiguration.class))
 			.run(context -> {
 				var imageProperties = context.getBean(DashScopeImageProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -400,7 +400,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.chat.options.toolChoice=" + ModelOptionsUtils.toJsonString(DashScopeApiSpec.ChatCompletionRequestParameter.ToolChoiceBuilder.function("toolChoiceFunctionName"))
 				)
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				var chatProperties = context.getBean(DashScopeChatProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -437,7 +437,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.audio.transcription.options.temperature=0.88"
 				)
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeAudioTranscriptionAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeAudioTranscriptionAutoConfiguration.class))
 			.run(context -> {
 				var transcriptionProperties = context.getBean(DashScopeAudioTranscriptionProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -465,7 +465,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.embedding.options.text-type=text"
 				)
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeEmbeddingAutoConfiguration.class))
 			.run(context -> {
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
 				var embeddingProperties = context.getBean(DashScopeEmbeddingProperties.class);
@@ -493,7 +493,7 @@ public class DashScopePropertiesTests {
 						"spring.ai.dashscope.image.options.style=vivid"
 				)
 				// @formatter:on
-			.withConfiguration(AutoConfigurations.of(DashScopeImageAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeImageAutoConfiguration.class))
 			.run(context -> {
 				var imageProperties = context.getBean(DashScopeImageProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
@@ -516,7 +516,7 @@ public class DashScopePropertiesTests {
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL",
 					"spring.ai.dashscope.embedding.enabled=false")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeEmbeddingProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeEmbeddingModel.class));
@@ -524,7 +524,7 @@ public class DashScopePropertiesTests {
 
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeEmbeddingProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeEmbeddingModel.class));
@@ -533,7 +533,7 @@ public class DashScopePropertiesTests {
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL",
 					"spring.ai.dashscope.embedding.enabled=true")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeEmbeddingProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeEmbeddingModel.class));
@@ -545,31 +545,11 @@ public class DashScopePropertiesTests {
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL",
 					"spring.ai.dashscope.chat.enabled=false")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeChatProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeChatModel.class));
 			});
-
-		// new ApplicationContextRunner()
-		// .withPropertyValues("spring.ai.dashscope.api-key=API_KEY",
-		// "spring.ai.dashscope.base-url=TEST_BASE_URL")
-		// .withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
-		// .run(context -> {
-		// assertNotNull(context.getBeansOfType(DashScopeChatProperties.class));
-		// assertNotNull(context.getBeansOfType(DashScopeChatModel.class));
-		// });
-		//
-		// new ApplicationContextRunner()
-		// .withPropertyValues("spring.ai.dashscope.api-key=API_KEY",
-		// "spring.ai.dashscope.base-url=TEST_BASE_URL",
-		// "spring.ai.dashscope.chat.enabled=true")
-		// .withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
-		// .run(context -> {
-		// assertNotNull(context.getBeansOfType(DashScopeChatProperties.class));
-		// assertNotNull(context.getBeansOfType(DashScopeChatModel.class));
-		// });
-
 	}
 
 	@Test
@@ -577,7 +557,7 @@ public class DashScopePropertiesTests {
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL",
 					"spring.ai.dashscope.image.enabled=false")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeImageProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeImageModel.class));
@@ -585,7 +565,7 @@ public class DashScopePropertiesTests {
 
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeImageProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeImageModel.class));
@@ -594,7 +574,7 @@ public class DashScopePropertiesTests {
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL",
 					"spring.ai.dashscope.image.enabled=true")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeImageProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeImageModel.class));
@@ -607,7 +587,7 @@ public class DashScopePropertiesTests {
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL",
 					"spring.ai.dashscope.audio.speech.enabled=false")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechSynthesisProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechModel.class));
@@ -615,7 +595,7 @@ public class DashScopePropertiesTests {
 
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechSynthesisProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechModel.class));
@@ -624,7 +604,7 @@ public class DashScopePropertiesTests {
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL",
 					"spring.ai.dashscope.audio.speech.enabled=true")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechSynthesisProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechModel.class));
@@ -637,7 +617,7 @@ public class DashScopePropertiesTests {
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL",
 					"spring.ai.dashscope.audio.transcription.enabled=false")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeAudioTranscriptionProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeAudioTranscriptionModel.class));
@@ -645,7 +625,7 @@ public class DashScopePropertiesTests {
 
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeAudioTranscriptionProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeAudioTranscriptionModel.class));
@@ -654,7 +634,7 @@ public class DashScopePropertiesTests {
 		new ApplicationContextRunner()
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL",
 					"spring.ai.dashscope.audio.transcription.enabled=true")
-			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
+			.withConfiguration(SpringAiTestAutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
 				assertNotNull(context.getBeansOfType(DashScopeAudioTranscriptionProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeAudioTranscriptionModel.class));
