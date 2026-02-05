@@ -22,6 +22,7 @@ import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.image.observation.ImageModelObservationConvention;
 import org.springframework.ai.model.SpringAIModelProperties;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -58,7 +59,7 @@ public class DashScopeImageAutoConfiguration {
 	@ConditionalOnMissingBean
 	public DashScopeImageModel dashScopeImageModel(DashScopeConnectionProperties commonProperties,
 			DashScopeImageProperties imageProperties, ObjectProvider<RestClient.Builder> restClientBuilderProvider,
-			RetryTemplate retryTemplate, ResponseErrorHandler responseErrorHandler,
+			ObjectProvider<RetryTemplate> retryTemplate, ObjectProvider<ResponseErrorHandler> responseErrorHandler,
 			ObjectProvider<ObservationRegistry> observationRegistry,
 			ObjectProvider<ImageModelObservationConvention> observationConvention) {
 
@@ -71,13 +72,13 @@ public class DashScopeImageAutoConfiguration {
             .queryTaskPath(imageProperties.getQueryTaskPath())
 			.workSpaceId(resolved.workspaceId())
 			.restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
-			.responseErrorHandler(responseErrorHandler)
+			.responseErrorHandler(responseErrorHandler.getIfAvailable(() -> RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER))
 			.build();
 
 		var dashScopeImageModel = DashScopeImageModel.builder()
                 .dashScopeApi(dashScopeImageApi)
                 .defaultOptions(imageProperties.getOptions())
-                .retryTemplate(retryTemplate)
+                .retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
                 .observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
                 .build();
 

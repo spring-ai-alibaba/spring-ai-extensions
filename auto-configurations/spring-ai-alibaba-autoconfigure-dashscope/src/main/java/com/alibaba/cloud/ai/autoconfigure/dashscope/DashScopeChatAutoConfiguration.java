@@ -27,6 +27,7 @@ import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicat
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.model.tool.ToolExecutionEligibilityPredicate;
 import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -64,10 +65,10 @@ public class DashScopeChatAutoConfiguration {
 		@Bean
 		@ConditionalOnMissingBean
 		public DashScopeChatModel dashScopeChatModel(
-				RetryTemplate retryTemplate,
+				ObjectProvider<RetryTemplate> retryTemplate,
 				ToolCallingManager toolCallingManager,
 				DashScopeChatProperties chatProperties,
-				ResponseErrorHandler responseErrorHandler,
+				ObjectProvider<ResponseErrorHandler> responseErrorHandler,
 				DashScopeConnectionProperties commonProperties,
 				ObjectProvider<ObservationRegistry> observationRegistry,
 				ObjectProvider<WebClient.Builder> webClientBuilderProvider,
@@ -82,13 +83,13 @@ public class DashScopeChatAutoConfiguration {
 					chatProperties,
 					restClientBuilderProvider.getIfAvailable(RestClient::builder),
 					webClientBuilderProvider.getIfAvailable(WebClient::builder),
-					responseErrorHandler,
+					responseErrorHandler.getIfAvailable(() -> RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER),
 					"chat"
 			);
 
 			var dashscopeModel = DashScopeChatModel.builder()
 					.dashScopeApi(dashscopeApi)
-					.retryTemplate(retryTemplate)
+					.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
 					.toolCallingManager(toolCallingManager)
 					.defaultOptions(chatProperties.getOptions())
 					.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
