@@ -19,6 +19,7 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
 import com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModelProperties;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -49,14 +50,14 @@ import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUt
 @ConditionalOnProperty(name = SpringAIAlibabaModelProperties.VIDEO_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
 		matchIfMissing = true)
 @EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeVideoProperties.class })
-@ImportAutoConfiguration(classes = { SpringAiRetryAutoConfiguration.class, RestClientAutoConfiguration.class, })
+@ImportAutoConfiguration(classes = { RestClientAutoConfiguration.class })
 public class DashScopeVideoAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
 	public DashScopeVideoModel dashScopeVideoModel(DashScopeConnectionProperties commonProperties,
 			DashScopeVideoProperties videoProperties, ObjectProvider<RestClient.Builder> restClientBuilderProvider,
-			RetryTemplate retryTemplate, ResponseErrorHandler responseErrorHandler) {
+			ObjectProvider<RetryTemplate> retryTemplate, ObjectProvider<ResponseErrorHandler> responseErrorHandler) {
 
         ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties, videoProperties, "video");
 
@@ -66,7 +67,7 @@ public class DashScopeVideoAutoConfiguration {
             .videoPath(videoProperties.getVideoPath())
             .queryTaskPath(videoProperties.getQueryTaskPath())
 			.restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
-			.responseErrorHandler(responseErrorHandler)
+			.responseErrorHandler(responseErrorHandler.getIfAvailable(() -> RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER))
 			.build();
 
 		// todo: add observation
@@ -74,7 +75,7 @@ public class DashScopeVideoAutoConfiguration {
 		return DashScopeVideoModel.builder()
 			.videoApi(videoApi)
 			.defaultOptions(videoProperties.getOptions())
-			.retryTemplate(retryTemplate)
+			.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
 			.build();
 	}
 

@@ -21,6 +21,8 @@ import com.alibaba.cloud.ai.dashscope.rerank.DashScopeRerankModel;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModelProperties;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
 
+import org.springframework.ai.retry.RetryUtils;
+
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -52,16 +54,15 @@ import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUt
 @ConditionalOnProperty(name = SpringAIAlibabaModelProperties.RERANK_MODEL,
 		havingValue = SpringAIAlibabaModels.DASHSCOPE, matchIfMissing = true)
 @EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeRerankProperties.class })
-@ImportAutoConfiguration(classes = { SpringAiRetryAutoConfiguration.class, RestClientAutoConfiguration.class,
-		WebClientAutoConfiguration.class })
+@ImportAutoConfiguration(classes = { RestClientAutoConfiguration.class, WebClientAutoConfiguration.class })
 public class DashScopeRerankAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
 	public DashScopeRerankModel dashscopeRerankModel(DashScopeConnectionProperties commonProperties,
 			DashScopeRerankProperties rerankProperties, ObjectProvider<Builder> restClientBuilderProvider,
-			ObjectProvider<WebClient.Builder> webClientBuilderProvider, RetryTemplate retryTemplate,
-			ResponseErrorHandler responseErrorHandler) {
+			ObjectProvider<WebClient.Builder> webClientBuilderProvider, ObjectProvider<RetryTemplate> retryTemplate,
+			ObjectProvider<ResponseErrorHandler> responseErrorHandler) {
 
 		ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties, rerankProperties,
 				"rerank");
@@ -74,13 +75,13 @@ public class DashScopeRerankAutoConfiguration {
 			.webClientBuilder(webClientBuilderProvider.getIfAvailable(WebClient::builder))
 			.workSpaceId(resolved.workspaceId())
 			.restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
-			.responseErrorHandler(responseErrorHandler)
+			.responseErrorHandler(responseErrorHandler.getIfAvailable(() -> RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER))
 			.build();
 
 		return DashScopeRerankModel.builder()
                 .dashScopeApi(dashScopeApi)
                 .defaultOptions(rerankProperties.getOptions())
-                .retryTemplate(retryTemplate)
+                .retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
                 .build();
 	}
 
