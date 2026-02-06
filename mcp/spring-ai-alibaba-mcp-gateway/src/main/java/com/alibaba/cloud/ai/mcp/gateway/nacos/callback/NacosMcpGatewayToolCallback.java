@@ -170,7 +170,7 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
 
             // Create WebClient
             baseUrl = baseUrl != null ? baseUrl : "http://localhost";
-            WebClient client = webClientBuilder.baseUrl(baseUrl).build();
+            WebClient client = webClientBuilder.clone().baseUrl(baseUrl).build();
 
             // Build and execute request
             return buildAndExecuteRequest(client, requestTemplate, argsPosition, toolConfig.path("responseTemplate"),
