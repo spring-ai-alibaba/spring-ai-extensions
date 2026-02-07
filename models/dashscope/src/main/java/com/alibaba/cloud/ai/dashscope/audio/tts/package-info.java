@@ -13,21 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@NullMarked
+package com.alibaba.cloud.ai.dashscope.audio.tts;
 
-package com.alibaba.cloud.ai.dashscope.video;
-
-import org.springframework.ai.model.ModelOptions;
-import org.jspecify.annotations.Nullable;
-
-/**
- * @author yuluo, yingzi
- */
-
-public interface VideoOptions extends ModelOptions {
-
-	@Nullable
-	String getModel();
-
-    // Add others?
-
-}
+import org.jspecify.annotations.NullMarked;

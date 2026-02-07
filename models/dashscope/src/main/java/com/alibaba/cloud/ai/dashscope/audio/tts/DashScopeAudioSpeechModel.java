@@ -17,7 +17,7 @@ package com.alibaba.cloud.ai.dashscope.audio.tts;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.audio.tts.Speech;
@@ -63,7 +63,7 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
 		this.retryTemplate = retryTemplate;
 	}
 
-	@NotNull
+	@NonNull
     @Override
 	public TextToSpeechResponse call(TextToSpeechPrompt prompt) {
         DashScopeAudioSpeechOptions options = this.mergeOptions(prompt);

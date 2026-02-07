@@ -18,7 +18,7 @@ package com.alibaba.cloud.ai.dashscope.metadata.audio;
 import org.springframework.ai.chat.metadata.EmptyRateLimit;
 import org.springframework.ai.chat.metadata.RateLimit;
 import org.springframework.ai.model.MutableResponseMetadata;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 /**
