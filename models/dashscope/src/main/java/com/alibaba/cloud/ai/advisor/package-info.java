@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 @NullMarked
-package com.alibaba.cloud.ai.rag.retrieval;
+package com.alibaba.cloud.ai.advisor;
 
 import org.jspecify.annotations.NullMarked;

@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 @NullMarked
-package com.alibaba.cloud.ai.rag.retrieval;
+package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
 import org.jspecify.annotations.NullMarked;
