@@ -28,8 +28,6 @@ import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.NoopApiKey;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.util.Assert;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -56,7 +54,7 @@ public class DashScopeAudioSpeechApi {
 	private final DashScopeQwenTTSRealtimeApi qwenTTSRealtimeApi;
 
 	public DashScopeAudioSpeechApi(String baseUrl, String websocketUrl, ApiKey apiKey,
-			String workSpaceId, MultiValueMap<String, String> headers,
+			String workSpaceId, HttpHeaders headers,
 			RestClient.Builder restClientBuilder, WebClient.Builder webClientBuilder,
 			ResponseErrorHandler responseErrorHandler) {
 		this.baseUrl = baseUrl;
@@ -161,7 +159,7 @@ public class DashScopeAudioSpeechApi {
         return this.workSpaceId;
     }
 
-    public MultiValueMap<String, String> getHeaders() {
+    public HttpHeaders getHeaders() {
         return this.headers;
     }
 
@@ -179,7 +177,7 @@ public class DashScopeAudioSpeechApi {
 
         private String workSpaceId;
 
-        private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        private HttpHeaders headers = new HttpHeaders();
 
         private RestClient.Builder restClientBuilder = RestClient.builder();
 
@@ -218,7 +216,7 @@ public class DashScopeAudioSpeechApi {
             return this;
         }
 
-        public Builder headers(MultiValueMap<String, String> headers) {
+        public Builder headers(HttpHeaders headers) {
             this.headers = headers;
             return this;
         }
