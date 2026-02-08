@@ -35,7 +35,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.net.ssl.SSLContext;
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -87,7 +86,6 @@ public class ElasticsearchDocumentReader implements DocumentReader {
 		}
 	}
 
-	@NotNull
 	private List<Document> getDocuments(SearchResponse<Map> response) {
 		List<Document> documents = new ArrayList<>();
 		response.hits().hits().forEach(hit -> {
