@@ -43,8 +43,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -74,7 +72,7 @@ public class DashScopeAudioSpeechApi {
 
     private final String workSpaceId;
 
-    private final MultiValueMap<String, String> headers;
+    private final HttpHeaders headers;
 
     private final DashScopeWebSocketClient webSocketClient;
 
@@ -88,7 +86,7 @@ public class DashScopeAudioSpeechApi {
                                    String  websocketUrl,
                                    ApiKey apiKey,
                                    String workSpaceId,
-                                   MultiValueMap<String, String> headers,
+                                   HttpHeaders headers,
                                    RestClient.Builder restClientBuilder,
                                    WebClient.Builder webClientBuilder,
                                    ResponseErrorHandler responseErrorHandler) {
@@ -273,7 +271,7 @@ public class DashScopeAudioSpeechApi {
         return this.workSpaceId;
     }
 
-    public MultiValueMap<String, String> getHeaders() {
+    public HttpHeaders getHeaders() {
         return this.headers;
     }
 
@@ -291,7 +289,7 @@ public class DashScopeAudioSpeechApi {
 
         private String workSpaceId;
 
-        private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        private HttpHeaders headers = new HttpHeaders();
 
         private RestClient.Builder restClientBuilder = RestClient.builder();
 
@@ -330,7 +328,7 @@ public class DashScopeAudioSpeechApi {
             return this;
         }
 
-        public Builder headers(MultiValueMap<String, String> headers) {
+        public Builder headers(HttpHeaders headers) {
             this.headers = headers;
             return this;
         }
