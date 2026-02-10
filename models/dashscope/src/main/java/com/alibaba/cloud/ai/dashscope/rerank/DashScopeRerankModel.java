@@ -33,8 +33,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
-import org.springframework.retry.support.RetryTemplate;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -85,8 +84,8 @@ public class DashScopeRerankModel implements RerankModel {
 		DashScopeRerankOptions requestOptions = mergeOptions(request.getOptions(), this.defaultOptions);
         DashScopeApiSpec.RerankRequest rerankRequest = createRequest(request, requestOptions);
 
-		ResponseEntity<DashScopeApiSpec.RerankResponse> responseEntity = this.retryTemplate
-			.execute(ctx -> this.dashScopeApi.rerankEntity(rerankRequest));
+		ResponseEntity<DashScopeApiSpec.RerankResponse> responseEntity = RetryUtils.execute(this.retryTemplate,
+                () -> this.dashScopeApi.rerankEntity(rerankRequest));
 
 		var response = responseEntity.getBody();
 
