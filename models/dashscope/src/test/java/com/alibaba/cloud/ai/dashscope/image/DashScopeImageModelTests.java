@@ -34,9 +34,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
-import org.springframework.core.retry.RetryTemplate;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.retry.support.RetryTemplate;
 
 /**
  * Test cases for DashScopeImageModel. Tests cover basic image generation, custom options,
@@ -71,7 +71,7 @@ class DashScopeImageModelTests {
 		// Initialize mock objects and test instances
 		dashScopeImageApi = Mockito.mock(DashScopeImageApi.class);
 		defaultOptions = DashScopeImageOptions.builder().model(TEST_MODEL).n(1).build();
-		imageModel = new DashScopeImageModel(dashScopeImageApi, defaultOptions, new RetryTemplate(),
+		imageModel = new DashScopeImageModel(dashScopeImageApi, defaultOptions, RetryTemplate.builder().build(),
 				ObservationRegistry.NOOP);
 	}
 

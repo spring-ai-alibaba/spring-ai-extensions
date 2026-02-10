@@ -19,16 +19,16 @@ package com.alibaba.cloud.ai.autoconfigure.memory;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
-import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.alibaba.cloud.ai.memory.elasticsearch.ElasticsearchChatMemoryRepository;
-import org.apache.hc.client5.http.auth.AuthScope;
-import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
-import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
-import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
-import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
-import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -64,22 +64,22 @@ public class ElasticsearchChatMemoryAutoConfiguration {
 		if (!CollectionUtils.isEmpty(properties.getNodes())) {
 			httpHosts = properties.getNodes().stream().map(node -> {
 				String[] parts = node.split(":");
-				return new HttpHost(properties.getScheme(), parts[0], Integer.parseInt(parts[1]));
+				return new HttpHost(parts[0], Integer.parseInt(parts[1]), properties.getScheme());
 			}).toArray(HttpHost[]::new);
 		}
 		else {
 			// Fallback to single node configuration
 			httpHosts = new HttpHost[] {
-					new HttpHost(properties.getScheme(), properties.getHost(), properties.getPort()) };
+					new HttpHost(properties.getHost(), properties.getPort(), properties.getScheme()) };
 		}
 
-		var restClientBuilder = Rest5Client.builder(httpHosts);
+		var restClientBuilder = RestClient.builder(httpHosts);
 
 		// Add authentication if credentials are provided
 		if (StringUtils.hasText(properties.getUsername()) && StringUtils.hasText(properties.getPassword())) {
-            BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-			credentialsProvider.setCredentials(new AuthScope(null, -1),
-					new UsernamePasswordCredentials(properties.getUsername(), properties.getPassword().toCharArray()));
+			CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+			credentialsProvider.setCredentials(AuthScope.ANY,
+					new UsernamePasswordCredentials(properties.getUsername(), properties.getPassword()));
 
 			// Create SSL context if using HTTPS
 			if ("https".equalsIgnoreCase(properties.getScheme())) {
@@ -87,11 +87,10 @@ public class ElasticsearchChatMemoryAutoConfiguration {
 					.loadTrustMaterial(null, (chains, authType) -> true)
 					.build();
 
-                restClientBuilder.setHttpClientConfigCallback(
-                                httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider))
-                        .setConnectionManagerCallback(
-                                connectionManager -> connectionManager.setTlsStrategy(
-                                        new DefaultClientTlsStrategy(sslContext, NoopHostnameVerifier.INSTANCE)));
+				restClientBuilder.setHttpClientConfigCallback(
+						httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider)
+							.setSSLContext(sslContext)
+							.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE));
 			}
 			else {
 				restClientBuilder.setHttpClientConfigCallback(
@@ -100,7 +99,7 @@ public class ElasticsearchChatMemoryAutoConfiguration {
 		}
 
 		// Create the transport and client
-		ElasticsearchTransport transport = new Rest5ClientTransport(restClientBuilder.build(), new JacksonJsonpMapper());
+		ElasticsearchTransport transport = new RestClientTransport(restClientBuilder.build(), new JacksonJsonpMapper());
 		ElasticsearchClient elasticsearchClient = new ElasticsearchClient(transport);
 		return new ElasticsearchChatMemoryRepository(elasticsearchClient);
 	}

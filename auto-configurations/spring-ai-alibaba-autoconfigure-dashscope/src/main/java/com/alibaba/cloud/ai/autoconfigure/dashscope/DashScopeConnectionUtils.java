@@ -17,10 +17,13 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import org.jspecify.annotations.NonNull;
-import org.springframework.http.HttpHeaders;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -44,9 +47,9 @@ public final class DashScopeConnectionUtils {
 		String workspaceId = StringUtils.hasText(modelProperties.getWorkspaceId()) ? modelProperties.getWorkspaceId()
 				: commonProperties.getWorkspaceId();
 
-        HttpHeaders connectionHeaders = new HttpHeaders();
+		Map<String, List<String>> connectionHeaders = new HashMap<>();
 		if (StringUtils.hasText(workspaceId)) {
-            connectionHeaders.add("DashScope-Workspace", workspaceId);
+			connectionHeaders.put("DashScope-Workspace", List.of(workspaceId));
 		}
 
 		// Get apikey from system env.
@@ -63,7 +66,8 @@ public final class DashScopeConnectionUtils {
 				"DashScope API key must be set. Use the connection property: spring.ai.dashscope.api-key or spring.ai.dashscope."
 						+ modelType + ".api-key property.");
 
-		return new ResolvedConnectionProperties(baseUrl, apiKey, workspaceId, connectionHeaders);
+		return new ResolvedConnectionProperties(baseUrl, apiKey, workspaceId,
+				CollectionUtils.toMultiValueMap(connectionHeaders));
 	}
 
 }

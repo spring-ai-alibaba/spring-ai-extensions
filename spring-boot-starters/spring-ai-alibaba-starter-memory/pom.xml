@@ -66,6 +66,12 @@
             <version>${revision}</version>
         </dependency>
 
+        <!--        <dependency>-->
+        <!--            <groupId>redis.clients</groupId>-->
+        <!--            <artifactId>jedis</artifactId>-->
+        <!--            <version>${jedis.version}</version>-->
+        <!--        </dependency>-->
+
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter-memory-redis</artifactId>
@@ -77,6 +83,11 @@
             <artifactId>spring-ai-alibaba-starter-memory-tablestore</artifactId>
             <version>${revision}</version>
         </dependency>
+
+        <!--        <dependency>-->
+        <!--            <groupId>co.elastic.clients</groupId>-->
+        <!--            <artifactId>elasticsearch-java</artifactId>-->
+        <!--        </dependency>-->
 
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>

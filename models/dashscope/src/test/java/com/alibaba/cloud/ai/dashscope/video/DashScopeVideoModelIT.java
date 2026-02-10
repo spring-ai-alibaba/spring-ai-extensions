@@ -32,8 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import org.springframework.ai.retry.RetryUtils;
-import org.springframework.core.retry.RetryTemplate;
+import org.springframework.retry.support.RetryTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -79,7 +78,9 @@ class DashScopeVideoModelIT {
 
         // Create retry template (shared by all tests)
         // Video generation may take longer, so increase retry attempts
-        retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
+        retryTemplate = RetryTemplate.builder().maxAttempts(30) // Increase max attempts for video generation
+                .fixedBackoff(5000) // 2 seconds between retries
+                .build();
     }
 
     /**

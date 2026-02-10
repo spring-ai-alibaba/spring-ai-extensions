@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.TransientAiException;
-import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.Assert;
 
 /**
@@ -97,9 +97,9 @@ public class DashScopeVideoModel implements VideoModel {
 
         String taskId = response.getOutput().taskId();
 
-		// todo: add observation
-		logger.warn("Video generation task submitted with taskId: {}", taskId);
-		return RetryUtils.execute(this.retryTemplate, () -> {
+        // todo: add observation
+        logger.info("Video generation task submitted with taskId: {}", taskId);
+        return this.retryTemplate.execute(context -> {
             var resp = getVideoTask(taskId);
             if (Objects.nonNull(resp)) {
                 logger.debug(String.valueOf(resp));
@@ -118,7 +118,7 @@ public class DashScopeVideoModel implements VideoModel {
             }
             throw new TransientAiException("Video generation still pending, retry ...");
         });
-	}
+    }
 
     private DashScopeVideoResponse getVideoTask(String taskId) {
 

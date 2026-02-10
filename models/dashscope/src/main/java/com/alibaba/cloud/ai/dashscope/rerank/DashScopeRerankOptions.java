@@ -27,76 +27,85 @@ import com.alibaba.cloud.ai.model.RerankOptions;
  */
 public class DashScopeRerankOptions implements RerankOptions {
 
-    /**
-     * ID of the model to use.
-     */
-    private String model = "gte-rerank";
+  /** ID of the model to use. */
+  private String model = "gte-rerank";
 
-    /**
-     * return top n best relevant docs for query
-     */
-    private Integer topN = 3;
+  /** return top n best relevant docs for query */
+  private Integer topN = 3;
 
-    /**
-     * if need to return original document
-     */
-    private Boolean returnDocuments = false;
+  /** if need to return original document */
+  private Boolean returnDocuments = false;
 
-    @Override
-    public String getModel() {
-        return model;
+  @Override
+  public String getModel() {
+    return model;
+  }
+
+  @Override
+  public Integer getTopN() {
+    return topN;
+  }
+
+  public Boolean getReturnDocuments() {
+    return returnDocuments;
+  }
+
+  public void setModel(String model) {
+    this.model = model;
+  }
+
+  public void setTopN(Integer topN) {
+    this.topN = topN;
+  }
+
+  public void setReturnDocuments(Boolean returnDocuments) {
+    this.returnDocuments = returnDocuments;
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+
+    private final DashScopeRerankOptions options;
+
+    public Builder() {
+      this.options = new DashScopeRerankOptions();
     }
 
-    @Override
-    public Integer getTopN() {
-        return topN;
+    public Builder model(String model) {
+      this.options.setModel(model);
+      return this;
     }
 
-    public Boolean getReturnDocuments() {
-        return returnDocuments;
+    @Deprecated
+    public Builder withModel(String model) {
+      return model(model);
     }
 
-    public void setModel(String model) {
-        this.model = model;
+    public Builder topN(Integer topN) {
+      this.options.setTopN(topN);
+      return this;
     }
 
-    public void setTopN(Integer topN) {
-        this.topN = topN;
+    @Deprecated
+    public Builder withTopN(Integer topN) {
+      return topN(topN);
     }
 
-    public void setReturnDocuments(Boolean returnDocuments) {
-        this.returnDocuments = returnDocuments;
+    public Builder returnDocuments(Boolean returnDocuments) {
+      this.options.setReturnDocuments(returnDocuments);
+      return this;
     }
 
-    public static Builder builder() {
-        return new Builder();
+    @Deprecated
+    public Builder withReturnDocuments(Boolean returnDocuments) {
+      return returnDocuments(returnDocuments);
     }
 
-    public static class Builder {
-
-        private final DashScopeRerankOptions options;
-
-        public Builder() {
-            this.options = new DashScopeRerankOptions();
-        }
-
-        public Builder model(String model) {
-            this.options.setModel(model);
-            return this;
-        }
-
-        public Builder topN(Integer topN) {
-            this.options.setTopN(topN);
-            return this;
-        }
-
-        public Builder returnDocuments(Boolean returnDocuments) {
-            this.options.setReturnDocuments(returnDocuments);
-            return this;
-        }
-
-        public DashScopeRerankOptions build() {
-            return this.options;
-        }
+    public DashScopeRerankOptions build() {
+      return this.options;
     }
+  }
 }

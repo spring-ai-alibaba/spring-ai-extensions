@@ -43,6 +43,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -72,7 +74,7 @@ public class DashScopeAudioSpeechApi {
 
     private final String workSpaceId;
 
-    private final HttpHeaders headers;
+    private final MultiValueMap<String, String> headers;
 
     private final DashScopeWebSocketClient webSocketClient;
 
@@ -86,7 +88,7 @@ public class DashScopeAudioSpeechApi {
                                    String  websocketUrl,
                                    ApiKey apiKey,
                                    String workSpaceId,
-                                   HttpHeaders headers,
+                                   MultiValueMap<String, String> headers,
                                    RestClient.Builder restClientBuilder,
                                    WebClient.Builder webClientBuilder,
                                    ResponseErrorHandler responseErrorHandler) {
@@ -271,7 +273,7 @@ public class DashScopeAudioSpeechApi {
         return this.workSpaceId;
     }
 
-    public HttpHeaders getHeaders() {
+    public MultiValueMap<String, String> getHeaders() {
         return this.headers;
     }
 
@@ -289,7 +291,7 @@ public class DashScopeAudioSpeechApi {
 
         private String workSpaceId;
 
-        private HttpHeaders headers = new HttpHeaders();
+        private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
 
         private RestClient.Builder restClientBuilder = RestClient.builder();
 
@@ -328,7 +330,7 @@ public class DashScopeAudioSpeechApi {
             return this;
         }
 
-        public Builder headers(HttpHeaders headers) {
+        public Builder headers(MultiValueMap<String, String> headers) {
             this.headers = headers;
             return this;
         }

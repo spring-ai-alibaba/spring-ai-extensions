@@ -71,6 +71,15 @@ public class DashScopeResponseFormat {
     public DashScopeResponseFormat() {
     }
 
+    /**
+     * Use Builder instead
+     */
+    @Deprecated(since = "1.1.2.0", forRemoval = true)
+    public DashScopeResponseFormat(Type type) {
+
+        this.type = type;
+    }
+
 	public static Builder builder() {
 
 		return new Builder();

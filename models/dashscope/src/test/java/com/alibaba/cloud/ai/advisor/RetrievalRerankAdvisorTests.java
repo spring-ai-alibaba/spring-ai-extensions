@@ -20,7 +20,6 @@ import com.alibaba.cloud.ai.document.DocumentWithScore;
 import com.alibaba.cloud.ai.model.RerankModel;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
-import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -179,7 +178,7 @@ class RetrievalRerankAdvisorTests {
 		assertThat(response.context()).containsKey(RetrievalRerankAdvisor.RETRIEVED_DOCUMENTS);
 		assertThat(response.context().get(RetrievalRerankAdvisor.RETRIEVED_DOCUMENTS)).isNotNull()
 			.isInstanceOf(List.class)
-			.asInstanceOf(InstanceOfAssertFactories.LIST)
+			.asList()
 			.hasSize(1)
 			.contains(testDocument);
 	}
@@ -210,7 +209,7 @@ class RetrievalRerankAdvisorTests {
 		assertThat(response.context()).containsKey(RetrievalRerankAdvisor.RETRIEVED_DOCUMENTS);
 		assertThat(response.context().get(RetrievalRerankAdvisor.RETRIEVED_DOCUMENTS)).isNotNull()
 			.isInstanceOf(List.class)
-            .asInstanceOf(InstanceOfAssertFactories.LIST)
+			.asList()
 			.isEmpty();
 	}
 
@@ -314,7 +313,7 @@ class RetrievalRerankAdvisorTests {
 		assertThat(response.context()).containsKey(RetrievalRerankAdvisor.RETRIEVED_DOCUMENTS);
 		assertThat(response.context().get(RetrievalRerankAdvisor.RETRIEVED_DOCUMENTS)).isNotNull()
 			.isInstanceOf(List.class)
-            .asInstanceOf(InstanceOfAssertFactories.LIST)
+			.asList()
 			.isEmpty();
 	}
 
