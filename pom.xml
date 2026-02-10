@@ -166,11 +166,11 @@
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-agentbay</module>
 
         <!-- vector-stores modules -->
-        <module>vector-stores/spring-ai-alibaba-starter-analyticdb-store</module>
-        <module>vector-stores/spring-ai-alibaba-starter-oceanbase-store</module>
-        <module>vector-stores/spring-ai-alibaba-starter-opensearch-store</module>
-        <module>vector-stores/spring-ai-alibaba-starter-tablestore-store</module>
-        <module>vector-stores/spring-ai-alibaba-starter-tair-store</module>
+        <module>vector-stores/spring-ai-alibaba-analyticdb-store</module>
+        <module>vector-stores/spring-ai-alibaba-oceanbase-store</module>
+        <module>vector-stores/spring-ai-alibaba-opensearch-store</module>
+        <module>vector-stores/spring-ai-alibaba-tablestore-store</module>
+        <module>vector-stores/spring-ai-alibaba-tair-store</module>
 
         <module>mcp/spring-ai-alibaba-mcp-common</module>
         <module>mcp/spring-ai-alibaba-mcp-registry</module>
