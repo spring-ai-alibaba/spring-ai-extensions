@@ -16,17 +16,18 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.alibaba.cloud.ai</groupId>
         <artifactId>spring-ai-alibaba-extensions</artifactId>
         <version>${revision}</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>spring-ai-alibaba-autoconfigure-mcp-router</artifactId>
+    <artifactId>spring-ai-alibaba-autoconfigure-memory-long</artifactId>
 
-    <name>Spring AI Alibaba Nacos Mcp Router Autoconfiguration</name>
-    <description>Spring AI Alibaba Nacos Mcp Router Autoconfiguration</description>
+    <name>Spring AI Alibaba Long Memory Autoconfiguration</name>
+    <description>Spring AI Alibaba Long Memory Autoconfiguration</description>
     <url>https://github.com/alibaba/spring-ai-alibaba</url>
 
     <licenses>
@@ -52,28 +53,18 @@
         <url>https://github.com/alibaba/spring-ai-alibaba</url>
     </scm>
 
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
     <dependencies>
-
-        <!-- DashScope SDK -->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-dashscope</artifactId>
-            <version>${project.parent.version}</version>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-mcp-router</artifactId>
+            <artifactId>spring-ai-alibaba-starter-memory-mem0</artifactId>
             <version>${revision}</version>
         </dependency>
-
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-mcp-server</artifactId>
-            <optional>true</optional>
-        </dependency>
-
     </dependencies>
 
 </project>

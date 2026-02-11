@@ -21,7 +21,7 @@
         <groupId>com.alibaba.cloud.ai</groupId>
         <artifactId>spring-ai-alibaba-extensions</artifactId>
         <version>${revision}</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../../../pom.xml</relativePath>
     </parent>
 
     <artifactId>spring-ai-alibaba-autoconfigure-memory</artifactId>

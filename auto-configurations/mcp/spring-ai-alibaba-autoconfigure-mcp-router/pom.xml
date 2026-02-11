@@ -20,12 +20,13 @@
         <groupId>com.alibaba.cloud.ai</groupId>
         <artifactId>spring-ai-alibaba-extensions</artifactId>
         <version>${revision}</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>spring-ai-alibaba-autoconfigure-mcp-gateway</artifactId>
-    <name>Spring AI Alibaba Nacos Mcp Gateway Autoconfiguration</name>
-    <description>Spring AI Alibaba Nacos Mcp Gateway Autoconfiguration</description>
+    <artifactId>spring-ai-alibaba-autoconfigure-mcp-router</artifactId>
+
+    <name>Spring AI Alibaba Nacos Mcp Router Autoconfiguration</name>
+    <description>Spring AI Alibaba Nacos Mcp Router Autoconfiguration</description>
     <url>https://github.com/alibaba/spring-ai-alibaba</url>
 
     <licenses>
@@ -51,34 +52,26 @@
         <url>https://github.com/alibaba/spring-ai-alibaba</url>
     </scm>
 
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
     <dependencies>
 
+        <!-- DashScope SDK -->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-mcp-common</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-mcp-gateway</artifactId>
-            <version>${revision}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
+            <artifactId>spring-ai-alibaba-dashscope</artifactId>
+            <version>${project.parent.version}</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
+            <groupId>com.alibaba.cloud.ai</groupId>
+            <artifactId>spring-ai-alibaba-mcp-router</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-autoconfigure-mcp-server-common</artifactId>
+            <artifactId>spring-ai-starter-mcp-server</artifactId>
+            <optional>true</optional>
         </dependency>
 
     </dependencies>
