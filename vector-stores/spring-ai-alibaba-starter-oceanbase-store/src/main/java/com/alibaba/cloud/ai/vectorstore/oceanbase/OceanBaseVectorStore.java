@@ -96,6 +96,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 	private final String indexName;
 	private final String fulltextIndexName;
 	private final boolean enableFulltext;
+	private final boolean initializeSchema;
 
 	protected OceanBaseVectorStore(Builder builder) {
 		super(builder);
@@ -113,6 +114,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		this.indexName = generateVectorIndexName(builder.tableName);
 		this.fulltextIndexName = generateFulltextIndexName(builder.tableName);
 		this.enableFulltext = HYBRID_SEARCH_TYPE_FULLTEXT.equalsIgnoreCase(hybridSearchType);
+		this.initializeSchema = builder.initializeSchema;
 	}
 
 	public static Builder builder(String tableName, DataSource dataSource, EmbeddingModel embeddingModel) {
@@ -137,6 +139,9 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 
 	@Override
 	public void afterPropertiesSet() {
+		if (!this.initializeSchema) {
+			return;
+		}
 		initializeDatabase();
 	}
 
@@ -706,6 +711,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		private String hybridSearchType;
 		private String indexType = INDEX_TYPE_HNSW;
 		private String indexMetricType = METRIC_TYPE_L2;
+		private boolean initializeSchema = false;
 
 		private Builder(String tableName, DataSource dataSource, EmbeddingModel embeddingModel) {
 			super(embeddingModel);
@@ -735,6 +741,11 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 
 		public Builder hybridSearchType(String hybridSearchType) {
 			this.hybridSearchType = hybridSearchType;
+			return this;
+		}
+
+		public Builder initializeSchema(boolean initializeSchema) {
+			this.initializeSchema = initializeSchema;
 			return this;
 		}
 

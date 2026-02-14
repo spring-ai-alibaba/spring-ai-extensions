@@ -15,12 +15,21 @@
  */
 package com.alibaba.cloud.ai.vectorstore.tair;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Test class for TairVectorStore to verify the fix for createObservationContextBuilder
@@ -86,6 +95,65 @@ class TairVectorStoreTest {
 		assertThat(context.getCollectionName()).isEqualTo("custom_index");
 		assertThat(context.getDimensions()).isEqualTo(512);
 		assertThat(context.getSimilarityMetric()).isEqualTo("IP");
+	}
+
+	@Test
+	void testInitializeSchemaDefaultsFalse() throws Exception {
+		TairVectorApi mockTairVectorApi = mock(TairVectorApi.class);
+		EmbeddingModel mockEmbeddingModel = mock(EmbeddingModel.class);
+
+		TairVectorStore vectorStore = TairVectorStore.builder(mockTairVectorApi, mockEmbeddingModel).build();
+
+		// afterPropertiesSet should be a no-op when initializeSchema is false (default)
+		vectorStore.afterPropertiesSet();
+
+		// Verify that tvsgetindex was never called since initializeSchema is false
+		verify(mockTairVectorApi, never()).tvsgetindex(anyString());
+	}
+
+	@Test
+	void testInitializeSchemaTrue() throws Exception {
+		TairVectorApi mockTairVectorApi = mock(TairVectorApi.class);
+		EmbeddingModel mockEmbeddingModel = mock(EmbeddingModel.class);
+
+		// Simulate index does not exist
+		when(mockTairVectorApi.tvsgetindex(anyString())).thenReturn(null);
+
+		TairVectorStore vectorStore = TairVectorStore.builder(mockTairVectorApi, mockEmbeddingModel)
+			.initializeSchema(true)
+			.build();
+
+		vectorStore.afterPropertiesSet();
+
+		// Verify that tvsgetindex was called to check if index exists
+		verify(mockTairVectorApi).tvsgetindex(TairVectorStoreOptions.DEFAULT_INDEX_NAME);
+		// Verify tvscreateindex was called to create the index
+		verify(mockTairVectorApi).tvscreateindex(eq(TairVectorStoreOptions.DEFAULT_INDEX_NAME),
+				eq(1536), any(com.aliyun.tair.tairvector.params.IndexAlgorithm.class),
+				any(com.aliyun.tair.tairvector.params.DistanceMethod.class), any(String[].class));
+	}
+
+	@Test
+	void testInitializeSchemaTrueIndexAlreadyExists() throws Exception {
+		TairVectorApi mockTairVectorApi = mock(TairVectorApi.class);
+		EmbeddingModel mockEmbeddingModel = mock(EmbeddingModel.class);
+
+		// Simulate index already exists
+		Map<String, String> existingIndex = new java.util.HashMap<>();
+		existingIndex.put("index_name", TairVectorStoreOptions.DEFAULT_INDEX_NAME);
+		when(mockTairVectorApi.tvsgetindex(anyString())).thenReturn(existingIndex);
+
+		TairVectorStore vectorStore = TairVectorStore.builder(mockTairVectorApi, mockEmbeddingModel)
+			.initializeSchema(true)
+			.build();
+
+		vectorStore.afterPropertiesSet();
+
+		// Verify tvsgetindex was called, but tvscreateindex was NOT called
+		verify(mockTairVectorApi).tvsgetindex(TairVectorStoreOptions.DEFAULT_INDEX_NAME);
+		verify(mockTairVectorApi, never()).tvscreateindex(anyString(), anyInt(),
+				any(com.aliyun.tair.tairvector.params.IndexAlgorithm.class),
+				any(com.aliyun.tair.tairvector.params.DistanceMethod.class), any(String[].class));
 	}
 
 }

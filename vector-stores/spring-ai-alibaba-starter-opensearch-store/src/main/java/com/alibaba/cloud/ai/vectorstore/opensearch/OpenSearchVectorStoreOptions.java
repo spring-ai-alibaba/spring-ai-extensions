@@ -66,11 +66,6 @@ public class OpenSearchVectorStoreOptions {
 			""";
 
 	/**
-	 * Whether to initialize the schema for the vector store.
-	 */
-	private boolean initializeSchema = false;
-
-	/**
 	 * The name of the index to store the vectors.
 	 */
 	private String tableName = DEFAULT_TABLE_NAME;
@@ -105,15 +100,6 @@ public class OpenSearchVectorStoreOptions {
 	 * The number of dimensions in the vector.
 	 */
 	private int dimensions = 1536;
-
-	public boolean isInitializeSchema() {
-		return initializeSchema;
-	}
-
-	public OpenSearchVectorStoreOptions setInitializeSchema(boolean initializeSchema) {
-		this.initializeSchema = initializeSchema;
-		return this;
-	}
 
 	public String getIndex() {
 		return index;

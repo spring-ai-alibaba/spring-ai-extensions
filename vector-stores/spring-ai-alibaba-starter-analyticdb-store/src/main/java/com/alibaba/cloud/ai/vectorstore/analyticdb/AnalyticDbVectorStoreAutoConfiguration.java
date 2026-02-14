@@ -81,7 +81,7 @@ public class AnalyticDbVectorStoreAutoConfiguration {
 		var builder = AnalyticDbVectorStore.builder(properties.getCollectName(), config, client, embeddingModel)
 			.batchingStrategy(batchingStrategy)
 			.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
-			.customObservationConvention(customObservationConvention.getIfAvailable(() -> null));
+			.customObservationConvention(customObservationConvention.getIfAvailable());
 		if (properties.getDefaultTopK() >= 0) {
 			builder.defaultTopK(properties.getDefaultTopK());
 		}
@@ -89,7 +89,7 @@ public class AnalyticDbVectorStoreAutoConfiguration {
 		if (properties.getDefaultSimilarityThreshold() >= 0.0) {
 			builder.defaultSimilarityThreshold(properties.getDefaultSimilarityThreshold());
 		}
-		return builder.build();
+		return builder.initializeSchema(properties.isInitializeSchema()).build();
 	}
 
 }

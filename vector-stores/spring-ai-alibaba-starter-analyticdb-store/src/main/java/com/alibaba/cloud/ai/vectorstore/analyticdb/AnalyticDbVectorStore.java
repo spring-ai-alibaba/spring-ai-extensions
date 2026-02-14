@@ -83,7 +83,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 
 	public final FilterExpressionConverter filterExpressionConverter = new AdVectorFilterExpressionConverter();
 
-	// private final boolean initializeSchema;
+	private final boolean initializeSchema;
 
 	private final String collectionName;
 
@@ -106,6 +106,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 		this.objectMapper = JsonMapper.builder().addModules(JacksonUtils.instantiateAvailableModules()).build();
 		this.defaultSimilarityThreshold = builder.defaultSimilarityThreshold;
 		this.defaultTopK = builder.defaultTopK;
+		this.initializeSchema = builder.initializeSchema;
 	}
 
 	public static Builder builder(String collectionName, AnalyticDbConfig config, Client client,
@@ -361,6 +362,9 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
+		if (!this.initializeSchema) {
+			return;
+		}
 		initialize();
 		logger.debug("created AnalyticdbVector client success");
 	}
@@ -393,6 +397,8 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 		private int defaultTopK = DEFAULT_TOP_K;
 
 		private Double defaultSimilarityThreshold = DEFAULT_SIMILARITY_THRESHOLD;
+
+		private boolean initializeSchema = false;
 
 		private Builder(String collectionName, AnalyticDbConfig config, Client client, EmbeddingModel embeddingModel) {
 			super(embeddingModel);
@@ -427,6 +433,11 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 			Assert.isTrue(defaultSimilarityThreshold >= 0.0 && defaultSimilarityThreshold <= 1.0,
 					"The similarity threshold must be in range [0.0:1.00].");
 			this.defaultSimilarityThreshold = defaultSimilarityThreshold;
+			return this;
+		}
+
+		public Builder initializeSchema(boolean initializeSchema) {
+			this.initializeSchema = initializeSchema;
 			return this;
 		}
 

@@ -33,6 +33,7 @@ import org.springframework.ai.vectorstore.observation.AbstractObservationVectorS
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationContext;
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationConvention;
 import org.springframework.util.Assert;
+import org.springframework.beans.factory.InitializingBean;
 
 import java.util.*;
 
@@ -44,7 +45,7 @@ import java.util.*;
  * @author fuyou.lxm
  * @since 1.0.0-M3
  */
-public class TairVectorStore extends AbstractObservationVectorStore {
+public class TairVectorStore extends AbstractObservationVectorStore implements InitializingBean {
 
 	private static final Logger logger = LoggerFactory.getLogger(TairVectorStore.class);
 
@@ -81,6 +82,8 @@ public class TairVectorStore extends AbstractObservationVectorStore {
 	protected final BatchingStrategy batchingStrategy;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
+
+	private final boolean initializeSchema;
 
 	/**
 	 * Constructs a new instance of TairVectorStore with the specified parameters.
@@ -121,6 +124,7 @@ public class TairVectorStore extends AbstractObservationVectorStore {
 		this.tairVectorApi = builder.tairVectorApi;
 		this.embeddingModel = builder.getEmbeddingModel();
 		this.batchingStrategy = builder.batchingStrategy;
+		this.initializeSchema = builder.initializeSchema;
 	}
 
 	/**
@@ -131,6 +135,39 @@ public class TairVectorStore extends AbstractObservationVectorStore {
 	 */
 	public static Builder builder(TairVectorApi tairVectorApi, EmbeddingModel embeddingModel) {
 		return new Builder(tairVectorApi, embeddingModel);
+	}
+
+	@Override
+	public void afterPropertiesSet() {
+		if (!this.initializeSchema) {
+			return;
+		}
+
+		try {
+			// Check if index already exists
+			Map<String, String> indexInfo = tairVectorApi.tvsgetindex(options.getIndexName());
+			if (indexInfo != null && !indexInfo.isEmpty()) {
+				logger.debug("Tair vector index {} already exists, skipping creation", options.getIndexName());
+				return;
+			}
+		}
+		catch (Exception e) {
+			logger.warn("Failed to check if index exists, proceeding to create", e);
+		}
+
+		try {
+			tairVectorApi.tvscreateindex(
+				options.getIndexName(),
+				options.getDimensions(),
+				options.getIndexAlgorithm(),
+				options.getDistanceMethod(),
+				options.getIndexParams().toArray(new String[0])
+			);
+			logger.debug("Created Tair vector index: {}", options.getIndexName());
+		}
+		catch (Exception e) {
+			throw new RuntimeException("Failed to create Tair vector index", e);
+		}
 	}
 
 	@Override
@@ -244,6 +281,8 @@ public class TairVectorStore extends AbstractObservationVectorStore {
 
 		protected BatchingStrategy batchingStrategy = new TokenCountBatchingStrategy();
 
+		protected boolean initializeSchema = false;
+
 		/**
 		 * Initializes a new instance of the {@link Builder} class.
 		 * @param tairVectorApi The TairVectorApi instance to be used.
@@ -274,6 +313,16 @@ public class TairVectorStore extends AbstractObservationVectorStore {
 		public Builder batchingStrategy(BatchingStrategy batchingStrategy) {
 			Assert.notNull(batchingStrategy, "BatchingStrategy must not be null");
 			this.batchingStrategy = batchingStrategy;
+			return this;
+		}
+
+		/**
+		 * Sets whether to initialize the schema (create index) on startup.
+		 * @param initializeSchema true to initialize schema, false otherwise.
+		 * @return The builder instance.
+		 */
+		public Builder initializeSchema(boolean initializeSchema) {
+			this.initializeSchema = initializeSchema;
 			return this;
 		}
 
