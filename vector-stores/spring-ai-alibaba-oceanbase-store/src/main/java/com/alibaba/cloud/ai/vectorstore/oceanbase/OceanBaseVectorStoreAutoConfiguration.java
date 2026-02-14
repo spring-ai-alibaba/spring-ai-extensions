@@ -71,7 +71,7 @@ public class OceanBaseVectorStoreAutoConfiguration {
 		var builder = OceanBaseVectorStore.builder(properties.getTableName(), dataSource, embeddingModel)
 			.batchingStrategy(batchingStrategy)
 			.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
-			.customObservationConvention(customObservationConvention.getIfAvailable(() -> null));
+			.customObservationConvention(customObservationConvention.getIfAvailable());
 
 		if (properties.getDefaultTopK() >= 0) {
 			builder.defaultTopK(properties.getDefaultTopK());
@@ -89,7 +89,7 @@ public class OceanBaseVectorStoreAutoConfiguration {
 			builder.hybridSearchType(properties.getHybridSearchType());
 		}
 
-		return builder.build();
+		return builder.initializeSchema(properties.isInitializeSchema()).build();
 	}
 
 }

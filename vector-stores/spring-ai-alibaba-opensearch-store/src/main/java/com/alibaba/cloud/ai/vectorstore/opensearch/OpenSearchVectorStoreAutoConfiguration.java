@@ -62,14 +62,16 @@ public class OpenSearchVectorStoreAutoConfiguration {
 	@ConditionalOnMissingBean
 	public OpenSearchVectorStore openSearchVectorStore(OpenSearchApi openSearchApi, EmbeddingModel embeddingModel,
 			BatchingStrategy batchingStrategy, OpenSearchVectorStoreOptions options,
+			OpenSearchVectorStoreProperties properties,
 			ObjectProvider<ObservationRegistry> observationRegistry,
 			ObjectProvider<VectorStoreObservationConvention> customObservationConvention) {
 
 		return OpenSearchVectorStore.builder(openSearchApi, embeddingModel)
 			.batchingStrategy(batchingStrategy)
 			.options(options)
+			.initializeSchema(properties.isInitializeSchema())
 			.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
-			.customObservationConvention(customObservationConvention.getIfAvailable(() -> null))
+			.customObservationConvention(customObservationConvention.getIfAvailable())
 			.build();
 	}
 

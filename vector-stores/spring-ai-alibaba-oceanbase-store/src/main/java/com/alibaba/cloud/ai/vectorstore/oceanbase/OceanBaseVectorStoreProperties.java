@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.vectorstore.oceanbase;
 
+import org.springframework.ai.vectorstore.properties.CommonVectorStoreProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -23,7 +24,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author xxsc0529
  */
 @ConfigurationProperties(prefix = OceanBaseVectorStoreProperties.CONFIG_PREFIX)
-public class OceanBaseVectorStoreProperties {
+public class OceanBaseVectorStoreProperties extends CommonVectorStoreProperties {
 
 	public static final String CONFIG_PREFIX = "spring.ai.vectorstore.oceanbase";
 

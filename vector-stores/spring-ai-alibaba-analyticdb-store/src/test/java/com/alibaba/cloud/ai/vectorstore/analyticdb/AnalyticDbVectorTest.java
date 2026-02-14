@@ -52,10 +52,11 @@ import static org.hamcrest.Matchers.hasSize;
 class AnalyticDbVectorTest {
 
 	private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-		.withConfiguration(AutoConfigurations.of(AnalyticDbVectorStoreProperties.class))
+		.withConfiguration(AutoConfigurations.of(AnalyticDbVectorStoreAutoConfiguration.class))
 		.withUserConfiguration(Config.class)
 		.withPropertyValues("spring.ai.vectorstore.analytic.accessKeyId=" + System.getenv("ANALYTICDB_ACCESS_KEY_ID"),
-				"spring.ai.vectorstore.analytic.accessKeyId=" + System.getenv("ANALYTICDB_ACCESS_KEY_SECRET"));
+				"spring.ai.vectorstore.analytic.accessKeyId=" + System.getenv("ANALYTICDB_ACCESS_KEY_SECRET"),
+				"spring.ai.vectorstore.analytic.initialize-schema=true");
 
 	List<Document> documents = List.of(
 			new Document("1", getText("classpath:spring.ai.txt"), Map.of("docId", "1", "spring", "great")),

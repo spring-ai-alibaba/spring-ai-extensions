@@ -78,6 +78,11 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	private final OpenSearchVectorStoreOptions options;
 
 	/**
+	 * Whether to initialize the schema for the vector store.
+	 */
+	private final boolean initializeSchema;
+
+	/**
 	 * The embedding model used for vector operations.
 	 */
 	private final EmbeddingModel embeddingModel;
@@ -134,6 +139,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 		Assert.notNull(builder.options.getTableName(), "The tableName cannot be null");
 
 		this.options = builder.options;
+		this.initializeSchema = builder.initializeSchema;
 		this.openSearchApi = builder.openSearchApi;
 		this.embeddingModel = builder.getEmbeddingModel();
 		this.batchingStrategy = builder.batchingStrategy;
@@ -267,7 +273,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (this.options.isInitializeSchema() && !exists(this.options.getIndex())) {
+		if (this.initializeSchema && !exists(this.options.getIndex())) {
 			openSearchApi.createCollectionAndIndex(this.options.getMappingJson());
 		}
 	}
@@ -294,6 +300,8 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 
 		private OpenSearchVectorStoreOptions options = new OpenSearchVectorStoreOptions();
 
+		private boolean initializeSchema = false;
+
 		private BatchingStrategy batchingStrategy = new TokenCountBatchingStrategy();
 
 		/**
@@ -316,6 +324,11 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 		public Builder options(OpenSearchVectorStoreOptions options) {
 			Assert.notNull(options, "options must not be null");
 			this.options = options;
+			return this;
+		}
+
+		public Builder initializeSchema(boolean initializeSchema) {
+			this.initializeSchema = initializeSchema;
 			return this;
 		}
 

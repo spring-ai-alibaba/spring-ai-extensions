@@ -129,7 +129,8 @@ class OceanBaseVectorTest {
 			.withPropertyValues("spring.ai.vectorstore.oceanbase.url=" + getJdbcUrl(),
 					"spring.ai.vectorstore.oceanbase.username=" + System.getenv("OCEANBASE_USERNAME"),
 					"spring.ai.vectorstore.oceanbase.password=" + System.getenv("OCEANBASE_PASSWORD"),
-					"spring.ai.vectorstore.oceanbase.tableName=" + System.getenv("OCEANBASE_TABLENAME"));
+					"spring.ai.vectorstore.oceanbase.tableName=" + System.getenv("OCEANBASE_TABLENAME"),
+					"spring.ai.vectorstore.oceanbase.initialize-schema=true");
 	}
 
 	@Test
