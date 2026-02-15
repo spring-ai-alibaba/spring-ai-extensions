@@ -15,15 +15,13 @@
  */
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionOptions;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
- * @author xYLiu
- * @author yuluo
- * @author kevinlin09
+ * @author xYLiu、yuluo、kevinlin09、yingzi
  */
 
 @ConfigurationProperties(DashScopeAudioTranscriptionProperties.CONFIG_PREFIX)
@@ -34,12 +32,10 @@ public class DashScopeAudioTranscriptionProperties extends DashScopeParentProper
 	 */
 	public static final String CONFIG_PREFIX = "spring.ai.dashscope.audio.transcription";
 
-	private final String DEFAULT_MODEL = DashScopeModel.AudioModel.PARAFORMER_V2.getValue();
+    private String websocketUrl = DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL;
 
 	@NestedConfigurationProperty
-	private DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
-		.model(DEFAULT_MODEL)
-		.build();
+	private DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder().build();
 
 	public DashScopeAudioTranscriptionOptions getOptions() {
 		return this.options;
@@ -48,5 +44,13 @@ public class DashScopeAudioTranscriptionProperties extends DashScopeParentProper
 	public void setOptions(DashScopeAudioTranscriptionOptions options) {
 		this.options = options;
 	}
+
+    public String getWebsocketUrl() {
+        return websocketUrl;
+    }
+
+    public void setWebsocketUrl(String websocketUrl) {
+        this.websocketUrl = websocketUrl;
+    }
 
 }

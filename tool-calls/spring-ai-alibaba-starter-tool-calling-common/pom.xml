@@ -55,7 +55,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <json-schema-validator.version>1.5.3</json-schema-validator.version>
+        <json-schema-validator.version>1.5.3</json-schema-validator.version>
     </properties>
 
     <dependencies>
@@ -85,26 +85,26 @@
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-test</artifactId>
             <scope>test</scope>
-          <exclusions>
-            <exclusion>
-              <groupId>com.networknt</groupId>
-              <artifactId>json-schema-validator</artifactId>
-            </exclusion>
-          </exclusions>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.networknt</groupId>
+                    <artifactId>json-schema-validator</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
-      <!-- Manually add compatible version of json-schema-validator with Jackson exclusions -->
-      <dependency>
-        <groupId>com.networknt</groupId>
-        <artifactId>json-schema-validator</artifactId>
-        <version>${json-schema-validator.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
-          </exclusion>
-        </exclusions>
+        <!-- Manually add compatible version of json-schema-validator with Jackson exclusions -->
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>json-schema-validator</artifactId>
+            <version>${json-schema-validator.version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.dataformat</groupId>
+                    <artifactId>jackson-dataformat-yaml</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

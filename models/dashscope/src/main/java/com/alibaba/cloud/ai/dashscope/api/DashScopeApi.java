@@ -200,7 +200,7 @@ public class DashScopeApi {
 				.defaultStatusHandler(responseErrorHandler)
 				.build();
 
-		this.webClient = webClientBuilder
+		this.webClient = webClientBuilder.clone()
 				.baseUrl(baseUrl)
 				.defaultHeaders(finalHeaders)
 				.build();

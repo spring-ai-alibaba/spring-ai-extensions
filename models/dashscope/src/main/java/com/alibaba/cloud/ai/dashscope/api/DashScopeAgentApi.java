@@ -77,12 +77,14 @@ public class DashScopeAgentApi {
         this.agentPath = agentPath;
         this.responseErrorHandler = responseErrorHandler;
 
-        this.restClient = restClientBuilder.baseUrl(baseUrl)
+        this.restClient = restClientBuilder.clone()
+                .baseUrl(baseUrl)
                 .defaultHeaders(ApiUtils.getJsonContentHeaders(apiKey.getValue(), workSpaceId))
                 .defaultStatusHandler(responseErrorHandler)
                 .build();
 
-        this.webClient = webClientBuilder.baseUrl(baseUrl)
+        this.webClient = webClientBuilder.clone()
+                .baseUrl(baseUrl)
                 .defaultHeaders(ApiUtils.getJsonContentHeaders(apiKey.getValue(), workSpaceId, true))
                 .build();
     }

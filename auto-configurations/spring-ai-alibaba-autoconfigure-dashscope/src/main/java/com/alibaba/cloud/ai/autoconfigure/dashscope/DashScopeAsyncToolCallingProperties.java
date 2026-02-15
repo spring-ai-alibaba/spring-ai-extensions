@@ -38,12 +38,12 @@ public class DashScopeAsyncToolCallingProperties {
     private int keepAliveTime = 60;
     private int queueCapacity = 1000;
 
-    public boolean isEnable() {
+    public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnable(boolean enable) {
-        this.enabled = enable;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public int getCorePoolSize() {

@@ -55,7 +55,7 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -170,7 +170,7 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
 
             // Create WebClient
             baseUrl = baseUrl != null ? baseUrl : "http://localhost";
-            WebClient client = webClientBuilder.baseUrl(baseUrl).build();
+            WebClient client = webClientBuilder.clone().baseUrl(baseUrl).build();
 
             // Build and execute request
             return buildAndExecuteRequest(client, requestTemplate, argsPosition, toolConfig.path("responseTemplate"),

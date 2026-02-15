@@ -60,10 +60,6 @@ public final class DashScopeApiConstants {
 
 	public static final String IMAGE_GENERATION_RESTFUL_URL = "/api/v1/services/aigc/image-generation/generation";
 
-    public static final String VIDEO_GENERATION_RESTFUL_URL = "/api/v1/services/aigc/video-generation/video-synthesis";
-
-	public static final String IMAGE2VIDEO_RESTFUL_URL = "/api/v1/services/aigc/image2video/video-synthesis";
-
 	public static final String AUDIO_TRANSCRIPTION_RESTFUL_URL = "/api/v1/services/audio/asr/transcription";
 
 	public static final String TEXT_RERANK_RESTFUL_URL = "/api/v1/services/rerank/text-rerank/text-rerank";
@@ -92,8 +88,6 @@ public final class DashScopeApiConstants {
 
 	public static final String RETRIEVE_PIPELINE_RESTFUL_URL = "/api/v1/indices/pipeline/{pipeline_id}/retrieve";
 
-	public static final String DEFAULT_WEBSOCKET_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference";
-
 	public static final Integer DEFAULT_READ_TIMEOUT = 60;
 
 	public static final String PROVIDER_NAME = AiProvider.DASHSCOPE.value();
@@ -109,12 +103,6 @@ public final class DashScopeApiConstants {
 	public static final String DEFAULT_PARSER_NAME = "DASHSCOPE_DOCMIND";
 
 	public static final String TASK_ID = "task_id";
-
-	public static final String STATUS_CODE = "status_code";
-
-	public static final String CODE = "code";
-
-	public static final String MESSAGE = "message";
 
 	public static final String MESSAGE_FORMAT = "messageFormat";
 

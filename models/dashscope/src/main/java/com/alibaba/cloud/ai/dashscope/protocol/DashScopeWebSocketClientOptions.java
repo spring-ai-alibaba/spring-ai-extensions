@@ -15,14 +15,14 @@
  */
 package com.alibaba.cloud.ai.dashscope.protocol;
 
-import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 
 /**
  * @author kevinlin09
  */
 public class DashScopeWebSocketClientOptions {
 
-  private String url = DashScopeApiConstants.DEFAULT_WEBSOCKET_URL;
+  private String url = DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL;
 
   private String apiKey;
 

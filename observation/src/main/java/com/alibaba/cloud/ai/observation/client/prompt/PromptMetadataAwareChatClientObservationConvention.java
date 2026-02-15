@@ -33,7 +33,7 @@ import java.util.Map;
 import org.springframework.ai.chat.client.observation.ChatClientObservationContext;
 import org.springframework.ai.chat.client.observation.DefaultChatClientObservationConvention;
 import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
 
 public class PromptMetadataAwareChatClientObservationConvention extends DefaultChatClientObservationConvention {
 

@@ -16,7 +16,7 @@
 
 package com.alibaba.cloud.ai.dashscope.spec;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.ai.model.ChatModelDescription;
 
 /**
@@ -226,129 +226,105 @@ public class DashScopeModel {
 	 * <a href="https://help.aliyun.com/zh/model-studio/cosyvoice-java-sdk#95303fd00f0ge">Audio Models</a>
 	 */
 	public enum AudioModel {
-		// =============== TTS Model ===============
+        // =============== COSY VOICE Model ===============
 		COSYVOICE_V1("cosyvoice-v1"),
-
-		COSYVOICE_V2("cosyvoice-v2"),
-
-		COSYVOICE_V3("cosyvoice-v3"),
-
+        COSYVOICE_V2("cosyvoice-v2"),
+		COSYVOICE_V3_FLASH("cosyvoice-v3-flash"),
 		COSYVOICE_V3_PLUS("cosyvoice-v3-plus"),
+        // =============== COSY VOICE Model ===============
 
-		SAMBERT_ZHINAN_V1("sambert-zhinan-v1"),
+        // =============== SAMBERT Model ===============
+        SAMBERT_ZHINAN_V1("sambert-zhinan-v1"),
+        SAMBERT_ZHIQI_V1("sambert-zhiqi-v1"),
+        SAMBERT_ZHICHU_V1("sambert-zhichu-v1"),
+        SAMBERT_ZHIDE_V1("sambert-zhide-v1"),
+        SAMBERT_ZHIJIA_V1("sambert-zhijia-v1"),
+        SAMBERT_ZHIRU_V1("sambert-zhiru-v1"),
+        SAMBERT_ZHIQIAN_V1("sambert-zhiqian-v1"),
+        SAMBERT_ZHIXIANG_V1("sambert-zhixiang-v1"),
+        SAMBERT_ZHIWEI_V1("sambert-zhiwei-v1"),
+        SAMBERT_ZHIHAO_V1("sambert-zhihao-v1"),
+        SAMBERT_ZHIJING_V1("sambert-zhijing-v1"),
+        SAMBERT_ZHIMING_V1("sambert-zhiming-v1"),
+        SAMBERT_ZHIMO_V1("sambert-zhimo-v1"),
+        SAMBERT_ZHINA_V1("sambert-zhina-v1"),
+        SAMBERT_ZHISHU_V1("sambert-zhishu-v1"),
+        SAMBERT_ZHISTELLA_V1("sambert-zhistella-v1"),
+        SAMBERT_ZHITING_V1("sambert-zhiting-v1"),
+        SAMBERT_ZHIXIAO_V1("sambert-zhixiao-v1"),
+        SAMBERT_ZHIYA_V1("sambert-zhiya-v1"),
+        SAMBERT_ZHIYE_V1("sambert-zhiye-v1"),
+        SAMBERT_ZHIYING_V1("sambert-zhiying-v1"),
+        SAMBERT_ZHIYUAN_V1("sambert-zhiyuan-v1"),
+        SAMBERT_ZHIYUE_V1("sambert-zhiyue-v1"),
+        SAMBERT_ZHIGUI_V1("sambert-zhigui-v1"),
+        SAMBERT_ZHISHUO_V1("sambert-zhishuo-v1"),
+        SAMBERT_ZHIMIAO_EMO_V1("sambert-zhimiao-emo-v1"),
+        SAMBERT_ZHIMAO_V1("sambert-zhimao-v1"),
+        SAMBERT_ZHILUN_V1("sambert-zhilun-v1"),
+        SAMBERT_ZHIFEI_V1("sambert-zhifei-v1"),
+        SAMBERT_ZHIDA_V1("sambert-zhida-v1"),
+        SAMBERT_CAMILA_V1("sambert-camila-v1"),
+        SAMBERT_PERLA_V1("sambert-perla-v1"),
+        SAMBERT_INDAH_V1("sambert-indah-v1"),
+        SAMBERT_CLARA_V1("sambert-clara-v1"),
+        SAMBERT_HANNA_V1("sambert-hanna-v1"),
+        SAMBERT_BETH_V1("sambert-beth-v1"),
+        SAMBERT_BETTY_V1("sambert-betty-v1"),
+        SAMBERT_CALLY_V1("sambert-cally-v1"),
+        SAMBERT_CINDY_V1("sambert-cindy-v1"),
+        SAMBERT_EVA_V1("sambert-eva-v1"),
+        SAMBERT_DONNA_V1("sambert-donna-v1"),
+        SAMBERT_BRIAN_V1("sambert-brian-v1"),
+        SAMBERT_WAAN_V1("sambert-waan-v1"),
+        // =============== SAMBERT Model ===============
 
-		SAMBERT_ZHIQI_V1("sambert-zhiqi-v1"),
-
-		SAMBERT_ZHICHU_V1("sambert-zhichu-v1"),
-
-		SAMBERT_ZHIDE_V1("sambert-zhide-v1"),
-
-		SAMBERT_ZHIJIA_V1("sambert-zhijia-v1"),
-
-		SAMBERT_ZHIRU_V1("sambert-zhiru-v1"),
-
-		SAMBERT_ZHIQIAN_V1("sambert-zhiqian-v1"),
-
-		SAMBERT_ZHIXIANG_V1("sambert-zhixiang-v1"),
-
-		SAMBERT_ZHIWEI_V1("sambert-zhiwei-v1"),
-
-		SAMBERT_ZHIHAO_V1("sambert-zhihao-v1"),
-
-		SAMBERT_ZHIJING_V1("sambert-zhijing-v1"),
-
-		SAMBERT_ZHIMING_V1("sambert-zhiming-v1"),
-
-		SAMBERT_ZHIMO_V1("sambert-zhimo-v1"),
-
-		SAMBERT_ZHINA_V1("sambert-zhina-v1"),
-
-		SAMBERT_ZHISHU_V1("sambert-zhishu-v1"),
-
-		SAMBERT_ZHISTELLA_V1("sambert-zhistella-v1"),
-
-		SAMBERT_ZHITING_V1("sambert-zhiting-v1"),
-
-		SAMBERT_ZHIXIAO_V1("sambert-zhixiao-v1"),
-
-		SAMBERT_ZHIYA_V1("sambert-zhiya-v1"),
-
-		SAMBERT_ZHIYE_V1("sambert-zhiye-v1"),
-
-		SAMBERT_ZHIYING_V1("sambert-zhiying-v1"),
-
-		SAMBERT_ZHIYUAN_V1("sambert-zhiyuan-v1"),
-
-		SAMBERT_ZHIYUE_V1("sambert-zhiyue-v1"),
-
-		SAMBERT_ZHIGUI_V1("sambert-zhigui-v1"),
-
-		SAMBERT_ZHISHUO_V1("sambert-zhishuo-v1"),
-
-		SAMBERT_ZHIMIAO_EMO_V1("sambert-zhimiao-emo-v1"),
-
-		SAMBERT_ZHIMAO_V1("sambert-zhimao-v1"),
-
-		SAMBERT_ZHILUN_V1("sambert-zhilun-v1"),
-
-		SAMBERT_ZHIFEI_V1("sambert-zhifei-v1"),
-
-		SAMBERT_ZHIDA_V1("sambert-zhida-v1"),
-
-		SAMBERT_CAMILA_V1("sambert-camila-v1"),
-
-		SAMBERT_PERLA_V1("sambert-perla-v1"),
-
-		SAMBERT_INDAH_V1("sambert-indah-v1"),
-
-		SAMBERT_CLARA_V1("sambert-clara-v1"),
-
-		SAMBERT_HANNA_V1("sambert-hanna-v1"),
-
-		SAMBERT_BETH_V1("sambert-beth-v1"),
-
-		SAMBERT_BETTY_V1("sambert-betty-v1"),
-
-		SAMBERT_CALLY_V1("sambert-cally-v1"),
-
-		SAMBERT_CINDY_V1("sambert-cindy-v1"),
-
-		SAMBERT_EVA_V1("sambert-eva-v1"),
-
-		SAMBERT_DONNA_V1("sambert-donna-v1"),
-
-		SAMBERT_BRIAN_V1("sambert-brian-v1"),
-
-		SAMBERT_WAAN_V1("sambert-waan-v1"),
+        // =============== TTS Model ===============
+        QWEN3_TTS_FLASH("qwen3-tts-flash"),
+        QWEN3_TTS_FLASH_2025_11_27("qwen3-tts-flash-2025-11-27"),
+        QWEN3_TTS_FLASH_2025_09_18("qwen3-tts-flash-2025-09-18"),
+        QWEN_TTS("qwen-tts"),
+        QWEN_TTS_LATEST("qwen-tts-latest"),
+        QWEN_TTS_2025_05_22("qwen-tts-2025-05-22"),
+        QWEN_TTS_2025_04_10("qwen-tts-2025-04-10"),
+        // =============== TTS Model ===============
 
         // =============== Transcription Model ===============
-		PARAFORMER_REALTIME_V1("paraformer-realtime-v1"),
-
-		PARAFORMER_REALTIME_8K_V1("paraformer-realtime-8k-v1"),
-
-		PARAFORMER_REALTIME_V2("paraformer-realtime-v2"),
-
-		PARAFORMER_REALTIME_8K_V2("paraformer-realtime-8k-v2"),
-
-        PARAFORMER_V1("paraformer-v1"),
-
-        PARAFORMER_8K_V1("paraformer-8k-v1"),
-
-		PARAFORMER_V2("paraformer-v2"),
-
-		PARAFORMER_8K_V2("paraformer-8k-v2"),
-
-        PARAFORMER_MTL_V1("paraformer-mtl-v1"),
-
         FUN_ASR_REALTIME("fun-asr-realtime"),
-
-		FUN_ASR("fun-asr"),
-
-		FUN_ASR_MTL("fun-asr-mtl"),
-
         GUMMY_REALTIME_V1("gummy-realtime-v1"),
+        GUMMY_CHAT_V1("gummy-chat-v1"),
+        PARAFORMER_REALTIME_V2("paraformer-realtime-v2"),
+        PARAFORMER_REALTIME_V1("paraformer-realtime-v1"),
+        PARAFORMER_REALTIME_8K_V1("paraformer-realtime-8k-v1"),
+        PARAFORMER_REALTIME_8K_V2("paraformer-realtime-8k-v2"),
 
-        GUMMY_CHAT_V1("gummy-chat-v1");
+        QWEN3_LIVETRANSLATE_FLASH("qwen3-livetranslate-flash"),
+        QWEN3_LIVETRANSLATE_FLASH_2025_12_01("qwen3-livetranslate-flash-2025-12-01"),
+        // =============== Transcription Model ===============
+
+        // =============== 录音文件识别 Model ===============
+        PARAFORMER_V2("paraformer-v2"),
+        PARAFORMER_V1("paraformer-v1"),
+        PARAFORMER_8K_V2("paraformer-8k-v2"),
+        PARAFORMER_8K_V1("paraformer-8k-v1"),
+        PARAFORMER_MTL_V1("paraformer-mtl-v1"),
+        FUN_ASR("fun-asr"),
+        FUN_ASR_2025_11_07("fun-asr-2025-11-07"),
+        FUN_ASR_2025_08_25("fun-asr-2025-08-25"),
+        FUN_ASR_MTL("fun-asr-mtl"),
+        FUN_ASR_MTL_2025_08_25("fun-asr-mtl-2025-08-25"),
+        SPEECH_BIASING("speech-biasing"),
+        // =============== 录音文件识别 Model ===============
+
+        // =============== 千问ASR Model ===============
+        QWEN3_ASR_FLASH_FILETRANS("qwen3-asr-flash-filetrans"),
+        QWEN3_ASR_FLASH("qwen3-asr-flash"),
+        QWEN3_ASR_FLASH_US("qwen3-asr-flash-us"),
+        QWEN3_ASR_FLASH_FILETANS("qwen3-asr-flash-filetrans"),
+        // =============== 千问ASR Model ===============
+
+
+        ;
 
         public final String value;
 
@@ -498,7 +474,7 @@ public class DashScopeModel {
             this.value = value;
         }
 
-        @NotNull
+        @NonNull
         public String getName() {
             return value;
         }

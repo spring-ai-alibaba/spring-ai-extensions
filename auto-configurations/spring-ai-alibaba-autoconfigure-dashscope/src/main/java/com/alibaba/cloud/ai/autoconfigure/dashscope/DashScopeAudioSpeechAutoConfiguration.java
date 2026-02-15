@@ -17,12 +17,14 @@
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechModel;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechModel;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
+import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.model.SpringAIModelProperties;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -31,46 +33,54 @@ import org.springframework.boot.autoconfigure.web.reactive.function.client.WebCl
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.web.client.ResponseErrorHandler;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUtils.resolveConnectionProperties;
 
 /**
- * @author yuluo
- * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
+ * Spring AI Alibaba DashScope Audio Speech Auto Configuration.
+ * @author yuluo, yingzi
  */
 
 @AutoConfiguration(after = { RestClientAutoConfiguration.class, WebClientAutoConfiguration.class,
 		SpringAiRetryAutoConfiguration.class })
-@ConditionalOnClass(DashScopeAudioSpeechApi.class)
 @ConditionalOnDashScopeEnabled
+@ConditionalOnClass(DashScopeAudioSpeechApi.class)
 @ConditionalOnProperty(name = SpringAIModelProperties.AUDIO_SPEECH_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
 		matchIfMissing = true)
-@EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeAudioSpeechSynthesisProperties.class })
-@ImportAutoConfiguration(classes = { SpringAiRetryAutoConfiguration.class, RestClientAutoConfiguration.class,
-		WebClientAutoConfiguration.class })
+@EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeAudioSpeechProperties.class })
 public class DashScopeAudioSpeechAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
 	public DashScopeAudioSpeechModel dashScopeSpeechSynthesisModel(DashScopeConnectionProperties commonProperties,
-			DashScopeAudioSpeechSynthesisProperties audioSpeechProperties, RetryTemplate retryTemplate) {
+                                                                   DashScopeAudioSpeechProperties audioSpeechProperties,
+                                                                   ObjectProvider<WebClient.Builder> webClientBuilderProvider,
+                                                                   ObjectProvider<RestClient.Builder> restClientBuilderProvider,
+                                                                   ObjectProvider<RetryTemplate> retryTemplate,
+                                                                   ObjectProvider<ResponseErrorHandler> responseErrorHandler) {
 
-		var dashScopeSpeechSynthesisApi = audioSpeechApi(commonProperties, audioSpeechProperties);
+        ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties, audioSpeechProperties,
+                "audio.speech");
+
+        var dashScopeAudioSpeechApi = DashScopeAudioSpeechApi.builder()
+                .baseUrl(resolved.baseUrl())
+                .websocketUrl(audioSpeechProperties.getWebsocketUrl())
+                .apiKey(new SimpleApiKey(resolved.apiKey()))
+                .workSpaceId(resolved.workspaceId())
+                .restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
+                .webClientBuilder(webClientBuilderProvider.getIfAvailable(WebClient::builder))
+                .headers(resolved.headers())
+                .responseErrorHandler(responseErrorHandler.getIfAvailable(() -> RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER))
+                .build();
 
 		return DashScopeAudioSpeechModel.builder()
-                .audioSpeechApi(dashScopeSpeechSynthesisApi)
+                .audioSpeechApi(dashScopeAudioSpeechApi)
                 .defaultOptions(audioSpeechProperties.getOptions())
-                .retryTemplate(retryTemplate)
+                .retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
                 .build();
-	}
-
-	private DashScopeAudioSpeechApi audioSpeechApi(DashScopeConnectionProperties commonProperties,
-			DashScopeAudioSpeechSynthesisProperties audioSpeechProperties) {
-
-		ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties, audioSpeechProperties,
-				"audio.synthesis");
-
-		return new DashScopeAudioSpeechApi(resolved.apiKey(), resolved.workspaceId());
 	}
 
 }

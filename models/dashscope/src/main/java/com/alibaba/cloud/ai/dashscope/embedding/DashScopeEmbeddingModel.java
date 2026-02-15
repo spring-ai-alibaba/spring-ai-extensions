@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.embedding;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.EmbeddingModel;
 import io.micrometer.observation.ObservationRegistry;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +55,7 @@ import org.springframework.util.Assert;
  * @author yuluo
  * @author <a href="mailto:550588941@qq.com">why_ohh</a>
  * @author yyyhhx
+ * @author guanxu
  * @since 2024/7/31 10:57
  */
 public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
@@ -61,6 +63,13 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 	private static final Logger logger = LoggerFactory.getLogger(DashScopeEmbeddingModel.class);
 
 	private static final EmbeddingModelObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DefaultEmbeddingModelObservationConvention();
+
+    /**
+     * Known embedding dimensions for DashScope models.
+     */
+    private static final Map<String, Integer> KNOWN_EMBEDDING_DIMENSIONS = Map.of(
+            EmbeddingModel.EMBEDDING_V1.getValue(), 1536, EmbeddingModel.EMBEDDING_V2.getValue(), 1536,
+            EmbeddingModel.EMBEDDING_V3.getValue(), 1024, EmbeddingModel.EMBEDDING_V4.getValue(), 1024);
 
 	private final DashScopeEmbeddingOptions defaultOptions;
 
@@ -268,6 +277,14 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 		Assert.notNull(texts, "Texts must not be null");
 		return this.call(new EmbeddingRequest(texts, defaultOptions));
 	}
+
+    @Override
+    public int dimensions() {
+        if (KNOWN_EMBEDDING_DIMENSIONS.containsKey(this.defaultOptions.getModel())) {
+            return KNOWN_EMBEDDING_DIMENSIONS.get(this.defaultOptions.getModel());
+        }
+        return super.dimensions();
+    }
 
     /**
      * Returns a builder pre-populated with the current configuration for mutation.

@@ -15,13 +15,11 @@
  */
 package com.alibaba.cloud.ai.dashscope.metadata.audio;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.metadata.EmptyRateLimit;
 import org.springframework.ai.chat.metadata.RateLimit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -54,16 +52,6 @@ class DashScopeAudioSpeechResponseMetadataTests {
 		assertThat(metadata.getRateLimit()).isEqualTo(rateLimit);
 	}
 
-	@Test
-	void testFromSpeechSynthesisResult() {
-		// Test factory method with SpeechSynthesisResult
-		DashScopeAudioTranscriptionApi.Response result = mock(DashScopeAudioTranscriptionApi.Response.class);
-		DashScopeAudioSpeechResponseMetadata metadata = DashScopeAudioSpeechResponseMetadata.from(result);
-
-		// Verify metadata is created successfully
-		assertThat(metadata).isNotNull();
-		assertThat(metadata.getRateLimit()).isInstanceOf(EmptyRateLimit.class);
-	}
 
 	@Test
 	void testFromString() {
@@ -74,19 +62,6 @@ class DashScopeAudioSpeechResponseMetadataTests {
 		// Verify metadata is created successfully
 		assertThat(metadata).isNotNull();
 		assertThat(metadata.getRateLimit()).isInstanceOf(EmptyRateLimit.class);
-	}
-
-	@Test
-	void testFromWithNullResult() {
-		// Test factory method with null SpeechSynthesisResult
-		assertThatThrownBy(() -> DashScopeAudioSpeechResponseMetadata.from((DashScopeAudioTranscriptionApi.Response) null))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessageContaining("DashScope speech must not be null");
-
-		// Test factory method with null String
-		assertThatThrownBy(() -> DashScopeAudioSpeechResponseMetadata.from((String) null))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessageContaining("DashScope speech must not be null");
 	}
 
 	@Test

@@ -15,7 +15,7 @@
  */
 package com.alibaba.cloud.ai.reader.gptrepo;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 
@@ -185,9 +185,9 @@ public class GptRepoDocumentReader implements DocumentReader {
 		StringBuilder concatenatedContent = new StringBuilder();
 
 		Files.walkFileTree(repoPath, new SimpleFileVisitor<>() {
-			@NotNull
+			@NonNull
 			@Override
-			public FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+			public FileVisitResult visitFile(Path file, @NonNull BasicFileAttributes attrs) throws IOException {
 				String relativePath = repoPath.relativize(file).toString();
 
 				// Check if file should be ignored

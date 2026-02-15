@@ -102,7 +102,8 @@ public class DashScopeImageApi {
 		Assert.notNull(baseUrl, "Base URL must not be null");
 		Assert.notNull(restClientBuilder, "RestClientBuilder must not be null");
 
-		this.restClient = restClientBuilder.baseUrl(baseUrl)
+		this.restClient = restClientBuilder.clone()
+            .baseUrl(baseUrl)
 			.defaultHeaders(ApiUtils.getJsonContentHeaders(apiKey.getValue(), workSpaceId))
 			.defaultStatusHandler(responseErrorHandler)
 			.build();

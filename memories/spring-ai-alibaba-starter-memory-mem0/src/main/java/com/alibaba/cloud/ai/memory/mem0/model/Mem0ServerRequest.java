@@ -18,7 +18,7 @@ package com.alibaba.cloud.ai.memory.mem0.model;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionTextParser;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
@@ -293,8 +293,8 @@ public class Mem0ServerRequest {
 			private String query = "";
 			private int topK = 4;
 			private double similarityThreshold = (double) 0.0F;
-			@Nullable
-			private Filter.Expression filterExpression;
+
+            private Filter.@Nullable Expression filterExpression;
 
 			private String userId;
 
@@ -346,7 +346,7 @@ public class Mem0ServerRequest {
 				return this;
 			}
 
-			public Builder filterExpression(@Nullable Filter.Expression expression) {
+			public Builder filterExpression(Filter.@Nullable Expression expression) {
 				this.filterExpression = expression;
 				return this;
 			}

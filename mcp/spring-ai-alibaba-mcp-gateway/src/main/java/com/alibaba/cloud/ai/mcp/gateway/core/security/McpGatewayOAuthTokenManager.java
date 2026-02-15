@@ -49,7 +49,7 @@ public class McpGatewayOAuthTokenManager {
 	private final static Integer DEFAULT_EXPIRED_TIME = 3600;
 
 	public McpGatewayOAuthTokenManager(WebClient.Builder webClientBuilder, McpGatewayOAuthProperties oauthProperties) {
-		this.webClient = webClientBuilder.build();
+		this.webClient = webClientBuilder.clone().build();
 		this.oauthProperties = oauthProperties;
 		this.objectMapper = new ObjectMapper();
 		this.cachedToken = null;
