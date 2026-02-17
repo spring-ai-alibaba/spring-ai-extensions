@@ -274,7 +274,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (this.initializeSchema && !exists(this.options.getIndex())) {
-			openSearchApi.createCollectionAndIndex(this.options.getMappingJson());
+			openSearchApi.createCollectionAndIndex(this.options.getMappingJson().formatted(this.options.getDimensions()));
 		}
 	}
 
