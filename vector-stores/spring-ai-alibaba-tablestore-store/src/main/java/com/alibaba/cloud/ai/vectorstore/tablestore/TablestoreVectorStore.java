@@ -43,12 +43,12 @@ public class TablestoreVectorStore extends AbstractObservationVectorStore implem
 
 	private final KnowledgeStoreImpl knowledgeStore;
 
-	private final boolean initializeTable;
+	private final boolean initializeSchema;
 
 	protected TablestoreVectorStore(Builder builder) {
 		super(builder);
 		this.knowledgeStore = builder.knowledgeStore;
-		this.initializeTable = builder.initializeTable;
+		this.initializeSchema = builder.initializeSchema;
 	}
 
 	@Override
@@ -115,7 +115,7 @@ public class TablestoreVectorStore extends AbstractObservationVectorStore implem
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (!initializeTable) {
+		if (!initializeSchema) {
 			return;
 		}
 		knowledgeStore.initTable();
@@ -129,15 +129,15 @@ public class TablestoreVectorStore extends AbstractObservationVectorStore implem
 
 		private final KnowledgeStoreImpl knowledgeStore;
 
-		private boolean initializeTable = false;
+		private boolean initializeSchema = false;
 
 		public Builder(KnowledgeStoreImpl knowledgeStore, EmbeddingModel embeddingModel) {
 			super(embeddingModel);
 			this.knowledgeStore = knowledgeStore;
 		}
 
-		public Builder initializeTable(boolean initializeTable) {
-			this.initializeTable = initializeTable;
+		public Builder initializeSchema(boolean initializeSchema) {
+			this.initializeSchema = initializeSchema;
 			return this;
 		}
 
@@ -152,8 +152,8 @@ public class TablestoreVectorStore extends AbstractObservationVectorStore implem
 		return knowledgeStore;
 	}
 
-	public boolean isInitializeTable() {
-		return initializeTable;
+	public boolean isInitializeSchema() {
+		return initializeSchema;
 	}
 
 }
