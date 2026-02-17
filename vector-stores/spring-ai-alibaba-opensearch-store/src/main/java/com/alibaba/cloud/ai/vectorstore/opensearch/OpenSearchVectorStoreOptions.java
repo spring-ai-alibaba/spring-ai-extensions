@@ -15,8 +15,6 @@
  */
 package com.alibaba.cloud.ai.vectorstore.opensearch;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
 import java.util.List;
 
 /**
@@ -26,7 +24,6 @@ import java.util.List;
  * @author fuyou.lxm 北极星
  * @since 1.0.0-M6
  */
-@ConfigurationProperties(prefix = "spring.ai.alibaba.vectorstore.opensearch.options")
 public class OpenSearchVectorStoreOptions {
 
 	public static final String DEFAULT_TABLE_NAME = "spring_ai_opensearch_vector_store";
@@ -37,9 +34,8 @@ public class OpenSearchVectorStoreOptions {
 		return mappingJson;
 	}
 
-	public OpenSearchVectorStoreOptions setMappingJson(String mappingJson) {
+	public void setMappingJson(String mappingJson) {
 		this.mappingJson = mappingJson;
-		return this;
 	}
 
 	private String mappingJson = """
@@ -58,7 +54,7 @@ public class OpenSearchVectorStoreOptions {
 			            "indexName": "test_index_1",
 			            "vectorField": "source_image_vector",
 			            "vectorIndexType": "hnsw",
-			            "dimension": "512",
+			            "dimension": "%d",
 			            "distanceType": "InnerProduct"
 			        }
 			    ]
@@ -84,9 +80,8 @@ public class OpenSearchVectorStoreOptions {
 		return similarityFunction;
 	}
 
-	public OpenSearchVectorStoreOptions setSimilarityFunction(String similarityFunction) {
+	public void setSimilarityFunction(String similarityFunction) {
 		this.similarityFunction = similarityFunction;
-		return this;
 	}
 
 	private String similarityFunction = "cosinesimil";
@@ -105,9 +100,8 @@ public class OpenSearchVectorStoreOptions {
 		return index;
 	}
 
-	public OpenSearchVectorStoreOptions setIndex(String index) {
+	public void setIndex(String index) {
 		this.index = index;
-		return this;
 	}
 
 	public String getTableName() {

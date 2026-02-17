@@ -40,7 +40,7 @@ public class TablestoreVectorStoreExample {
 		FakedEmbeddingService embeddingService = new FakedEmbeddingService(768);
 
 		TablestoreVectorStore store = TablestoreVectorStore.builder(knowledgeStoreImpl, embeddingService)
-			.initializeTable(true) // For first use, set this parameter to true to
+			.initializeSchema(true) // For first use, set this parameter to true to
 									// initialize table. Not needed afterwards.
 			.build();
 
