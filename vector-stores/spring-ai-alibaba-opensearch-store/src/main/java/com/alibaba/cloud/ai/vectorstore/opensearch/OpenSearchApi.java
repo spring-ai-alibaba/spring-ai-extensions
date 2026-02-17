@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.converter.Converter;
@@ -41,33 +42,22 @@ public class OpenSearchApi {
 
 	private final Client client;
 
-	private final OpenSearchVectorStoreProperties properties;
+	private final @Nullable String instanceId;
 
 	/**
-	 * Initializes a new instance of the OpenSearchApi class.
-	 * @param properties basic configuration for connecting to OpenSearch instance.
-	 * @throws RuntimeException If the initialization fails due to an error in configuring
-	 * or creating the OpenSearch client. The exception message will include details of
-	 * the underlying error.
+	 * Constructs an OpenSearchApi instance.
 	 */
-	public OpenSearchApi(OpenSearchVectorStoreProperties properties) {
-		try {
-			this.properties = properties;
-			Config openSearchConfiguration = Config.build(properties.toClientParams());
-			this.client = new Client(openSearchConfiguration);
-		}
-		catch (Exception exception) {
-			logger.error("init OpenSearch client error", exception);
-			throw new RuntimeException(exception);
-		}
+	public OpenSearchApi(@Nullable String instanceId, Client client) {
+		this.instanceId = instanceId;
+		this.client = client;
 	}
 
 	private String getFullTableName(String tableName) {
-		return this.properties.getInstanceId() + "_" + tableName;
+		return this.instanceId + "_" + tableName;
 	}
 
 	public void createCollectionAndIndex(String mappingJson) throws Exception {
-		String queryUri = "/openapi/ha3/instances/" + this.properties.getInstanceId() + "/tables";
+		String queryUri = "/openapi/ha3/instances/" + this.instanceId + "/tables";
 		Map<String, ?> ansMap = client._request("POST", queryUri, null, client.getHeadersFromRunTimeOption(),
 				Common.toJSONString(mappingJson), client._runtimeOptions);
 
@@ -80,7 +70,7 @@ public class OpenSearchApi {
 	}
 
 	public List<Object> getIndexList(String tableName) throws Exception {
-		String queryUri = "/openapi/ha3/instances/" + this.properties.getInstanceId() + "/tables" + "/" + tableName;
+		String queryUri = "/openapi/ha3/instances/" + this.instanceId + "/tables" + "/" + tableName;
 		Map<String, ?> ansMap = client._request("GET", queryUri, null, client.getHeadersFromRunTimeOption(), null,
 				client._runtimeOptions);
 
