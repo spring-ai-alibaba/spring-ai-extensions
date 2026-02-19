@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.cloud.ai.vectorstore.tablestore.autoconfigure;
+package com.alibaba.cloud.ai.vectorstore.tablestore;
 
 import com.alicloud.openservices.tablestore.SyncClient;
 import org.junit.jupiter.api.Assumptions;
