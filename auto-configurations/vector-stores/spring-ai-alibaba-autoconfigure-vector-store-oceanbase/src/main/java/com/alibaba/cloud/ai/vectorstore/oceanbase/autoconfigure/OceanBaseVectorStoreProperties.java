@@ -35,7 +35,7 @@ public class OceanBaseVectorStoreProperties extends CommonVectorStoreProperties 
 
 	private @Nullable String password;
 
-	private @Nullable String tableName;
+	private String tableName = "vector_store";
 
 	private Integer defaultTopK = -1;
 
@@ -69,7 +69,7 @@ public class OceanBaseVectorStoreProperties extends CommonVectorStoreProperties 
 		this.password = password;
 	}
 
-	public @Nullable String getTableName() {
+	public String getTableName() {
 		return tableName;
 	}
 
