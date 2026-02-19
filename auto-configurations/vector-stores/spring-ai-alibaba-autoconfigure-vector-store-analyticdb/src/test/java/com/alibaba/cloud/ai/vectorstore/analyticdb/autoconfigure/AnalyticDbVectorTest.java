@@ -55,9 +55,9 @@ class AnalyticDbVectorTest {
 	private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
 		.withConfiguration(AutoConfigurations.of(AnalyticDbVectorStoreAutoConfiguration.class))
 		.withUserConfiguration(Config.class)
-		.withPropertyValues("spring.ai.vectorstore.analytic.accessKeyId=" + System.getenv("ANALYTICDB_ACCESS_KEY_ID"),
-				"spring.ai.vectorstore.analytic.accessKeyId=" + System.getenv("ANALYTICDB_ACCESS_KEY_SECRET"),
-				"spring.ai.vectorstore.analytic.initialize-schema=true");
+		.withPropertyValues("spring.ai.vectorstore.analyticdb.accessKeyId=" + System.getenv("ANALYTICDB_ACCESS_KEY_ID"),
+				"spring.ai.vectorstore.analyticdb.accessKeySecret=" + System.getenv("ANALYTICDB_ACCESS_KEY_SECRET"),
+				"spring.ai.vectorstore.analyticdb.initialize-schema=true");
 
 	List<Document> documents = List.of(
 			new Document("1", getText("classpath:spring.ai.txt"), Map.of("docId", "1", "spring", "great")),
@@ -85,15 +85,15 @@ class AnalyticDbVectorTest {
 	public void addAndSearchTest() {
 
 		this.contextRunner
-			.withPropertyValues("spring.ai.vectorstore.analytic.collectName=my_test_index",
-					"spring.ai.vectorstore.analytic.regionId=cn-beijing",
-					"spring.ai.vectorstore.analytic.dbInstanceId=gp-2ze41j8y0ry4spfev",
-					"spring.ai.vectorstore.analytic.managerAccount=hyq",
-					"spring.ai.vectorstore.analytic.managerAccountPassword=hdcHDC1997@@@",
-					"spring.ai.vectorstore.analytic.namespace=llama",
-					"spring.ai.vectorstore.analytic.namespacePassword=llamapassword",
-					"spring.ai.vectorstore.analytic.defaultTopK=6",
-					"spring.ai.vectorstore.analytic.defaultSimilarityThreshold=0.75")
+			.withPropertyValues("spring.ai.vectorstore.analyticdb.collectName=my_test_index",
+					"spring.ai.vectorstore.analyticdb.regionId=cn-beijing",
+					"spring.ai.vectorstore.analyticdb.dbInstanceId=gp-2ze41j8y0ry4spfev",
+					"spring.ai.vectorstore.analyticdb.managerAccount=hyq",
+					"spring.ai.vectorstore.analyticdb.managerAccountPassword=hdcHDC1997@@@",
+					"spring.ai.vectorstore.analyticdb.namespace=llama",
+					"spring.ai.vectorstore.analyticdb.namespacePassword=llamapassword",
+					"spring.ai.vectorstore.analyticdb.defaultTopK=6",
+					"spring.ai.vectorstore.analyticdb.defaultSimilarityThreshold=0.75")
 			.run(context -> {
 
 				var properties = context.getBean(AnalyticDbVectorStoreProperties.class);

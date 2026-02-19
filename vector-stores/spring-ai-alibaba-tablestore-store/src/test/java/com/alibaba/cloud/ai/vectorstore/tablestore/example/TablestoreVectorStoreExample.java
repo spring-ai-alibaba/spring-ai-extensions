@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.cloud.ai.vectorstore.tablestore.autoconfigure.example;
+package com.alibaba.cloud.ai.vectorstore.tablestore.example;
 
 import com.alibaba.cloud.ai.vectorstore.tablestore.TablestoreVectorStore;
-
 import com.aliyun.openservices.tablestore.agent.knowledge.KnowledgeStoreImpl;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
