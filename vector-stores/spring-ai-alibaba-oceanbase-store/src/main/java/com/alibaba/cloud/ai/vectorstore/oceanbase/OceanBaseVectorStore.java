@@ -163,7 +163,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 	private String buildCreateTableSql(int vectorDimension) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("CREATE TABLE IF NOT EXISTS ").append(tableName).append(" (");
-		sql.append(ID_FIELD).append(" BIGINT AUTO_INCREMENT PRIMARY KEY, ");
+		sql.append(ID_FIELD).append(" VARCHAR(36) NOT NULL PRIMARY KEY, ");
 		sql.append(EMBEDDING_FIELD).append(" VECTOR(").append(vectorDimension).append(") NOT NULL, ");
 		sql.append(DOCUMENT_FIELD).append(" LONGTEXT, ");
 		sql.append(METADATA_FIELD).append(" JSON, ");
@@ -324,7 +324,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 
 	private String getDistanceFunction(String metricType) {
 		if (metricType == null) {
-			return METRIC_TYPE_L2;
+			return METRIC_TYPE_COSINE;
 		}
 		switch (metricType.toLowerCase()) {
 			case METRIC_TYPE_L2:
@@ -334,7 +334,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 			case METRIC_TYPE_INNER_PRODUCT:
 				return METRIC_TYPE_INNER_PRODUCT;
 			default:
-				return METRIC_TYPE_L2;
+				return METRIC_TYPE_COSINE;
 		}
 	}
 
@@ -348,7 +348,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		List<float[]> embeddings = this.embeddingModel.embed(documents, EmbeddingOptions.builder().build(),
 				this.batchingStrategy);
 
-		String sql = buildInsertSql();
+		String sql = buildInsertOrUpdateSql();
 		try (Connection connection = dataSource.getConnection();
 				PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 			for (int i = 0; i < documents.size(); i++) {
@@ -356,9 +356,10 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 				String vectorString = convertEmbeddingToString(embeddings.get(i));
 				String metadataJson = serializeMetadata(doc.getMetadata());
 
-				pstmt.setString(1, vectorString);
-				pstmt.setString(2, doc.getText());
-				pstmt.setString(3, metadataJson);
+				pstmt.setString(1, doc.getId());
+				pstmt.setString(2, vectorString);
+				pstmt.setString(3, doc.getText());
+				pstmt.setString(4, metadataJson);
 				pstmt.addBatch();
 			}
 			pstmt.executeBatch();
@@ -369,9 +370,13 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		}
 	}
 
-	private String buildInsertSql() {
-		return String.format("INSERT INTO %s (%s, %s, %s) VALUES (?, ?, ?)",
-			tableName, EMBEDDING_FIELD, DOCUMENT_FIELD, METADATA_FIELD);
+	private String buildInsertOrUpdateSql() {
+		return String.format("INSERT INTO %s (%s, %s, %s, %s) VALUES (?, ?, ?, ?) " +
+				"ON DUPLICATE KEY UPDATE %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s)",
+			tableName, ID_FIELD, EMBEDDING_FIELD, DOCUMENT_FIELD, METADATA_FIELD,
+			EMBEDDING_FIELD, EMBEDDING_FIELD,
+			DOCUMENT_FIELD, DOCUMENT_FIELD,
+			METADATA_FIELD, METADATA_FIELD);
 	}
 
 	private String serializeMetadata(Map<String, Object> metadata) {
@@ -453,10 +458,14 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		List<Document> similarDocuments = new ArrayList<>();
 		try (Connection connection = dataSource.getConnection();
 				PreparedStatement pstmt = connection.prepareStatement(sql.toString())) {
+			int paramIndex = 1;
 			String vector = convertQueryToVectorBytes(searchRequest.getQuery());
-			pstmt.setString(1, vector);
-			pstmt.setString(2, vector);
-			pstmt.setInt(3, searchRequest.getTopK());
+			pstmt.setString(paramIndex++, vector);
+			if (searchRequest.getSimilarityThreshold() > 0.0) {
+				pstmt.setString(paramIndex++, vector);
+			}
+			pstmt.setString(paramIndex++, vector);
+			pstmt.setInt(paramIndex, searchRequest.getTopK());
 
 			String limitType = useApproximateLimit ? "APPROXIMATE LIMIT" : "LIMIT";
 			logger.info("Executing similarity search SQL with {}: {}", limitType, sql.toString());
@@ -486,6 +495,17 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 			sql.append(" WHERE ").append(filterExpr);
 		}
 
+		// Add threshold filtering
+		if (searchRequest.getSimilarityThreshold() > 0.0) {
+			double maxDistance = 1 - searchRequest.getSimilarityThreshold();
+			if (searchRequest.getFilterExpression() != null) {
+				sql.append(" AND ");
+			} else {
+				sql.append(" WHERE ");
+			}
+			sql.append(distanceFunc).append("(").append(EMBEDDING_FIELD).append(", ?) <= ").append(maxDistance);
+		}
+
 		sql.append(" ORDER BY ").append(distanceFunc).append("(").append(EMBEDDING_FIELD).append(", ?) ASC ");
 
 		if (useApproximateLimit) {
@@ -505,6 +525,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 			.query(searchRequest.getQuery())
 			.topK(searchRequest.getTopK() * 2)
 			.filterExpression(searchRequest.getFilterExpression())
+			.similarityThreshold(searchRequest.getSimilarityThreshold())
 			.build());
 
 		List<Document> fulltextResults = doFulltextSearch(searchRequest);
@@ -582,7 +603,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 
 	private String getDistanceFunctionName(String metricType) {
 		if (metricType == null) {
-			return DISTANCE_FUNCTION_L2;
+			return DISTANCE_FUNCTION_COSINE;
 		}
 		switch (metricType.toLowerCase()) {
 			case METRIC_TYPE_L2:
@@ -592,7 +613,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 			case METRIC_TYPE_INNER_PRODUCT:
 				return DISTANCE_FUNCTION_INNER_PRODUCT;
 			default:
-				return DISTANCE_FUNCTION_L2;
+				return DISTANCE_FUNCTION_COSINE;
 		}
 	}
 
@@ -609,7 +630,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 			try {
 				double distance = Double.parseDouble(distanceStr);
 				metadata.put("distance", distanceStr);
-				score = distance;
+				score = 1 - distance;
 			}
 			catch (NumberFormatException e) {
 				logger.warn("Failed to parse distance as number: {}", distanceStr);
@@ -710,7 +731,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		private Integer dimension;
 		private String hybridSearchType;
 		private String indexType = INDEX_TYPE_HNSW;
-		private String indexMetricType = METRIC_TYPE_L2;
+		private String indexMetricType = METRIC_TYPE_COSINE;
 		private boolean initializeSchema = false;
 
 		private Builder(String tableName, DataSource dataSource, EmbeddingModel embeddingModel) {

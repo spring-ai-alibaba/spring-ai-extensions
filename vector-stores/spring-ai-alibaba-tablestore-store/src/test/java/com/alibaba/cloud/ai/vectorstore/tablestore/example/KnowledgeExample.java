@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.cloud.ai.vectorstore.tablestore.autoconfigure.example;
+package com.alibaba.cloud.ai.vectorstore.tablestore.example;
+
 
 import com.aliyun.openservices.tablestore.agent.knowledge.KnowledgeSearchRequest;
 import com.aliyun.openservices.tablestore.agent.knowledge.KnowledgeStoreImpl;

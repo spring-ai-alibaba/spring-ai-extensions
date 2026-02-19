@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.cloud.ai.vectorstore.tair.autoconfigure;
+package com.alibaba.cloud.ai.vectorstore.tair;
 
-import com.alibaba.cloud.ai.vectorstore.tair.TairVectorApi;
-import com.alibaba.cloud.ai.vectorstore.tair.TairVectorStore;
-import com.alibaba.cloud.ai.vectorstore.tair.TairVectorStoreOptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationContext;
