@@ -50,6 +50,20 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 /**
+ * WebSocket client for DashScope TTS and ASR protocols.
+ * <p>
+ * TTS interaction patterns:
+ * <ul>
+ *   <li>Sambert (half-duplex): run-task (with text) → binary audio → task-finished</li>
+ *   <li>CosyVoice single text: run-task → task-started → continue-task → finish-task → binary audio → task-finished</li>
+ *   <li>CosyVoice streaming input: run-task → task-started → N * continue-task → finish-task → binary audio → task-finished</li>
+ * </ul>
+ * ASR interaction patterns:
+ * <ul>
+ *   <li>Binary one-shot: run-task → task-started → binary data → finish-task → result-generated → task-finished</li>
+ *   <li>Binary streaming: run-task → task-started → N * sendBinary(chunk) → finish-task → result-generated → task-finished</li>
+ * </ul>
+ *
  * @author kevinlin09, xuguan, yingzi
  */
 public class DashScopeWebSocketClient extends WebSocketListener {
@@ -68,11 +82,24 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	FluxSink<String> textEmitter;
 
+	// For single continue-task mode (legacy CosyVoice)
     private String continueTaskMessage;
+
+	// Template for building continue-task messages dynamically (streaming input)
+	private String continueTaskTemplate;
 
     private String finishTaskMessage;
 
     private ByteBuffer binaryData;
+
+	// Streaming binary input for ASR duplex
+	private Flux<ByteBuffer> binaryStream;
+
+	// Streaming text input for CosyVoice duplex
+	private Flux<String> textStream;
+
+	// Indicates whether task-started has been received
+	private volatile boolean taskStarted = false;
 
 	public DashScopeWebSocketClient(DashScopeWebSocketClientOptions options) {
 		this.options = options;
@@ -90,59 +117,115 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	}
 
 	/**
-	 * Stream binary output using event-driven duplex flow for CosyVoice.
-	 * This implements the official protocol specification:
-	 * 1. Send run-task
-	 * 2. Wait for task-started event
-	 * 3. Send continue-task
-	 * 4. Send finish-task
-	 * 5. Wait for task-finished event
-	 *
-	 * @param runTaskMessage the run-task JSON message
-	 * @param continueTaskMessage the continue-task JSON message
-	 * @param finishTaskMessage the finish-task JSON message
-	 * @return the binary data flux
+	 * CosyVoice single text mode: run-task → task-started → continue-task → finish-task.
 	 */
 	public Flux<ByteBuffer> command(String runTaskMessage, String continueTaskMessage,
 			String finishTaskMessage) {
-		// Prepare the messages to be sent
 		this.continueTaskMessage = continueTaskMessage;
 		this.finishTaskMessage = finishTaskMessage;
+		this.binaryData = null;
+		this.binaryStream = null;
+		this.textStream = null;
+		this.continueTaskTemplate = null;
+		this.taskStarted = false;
 
 		return Flux.<ByteBuffer>create(emitter -> {
 			this.binaryEmitter = emitter;
-
-			// Send run-task first
-			logger.info("Event-driven : Sending run-task message");
+			logger.info("CosyVoice single text: Sending run-task message");
 			sendText(runTaskMessage);
-
 		}, FluxSink.OverflowStrategy.BUFFER);
 	}
 
+	/**
+	 * CosyVoice streaming input mode: run-task → task-started → N * continue-task → finish-task.
+	 * Each element in textStream becomes a continue-task message via the template.
+	 *
+	 * @param runTaskMessage the run-task JSON message
+	 * @param continueTaskTemplate a JSON template with a placeholder for text (the template
+	 *                             should contain a text field that will be replaced)
+	 * @param finishTaskMessage the finish-task JSON message
+	 * @param textStream the streaming text input
+	 * @return the binary audio data flux
+	 */
+	public Flux<ByteBuffer> commandStreaming(String runTaskMessage, String continueTaskTemplate,
+			String finishTaskMessage, Flux<String> textStream) {
+		this.continueTaskMessage = null;
+		this.continueTaskTemplate = continueTaskTemplate;
+		this.finishTaskMessage = finishTaskMessage;
+		this.binaryData = null;
+		this.binaryStream = null;
+		this.textStream = textStream;
+		this.taskStarted = false;
+
+		return Flux.<ByteBuffer>create(emitter -> {
+			this.binaryEmitter = emitter;
+			logger.info("CosyVoice streaming input: Sending run-task message");
+			sendText(runTaskMessage);
+		}, FluxSink.OverflowStrategy.BUFFER);
+	}
+
+	/**
+	 * Sambert mode: run-task (with text) only.
+	 */
     public Flux<ByteBuffer> command(String runTaskMessage) {
+		this.continueTaskMessage = null;
+		this.finishTaskMessage = null;
+		this.binaryData = null;
+		this.binaryStream = null;
+		this.textStream = null;
+		this.continueTaskTemplate = null;
+		this.taskStarted = false;
+
         return Flux.<ByteBuffer>create(emitter -> {
             this.binaryEmitter = emitter;
-
-            // Send run-task first
-            logger.info("Event-driven : Sending run-task message");
+            logger.info("Sambert: Sending run-task message");
             sendText(runTaskMessage);
-
         }, FluxSink.OverflowStrategy.BUFFER);
     }
 
-
+	/**
+	 * Binary input mode (e.g., ASR): run-task → task-started → binary data → finish-task.
+	 */
     public Flux<String> command(String runTaskMessage, ByteBuffer binaryData, String finishTaskMessage) {
         this.binaryData = binaryData;
+        this.binaryStream = null;
         this.finishTaskMessage = finishTaskMessage;
+		this.textStream = null;
+		this.continueTaskTemplate = null;
+		this.taskStarted = false;
 
         return Flux.<String>create(emitter -> {
             this.textEmitter = emitter;
-
-            // Send run-task first
-            logger.info("Event-driven : Sending run-task message");
+            logger.info("Binary input: Sending run-task message");
             sendText(runTaskMessage);
         }, FluxSink.OverflowStrategy.BUFFER);
     }
+
+	/**
+	 * ASR streaming binary input mode: run-task → task-started → N * sendBinary(chunk) → finish-task.
+	 * Each element in binaryStream is sent as a separate binary frame, enabling true bidirectional streaming.
+	 *
+	 * @param runTaskMessage the run-task JSON message
+	 * @param finishTaskMessage the finish-task JSON message
+	 * @param binaryStream the streaming audio input (e.g., PCM chunks from microphone)
+	 * @return the text result flux (result-generated events)
+	 */
+	public Flux<String> commandStreaming(String runTaskMessage, String finishTaskMessage,
+			Flux<ByteBuffer> binaryStream) {
+		this.binaryData = null;
+		this.binaryStream = binaryStream;
+		this.finishTaskMessage = finishTaskMessage;
+		this.textStream = null;
+		this.continueTaskTemplate = null;
+		this.continueTaskMessage = null;
+		this.taskStarted = false;
+
+		return Flux.<String>create(emitter -> {
+			this.textEmitter = emitter;
+			logger.info("ASR streaming binary: Sending run-task message");
+			sendText(runTaskMessage);
+		}, FluxSink.OverflowStrategy.BUFFER);
+	}
 
 	public void sendText(String text) {
         if (!isOpen.get()) {
@@ -263,35 +346,51 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 			switch (message.header().event()) {
 				case TASK_STARTED:
 					logger.info("task started: text={}", text);
+					this.taskStarted = true;
+
+					// Mode 1: CosyVoice single text - send the pre-built continue-task then finish-task
                     if (!ObjectUtils.isEmpty(this.continueTaskMessage)) {
                         sendText(this.continueTaskMessage);
+						sendText(this.finishTaskMessage);
                     }
+
+					// Mode 2: CosyVoice streaming input - subscribe to textStream
+					if (this.textStream != null && this.continueTaskTemplate != null) {
+						subscribeTextStream();
+					}
+
+					// Mode 3: Binary input (e.g., ASR) - send binary data then finish-task
                     if (!ObjectUtils.isEmpty(this.binaryData)) {
                         sendBinary(this.binaryData);
                         sendText(this.finishTaskMessage);
                     }
+
+					// Mode 4: ASR streaming binary - subscribe to binaryStream, send each chunk then finish-task
+					if (this.binaryStream != null) {
+						subscribeBinaryStream();
+					}
+
+					// Mode 5: Sambert - nothing to send, just wait for audio
 					break;
+
                 case RESULT_GENERATED:
                     logger.debug("result generated: text={}", text);
                     if (this.textEmitter != null) {
                         textEmitter.next(text);
                     }
-
                     break;
+
 				case TASK_FINISHED:
 					logger.info("task finished: text={}", text);
-                    if (!ObjectUtils.isEmpty(this.finishTaskMessage)) {
-                        sendText(this.finishTaskMessage);
-                    }
 					emittersComplete("finished");
 					break;
+
 				case TASK_FAILED:
                     String errorCode = message.header().code() != null ? message.header().code() : "UNKNOWN";
                     String errorMessage =
                             message.header().message() != null ? message.header().message() : "No error message provided";
                     String errorDetail = String.format("Task failed with error_code='%s', error_message='%s'", errorCode, errorMessage);
                     logger.error("task failed: text={}, error_code={}, error_message={}", text, errorCode, errorMessage);
-                    // Reset duplex state on error
                     emittersError("task failed", new Exception(errorDetail));
 					break;
 			}
@@ -299,6 +398,69 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		catch (Exception e) {
 			logger.error("parse message failed: text={}, msg={}", text, e.getMessage());
 		}
+	}
+
+	/**
+	 * Subscribe to the streaming text input and send each text chunk as a continue-task message.
+	 * When the stream completes, send finish-task.
+	 */
+	private void subscribeTextStream() {
+		this.textStream
+			.doOnNext(textChunk -> {
+				String continueMsg = buildContinueTaskMessage(textChunk);
+				logger.debug("CosyVoice streaming: sending continue-task for text chunk, length={}", textChunk.length());
+				sendText(continueMsg);
+			})
+			.doOnError(err -> {
+				logger.error("CosyVoice streaming: text stream error", err);
+				emittersError("text stream error", err);
+			})
+			.doOnComplete(() -> {
+				logger.info("CosyVoice streaming: text stream completed, sending finish-task");
+				sendText(this.finishTaskMessage);
+			})
+			.subscribe();
+	}
+
+	/**
+	 * Build a continue-task message by injecting the text into the template.
+	 * The template is expected to have a text field placeholder that gets replaced.
+	 */
+	private String buildContinueTaskMessage(String textChunk) {
+		try {
+			var node = this.objectMapper.readTree(this.continueTaskTemplate);
+			if (node.has("payload") && node.get("payload").has("input")) {
+				((com.fasterxml.jackson.databind.node.ObjectNode) node.get("payload").get("input"))
+					.put("text", textChunk);
+			}
+			return this.objectMapper.writeValueAsString(node);
+		}
+		catch (Exception e) {
+			logger.error("Failed to build continue-task message from template", e);
+			throw new RuntimeException("Failed to build continue-task message", e);
+		}
+	}
+
+	/**
+	 * Subscribe to the streaming binary input and send each chunk via sendBinary.
+	 * When the stream completes, send finish-task.
+	 */
+	private void subscribeBinaryStream() {
+		this.binaryStream
+			.filter(chunk -> chunk != null && chunk.hasRemaining())
+			.doOnNext(chunk -> {
+				logger.debug("ASR streaming: sending binary chunk, size={}", chunk.remaining());
+				sendBinary(chunk);
+			})
+			.doOnError(err -> {
+				logger.error("ASR streaming: binary stream error", err);
+				emittersError("binary stream error", err);
+			})
+			.doOnComplete(() -> {
+				logger.info("ASR streaming: binary stream completed, sending finish-task");
+				sendText(this.finishTaskMessage);
+			})
+			.subscribe();
 	}
 
 	@Override

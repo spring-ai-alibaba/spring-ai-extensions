@@ -87,59 +87,136 @@ class DashScopeAudioSpeechIT {
 	}
 
 	// ==================== CosyVoice Model Tests ====================
-	// 备注：改功能暂未通过，报错：Invalid payload data，待和百炼官方文档确认后再启用
-//	@org.junit.jupiter.api.Test
-//	void testCosyVoice_Stream_RealApi() {
-//		// Arrange
-//		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()
-//			.model(AudioModel.COSYVOICE_V3_FLASH.getValue())
-//				.textType("PlainText")
-//				.voice("longanyang")
-//				.format("mp3")
-//				.sampleRate(22050)
-//				.volume(50)
-//				.rate(1f)
-//				.pitch(1f)
-//			.build();
-//
-//		// Act
-//		TextToSpeechPrompt prompt = new TextToSpeechPrompt(TEST_TEXT, options);
-//		Flux<TextToDashScopeAudioTTSResponse> result = speechModel.stream(prompt);
-//
-//		List<byte[]> speechChunks = new ArrayList<>();
-//
-//		// Assert - 使用 consumeWhileWith 来处理流中的所有元素
-//		StepVerifier.create(result)
-//				.thenConsumeWhile(response -> {
-//					assertThat(response).isNotNull();
-//					Speech speech = response.getResult();
-//					speechChunks.add(speech.getOutput());
-//					return true; // 继续消费更多元素
-//				})
-//				.verifyComplete();
-//
-//		// 保存合并后的音频文件
-//		if (!speechChunks.isEmpty()) {
-//			String outputPath = "src/test/resources/audio/websocket/cosyvoice-stream-test.mp3";
-//			try {
-//				AudioUtils.saveAudioFromByteChunks(speechChunks, outputPath);
-//				logger.info("CosyVoice stream test passed successfully, audio saved to: {}",
-//						Paths.get(outputPath).toAbsolutePath());
-//			}
-//			catch (IOException e) {
-//				logger.error("Failed to save audio: {}", e.getMessage());
-//			}
-//		}
-//		else {
-//			logger.warn("No audio chunks received");
-//		}
-//	}
+
+	@org.junit.jupiter.api.Test
+	void testCosyVoice_Stream_RealApi() {
+		// CosyVoice: WebSocket duplex, run-task → continue-task → finish-task
+		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()
+				.model(AudioModel.COSYVOICE_V3_FLASH.getValue())
+				.textType("PlainText")
+				.voice("longanyang")
+				.format("mp3")
+				.sampleRate(22050)
+				.volume(50)
+				.rate(1f)
+				.pitch(1f)
+				.build();
+
+		TextToSpeechPrompt prompt = new TextToSpeechPrompt(TEST_TEXT, options);
+		Flux<TextToSpeechResponse> result = speechModel.stream(prompt);
+		List<byte[]> speechChunks = new ArrayList<>();
+
+		StepVerifier.create(result)
+				.thenConsumeWhile(response -> {
+					assertThat(response).isNotNull();
+					Speech speech = response.getResult();
+					speechChunks.add(speech.getOutput());
+					return true;
+				})
+				.verifyComplete();
+
+		saveAudioChunks(speechChunks, "src/test/resources/audio/websocket/cosyvoice-stream-test.mp3");
+		logger.info("CosyVoice stream test passed");
+	}
+
+	@org.junit.jupiter.api.Test
+	void testCosyVoice_StreamWithStreamingInput_RealApi() {
+		// CosyVoice 流式输入：模拟 LLM 逐字输出，每个 chunk 作为 continue-task 发送
+		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()
+				.model(AudioModel.COSYVOICE_V3_FLASH.getValue())
+				.textType("PlainText")
+				.voice("longanyang")
+				.format("mp3")
+				.sampleRate(22050)
+				.volume(50)
+				.rate(1f)
+				.pitch(1f)
+				.build();
+
+		// 模拟流式文本输入（如 LLM 输出）
+		Flux<String> textStream = Flux.just("你好，", "我是", "语音助手。");
+
+		Flux<TextToSpeechResponse> result = speechModel.stream(textStream, options);
+		List<byte[]> speechChunks = new ArrayList<>();
+
+		StepVerifier.create(result)
+				.thenConsumeWhile(response -> {
+					assertThat(response).isNotNull();
+					Speech speech = response.getResult();
+					speechChunks.add(speech.getOutput());
+					return true;
+				})
+				.verifyComplete();
+
+		saveAudioChunks(speechChunks, "src/test/resources/audio/websocket/cosyvoice-streaming-input-test.mp3");
+		logger.info("CosyVoice streaming input test passed");
+	}
+
+	// ==================== Qwen TTS Realtime Model Tests ====================
+
+	@org.junit.jupiter.api.Test
+	void testQwenTTSRealtime_Stream_RealApi() {
+		// Qwen TTS Realtime: WebSocket append/commit 协议，单次文本
+		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()
+				.model(AudioModel.QWEN3_TTS_FLASH_REALTIME.getValue())
+				.voice("longxiaochun")
+				.format("pcm")
+				.sampleRate(24000)
+				.build();
+
+		TextToSpeechPrompt prompt = new TextToSpeechPrompt(TEST_TEXT, options);
+		Flux<TextToSpeechResponse> result = speechModel.stream(prompt);
+		List<byte[]> speechChunks = new ArrayList<>();
+
+		StepVerifier.create(result)
+				.thenConsumeWhile(response -> {
+					assertThat(response).isNotNull();
+					Speech speech = response.getResult();
+					speechChunks.add(speech.getOutput());
+					return true;
+				})
+				.verifyComplete();
+
+		saveAudioChunks(speechChunks, "src/test/resources/audio/websocket/qwen-realtime-stream-test.pcm");
+		logger.info("Qwen TTS Realtime stream test passed");
+	}
+
+	@org.junit.jupiter.api.Test
+	void testQwenTTSRealtime_StreamWithStreamingInput_RealApi() {
+		// Qwen TTS Realtime 流式输入：append_text 多次 → commit → finish
+		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()
+				.model(AudioModel.QWEN3_TTS_FLASH_REALTIME.getValue())
+				.voice("longxiaochun")
+				.format("pcm")
+				.sampleRate(24000)
+				.build();
+
+		Flux<String> textStream = Flux.just("欢迎使用", "通义千问", "实时语音合成。");
+
+		Flux<TextToSpeechResponse> result = speechModel.stream(textStream, options);
+		List<byte[]> speechChunks = new ArrayList<>();
+
+		StepVerifier.create(result)
+				.thenConsumeWhile(response -> {
+					assertThat(response).isNotNull();
+					Speech speech = response.getResult();
+                    System.out.println("Received speech chunk of size: " + speech.getOutput().length + " bytes");
+					speechChunks.add(speech.getOutput());
+					return true;
+				})
+				.verifyComplete();
+
+		saveAudioChunks(speechChunks, "src/test/resources/audio/websocket/qwen-realtime-streaming-input-test.pcm");
+		logger.info("Qwen TTS Realtime streaming input test passed");
+	}
+
+	// ==================== Sambert Model Tests ====================
 
 	@org.junit.jupiter.api.Test
 	void testSambert_Stream_RealApi() {
-		// Arrange
+		// Sambert: WebSocket 半双工，run-task 一次性带 text
 		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()
-			.model(AudioModel.SAMBERT_ZHICHU_V1.getValue())
+				.model(AudioModel.SAMBERT_ZHICHU_V1.getValue())
 				.textType("PlainText")
 				.format("mp3")
 				.sampleRate(16000)
@@ -148,30 +225,30 @@ class DashScopeAudioSpeechIT {
 				.pitch(1f)
 				.wordTimestampEnabled(true)
 				.phonemeTimestampEnabled(true)
-			.build();
+				.build();
 
-		// Act
 		TextToSpeechPrompt prompt = new TextToSpeechPrompt(TEST_TEXT, options);
 		Flux<TextToSpeechResponse> result = speechModel.stream(prompt);
 		List<byte[]> speechChunks = new ArrayList<>();
 
-		// Assert - 使用 consumeWhileWith 来处理流中的所有元素
 		StepVerifier.create(result)
 				.thenConsumeWhile(response -> {
 					assertThat(response).isNotNull();
 					Speech speech = response.getResult();
 					speechChunks.add(speech.getOutput());
-					return true; // 继续消费更多元素
+					return true;
 				})
 				.verifyComplete();
 
-		// 保存合并后的音频文件
+		saveAudioChunks(speechChunks, "src/test/resources/audio/websocket/sambert-stream-test.mp3");
+		logger.info("Sambert stream test passed");
+	}
+
+	private void saveAudioChunks(List<byte[]> speechChunks, String outputPath) {
 		if (!speechChunks.isEmpty()) {
-			String outputPath = "src/test/resources/audio/websocket/sambert-stream-test.mp3";
 			try {
 				AudioUtils.saveAudioFromByteChunks(speechChunks, outputPath);
-				logger.info("sambert stream test passed successfully, audio saved to: {}",
-						Paths.get(outputPath).toAbsolutePath());
+				logger.info("Audio saved to: {}", Paths.get(outputPath).toAbsolutePath());
 			}
 			catch (IOException e) {
 				logger.error("Failed to save audio: {}", e.getMessage());

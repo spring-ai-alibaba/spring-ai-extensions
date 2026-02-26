@@ -25,6 +25,17 @@ import reactor.core.publisher.Flux;
 
 /**
  * Interface for the streaming audio transcription model.
+ * <p>
+ * Provides unidirectional streaming: {@link #stream(AudioTranscriptionPrompt)} - audio input is provided
+ * as a complete resource (file/URL), output is streamed. Suitable for pre-recorded audio.
+ * <p>
+ * For bidirectional streaming (real-time microphone input), use the scenario-specific methods on
+ * {@link DashScopeAudioTranscriptionModel}:
+ * <ul>
+ *   <li>{@code streamRecognition} - Paraformer / Fun-ASR real-time recognition</li>
+ *   <li>{@code streamTranslation} - Gummy long-speech translation</li>
+ *   <li>{@code streamTranslationChat} - Gummy short-speech (single sentence) translation</li>
+ * </ul>
  *
  * @author xuguan
  * @since 1.1.0.0
@@ -45,4 +56,5 @@ public interface StreamingTranscriptionModel extends StreamingModel<AudioTranscr
 	}
 
 	Flux<AudioTranscriptionResponse> stream(AudioTranscriptionPrompt prompt);
+
 }

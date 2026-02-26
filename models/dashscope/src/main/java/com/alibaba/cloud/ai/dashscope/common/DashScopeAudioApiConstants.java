@@ -47,15 +47,29 @@ public class DashScopeAudioApiConstants {
     // 语音合成 Qwen-TTS
     public static List<String> QWEN_TTS_MODEL_LIST = List.of(AudioModel.QWEN3_TTS_FLASH.getValue(), AudioModel.QWEN3_TTS_FLASH_2025_11_27.getValue(), AudioModel.QWEN3_TTS_FLASH_2025_09_18.getValue(), AudioModel.QWEN_TTS.getValue(), AudioModel.QWEN_TTS_LATEST.getValue(), AudioModel.QWEN_TTS_2025_05_22.getValue(), AudioModel.QWEN_TTS_2025_04_10.getValue());
 
+    // 实时语音合成 - Qwen TTS Realtime (append/commit 协议)
+    public static final String QWEN_TTS_REALTIME_WEBSOCKET_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/realtime";
+    public static List<String> QWEN_TTS_REALTIME_MODEL_LIST = List.of(AudioModel.QWEN3_TTS_FLASH_REALTIME.getValue());
+
     // 语音翻译 - 音视频翻译 - 通义千问
     public static List<String> QWEN3_LIVE_TRANSLATE_LIST = List.of(AudioModel.QWEN3_LIVETRANSLATE_FLASH.getValue(), AudioModel.QWEN3_LIVETRANSLATE_FLASH_2025_12_01.getValue());
 
     // 语音翻译 - 实时长（短）语音翻译
     public static List<String> QWEN3_LONG_SHORT_TRANSLATE_LIST = List.of(AudioModel.GUMMY_REALTIME_V1.getValue(), AudioModel.GUMMY_CHAT_V1.getValue());
 
-    // 实时语音识别
+    // 实时语音识别（全部 WebSocket ASR 模型）
     public static List<String> PARAFORMER_FUNAS_LIST = List.of(AudioModel.PARAFORMER_REALTIME_V2.getValue(), AudioModel.PARAFORMER_REALTIME_V1.getValue(), AudioModel.PARAFORMER_REALTIME_8K_V2.getValue(), AudioModel.PARAFORMER_REALTIME_8K_V1.getValue(),
             AudioModel.FUN_ASR_REALTIME.getValue(), AudioModel.GUMMY_REALTIME_V1.getValue(), AudioModel.GUMMY_CHAT_V1.getValue());
+
+    // 实时语音识别 - 仅 Paraformer / Fun-ASR（不含 Gummy）
+    public static List<String> PARAFORMER_REALTIME_ONLY_LIST = List.of(AudioModel.PARAFORMER_REALTIME_V2.getValue(), AudioModel.PARAFORMER_REALTIME_V1.getValue(), AudioModel.PARAFORMER_REALTIME_8K_V2.getValue(), AudioModel.PARAFORMER_REALTIME_8K_V1.getValue(),
+            AudioModel.FUN_ASR_REALTIME.getValue());
+
+    // Gummy 长语音翻译
+    public static List<String> GUMMY_REALTIME_LIST = List.of(AudioModel.GUMMY_REALTIME_V1.getValue());
+
+    // Gummy 短语音翻译（单句模式）
+    public static List<String> GUMMY_CHAT_LIST = List.of(AudioModel.GUMMY_CHAT_V1.getValue());
 
     // 录音文件识别
     public static List<String> ASR_TRANSCRIPTION_LIST = List.of(AudioModel.PARAFORMER_V2.getValue(), AudioModel.PARAFORMER_V1.getValue(), AudioModel.PARAFORMER_8K_V2.getValue(), AudioModel.PARAFORMER_8K_V1.getValue(), AudioModel.PARAFORMER_MTL_V1.getValue(),
@@ -87,5 +101,13 @@ public class DashScopeAudioApiConstants {
 
     public static boolean isQwenAsr(String modelName) {
         return QWEN_ASR_MODEL_LIST.contains(modelName);
+    }
+
+    public static boolean isCosyVoiceModel(String modelName) {
+        return COSY_VOICE_MODEL_LIST.contains(modelName);
+    }
+
+    public static boolean isQwenTTSRealtimeModel(String modelName) {
+        return QWEN_TTS_REALTIME_MODEL_LIST.contains(modelName);
     }
 }

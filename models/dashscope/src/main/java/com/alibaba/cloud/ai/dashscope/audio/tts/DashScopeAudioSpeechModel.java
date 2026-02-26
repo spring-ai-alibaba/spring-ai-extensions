@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.audio.tts;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
+import com.alibaba.cloud.ai.dashscope.api.tts.DashScopeQwenTTSRealtimeApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -33,11 +34,20 @@ import reactor.core.publisher.Flux;
 import java.util.List;
 
 /**
- * Audio Speech: input text, output audio.
+ * DashScope TTS model facade. Supports all four TTS modes:
+ * <ul>
+ *   <li>Qwen-TTS (REST/SSE) — call / stream</li>
+ *   <li>Sambert (WebSocket half-duplex) — stream</li>
+ *   <li>CosyVoice (WebSocket duplex) — stream / stream with streaming input</li>
+ *   <li>Qwen TTS Realtime (WebSocket append/commit) — stream / stream with streaming input</li>
+ * </ul>
+ * <p>
+ * Implements both Spring AI's {@link TextToSpeechModel} (complete text input) and
+ * {@link StreamingInputTextToSpeechModel} (streaming text input for CosyVoice / Qwen TTS Realtime).
  *
  * @author kevinlin09, xuguan, yingzi
  */
-public class DashScopeAudioSpeechModel implements TextToSpeechModel {
+public class DashScopeAudioSpeechModel implements TextToSpeechModel, StreamingInputTextToSpeechModel {
 
 	private static final Logger logger = LoggerFactory.getLogger(DashScopeAudioSpeechModel.class);
 
@@ -63,6 +73,8 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
 		this.retryTemplate = retryTemplate;
 	}
 
+	// ========================= TextToSpeechModel =========================
+
 	@NonNull
     @Override
 	public TextToSpeechResponse call(TextToSpeechPrompt prompt) {
@@ -70,8 +82,12 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
         if (DashScopeAudioApiConstants.isQwenTTSModel(options.getModel())) {
             return this.audioSpeechApi.callQwenTTS(prompt.getInstructions().getText(), options);
         }
-
-        throw new IllegalArgumentException("Model " + options.getModel() + " is not supported call method.");
+        if (DashScopeAudioApiConstants.isWebsocketByTTSModelName(options.getModel())
+                || DashScopeAudioApiConstants.isQwenTTSRealtimeModel(options.getModel())) {
+            throw new IllegalArgumentException("Model " + options.getModel()
+                    + " does not support synchronous call; use stream() instead.");
+        }
+        throw new IllegalArgumentException("Model " + options.getModel() + " is not supported.");
     }
 
     @Override
@@ -82,26 +98,65 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
                     .map(response -> (TextToSpeechResponse) response);
         }
 
-        if (!DashScopeAudioApiConstants.isWebsocketByTTSModelName(options.getModel())) {
-            throw new IllegalArgumentException("Model " + options.getModel() + " is not supported.");
+        if (DashScopeAudioApiConstants.isWebsocketByTTSModelName(options.getModel())
+                || DashScopeAudioApiConstants.isQwenTTSRealtimeModel(options.getModel())) {
+            return this.audioSpeechApi.createWebSocketTask(prompt.getInstructions().getText(), options)
+                    .map(byteBuffer -> {
+                        byte[] data = new byte[byteBuffer.remaining()];
+                        byteBuffer.get(data);
+                        return new TextToSpeechResponse(List.of(new Speech(data)));
+                    });
         }
 
-        // 下面是websocket任务
-        return this.audioSpeechApi.createWebSocketTask(prompt.getInstructions().getText(), options)
-                .map(byteBuffer -> {
-            byte[] data = new byte[byteBuffer.remaining()];
-            byteBuffer.get(data);
-            return new TextToSpeechResponse(List.of(new Speech(data)));
-        });
+        throw new IllegalArgumentException("Model " + options.getModel() + " is not supported.");
+	}
+
+	// =================== StreamingInputTextToSpeechModel ===================
+
+	@Override
+	public Flux<TextToSpeechResponse> stream(Flux<String> textStream, TextToSpeechOptions options) {
+		DashScopeAudioSpeechOptions dashScopeOptions = mergeOptions(options);
+
+		if (DashScopeAudioApiConstants.isQwenTTSRealtimeModel(dashScopeOptions.getModel())) {
+			DashScopeQwenTTSRealtimeApi realtimeApi = audioSpeechApi.getQwenTTSRealtimeApi();
+			return realtimeApi.stream(textStream, dashScopeOptions)
+					.map(byteBuffer -> toTextToSpeechResponse(byteBuffer));
+		}
+
+		if (DashScopeAudioApiConstants.isCosyVoiceModel(dashScopeOptions.getModel())) {
+			return audioSpeechApi.createWebSocketStreamingTask(textStream, dashScopeOptions)
+					.map(byteBuffer -> toTextToSpeechResponse(byteBuffer));
+		}
+
+		throw new IllegalArgumentException(
+				"Model " + dashScopeOptions.getModel() + " does not support streaming input. "
+						+ "Only CosyVoice and Qwen TTS Realtime models support streaming text input.");
+	}
+
+	// ========================= Internal helpers =========================
+
+	private static TextToSpeechResponse toTextToSpeechResponse(java.nio.ByteBuffer byteBuffer) {
+		byte[] data = new byte[byteBuffer.remaining()];
+		byteBuffer.get(data);
+		return new TextToSpeechResponse(List.of(new Speech(data)));
 	}
 
 	private DashScopeAudioSpeechOptions mergeOptions(TextToSpeechPrompt prompt) {
 		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder().build();
-        DashScopeAudioSpeechOptions runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(), TextToSpeechOptions.class, DashScopeAudioSpeechOptions.class);
-
+        DashScopeAudioSpeechOptions runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(),
+				TextToSpeechOptions.class, DashScopeAudioSpeechOptions.class);
         options = ModelOptionsUtils.merge(runtimeOptions, options, DashScopeAudioSpeechOptions.class);
-
         return ModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioSpeechOptions.class);
+	}
+
+	private DashScopeAudioSpeechOptions mergeOptions(TextToSpeechOptions options) {
+		DashScopeAudioSpeechOptions result = DashScopeAudioSpeechOptions.builder().build();
+		if (options != null) {
+			DashScopeAudioSpeechOptions runtime = ModelOptionsUtils.copyToTarget(options,
+					TextToSpeechOptions.class, DashScopeAudioSpeechOptions.class);
+			result = ModelOptionsUtils.merge(runtime, result, DashScopeAudioSpeechOptions.class);
+		}
+		return ModelOptionsUtils.merge(result, this.defaultOptions, DashScopeAudioSpeechOptions.class);
 	}
 
     /**

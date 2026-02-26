@@ -15,7 +15,10 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
@@ -93,6 +96,186 @@ class DashScopeAudioTranscriptionIT {
 				.audioTranscriptionApi(transcriptionApi)
 				.defaultOptions(defaultOptions)
 				.build();
+	}
+
+	/**
+	 * Load audio resource and emit as Flux of ByteBuffer chunks (simulates streaming input).
+	 */
+	private static Flux<ByteBuffer> loadAudioAsStream(org.springframework.core.io.Resource resource, int chunkSize)
+			throws IOException {
+		byte[] bytes = resource.getInputStream().readAllBytes();
+		List<ByteBuffer> chunks = new ArrayList<>();
+		for (int i = 0; i < bytes.length; i += chunkSize) {
+			int end = Math.min(i + chunkSize, bytes.length);
+			chunks.add(ByteBuffer.wrap(Arrays.copyOfRange(bytes, i, end)));
+		}
+		return Flux.fromIterable(chunks);
+	}
+
+	private static final String AUDIO_RESOURCE_PATH = "audio/qwen-tts/stream-url-test.wav";
+
+	/**
+	 * 双向流：streamRecognition - Paraformer 实时识别
+	 *
+	 * 测试 paraformer-realtime-v2 模型的 streamRecognition 双向流功能
+	 */
+	@org.junit.jupiter.api.Test
+	void testStreamRecognition_Paraformer_RealApi() throws IOException {
+		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+				.model(AudioModel.PARAFORMER_REALTIME_V2.getValue())
+				.sampleRate(16000)
+				.format("pcm")
+				.disfluencyRemovalEnabled(false)
+				.languageHints(List.of("zh"))
+				.build();
+
+		org.springframework.core.io.Resource audioResource =
+				new org.springframework.core.io.ClassPathResource(AUDIO_RESOURCE_PATH);
+		Flux<ByteBuffer> audioStream = loadAudioAsStream(audioResource, 3200);
+
+		Flux<RecognitionResult> result = transcriptionModel.streamRecognition(audioStream, options);
+
+		List<RecognitionResult> responses = new ArrayList<>();
+		StepVerifier.create(result)
+				.thenConsumeWhile(response -> {
+					assertThat(response).isNotNull();
+					responses.add(response);
+					if (response.sentence() != null) {
+						String text = response.getText();
+						if (text != null && !text.isEmpty()) {
+							logger.info("  - Recognition: {}", text);
+						}
+						if (response.sentence().stash() != null) {
+							logger.info("  - Stash (partial): {}", response.sentence().stash().text());
+						}
+					}
+					return true;
+				})
+				.verifyComplete();
+
+		assertThat(responses).isNotEmpty();
+		logger.info("streamRecognition (Paraformer) test passed, total responses: {}", responses.size());
+	}
+
+	/**
+	 * 双向流：streamRecognition - Fun-ASR 实时识别
+	 *
+	 * 测试 fun-asr-realtime 模型的 streamRecognition 双向流功能
+	 */
+	@org.junit.jupiter.api.Test
+	void testStreamRecognition_FunAsr_RealApi() throws IOException {
+		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+				.model(AudioModel.FUN_ASR_REALTIME.getValue())
+				.sampleRate(16000)
+				.format("pcm")
+				.build();
+
+		org.springframework.core.io.Resource audioResource =
+				new org.springframework.core.io.ClassPathResource(AUDIO_RESOURCE_PATH);
+		Flux<ByteBuffer> audioStream = loadAudioAsStream(audioResource, 3200);
+
+		Flux<RecognitionResult> result = transcriptionModel.streamRecognition(audioStream, options);
+
+		List<RecognitionResult> responses = new ArrayList<>();
+		StepVerifier.create(result)
+				.thenConsumeWhile(response -> {
+					assertThat(response).isNotNull();
+					responses.add(response);
+					if (response.sentence() != null && response.getText() != null) {
+						logger.info("  - Recognition: {}", response.getText());
+					}
+					return true;
+				})
+				.verifyComplete();
+
+		assertThat(responses).isNotEmpty();
+		logger.info("streamRecognition (Fun-ASR) test passed, total responses: {}", responses.size());
+	}
+
+	/**
+	 * 双向流：streamTranslation - Gummy 长语音翻译
+	 *
+	 * 测试 gummy-realtime-v1 模型的 streamTranslation 双向流功能
+	 */
+	@org.junit.jupiter.api.Test
+	void testStreamTranslation_GummyRealtime_RealApi() throws IOException {
+		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+				.model(AudioModel.GUMMY_REALTIME_V1.getValue())
+				.sampleRate(16000)
+				.format("wav")
+				.transcriptionEnabled(true)
+				.translationEnabled(true)
+				.translationTargetLanguages(List.of("en"))
+				.build();
+
+		org.springframework.core.io.Resource audioResource =
+				new org.springframework.core.io.ClassPathResource(AUDIO_RESOURCE_PATH);
+		Flux<ByteBuffer> audioStream = loadAudioAsStream(audioResource, 3200);
+
+		Flux<TranslationRecognitionResult> result = transcriptionModel.streamTranslation(audioStream, options);
+
+		List<TranslationRecognitionResult> responses = new ArrayList<>();
+		StepVerifier.create(result)
+				.thenConsumeWhile(response -> {
+					assertThat(response).isNotNull();
+					responses.add(response);
+					if (response.getTranscriptionText() != null) {
+						logger.info("  - Transcription: {}", response.getTranscriptionText());
+					}
+					if (response.getTranslationText("en") != null) {
+						logger.info("  - Translation (en): {}", response.getTranslationText("en"));
+					}
+					return true;
+				})
+				.verifyComplete();
+
+		assertThat(responses).isNotEmpty();
+		logger.info("streamTranslation (Gummy realtime) test passed, total responses: {}", responses.size());
+	}
+
+	/**
+	 * 双向流：streamTranslationChat - Gummy 短语音翻译（单句模式）
+	 *
+	 * 测试 gummy-chat-v1 模型的 streamTranslationChat 双向流功能
+	 * 流在 sentenceEnd 后自动完成
+	 */
+	@org.junit.jupiter.api.Test
+	void testStreamTranslationChat_GummyChat_RealApi() throws IOException {
+		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+				.model(AudioModel.GUMMY_CHAT_V1.getValue())
+				.sampleRate(16000)
+				.format("wav")
+				.transcriptionEnabled(true)
+				.translationEnabled(true)
+				.translationTargetLanguages(List.of("en"))
+				.build();
+
+		org.springframework.core.io.Resource audioResource =
+				new org.springframework.core.io.ClassPathResource(AUDIO_RESOURCE_PATH);
+		Flux<ByteBuffer> audioStream = loadAudioAsStream(audioResource, 3200);
+
+		Flux<TranslationRecognitionResult> result = transcriptionModel.streamTranslationChat(audioStream, options);
+
+		List<TranslationRecognitionResult> responses = new ArrayList<>();
+		StepVerifier.create(result)
+				.thenConsumeWhile(response -> {
+					assertThat(response).isNotNull();
+					responses.add(response);
+					if (response.getTranscriptionText() != null) {
+						logger.info("  - Transcription: {}", response.getTranscriptionText());
+					}
+					if (response.getTranslationText("en") != null) {
+						logger.info("  - Translation (en): {}", response.getTranslationText("en"));
+					}
+					if (response.isSentenceEnd()) {
+						logger.info("  - Sentence end reached");
+					}
+					return true;
+				})
+				.verifyComplete();
+
+		assertThat(responses).isNotEmpty();
+		logger.info("streamTranslationChat (Gummy chat) test passed, total responses: {}", responses.size());
 	}
 
 	/**
@@ -565,7 +748,8 @@ class DashScopeAudioTranscriptionIT {
 
 			if (result.transcripts() != null) {
 				for (DashScopeAudioTranscription transcript : result.transcripts()) {
-					logger.info("  - Channel: {}, Text: {}", transcript.getMetadata().channelId(), transcript.getText());
+					Integer channelId = transcript.getMetadata() != null ? transcript.getMetadata().channelId() : null;
+					logger.info("  - Channel: {}, Text: {}", channelId, transcript.getText());
 					assertThat(transcript.getText()).isNotEmpty();
 				}
 			}
@@ -639,7 +823,8 @@ class DashScopeAudioTranscriptionIT {
 
 			if (result.transcripts() != null) {
 				for (DashScopeAudioTranscription transcript : result.transcripts()) {
-					logger.info("  - Channel: {}, Text: {}", transcript.getMetadata().channelId(), transcript.getText());
+					Integer channelId = transcript.getMetadata() != null ? transcript.getMetadata().channelId() : null;
+					logger.info("  - Channel: {}, Text: {}", channelId, transcript.getText());
 					assertThat(transcript.getText()).isNotEmpty();
 				}
 			}

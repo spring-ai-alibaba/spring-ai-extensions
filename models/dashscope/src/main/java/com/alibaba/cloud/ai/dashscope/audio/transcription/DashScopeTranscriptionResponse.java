@@ -20,6 +20,9 @@ import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscription
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Sentence;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Translation;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Usage;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.NonNull;
@@ -62,14 +65,22 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class DashScopeAudioTranscription extends AudioTranscription {
         @JsonProperty("text")
         private String text;
 
+        @JsonProperty("metadata")
         private DashScopeAudioTranscriptionMetadata metadata;
 
-        public DashScopeAudioTranscription(String text) {
-            super(text);
+        @JsonCreator
+        public DashScopeAudioTranscription(@JsonProperty("text") @JsonAlias("transcript") String text) {
+            super(text != null ? text : "");
+            this.text = text;
+        }
+
+        public void setMetadata(DashScopeAudioTranscriptionMetadata metadata) {
+            this.metadata = metadata;
         }
 
         public DashScopeAudioTranscriptionMetadata withTranscriptionMetadata(DashScopeAudioTranscriptionMetadata metadata) {

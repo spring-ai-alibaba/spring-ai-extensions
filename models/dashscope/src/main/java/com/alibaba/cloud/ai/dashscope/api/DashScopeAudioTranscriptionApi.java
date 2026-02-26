@@ -24,16 +24,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient.EventType;
-import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest;
-import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest.RequestHeader;
-import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest.RequestPayload;
-import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest.RequestPayloadInput;
-import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest.RequestPayloadParameters;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.AsrOutPut;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.AsrResponse;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.AsrResponse.Output.Result;
@@ -46,8 +39,7 @@ import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscription
 import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeTTSApiSpec.DashScopeAudioTTSRequest;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient;
-import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
+import com.alibaba.cloud.ai.dashscope.api.asr.DashScopeWebSocketAsrApi;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -103,7 +95,7 @@ public class DashScopeAudioTranscriptionApi {
 
     private final MultiValueMap<String, String> headers;
 
-	private final DashScopeWebSocketClient webSocketClient;
+	private final DashScopeWebSocketAsrApi webSocketAsrApi;
 
 	private final RestClient restClient;
 
@@ -140,17 +132,18 @@ public class DashScopeAudioTranscriptionApi {
                 .defaultStatusHandler(responseErrorHandler)
                 .build();
 
-        this.webClient = webClientBuilder.clone()
+		this.webClient = webClientBuilder.clone()
 			    .baseUrl(baseUrl)
 			    .defaultHeaders(authHeaders)
                 .build();
 
-		this.webSocketClient = new DashScopeWebSocketClient(
-			DashScopeWebSocketClientOptions.builder()
-				.apiKey(apiKey.getValue())
-				.workSpaceId(workSpaceId)
-                    .url(websocketUrl)
-				.build());
+		this.webSocketAsrApi = DashScopeWebSocketAsrApi.builder()
+				.options(com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions.builder()
+						.apiKey(apiKey.getValue())
+						.workSpaceId(workSpaceId)
+						.url(websocketUrl)
+						.build())
+				.build();
 
 		this.objectMapper = JsonMapper.builder()
 			// Deserialization configuration
@@ -240,58 +233,16 @@ public class DashScopeAudioTranscriptionApi {
     }
 
     public Flux<String> createWebSocketTask(ByteBuffer binaryData, DashScopeAudioTranscriptionOptions options) {
-        String taskId = UUID.randomUUID().toString();
-        // run-task
-        WebSocketRequest runTaskRequest = WebSocketRequest.builder()
-                .header(RequestHeader.builder()
-                        .action(EventType.RUN_TASK)
-                        .taskId(taskId)
-                        .streaming("duplex")
-                        .build())
-                .payload(RequestPayload.builder()
-                        .model(options.getModel())
-                        .task("asr")
-                        .function("recognition")
-                        .taskGroup("audio")
-                        .input(RequestPayloadInput.builder().build())
-                        .parameters(RequestPayloadParameters.builder()
-                                .sampleRate(options.getSampleRate())
-                                .format(options.getFormat())
-                                .vocabularyId(options.getVocabularyId())
-                                .sourceLanguage(options.getSourceLanguage())
-                                .transcriptionEnabled(options.getTranscriptionEnabled())
-                                .translationEnabled(options.getTranslationEnabled())
-                                .translationTargetLanguages(options.getTranslationTargetLanguages())
-                                .maxEndSilence(options.getMaxEndSilence())
-                                .multiThresholdModeEnabled(options.getMultiThresholdModeEnabled())
-                                .punctuationPredictionEnabled(options.getPunctuationPredictionEnabled())
-                                .heartbeat(options.getHeartbeat())
-                                .inverseTextNormalizationEnabled(options.getInverseTextNormalizationEnabled())
-                                .disfluencyRemovalEnabled(options.getDisfluencyRemovalEnabled())
-                                .languageHints(options.getLanguageHints())
-                                .build())
-                        .resources(options.getResources())
-                        .build())
-                .build();
-        // finish-task
-        WebSocketRequest finishTaskRequest = WebSocketRequest.builder()
-                .header(RequestHeader.builder()
-                        .action(EventType.FINISH_TASK)
-                        .taskId(taskId)
-                        .streaming("duplex")
-                        .build())
-                .payload(RequestPayload.builder()
-                        .input(RequestPayloadInput.builder()
-                                .build())
-                        .build())
-                .build();
-        try{
-            String runTaskMessage = this.objectMapper.writeValueAsString(runTaskRequest);
-            String finishTaskMessage = this.objectMapper.writeValueAsString(finishTaskRequest);
-            return this.webSocketClient.command(runTaskMessage, binaryData, finishTaskMessage);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to create WebSocket task: " + e.getMessage(), e);
-        }
+        return webSocketAsrApi.stream(binaryData, options);
+    }
+
+    /**
+     * Create WebSocket ASR task with streaming audio input (bidirectional streaming).
+     * Suitable for real-time microphone input.
+     */
+    public Flux<String> createWebSocketStreamingTask(Flux<ByteBuffer> audioStream,
+            DashScopeAudioTranscriptionOptions options) {
+        return webSocketAsrApi.stream(audioStream, options);
     }
 
     public AudioTranscriptionResponse callAsr(
@@ -348,7 +299,7 @@ public class DashScopeAudioTranscriptionApi {
                 return parseAsrResponse(asrResponse.getBody());
             } else if ("FAILED".equals(taskStatus)) {
                 throw new RuntimeException("ASR transcription task failed");
-            } else if ("PENDING".equals(taskStatus)) {
+            } else if ("PENDING".equals(taskStatus) || "RUNNING".equals(taskStatus)) {
                 attempts++;
                 try {
                     Thread.sleep(POLL_INTERVAL_MS);

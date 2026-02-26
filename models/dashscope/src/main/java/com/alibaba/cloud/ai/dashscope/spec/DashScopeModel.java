@@ -287,6 +287,7 @@ public class DashScopeModel {
         QWEN_TTS_LATEST("qwen-tts-latest"),
         QWEN_TTS_2025_05_22("qwen-tts-2025-05-22"),
         QWEN_TTS_2025_04_10("qwen-tts-2025-04-10"),
+        QWEN3_TTS_FLASH_REALTIME("qwen3-tts-flash-realtime"),
         // =============== TTS Model ===============
 
         // =============== Transcription Model ===============
