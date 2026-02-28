@@ -260,7 +260,7 @@ Multiple storage backends for managing conversation history and long-term memory
 Available starters:
 - `spring-ai-alibaba-starter-memory` (short-term memory)
 - `spring-ai-alibaba-starter-memory-long` (long-term memory)
-- Individual storage backend starters (e.g., `spring-ai-alibaba-starter-memory-redis`)
+- Individual storage backend starters (e.g., `spring-ai-alibaba-starter-model-chat-memory-repository-redis`)
 
 ### RAG
 

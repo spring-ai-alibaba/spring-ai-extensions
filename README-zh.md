@@ -258,9 +258,9 @@ MCP 提供了一个标准化协议，用于管理和路由 AI 模型上下文。
 - **Mem0**: 具有智能摘要和检索功能的高级长期记忆
 
 可用的 Starter：
-- `spring-ai-alibaba-starter-memory`（短期记忆）
-- `spring-ai-alibaba-starter-memory-long`（长期记忆）
-- 单独的存储后端 Starter（如 `spring-ai-alibaba-starter-memory-redis`）
+- `spring-ai-alibaba-starter-model-chat-memory`（短期记忆）
+- `spring-ai-alibaba-starter-model-chat-memory-long`（长期记忆）
+- 单独的存储后端 Starter（如 `spring-ai-alibaba-starter-model-chat-memory-repository-redis`）
 
 ### 检索增强生成 (RAG)
 
