@@ -17,7 +17,7 @@
 package com.alibaba.cloud.ai.model;
 
 import org.springframework.ai.model.ModelOptions;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Title rerank options.<br>
