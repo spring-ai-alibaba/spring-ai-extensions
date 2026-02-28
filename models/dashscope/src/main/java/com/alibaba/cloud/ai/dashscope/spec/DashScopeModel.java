@@ -16,8 +16,8 @@
 
 package com.alibaba.cloud.ai.dashscope.spec;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.ai.model.ChatModelDescription;
+import org.springframework.lang.NonNull;
 
 /**
  * @author yuluo

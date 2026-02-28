@@ -17,7 +17,7 @@
 package com.alibaba.cloud.ai.dashscope.video;
 
 import org.springframework.ai.model.ModelOptions;
-import org.jspecify.annotations.Nullable;
+import org.springframework.lang.Nullable;
 
 /**
  * @author yuluo, yingzi

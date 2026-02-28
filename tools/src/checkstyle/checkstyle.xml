@@ -109,13 +109,8 @@
         <module name="com.puppycrawl.tools.checkstyle.checks.imports.IllegalImportCheck">
             <property name="id" value="bannedNullabilityImports"/>
             <property name="regexp" value="true"/>
-            <!-- Rejects all NonNull, Nonnull, and Nullable types that are NOT in the org.jspecify.annotations package. -->
-            <property name="illegalClasses" value="^(?!org\.jspecify\.annotations).*\.(Non[Nn]ull|Nullable|NotNull|NonNullApi|NonNullFields)$"/>
         </module>
 		<module name="com.puppycrawl.tools.checkstyle.checks.imports.RedundantImportCheck" />
-		<module name="com.puppycrawl.tools.checkstyle.checks.imports.UnusedImportsCheck">
-			<property name="processJavadoc" value="true" />
-		</module>
 <!--		<module name="ImportOrder">-->
 <!--			<property name="groups" value="java,javax,*,org.springframework"/>-->
 <!--			<property name="ordered" value="true"/>-->

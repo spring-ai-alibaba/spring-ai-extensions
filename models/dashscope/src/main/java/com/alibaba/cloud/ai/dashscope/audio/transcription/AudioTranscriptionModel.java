@@ -20,7 +20,7 @@ import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.audio.transcription.TranscriptionModel;
 import org.springframework.core.io.Resource;
-import org.jspecify.annotations.Nullable;
+import org.springframework.lang.Nullable;
 
 /**
  * @author kevinlin09
@@ -34,6 +34,7 @@ public interface AudioTranscriptionModel extends TranscriptionModel, StreamingTr
 		AudioTranscriptionResponse transcriptionResponse = call(prompt);
 		return transcriptionResponse.getResult().getOutput();
 	}
+
 	@Nullable
 	default String call(Resource resource, AudioTranscriptionOptions options) {
 		AudioTranscriptionPrompt prompt = new AudioTranscriptionPrompt(resource, options);

@@ -16,7 +16,7 @@
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
-import org.jspecify.annotations.NonNull;
+import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -37,7 +37,8 @@ public final class DashScopeConnectionUtils {
 	private DashScopeConnectionUtils() {
 	}
 
-	public static @NonNull ResolvedConnectionProperties resolveConnectionProperties(
+    @NonNull
+	public static ResolvedConnectionProperties resolveConnectionProperties(
 			DashScopeParentProperties commonProperties, DashScopeParentProperties modelProperties, String modelType) {
 
 		String baseUrl = StringUtils.hasText(modelProperties.getBaseUrl()) ? modelProperties.getBaseUrl()

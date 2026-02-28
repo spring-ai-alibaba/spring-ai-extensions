@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@NullMarked
+@NonNullApi
+@NonNullFields
 package com.alibaba.cloud.ai.tool.observation;
 
-import org.jspecify.annotations.NullMarked;
+import org.springframework.lang.NonNullApi;
+import org.springframework.lang.NonNullFields;

@@ -15,9 +15,9 @@
  */
 package com.alibaba.cloud.ai.reader.gptrepo;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
+import org.springframework.lang.NonNull;
 
 import java.io.*;
 import java.nio.charset.Charset;

@@ -17,7 +17,6 @@ package com.alibaba.cloud.ai.dashscope.audio.tts;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.audio.tts.Speech;
@@ -27,6 +26,7 @@ import org.springframework.ai.audio.tts.TextToSpeechPrompt;
 import org.springframework.ai.audio.tts.TextToSpeechResponse;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
+import org.springframework.lang.NonNull;
 import org.springframework.retry.support.RetryTemplate;
 import reactor.core.publisher.Flux;
 

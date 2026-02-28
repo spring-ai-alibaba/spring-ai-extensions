@@ -22,9 +22,9 @@ import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscription
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Usage;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.jspecify.annotations.NonNull;
 import org.springframework.ai.audio.transcription.AudioTranscription;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 

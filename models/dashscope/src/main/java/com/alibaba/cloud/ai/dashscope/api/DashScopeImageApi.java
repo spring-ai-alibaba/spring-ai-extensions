@@ -21,13 +21,13 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageGenera
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageGenerationRequest.DashScopeImageGenerationRequestInputMessage;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageGenerationRequest.DashScopeImageGenerationRequestInputMessageContent;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageRequest;
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResponseErrorHandler;

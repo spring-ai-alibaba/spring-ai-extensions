@@ -21,8 +21,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.jspecify.annotations.Nullable;
 import io.opentelemetry.api.trace.Span;
+import org.springframework.lang.Nullable;
 
 public final class OpenTelemetrySpanBridge {
 
@@ -31,7 +31,7 @@ public final class OpenTelemetrySpanBridge {
 	private static Method toOtelMethod;
 
 	@Nullable
-	public static Span retrieveOtelSpan(TracingObservationHandler.@Nullable TracingContext tracingContext) {
+	public static Span retrieveOtelSpan(@Nullable TracingObservationHandler.TracingContext tracingContext) {
 		if (tracingContext == null) {
 			return null;
 		}
