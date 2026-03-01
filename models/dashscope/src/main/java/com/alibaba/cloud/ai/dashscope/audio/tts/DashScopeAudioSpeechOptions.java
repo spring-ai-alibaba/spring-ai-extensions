@@ -81,6 +81,9 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
     @JsonProperty("instruction")
     private String instruction;
 
+    @JsonProperty("optimize_instructions")
+    private Boolean optimizeInstructions;
+
     @JsonProperty("enable_aigc_tag")
     private Boolean enableAigcTag;
 
@@ -258,6 +261,14 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
         this.instruction = instruction;
     }
 
+    public Boolean getOptimizeInstructions() {
+        return optimizeInstructions;
+    }
+
+    public void setOptimizeInstructions(Boolean optimizeInstructions) {
+        this.optimizeInstructions = optimizeInstructions;
+    }
+
     public String getLanguageType() {
         return languageType;
     }
@@ -358,6 +369,11 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 
         public Builder instruction(String instruction) {
             this.options.instruction = instruction;
+            return this;
+        }
+
+        public Builder optimizeInstructions(Boolean optimizeInstructions) {
+            this.options.optimizeInstructions = optimizeInstructions;
             return this;
         }
 

@@ -39,12 +39,25 @@ public class DashScopeTTSApiSpec {
         @JsonProperty("input")
         private TTSInput input;
 
-        public DashScopeAudioTTSRequest(String model, String text, String voice, String languageType) {
+        @JsonProperty("stream")
+        private Boolean stream;
+
+        @JsonProperty("instructions")
+        private String instructions;
+
+        @JsonProperty("optimize_instructions")
+        private Boolean optimizeInstructions;
+
+        public DashScopeAudioTTSRequest(String model, String text, String voice, String languageType,
+                Boolean stream, String instructions, Boolean optimizeInstructions) {
             this.model = model;
             this.input = new TTSInput();
             this.input.text = text;
             this.input.voice = voice;
             this.input.languageType = languageType;
+            this.stream = stream;
+            this.instructions = instructions;
+            this.optimizeInstructions = optimizeInstructions;
         }
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -68,6 +81,9 @@ public class DashScopeTTSApiSpec {
             private String text;
             private String voice;
             private String languageType;
+            private Boolean stream;
+            private String instructions;
+            private Boolean optimizeInstructions;
 
             public Builder model(String model) {
                 this.model = model;
@@ -89,8 +105,24 @@ public class DashScopeTTSApiSpec {
                 return this;
             }
 
+            public Builder stream(Boolean stream) {
+                this.stream = stream;
+                return this;
+            }
+
+            public Builder instructions(String instructions) {
+                this.instructions = instructions;
+                return this;
+            }
+
+            public Builder optimizeInstructions(Boolean optimizeInstructions) {
+                this.optimizeInstructions = optimizeInstructions;
+                return this;
+            }
+
             public DashScopeAudioTTSRequest build() {
-                return new DashScopeAudioTTSRequest(model, text, voice, languageType);
+                return new DashScopeAudioTTSRequest(model, text, voice, languageType, stream,
+                        instructions, optimizeInstructions);
             }
         }
 

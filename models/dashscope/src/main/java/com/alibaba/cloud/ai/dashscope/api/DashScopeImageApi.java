@@ -49,6 +49,20 @@ import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN
 import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.WAN_2_6_IMAGE;
 
 /**
+ * DashScope image generation API client.
+ * <p>
+ * Model-to-path mapping (see Aliyun Bailian API docs):
+ * <ul>
+ *   <li>{@value com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants#MULTIMODAL_GENERATION_RESTFUL_URL}:
+ *   qwen-image*, z-image*, qwen-image-edit* (Qwen text-to-image/edit, Z-Image, Wanx 2.6 sync)</li>
+ *   <li>{@value com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants#IMAGE_GENERATION_RESTFUL_URL}:
+ *   wan2.6-image (Wanx 2.6 async)</li>
+ *   <li>{@value com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants#TEXT2IMAGE_RESTFUL_URL}:
+ *   wan2.5-t2i-preview, wan2.2-t2i-*, wanx2.1-t2i-*, wanx2.0-t2i-turbo, wanx-v1 (Wanx text-to-image V2 legacy)</li>
+ *   <li>{@value com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants#IMAGE2IMAGE_RESTFUL_URL}:
+ *   qwen-mt-image (Qwen image translation)</li>
+ * </ul>
+ *
  * @author nuocheng.lxm
  * @author yuluo-yx
  * @author Soryu
@@ -112,17 +126,9 @@ public class DashScopeImageApi {
 	public ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> submitImageGenTask(DashScopeApiSpec.DashScopeImageRequest request) {
 
 		String model = request.model();
-        String imagesUri = this.imagesPath;
-        Object requestBody = request;
-
-        if (model.startsWith("qwen-image") || model.startsWith("z-image")) {
-			imagesUri = MULTIMODAL_GENERATION_RESTFUL_URL;
-        }else if(model.equals(WAN_2_6_IMAGE.getValue())) {
-            imagesUri = IMAGE_GENERATION_RESTFUL_URL;
-            requestBody = convertToImageGenerationRequest(request);
-        } else if (model.equals(QWEN_MT_IMAGE.getValue()) || model.contains("edit")) {
-			imagesUri = IMAGE2IMAGE_RESTFUL_URL;
-        }
+		ImageApiPath path = resolveImagePath(model);
+		String imagesUri = path.uri;
+		Object requestBody = path.needImageGenerationBody ? convertToImageGenerationRequest(request) : request;
 
 		return this.restClient.post()
 			.uri(imagesUri)
@@ -130,6 +136,37 @@ public class DashScopeImageApi {
 			.body(requestBody)
 			.retrieve()
 			.toEntity(DashScopeApiSpec.DashScopeImageAsyncResponse.class);
+	}
+
+	/**
+	 * Resolves API path and request body type from model name.
+	 * Mapping per Aliyun Bailian: text-to-image, image-to-image, multimodal, image-generation docs.
+	 */
+	private ImageApiPath resolveImagePath(String model) {
+		// wan2.6-image: Wanx 2.6 async -> image-generation/generation + dedicated request body
+		if (WAN_2_6_IMAGE.getValue().equals(model)) {
+			return new ImageApiPath(IMAGE_GENERATION_RESTFUL_URL, true);
+		}
+		// qwen-mt-image: Qwen image translation -> image2image/image-synthesis
+		if (QWEN_MT_IMAGE.getValue().equals(model)) {
+			return new ImageApiPath(IMAGE2IMAGE_RESTFUL_URL, false);
+		}
+		// qwen-image*, z-image* (incl. qwen-image-edit*): Qwen text-to-image/edit, Z-Image -> multimodal-generation/generation
+		if (model.startsWith("qwen-image") || model.startsWith("z-image")) {
+			return new ImageApiPath(MULTIMODAL_GENERATION_RESTFUL_URL, false);
+		}
+		// Wanx 2.5 and below, wanx series: text2image/image-synthesis
+		return new ImageApiPath(this.imagesPath, false);
+	}
+
+	private static final class ImageApiPath {
+		final String uri;
+		final boolean needImageGenerationBody;
+
+		ImageApiPath(String uri, boolean needImageGenerationBody) {
+			this.uri = uri;
+			this.needImageGenerationBody = needImageGenerationBody;
+		}
 	}
 
     private DashScopeImageGenerationRequest convertToImageGenerationRequest(DashScopeImageRequest request) {

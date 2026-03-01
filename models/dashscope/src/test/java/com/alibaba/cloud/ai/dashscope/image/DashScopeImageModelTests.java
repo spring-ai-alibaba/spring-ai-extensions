@@ -175,6 +175,28 @@ class DashScopeImageModelTests {
 		when(dashScopeImageApi.getImageGenTaskResult(TEST_TASK_ID)).thenReturn(ResponseEntity.ok(failedResponse));
 	}
 
+	@Test
+	void testImageGenerationTimeout() {
+		mockTimeoutImageGeneration();
+		DashScopeImageModel shortPollModel = DashScopeImageModel.builder()
+				.dashScopeApi(dashScopeImageApi)
+				.defaultOptions(defaultOptions)
+				.retryTemplate(RetryTemplate.builder().build())
+				.observationRegistry(ObservationRegistry.NOOP)
+				.pollIntervalMs(20)
+				.pollTimeoutMs(80)
+				.build();
+
+		ImagePrompt prompt = new ImagePrompt(TEST_PROMPT);
+		ImageResponse response = shortPollModel.call(prompt);
+
+		assertThat(response.getResults()).isEmpty();
+		Object status = response.getMetadata().get("taskStatus");
+		Object taskIdMeta = response.getMetadata().get("taskId");
+		assertThat(status).isEqualTo("TIMED_OUT");
+		assertThat(taskIdMeta).isEqualTo(TEST_TASK_ID);
+	}
+
 	private void mockTimeoutImageGeneration() {
 		// Mock successful task submission but pending status until timeout
 		DashScopeImageAsyncResponse submitResponse = new DashScopeImageAsyncResponse(TEST_REQUEST_ID,

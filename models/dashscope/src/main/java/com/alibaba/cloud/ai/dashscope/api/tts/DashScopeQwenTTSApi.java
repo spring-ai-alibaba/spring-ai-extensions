@@ -107,6 +107,9 @@ public class DashScopeQwenTTSApi {
 				.text(text)
 				.voice(options.getVoice())
 				.languageType(options.getLanguageType())
+				.stream(false)
+				.instructions(options.getInstruction())
+				.optimizeInstructions(options.getOptimizeInstructions())
 				.build();
 
 		ResponseEntity<DashScopeAudioTTSResponse> response = restClient.post()
@@ -128,6 +131,9 @@ public class DashScopeQwenTTSApi {
 				.text(text)
 				.voice(options.getVoice())
 				.languageType(options.getLanguageType())
+				.stream(true)
+				.instructions(options.getInstruction())
+				.optimizeInstructions(options.getOptimizeInstructions())
 				.build();
 
 		Predicate<String> SSE_DONE_PREDICATE = "[DONE]"::equals;
