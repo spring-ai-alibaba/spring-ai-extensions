@@ -42,7 +42,6 @@ import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.util.JacksonUtils;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.retry.support.RetryTemplate;
 import reactor.core.publisher.Flux;
 
@@ -176,62 +175,6 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
                             return new DashScopeTranscriptionResponse(sentence, usage);
                         } else {
                             throw new IllegalArgumentException("Model " + options.getModel() + " is not supported stream method.");
-                        }
-
-                    } catch (JsonProcessingException e) {
-                        logger.error("Failed to parse WebSocket response: {}", response, e);
-                        throw new RuntimeException(e);
-                    }
-                }
-        );
-    }
-
-    /**
-     * Stream audio transcription with real-time audio input.
-     * This method accepts a Flux of DataBuffer for streaming audio transcription,
-     * enabling lower latency and reduced memory footprint for real-time scenarios.
-     *
-     * @param audioFlux the streaming audio data as Flux&lt;DataBuffer&gt;
-     * @param options the transcription options
-     * @return Flux of AudioTranscriptionResponse with transcription results
-     */
-    @Override
-    public Flux<AudioTranscriptionResponse> stream(Flux<DataBuffer> audioFlux,
-            DashScopeAudioTranscriptionOptions options) {
-        // Merge with default options
-        DashScopeAudioTranscriptionOptions mergedOptions = ModelOptionsUtils.merge(
-                options, this.defaultOptions, DashScopeAudioTranscriptionOptions.class);
-
-        // Convert DataBuffer to ByteBuffer
-        Flux<ByteBuffer> byteBufferFlux = audioFlux.map(DataBuffer::asByteBuffer);
-
-        // Delegate to API layer
-        return audioTranscriptionApi.createStreamingWebSocketTask(byteBufferFlux, mergedOptions).map(
-                response -> {
-                    try {
-                        logger.debug("Raw WebSocket response: {}", response);
-                        JsonNode jsonNode = mapper.readTree(response).get("payload").get("output");
-                        if (DashScopeAudioApiConstants.QWEN3_LONG_SHORT_TRANSLATE_LIST.contains(mergedOptions.getModel())) {
-                            JsonNode translationsNode = jsonNode.get("translations");
-                            JsonNode transcriptionNode = jsonNode.get("transcription");
-                            logger.debug("translationsNode: {}", translationsNode);
-                            logger.debug("transcriptionNode: {}", transcriptionNode);
-
-                            List<Translation> translations = mapper.convertValue(translationsNode, new TypeReference<>() {});
-                            DashScopeAudioTranscription transcription = mapper.convertValue(transcriptionNode, new TypeReference<>() {});
-                            return new DashScopeTranscriptionResponse(translations, transcription);
-                        } else if (DashScopeAudioApiConstants.PARAFORMER_FUNAS_LIST.contains(mergedOptions.getModel())) {
-                            JsonNode sentenceNode = jsonNode.get("sentence");
-                            JsonNode usageNode = jsonNode.get("usage");
-
-                            logger.debug("sentenceNode: {}", sentenceNode);
-                            logger.debug("usageNode: {}", usageNode);
-
-                            Sentence sentence = mapper.convertValue(sentenceNode, new TypeReference<>() {});
-                            Usage usage = mapper.convertValue(usageNode, new TypeReference<>() {});
-                            return new DashScopeTranscriptionResponse(sentence, usage);
-                        } else {
-                            throw new IllegalArgumentException("Model " + mergedOptions.getModel() + " is not supported stream method.");
                         }
 
                     } catch (JsonProcessingException e) {

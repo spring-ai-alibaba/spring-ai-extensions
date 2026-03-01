@@ -21,7 +21,6 @@ import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.model.StreamingModel;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.buffer.DataBuffer;
 import reactor.core.publisher.Flux;
 
 /**
@@ -30,6 +29,7 @@ import reactor.core.publisher.Flux;
  * @author xuguan
  * @since 1.1.0.0
  */
+@FunctionalInterface
 public interface StreamingTranscriptionModel extends StreamingModel<AudioTranscriptionPrompt, AudioTranscriptionResponse> {
 
 	default Flux<String> stream(Resource audioResource) {
@@ -45,6 +45,4 @@ public interface StreamingTranscriptionModel extends StreamingModel<AudioTranscr
 	}
 
 	Flux<AudioTranscriptionResponse> stream(AudioTranscriptionPrompt prompt);
-
-    Flux<AudioTranscriptionResponse> stream(Flux<DataBuffer> audioFlux, DashScopeAudioTranscriptionOptions options);
 }

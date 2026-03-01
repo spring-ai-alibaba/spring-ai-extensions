@@ -15,13 +15,6 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,9 +33,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.model.SimpleApiKey;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DefaultDataBuffer;
-import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -856,136 +846,6 @@ class DashScopeAudioTranscriptionIT {
 		// 验证至少收到了一些响应
 		assertThat(responses).isNotEmpty();
 		logger.info("Qwen-ASR stream test passed, total chunks: {}", responses.size());
-	}
-
-	/**
-	 * Streaming audio transcription test using Flux<DataBuffer>.
-	 * Tests real-time transcription by splitting an audio file into chunks.
-	 *
-	 * <p>This test downloads a test audio file, splits it into chunks,
-	 * and streams it through the new stream(Flux<DataBuffer>, options) method.</p>
-	 */
-	@org.junit.jupiter.api.Test
-	void testStreamingAudioTranscription_RealApi() throws IOException, InterruptedException {
-		// Arrange - Download test audio file
-		byte[] audioData = downloadTestAudio(PARAFORMER_TEST_AUDIO_URL_1);
-		logger.info("Downloaded test audio: {} bytes", audioData.length);
-
-		// Split audio into chunks (simulating real-time streaming)
-		int chunkSize = 3200; // ~100ms at 16kHz PCM
-		List<byte[]> chunks = splitAudioIntoChunks(audioData, chunkSize);
-		logger.info("Split audio into {} chunks", chunks.size());
-
-		// Create Flux of DataBuffers
-		DefaultDataBufferFactory bufferFactory = new DefaultDataBufferFactory();
-		Flux<DataBuffer> audioStream = Flux.fromIterable(chunks)
-				.map(chunk -> {
-					DefaultDataBuffer buffer = bufferFactory.wrap(chunk);
-					return buffer;
-				});
-
-		// Arrange - Configure transcription options
-        DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
-                .model(AudioModel.PARAFORMER_REALTIME_V2.getValue())
-                .sampleRate(16000)
-                .format("pcm")
-                .disfluencyRemovalEnabled(false)
-                .languageHints(List.of("zh")) // 可以改为en
-                .vocabularyId(null) // 待传入
-                .resources(null) // 待传入
-                .build();
-
-		// Act - Stream transcription
-		Flux<AudioTranscriptionResponse> responses = transcriptionModel.stream(audioStream, options);
-
-	// Assert - Collect and verify responses
-		List<DashScopeTranscriptionResponse> responseList = new ArrayList<>();
-		StepVerifier.create(responses)
-				.thenConsumeWhile(response -> {
-					assertThat(response).isNotNull();
-					assertThat(response).isInstanceOf(DashScopeTranscriptionResponse.class);
-
-					DashScopeTranscriptionResponse r = (DashScopeTranscriptionResponse) response;
-					responseList.add(r);
-
-					Sentence sentence = r.getMetadata().getSentence();
-					logger.info("WebSocket response received: {}", sentence.text());
-
-					return true;
-				})
-				.verifyComplete();
-
-		assertThat(responseList).isNotEmpty();
-		logger.info("Streaming audio transcription test passed, total responses: {}", responseList.size());
-	}
-
-	/**
-	 * Unit test for backpressure handling.
-	 * Verifies that slow WebSocket processing applies backpressure to upstream audio source.
-	 */
-	@org.junit.jupiter.api.Test
-	void testStreamingAudioBackpressure() {
-		// This test verifies backpressure without making actual API calls
-		// In a real scenario, if the WebSocket can't keep up with the audio source,
-		// the Flux should naturally apply backpressure
-
-		DefaultDataBufferFactory bufferFactory = new DefaultDataBufferFactory();
-		List<DataBuffer> chunks = new ArrayList<>();
-		for (int i = 0; i < 10; i++) {
-			byte[] chunk = new byte[3200]; // Dummy audio data
-			chunks.add(bufferFactory.wrap(chunk));
-		}
-
-		Flux<DataBuffer> audioStream = Flux.fromIterable(chunks);
-
-		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
-				.model(AudioModel.PARAFORMER_V2.getValue())
-				.format("wav")
-				.sampleRate(16000)
-				.build();
-
-		// Note: This will fail without proper API key, but demonstrates the API structure
-		Flux<AudioTranscriptionResponse> responses = transcriptionModel.stream(audioStream, options);
-
-		// Verify the Flux is properly constructed (actual API call requires valid key)
-		assertThat(responses).isNotNull();
-		logger.info("Backpressure test API structure verified");
-	}
-
-	/**
-	 * Helper method to download test audio file.
-	 */
-	private byte[] downloadTestAudio(String urlString) throws IOException, InterruptedException {
-		HttpClient client = HttpClient.newHttpClient();
-		HttpRequest request = HttpRequest.newBuilder()
-				.uri(URI.create(urlString))
-				.GET()
-				.build();
-
-		HttpResponse<InputStream> response = client.send(request,
-				HttpResponse.BodyHandlers.ofInputStream());
-
-		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		int nRead;
-		byte[] data = new byte[16384];
-		while ((nRead = response.body().read(data, 0, data.length)) != -1) {
-			buffer.write(data, 0, nRead);
-		}
-		return buffer.toByteArray();
-	}
-
-	/**
-	 * Helper method to split audio data into chunks.
-	 */
-	private List<byte[]> splitAudioIntoChunks(byte[] audioData, int chunkSize) {
-		List<byte[]> chunks = new ArrayList<>();
-		for (int i = 0; i < audioData.length; i += chunkSize) {
-			int remainingLength = Math.min(chunkSize, audioData.length - i);
-			byte[] chunk = new byte[remainingLength];
-			System.arraycopy(audioData, i, chunk, 0, remainingLength);
-			chunks.add(chunk);
-		}
-		return chunks;
 	}
 
 }

@@ -35,48 +35,6 @@ import java.util.List;
 /**
  * Audio Speech: input text, output audio.
  *
- * <p>This model supports two TTS modes:
- * <ul>
- *   <li>File-based synthesis using {@link #stream(TextToSpeechPrompt)} - processes complete text at once</li>
- *   <li>Streaming synthesis using {@link #stream(Flux, DashScopeAudioSpeechOptions)} - processes text chunks in real-time</li>
- * </ul>
- *
- * <p><b>Streaming Text Example:</b>
- * <pre>{@code
- * // Create a Flux of text chunks from a source (e.g., LLM output, user input)
- * Flux<String> textStream = Flux.just("Hello", " world", "!");
- *
- * // Configure TTS options for CosyVoice model
- * DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()
- *     .model("cosyvoice-v1")
- *     .voice("longxiaochun")
- *     .build();
- *
- * // Stream synthesis
- * Flux<TextToSpeechResponse> responses = speechModel.stream(textStream, options);
- *
- * // Subscribe to process audio data
- * responses.subscribe(response -> {
- *     response.getSpeech().forEach(speech -> {
- *         Files.write(Paths.get("output.mp3"), speech.getBytes());
- *     });
- * });
- * }</pre>
- *
- * <p><b>Recommended Text Chunk Sizes:</b>
- * For optimal streaming performance, send text chunks representing complete phrases or sentences.
- * CosyVoice handles word boundaries internally, so chunk boundaries should align with natural pauses
- * (e.g., punctuation marks, clause boundaries).
- *
- * <p><b>Model Requirements:</b>
- * Streaming text input is only supported for CosyVoice models that support duplex mode:
- * <ul>
- *   <li>cosyvoice-v1</li>
- *   <li>cosyvoice-v1-longxiaochun</li>
- *   <li>cosyvoice-v1-zhibo</li>
- *   <li>cosyvoice-v1-ruiling</li>
- * </ul>
- *
  * @author kevinlin09, xuguan, yingzi
  */
 public class DashScopeAudioSpeechModel implements TextToSpeechModel {
@@ -136,35 +94,6 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
             return new TextToSpeechResponse(List.of(new Speech(data)));
         });
 	}
-
-    /**
-     * Stream text-to-speech with real-time text input.
-     * This method accepts a Flux of String for streaming TTS,
-     * enabling lower latency and reduced memory footprint for real-time scenarios.
-     *
-     * @param textFlux the streaming text data as Flux&lt;String&gt;
-     * @param options the TTS options
-     * @return Flux of TextToSpeechResponse with audio data
-     * @throws IllegalArgumentException if model is not a CosyVoice duplex model
-     */
-    public Flux<TextToSpeechResponse> stream(Flux<String> textFlux, DashScopeAudioSpeechOptions options) {
-        // Merge with default options
-        DashScopeAudioSpeechOptions mergedOptions = ModelOptionsUtils.merge(
-                options, this.defaultOptions, DashScopeAudioSpeechOptions.class);
-
-        if (!DashScopeAudioApiConstants.COSY_VOICE_MODEL_LIST.contains(options.getModel())) {
-            throw new IllegalArgumentException(
-                    "Model " + options.getModel() + " does not support streaming text input. " +
-                            "Only CosyVoice models support duplex mode for streaming text.");
-        }
-        // Delegate to API layer
-        return audioSpeechApi.createStreamingWebSocketTask(textFlux, mergedOptions)
-                .map(byteBuffer -> {
-                    byte[] data = new byte[byteBuffer.remaining()];
-                    byteBuffer.get(data);
-                    return new TextToSpeechResponse(List.of(new Speech(data)));
-                });
-    }
 
 	private DashScopeAudioSpeechOptions mergeOptions(TextToSpeechPrompt prompt) {
 		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder().build();

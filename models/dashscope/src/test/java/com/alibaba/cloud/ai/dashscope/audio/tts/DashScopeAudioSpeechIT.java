@@ -104,7 +104,7 @@ class DashScopeAudioSpeechIT {
 //
 //		// Act
 //		TextToSpeechPrompt prompt = new TextToSpeechPrompt(TEST_TEXT, options);
-//		Flux<TextToSpeechResponse> result = speechModel.stream(prompt);
+//		Flux<TextToDashScopeAudioTTSResponse> result = speechModel.stream(prompt);
 //
 //		List<byte[]> speechChunks = new ArrayList<>();
 //
@@ -294,63 +294,5 @@ class DashScopeAudioSpeechIT {
 		}
 		logger.info("Qwen3-tts-flash stream test passed");
 	}
-
-	/**
-	 * Streaming text TTS test using Flux<String>.
-	 * Tests real-time text-to-speech by splitting text into chunks.
-	 *
-	 * <p>This test splits the test text into chunks and streams it through
-	 * the new stream(Flux<String>, options) method.</p>
-     * CosyVoice Model 有问题，待修复
-	 */
-//	@org.junit.jupiter.api.Test
-//	void testStreamingTextTts_RealApi() {
-//		// Arrange - Configure CosyVoice model options
-//		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()
-//				.model(AudioModel.COSYVOICE_V3_FLASH.getValue())
-//				.textType("PlainText")
-//				.voice("longanyang")
-//				.format("mp3")
-//				.sampleRate(22050)
-//				.volume(50)
-//				.rate(1f)
-//				.pitch(1f)
-//				.build();
-//
-//		// Arrange - Split text into chunks (simulating real-time streaming)
-//		String[] textChunks = {"那我来给大家推荐一款T恤，", "这款呢真的是超级好看"};
-//		Flux<String> textStream = Flux.fromArray(textChunks);
-//
-//		// Act - Stream TTS
-//		Flux<TextToSpeechResponse> responses = speechModel.stream(textStream, options);
-//
-//		// Assert - Collect and verify responses
-//		List<byte[]> speechChunks = new ArrayList<>();
-//		StepVerifier.create(responses)
-//				.thenConsumeWhile(response -> {
-//					assertThat(response).isNotNull();
-//					Speech speech = response.getResult();
-//					speechChunks.add(speech.getOutput());
-//					logger.info("Received audio chunk: {} bytes", speech.getOutput().length);
-//					return true;
-//				})
-//				.verifyComplete();
-//
-//		// Save merged audio file
-//		if (!speechChunks.isEmpty()) {
-//			String outputPath = "src/test/resources/audio/websocket/cosyvoice-streaming-text-test.mp3";
-//			try {
-//				AudioUtils.saveAudioFromByteChunks(speechChunks, outputPath);
-//				logger.info("Streaming text TTS test passed, audio saved to: {}",
-//						Paths.get(outputPath).toAbsolutePath());
-//			}
-//			catch (IOException e) {
-//				logger.error("Failed to save audio: {}", e.getMessage());
-//			}
-//		}
-//		else {
-//			logger.warn("No audio chunks received");
-//		}
-//	}
 
 }

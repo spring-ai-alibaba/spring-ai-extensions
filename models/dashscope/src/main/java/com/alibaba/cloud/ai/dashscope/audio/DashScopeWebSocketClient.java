@@ -17,8 +17,6 @@ package com.alibaba.cloud.ai.dashscope.audio;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -50,11 +48,6 @@ import org.springframework.ai.util.JacksonUtils;
 import org.springframework.util.ObjectUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-import reactor.core.Disposable;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 /**
  * @author kevinlin09, xuguan, yingzi
@@ -80,12 +73,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
     private String finishTaskMessage;
 
     private ByteBuffer binaryData;
-
-    private Flux<ByteBuffer> streamingAudioData;
-
-    private Flux<String> streamingTextData;
-
-    private Disposable streamingSubscription;
 
 	public DashScopeWebSocketClient(DashScopeWebSocketClientOptions options) {
 		this.options = options;
@@ -157,63 +144,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
         }, FluxSink.OverflowStrategy.BUFFER);
     }
 
-    /**
-     * Stream binary audio data using event-driven duplex flow for real-time transcription.
-     * This implements the official protocol specification:
-     * 1. Send run-task
-     * 2. Wait for task-started event
-     * 3. Subscribe to audio Flux and send chunks as they arrive
-     * 4. Send finish-task when Flux completes
-     * 5. Wait for task-finished event
-     *
-     * @param runTaskMessage the run-task JSON message
-     * @param audioFlux the streaming audio data as Flux&lt;ByteBuffer&gt;
-     * @param finishTaskMessage the finish-task JSON message
-     * @return the transcription response flux
-     */
-    public Flux<String> streamingCommand(String runTaskMessage, Flux<ByteBuffer> audioFlux,
-            String finishTaskMessage) {
-        this.streamingAudioData = audioFlux;
-        this.finishTaskMessage = finishTaskMessage;
-
-        return Flux.<String>create(emitter -> {
-            this.textEmitter = emitter;
-
-            // Send run-task first
-            logger.info("Event-driven : Sending run-task message for streaming audio");
-            sendText(runTaskMessage);
-        }, FluxSink.OverflowStrategy.BUFFER);
-    }
-
-    /**
-     * Stream text data using event-driven duplex flow for real-time TTS.
-     * This implements the CosyVoice protocol specification:
-     * 1. Send run-task (with empty text)
-     * 2. Wait for task-started event
-     * 3. Send continue-task message
-     * 4. Subscribe to text Flux and send chunks as they arrive
-     * 5. Send finish-task when Flux completes
-     * 6. Wait for task-finished event
-     *
-     * @param runTaskMessage the run-task JSON message
-     * @param textFlux the streaming text data as Flux&lt;String&gt;
-     * @param finishTaskMessage the finish-task JSON message
-     * @return the audio data flux
-     */
-    public Flux<ByteBuffer> streamingCommandText(String runTaskMessage, Flux<String> textFlux,
-            String finishTaskMessage) {
-        this.streamingTextData = textFlux;
-        this.finishTaskMessage = finishTaskMessage;
-
-        return Flux.<ByteBuffer>create(emitter -> {
-            this.binaryEmitter = emitter;
-
-            // Send run-task first
-            logger.info("Event-driven : Sending run-task message for streaming text");
-            sendText(runTaskMessage);
-        }, FluxSink.OverflowStrategy.BUFFER);
-    }
-
 	public void sendText(String text) {
         if (!isOpen.get()) {
             establishWebSocketClient();
@@ -249,54 +179,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		}
 	}
 
-	private void subscribeToStreamingAudio() {
-        logger.info("Subscribing to streaming audio data");
-        this.streamingSubscription = this.streamingAudioData
-            .doOnNext(chunk -> {
-                logger.debug("Sending audio chunk: {} bytes", chunk.remaining());
-                sendBinary(chunk);
-            })
-            .doOnComplete(() -> {
-                logger.info("Audio stream completed, sending finish-task");
-                if (this.finishTaskMessage != null) {
-                    sendText(this.finishTaskMessage);
-                }
-            })
-            .doOnError(error -> {
-                logger.error("Audio stream error: {}", error.getMessage(), error);
-                emittersError("stream error", error);
-            })
-            .subscribe();
-    }
-
-    private void subscribeToStreamingText() {
-        logger.info("Subscribing to streaming text data");
-        this.streamingSubscription = this.streamingTextData
-            .doOnNext(chunk -> {
-                logger.debug("Sending text chunk: {}", chunk);
-                // Send text chunk as JSON with input.text field
-                try {
-                    String textChunkJson = String.format("{\"input\":{\"text\":\"%s\"}}",
-                        chunk.replace("\\", "\\\\").replace("\"", "\\\""));
-                    sendText(textChunkJson);
-                } catch (Exception e) {
-                    logger.error("Failed to send text chunk: {}", chunk, e);
-                    emittersError("text chunk error", e);
-                }
-            })
-            .doOnComplete(() -> {
-                logger.info("Text stream completed, sending finish-task");
-                if (this.finishTaskMessage != null) {
-                    sendText(this.finishTaskMessage);
-                }
-            })
-            .doOnError(error -> {
-                logger.error("Text stream error: {}", error.getMessage(), error);
-                emittersError("stream error", error);
-            })
-            .subscribe();
-    }
-
 	private void establishWebSocketClient() {
 		HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
 		logging.setLevel(HttpLoggingInterceptor.Level.valueOf(Constants.DEFAULT_HTTP_LOGGING_LEVEL));
@@ -305,33 +187,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		dispatcher.setMaxRequestsPerHost(Constants.DEFAULT_MAXIMUM_ASYNC_REQUESTS_PER_HOST);
 
 		OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
-
-		// 添加SSL配置以解决握手问题
-		try {
-			SSLContext sslContext = SSLContext.getInstance("TLS");
-			X509TrustManager trustManager = new X509TrustManager() {
-				@Override
-				public void checkClientTrusted(X509Certificate[] chain, String authType) {
-				}
-
-				@Override
-				public void checkServerTrusted(X509Certificate[] chain, String authType) {
-				}
-
-				@Override
-				public X509Certificate[] getAcceptedIssuers() {
-					return new X509Certificate[0];
-				}
-			};
-
-			sslContext.init(null, new TrustManager[]{trustManager}, new SecureRandom());
-
-			clientBuilder.sslSocketFactory(sslContext.getSocketFactory(), trustManager)
-				.hostnameVerifier((hostname, session) -> true);
-		} catch (Exception e) {
-			logger.warn("Failed to configure custom SSL context, using default: {}", e.getMessage());
-		}
-
 		clientBuilder.connectTimeout(Constants.DEFAULT_CONNECT_TIMEOUT)
 			.readTimeout(Constants.DEFAULT_READ_TIMEOUT)
 			.writeTimeout(Constants.DEFAULT_WRITE_TIMEOUT)
@@ -415,12 +270,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
                         sendBinary(this.binaryData);
                         sendText(this.finishTaskMessage);
                     }
-                    if (this.streamingAudioData != null) {
-                        subscribeToStreamingAudio();
-                    }
-                    if (this.streamingTextData != null) {
-                        subscribeToStreamingText();
-                    }
 					break;
                 case RESULT_GENERATED:
                     logger.debug("result generated: text={}", text);
@@ -461,10 +310,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	}
 
 	private void emittersComplete(String event) {
-		if (this.streamingSubscription != null && !this.streamingSubscription.isDisposed()) {
-			logger.info("disposing streaming subscription on {}", event);
-			this.streamingSubscription.dispose();
-		}
 		if (this.binaryEmitter != null && !this.binaryEmitter.isCancelled()) {
 			logger.info("binary emitter handling: complete on {}", event);
 			this.binaryEmitter.complete();
@@ -477,10 +322,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	}
 
 	private void emittersError(String event, Throwable t) {
-		if (this.streamingSubscription != null && !this.streamingSubscription.isDisposed()) {
-			logger.info("disposing streaming subscription on {}", event);
-			this.streamingSubscription.dispose();
-		}
 		if (this.binaryEmitter != null && !this.binaryEmitter.isCancelled()) {
 			logger.info("binary emitter handling: error on {}", event);
 			this.binaryEmitter.error(t);

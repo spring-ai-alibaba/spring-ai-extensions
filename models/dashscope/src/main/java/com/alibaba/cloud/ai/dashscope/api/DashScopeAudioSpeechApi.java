@@ -253,65 +253,6 @@ public class DashScopeAudioSpeechApi {
         }
     }
 
-    /**
-     * Create a streaming WebSocket task for real-time text-to-speech.
-     * Text data is sent in chunks as it arrives via the provided Flux.
-     * Only supports CosyVoice models with duplex mode.
-     *
-     * @param textFlux streaming text data as Flux&lt;String&gt;
-     * @param options TTS options
-     * @return Flux of ByteBuffer containing audio data
-     * @throws IllegalArgumentException if model is not a CosyVoice duplex model
-     */
-    public Flux<ByteBuffer> createStreamingWebSocketTask(Flux<String> textFlux,
-            DashScopeAudioSpeechOptions options) {
-        // Validate that model supports duplex mode
-        if (!DashScopeAudioApiConstants.COSY_VOICE_MODEL_LIST.contains(options.getModel())) {
-            throw new IllegalArgumentException(
-                "Model " + options.getModel() + " does not support streaming text input. " +
-                "Only CosyVoice models support duplex mode for streaming text.");
-        }
-
-        String taskId = UUID.randomUUID().toString();
-        // run-task - with empty text for streaming
-        WebSocketRequest runTaskRequest = WebSocketRequest.builder()
-                .header(WebSocketRequest.RequestHeader.builder()
-                        .action(EventType.RUN_TASK)
-                        .taskId(taskId)
-                        .streaming("duplex")
-                        .build())
-                .payload(WebSocketRequest.RequestPayload.builder()
-                        .model(options.getModel())
-                        .taskGroup("audio")
-                        .task("tts")
-                        .function("SpeechSynthesizer")
-                        .input(WebSocketRequest.RequestPayloadInput.builder()
-                                .build())
-                        .parameters(WebSocketRequest.RequestPayloadParameters
-                                .speechOptionsConvertReq(options))
-                        .build())
-                .build();
-        // finish-task
-        WebSocketRequest finishTaskRequest = WebSocketRequest.builder()
-                .header(RequestHeader.builder()
-                        .action(EventType.FINISH_TASK)
-                        .taskId(taskId)
-                        .streaming("duplex")
-                        .build())
-                .payload(RequestPayload.builder()
-                        .input(RequestPayloadInput.builder()
-                                .build())
-                        .build())
-                .build();
-        try {
-            String runTaskMessage = this.objectMapper.writeValueAsString(runTaskRequest);
-            String finishTaskMessage = this.objectMapper.writeValueAsString(finishTaskRequest);
-            return this.webSocketClient.streamingCommandText(runTaskMessage, textFlux, finishTaskMessage);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to create streaming WebSocket task: " + e.getMessage(), e);
-        }
-    }
-
     public Builder mutate() {
         return new Builder(this);
     }
