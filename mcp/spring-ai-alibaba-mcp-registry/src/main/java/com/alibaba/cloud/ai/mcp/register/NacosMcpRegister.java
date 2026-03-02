@@ -169,6 +169,12 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 				List<McpTool> toolsToNacosList = JacksonUtils.toObj(toolsStr, new TypeReference<>() {
 				});
 				mcpToolSpec.setTools(toolsToNacosList);
+                for (McpTool tool : toolsToNacosList) {
+                    McpToolMeta toolMeta = new McpToolMeta();
+                    toolMeta.setEnabled(true);  // 默认启用所有工具
+                    this.toolsMeta.put(tool.getName(), toolMeta);
+                }
+                mcpToolSpec.setToolsMeta(this.toolsMeta);
 			}
 			ServerVersionDetail serverVersionDetail = new ServerVersionDetail();
 			serverVersionDetail.setVersion(this.serverInfo.version());
