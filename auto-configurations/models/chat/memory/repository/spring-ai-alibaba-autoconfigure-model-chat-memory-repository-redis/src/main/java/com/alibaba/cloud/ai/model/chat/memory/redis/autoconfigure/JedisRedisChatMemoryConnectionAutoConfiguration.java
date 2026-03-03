@@ -16,10 +16,10 @@
 
 package com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure;
 
-import com.alibaba.cloud.ai.autoconfigure.memory.ChatMemoryAutoConfiguration;
+import com.alibaba.cloud.ai.memory.redis.JedisRedisChatMemoryRepository;
+import com.alibaba.cloud.ai.model.chat.memory.autoconfigure.ChatMemoryAutoConfiguration;
 import com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure.model.RedisChatMemoryCluster;
 import com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure.model.RedisChatMemoryStandalone;
-import com.alibaba.cloud.ai.memory.redis.JedisRedisChatMemoryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;

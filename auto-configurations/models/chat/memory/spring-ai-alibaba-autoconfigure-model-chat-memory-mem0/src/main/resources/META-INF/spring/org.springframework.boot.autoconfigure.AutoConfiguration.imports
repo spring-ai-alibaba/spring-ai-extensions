@@ -13,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-com.alibaba.cloud.ai.model.chat.memory.autoconfigure.ChatMemoryAutoConfiguration
+com.alibaba.cloud.ai.model.chat.memory.mem0.autoconfigure.Mem0ChatMemoryAutoConfiguration
