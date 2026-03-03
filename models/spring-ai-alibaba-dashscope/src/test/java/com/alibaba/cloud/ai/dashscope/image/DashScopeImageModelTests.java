@@ -181,7 +181,7 @@ class DashScopeImageModelTests {
 		DashScopeImageModel shortPollModel = DashScopeImageModel.builder()
 				.dashScopeApi(dashScopeImageApi)
 				.defaultOptions(defaultOptions)
-				.retryTemplate(RetryTemplate.builder().build())
+				.retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
 				.observationRegistry(ObservationRegistry.NOOP)
 				.pollIntervalMs(20)
 				.pollTimeoutMs(80)

@@ -32,15 +32,6 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncR
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.image.Image;
@@ -61,6 +52,8 @@ import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * @author nuocheng.lxm
@@ -224,10 +217,7 @@ public class DashScopeImageModel implements ImageModel {
      */
     private ImageResponse pollTaskResultUntilDone(Observation observation, String taskId) {
         long deadlineMs = System.currentTimeMillis() + pollTimeoutMs;
-
-        return retryTemplate.execute(ctx -> {
-            observation.lowCardinalityKeyValue("retry.attempt", String.valueOf(ctx.getRetryCount()));
-
+        return RetryUtils.execute(retryTemplate, () -> {
             while (System.currentTimeMillis() < deadlineMs) {
                 DashScopeApiSpec.DashScopeImageAsyncResponse resp = getImageGenTask(taskId);
                 if (resp == null) {
@@ -244,8 +234,7 @@ public class DashScopeImageModel implements ImageModel {
                         return toImageResponse(resp);
                     }
                     case "FAILED", "CANCELED", "UNKNOWN" -> {
-                        logger.warn("Image task {} ended with status {}: code={}, message={}",
-                                taskId, status, output.code(), output.message());
+                        logger.warn("Image task {} ended with status {}: code={}, message={}", taskId, status, output.code(), output.message());
                         return new ImageResponse(List.of(), toMetadata(resp));
                     }
                     case "PENDING", "RUNNING" -> { /* fall through to wait */ }
@@ -266,9 +255,6 @@ public class DashScopeImageModel implements ImageModel {
                 }
             }
 
-            observation.lowCardinalityKeyValue("timeout", "true");
-            return new ImageResponse(List.of(), toMetadataTimeout(taskId));
-        }, context -> {
             observation.lowCardinalityKeyValue("timeout", "true");
             return new ImageResponse(List.of(), toMetadataTimeout(taskId));
         });
