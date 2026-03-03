@@ -16,7 +16,7 @@
 
 package com.alibaba.cloud.ai.model.chat.memory.mongodb.autoconfigure;
 
-import com.alibaba.cloud.ai.autoconfigure.memory.ChatMemoryAutoConfiguration;
+import com.alibaba.cloud.ai.model.chat.memory.autoconfigure.ChatMemoryAutoConfiguration;
 import com.alibaba.cloud.ai.memory.mongodb.MongoDBChatMemoryRepository;
 import com.mongodb.client.MongoClient;
 import org.slf4j.Logger;
