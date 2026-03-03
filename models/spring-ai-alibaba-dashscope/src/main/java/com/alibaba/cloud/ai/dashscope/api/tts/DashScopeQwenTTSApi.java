@@ -29,15 +29,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.NoopApiKey;
+import org.springframework.ai.util.JacksonUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.ai.util.JacksonUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -65,7 +64,7 @@ public class DashScopeQwenTTSApi {
 	private final ObjectMapper objectMapper;
 
 	public DashScopeQwenTTSApi(String baseUrl, ApiKey apiKey, String workSpaceId,
-			MultiValueMap<String, String> headers, RestClient.Builder restClientBuilder,
+			HttpHeaders headers, RestClient.Builder restClientBuilder,
 			WebClient.Builder webClientBuilder, ResponseErrorHandler responseErrorHandler) {
 		this.baseUrl = baseUrl;
 		this.apiKey = apiKey;
@@ -165,7 +164,7 @@ public class DashScopeQwenTTSApi {
 		private String baseUrl;
 		private ApiKey apiKey;
 		private String workSpaceId;
-		private org.springframework.util.MultiValueMap<String, String> headers;
+		private HttpHeaders headers;
 		private RestClient.Builder restClientBuilder;
 		private WebClient.Builder webClientBuilder;
 		private ResponseErrorHandler responseErrorHandler;
@@ -185,7 +184,7 @@ public class DashScopeQwenTTSApi {
 			return this;
 		}
 
-		public Builder headers(org.springframework.util.MultiValueMap<String, String> headers) {
+		public Builder headers(HttpHeaders headers) {
 			this.headers = headers;
 			return this;
 		}
