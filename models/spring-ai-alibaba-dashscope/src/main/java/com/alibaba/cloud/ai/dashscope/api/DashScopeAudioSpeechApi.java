@@ -27,6 +27,7 @@ import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.NoopApiKey;
 import org.springframework.ai.retry.RetryUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.util.Assert;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
@@ -47,7 +48,7 @@ public class DashScopeAudioSpeechApi {
 	private final String websocketUrl;
 	private final ApiKey apiKey;
 	private final String workSpaceId;
-	private final MultiValueMap<String, String> headers;
+	private final HttpHeaders headers;
 	private final DashScopeTtsStrategyRegistry strategyRegistry;
 	private final DashScopeQwenTTSApi qwenTTSApi;
 	private final DashScopeWebSocketTTSApi webSocketTTSApi;
@@ -63,7 +64,7 @@ public class DashScopeAudioSpeechApi {
 		this.workSpaceId = workSpaceId;
 		this.headers = headers;
 
-		org.springframework.ai.model.ApiKey effectiveApiKey = apiKey instanceof NoopApiKey
+		ApiKey effectiveApiKey = apiKey instanceof NoopApiKey
 				? apiKey
 				: apiKey;
 
