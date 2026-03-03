@@ -15,7 +15,7 @@
  */
 package com.alibaba.cloud.ai.model.chat.memory.memcached.autoconfigure;
 
-import com.alibaba.cloud.ai.autoconfigure.memory.ChatMemoryAutoConfiguration;
+import com.alibaba.cloud.ai.model.chat.memory.autoconfigure.ChatMemoryAutoConfiguration;
 import com.alibaba.cloud.ai.memory.memcached.MemcachedChatMemoryRepository;
 import com.alibaba.cloud.ai.toolcalling.memcached.MemcachedService;
 import net.spy.memcached.MemcachedClient;
