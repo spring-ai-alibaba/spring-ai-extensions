@@ -631,7 +631,7 @@
             </dependency>
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-starter-model-chat-memory-long</artifactId>
+                <artifactId>spring-ai-alibaba-starter-model-chat-memory-mem0</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -672,7 +672,7 @@
             </dependency>
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-autoconfigure-model-chat-memory-long</artifactId>
+                <artifactId>spring-ai-alibaba-autoconfigure-model-chat-memory-mem0</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
