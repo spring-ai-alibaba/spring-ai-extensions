@@ -17,8 +17,8 @@
 package com.alibaba.cloud.ai.autoconfigure.mcp.router;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
-import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingOptions;
+import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingModel;
+import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions;
 import com.alibaba.cloud.ai.mcp.nacos.NacosMcpProperties;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
 import com.alibaba.cloud.ai.mcp.router.config.McpRouterProperties;

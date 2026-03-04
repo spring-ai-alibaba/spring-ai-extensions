@@ -17,7 +17,7 @@
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
+import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingModel;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -52,7 +52,7 @@ import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUt
 		SpringAiRetryAutoConfiguration.class })
 @ConditionalOnDashScopeEnabled
 @ConditionalOnClass(DashScopeApi.class)
-@ConditionalOnProperty(name = SpringAIModelProperties.EMBEDDING_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
+@ConditionalOnProperty(name = SpringAIModelProperties.TEXT_EMBEDDING_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
 		matchIfMissing = true)
 @EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeEmbeddingProperties.class })
 public class DashScopeEmbeddingAutoConfiguration {

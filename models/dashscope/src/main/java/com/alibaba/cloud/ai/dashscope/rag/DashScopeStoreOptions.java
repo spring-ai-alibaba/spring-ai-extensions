@@ -15,7 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.rag;
 
-import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingOptions;
+import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 

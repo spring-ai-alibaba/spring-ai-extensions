@@ -52,6 +52,8 @@ public final class DashScopeApiConstants {
 
 	public static final String TEXT_EMBEDDING_RESTFUL_URL = "/api/v1/services/embeddings/text-embedding/text-embedding";
 
+	public static final String MULTIMODAL_EMBEDDING_RESTFUL_URL = "/api/v1/services/embeddings/multimodal-embedding/multimodal-embedding";
+
 	public static final String MULTIMODAL_GENERATION_RESTFUL_URL = "/api/v1/services/aigc/multimodal-generation/generation";
 
 	public static final String TEXT2IMAGE_RESTFUL_URL = "/api/v1/services/aigc/text2image/image-synthesis";

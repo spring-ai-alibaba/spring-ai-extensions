@@ -17,7 +17,7 @@ package com.alibaba.cloud.ai.dashscope.rag;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingOptions;
+import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions;
 import org.junit.jupiter.api.Test;
 
 /**

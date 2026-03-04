@@ -343,10 +343,6 @@ public class DashScopeModel {
      */
     public enum EmbeddingModel {
 
-        QWEN_2_5_VL_EMBEDDING("qwen2.5-vl-embedding"),
-
-        TONGYI_EMBEDDING_VISION_PLUS("tongyi-embedding-vision-plus"),
-
         /**
          * DIMENSION: 1536
          */
@@ -396,6 +392,29 @@ public class DashScopeModel {
         }
 
     }
+
+	public enum MultimodalEmbeddingModel {
+
+		QWEN3_VL_EMBEDDING("qwen3-vl-embedding"),
+
+		QWEN2_5_VL_EMBEDDING("qwen2.5-vl-embedding"),
+
+		TONGYI_EMBEDDING_VISION_PLUS("tongyi-embedding-vision-plus"),
+
+		TONGYI_EMBEDDING_VISION_FLASH("tongyi-embedding-vision-flash"),
+
+		MULTIMODAL_EMBEDDING_V1("multimodal-embedding-v1");
+
+		public final String value;
+
+		MultimodalEmbeddingModel(String value) {
+			this.value = value;
+		}
+
+		public String getValue() {
+			return value;
+		}
+	}
 
     public enum ImageModel {
 

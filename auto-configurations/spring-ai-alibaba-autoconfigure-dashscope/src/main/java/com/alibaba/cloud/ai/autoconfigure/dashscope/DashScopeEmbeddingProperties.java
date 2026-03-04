@@ -17,7 +17,7 @@
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
-import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingOptions;
+import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions;
 import org.springframework.ai.document.MetadataMode;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;

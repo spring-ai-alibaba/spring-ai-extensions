@@ -1452,5 +1452,65 @@ public class DashScopeApiSpec {
     }
     // format: on
 
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	public record MultimodalEmbeddingRequest(
+			@JsonProperty("model") String model,
+			@JsonProperty("input") Input input,
+			@JsonProperty("parameters") Parameters parameters
+	) {
+		public MultimodalEmbeddingRequest {
+			org.springframework.util.Assert.hasText(model, "model cannot be null or empty");
+			org.springframework.util.Assert.notNull(input, "input cannot be null");
+		}
+	}
+
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	public record Input(
+			@JsonProperty("contents") List<Map<String, Object>> contents
+	) {
+	}
+
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	public record Parameters(
+			@JsonProperty("output_type") String outputType,
+			@JsonProperty("dimension") Integer dimension,
+			@JsonProperty("fps") Float fps,
+			@JsonProperty("instruct") String instruct
+	) {
+	}
+
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	public record MultimodalEmbeddingResponse(
+			@JsonProperty("output") Output output,
+			@JsonProperty("usage") MultimodalEmbeddingUsage usage,
+			@JsonProperty("request_id") String requestId,
+			@JsonProperty("code") String code,
+			@JsonProperty("message") String message
+	) {
+	}
+
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	public record Output(
+			@JsonProperty("embeddings") List<EmbeddingResult> embeddings
+	) {
+	}
+
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	public record EmbeddingResult(
+			@JsonProperty("index") Integer index,
+			@JsonProperty("embedding") float[] embedding,
+			@JsonProperty("type") String type
+	) {
+	}
+
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	public record MultimodalEmbeddingUsage(
+			@JsonProperty("input_tokens") Integer inputTokens,
+			@JsonProperty("image_tokens") Integer imageTokens,
+			@JsonProperty("image_count") Integer imageCount,
+			@JsonProperty("duration") Integer duration
+	) {
+	}
+
 }
 
