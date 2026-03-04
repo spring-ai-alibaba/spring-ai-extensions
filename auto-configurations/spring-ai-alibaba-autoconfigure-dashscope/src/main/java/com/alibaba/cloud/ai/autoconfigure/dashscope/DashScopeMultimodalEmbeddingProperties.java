@@ -28,7 +28,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 @ConfigurationProperties(DashScopeMultimodalEmbeddingProperties.CONFIG_PREFIX)
 public class DashScopeMultimodalEmbeddingProperties extends DashScopeParentProperties {
 
-	public static final String CONFIG_PREFIX = "spring.ai.model.embedding.multimodal";
+	public static final String CONFIG_PREFIX = "spring.ai.dashscope.embedding.multimodal";
 
 	public static final String DEFAULT_MULTIMODAL_EMBEDDING_MODEL = "tongyi-embedding-vision-plus";
 
