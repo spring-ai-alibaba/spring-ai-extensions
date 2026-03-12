@@ -578,7 +578,7 @@ public class DashScopeChatModel implements ChatModel {
 			requestOptions.setTools(getFunctionTools(toolDefinitions));
 		}
 
-		boolean multiModel = requestOptions.getMultiModel();
+		Boolean multiModel = requestOptions.getMultiModel();
 
 		return new ChatCompletionRequest(requestOptions.getModel(),
 				new ChatCompletionRequestInput(chatCompletionMessages),

@@ -120,7 +120,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      *   <li>false (default): Disable internet search.
      * </ul>
      */
-    private @JsonProperty("enable_search") Boolean enableSearch = false;
+    private @JsonProperty("enable_search") Boolean enableSearch;
 
     /**
      * Models can specify the format of the returned content. Valid values: {"type": "text"} or {"type": "json_object"}
@@ -193,7 +193,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
     /**
      * Whether to enable the thinking process of the model.
      */
-    private @JsonProperty("enable_thinking") Boolean enableThinking = false;
+    private @JsonProperty("enable_thinking") Boolean enableThinking;
 
     /**
      * The maximum length of the thinking process takes effect when enable_thinking is true,
@@ -222,12 +222,12 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
     /**
      * Indicates whether the request involves multiple models
      */
-    private @JsonProperty("multi_model") Boolean multiModel = false;
+    private @JsonProperty("multi_model") Boolean multiModel;
 
     /**
      * Whether to enable the vision language model to output image height and width.
      */
-    private Boolean vlEnableImageHwOutput = false;
+    private Boolean vlEnableImageHwOutput;
 
     /**
      * The tone color and format of the output audio are only applicable to the 'Qwen-Omni' model,
