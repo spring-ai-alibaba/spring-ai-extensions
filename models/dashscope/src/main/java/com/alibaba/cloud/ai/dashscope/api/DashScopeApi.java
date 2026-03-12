@@ -519,7 +519,7 @@ public class DashScopeApi {
 		Assert.notNull(additionalHttpHeader, "The additional HTTP headers can not be null.");
 
 		var chatCompletionUri = this.completionsPath;
-		if (chatRequest.multiModel()) {
+		if (Boolean.TRUE.equals(chatRequest.multiModel())) {
 			chatCompletionUri = MULTIMODAL_GENERATION_RESTFUL_URL;
 		}
 
@@ -575,7 +575,7 @@ public class DashScopeApi {
 				incrementalOutput);
 
 		var chatCompletionUri = this.completionsPath;
-		if (chatRequest.multiModel()) {
+		if (Boolean.TRUE.equals(chatRequest.multiModel())) {
 			chatCompletionUri = MULTIMODAL_GENERATION_RESTFUL_URL;
 		}
 
