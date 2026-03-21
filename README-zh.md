@@ -128,6 +128,22 @@ DashScopeChatModel 支持：
 
 基于 DashScope Java SDK 的聊天模型实现。使用 `spring-ai-alibaba-starter-dashscope-sdk` 并配置 `spring.ai.model.chat=dashscope-sdk` 即可启用。
 
+#### DashScopeSdkImageModel
+
+基于 DashScope Java SDK 的图像模型实现。使用 `spring-ai-alibaba-starter-dashscope-sdk` 并配置 `spring.ai.model.image=dashscope-sdk` 即可启用。
+
+#### DashScopeSdkEmbeddingModel
+
+基于 DashScope Java SDK 的向量模型实现。使用 `spring-ai-alibaba-starter-dashscope-sdk` 并配置 `spring.ai.model.embedding=dashscope-sdk` 即可启用。
+
+#### DashScopeSdkAudioSpeechModel
+
+基于 DashScope Java SDK 的语音合成模型实现。使用 `spring-ai-alibaba-starter-dashscope-sdk` 并配置 `spring.ai.model.audio.speech=dashscope-sdk` 即可启用。
+
+#### DashScopeSdkAudioTranscriptionModel
+
+基于 DashScope Java SDK 的语音识别模型实现。使用 `spring-ai-alibaba-starter-dashscope-sdk` 并配置 `spring.ai.model.audio.transcription=dashscope-sdk` 即可启用。
+
 #### DashScopeImageModel
 
 基于 DashScope 的图像生成能力，支持文本到图像的生成，具有多种风格和参数。

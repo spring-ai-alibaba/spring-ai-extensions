@@ -128,6 +128,22 @@ DashScopeChatModel supports:
 
 DashScope SDK based chat model implementation. Configure with `spring-ai-alibaba-starter-dashscope-sdk` and `spring.ai.model.chat=dashscope-sdk`.
 
+#### DashScopeSdkImageModel
+
+DashScope SDK based image model implementation. Configure with `spring-ai-alibaba-starter-dashscope-sdk` and `spring.ai.model.image=dashscope-sdk`.
+
+#### DashScopeSdkEmbeddingModel
+
+DashScope SDK based embedding model implementation. Configure with `spring-ai-alibaba-starter-dashscope-sdk` and `spring.ai.model.embedding=dashscope-sdk`.
+
+#### DashScopeSdkAudioSpeechModel
+
+DashScope SDK based text-to-speech model implementation. Configure with `spring-ai-alibaba-starter-dashscope-sdk` and `spring.ai.model.audio.speech=dashscope-sdk`.
+
+#### DashScopeSdkAudioTranscriptionModel
+
+DashScope SDK based audio transcription model implementation. Configure with `spring-ai-alibaba-starter-dashscope-sdk` and `spring.ai.model.audio.transcription=dashscope-sdk`.
+
 #### DashScopeImageModel
 
 Image generation capabilities powered by DashScope, supporting text-to-image generation with various styles and parameters.

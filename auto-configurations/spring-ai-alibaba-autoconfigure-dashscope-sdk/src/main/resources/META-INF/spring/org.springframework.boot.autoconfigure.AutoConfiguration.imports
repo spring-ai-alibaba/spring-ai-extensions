@@ -1,1 +1,5 @@
 com.alibaba.cloud.ai.autoconfigure.dashscope.sdk.DashScopeSdkChatAutoConfiguration
+com.alibaba.cloud.ai.autoconfigure.dashscope.sdk.DashScopeSdkImageAutoConfiguration
+com.alibaba.cloud.ai.autoconfigure.dashscope.sdk.DashScopeSdkEmbeddingAutoConfiguration
+com.alibaba.cloud.ai.autoconfigure.dashscope.sdk.DashScopeSdkAudioSpeechAutoConfiguration
+com.alibaba.cloud.ai.autoconfigure.dashscope.sdk.DashScopeSdkAudioTranscriptionAutoConfiguration
