@@ -39,6 +39,17 @@
 </dependencies>
 ```
 
+如需使用基于 DashScope Java SDK 的聊天模型实现，可改用 SDK starter：
+
+```xml
+<dependency>
+  <groupId>com.alibaba.cloud.ai</groupId>
+  <artifactId>spring-ai-alibaba-starter-dashscope-sdk</artifactId>
+</dependency>
+```
+
+并配置 `spring.ai.model.chat=dashscope-sdk`。
+
 #### 声明 ChatClient
 声明一个 `ChatClient` 实例，将会自动注入 `DashScopeChatModel`。
 
@@ -112,6 +123,10 @@ DashScopeChatModel 支持：
 - 函数调用 / 工具使用
 - 流式响应
 - 结构化输出
+
+#### DashScopeSdkChatModel
+
+基于 DashScope Java SDK 的聊天模型实现。使用 `spring-ai-alibaba-starter-dashscope-sdk` 并配置 `spring.ai.model.chat=dashscope-sdk` 即可启用。
 
 #### DashScopeImageModel
 

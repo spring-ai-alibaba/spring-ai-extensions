@@ -97,10 +97,23 @@
                 <optional>true</optional>
             </dependency>
 
+            <dependency>
+                <groupId>com.alibaba.cloud.ai</groupId>
+                <artifactId>spring-ai-alibaba-dashscope-sdk</artifactId>
+                <version>${project.version}</version>
+                <optional>true</optional>
+            </dependency>
+
             <!-- Spring AI Alibaba Starter -->
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
                 <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.cloud.ai</groupId>
+                <artifactId>spring-ai-alibaba-starter-dashscope-sdk</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -162,6 +175,12 @@
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
                 <artifactId>spring-ai-alibaba-autoconfigure-dashscope</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.cloud.ai</groupId>
+                <artifactId>spring-ai-alibaba-autoconfigure-dashscope-sdk</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

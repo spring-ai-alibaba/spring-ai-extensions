@@ -39,6 +39,17 @@ To quickly get started with Spring AI Alibaba, add 'spring-ai-alibaba-starter-da
 </dependencies>
 ```
 
+To use DashScope Java SDK based chat model implementation, use the SDK starter instead:
+
+```xml
+<dependency>
+  <groupId>com.alibaba.cloud.ai</groupId>
+  <artifactId>spring-ai-alibaba-starter-dashscope-sdk</artifactId>
+</dependency>
+```
+
+And set `spring.ai.model.chat=dashscope-sdk`.
+
 #### Declare ChatClient
 Decare a `ChatClient` instance that would have `DashScopeChatModel` automatically injected.
 
@@ -112,6 +123,10 @@ DashScopeChatModel supports:
 - Function calling / Tool use
 - Streaming responses
 - Structured output
+
+#### DashScopeSdkChatModel
+
+DashScope SDK based chat model implementation. Configure with `spring-ai-alibaba-starter-dashscope-sdk` and `spring.ai.model.chat=dashscope-sdk`.
 
 #### DashScopeImageModel
 

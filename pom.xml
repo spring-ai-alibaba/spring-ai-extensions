@@ -93,6 +93,7 @@
 
         <!-- auto-configurations modules -->
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-dashscope</module>
+        <module>auto-configurations/spring-ai-alibaba-autoconfigure-dashscope-sdk</module>
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-memory</module>
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-memory-long</module>
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-nacos-prompt</module>
@@ -105,6 +106,7 @@
 
         <!-- spring-boot-starters modules -->
         <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope</module>
+        <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope-sdk</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-memory</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-memory-long</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-nacos-prompt</module>
@@ -178,6 +180,7 @@
         <module>prompt/spring-ai-alibaba-prompt-nacos</module>
 
         <module>models/dashscope</module>
+        <module>models/dashscope-sdk</module>
         <module>rag/spring-ai-alibaba-rag</module>
         <module>observation</module>
         <module>spring-ai-alibaba-extensions-bom</module>
