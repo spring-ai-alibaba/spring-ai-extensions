@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.agent;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -207,6 +208,9 @@ public class DashScopeAgentOptions implements ChatOptions {
     }
 
     public static DashScopeAgentOptions fromOptions(DashScopeAgentOptions options) {
+        if (options == null) {
+            return null;
+        }
         return DashScopeAgentOptions.builder()
                 .appId(options.getAppId())
                 .sessionId(options.getSessionId())
@@ -215,9 +219,27 @@ public class DashScopeAgentOptions implements ChatOptions {
                 .incrementalOutput(options.getIncrementalOutput())
                 .hasThoughts(options.getHasThoughts())
                 .enableThinking(options.getEnableThinking())
-                .images(options.getImages())
-                .files(options.getFiles())
-                .bizParams(options.getBizParams())
+                .images(options.getImages() == null ? null : new ArrayList<>(options.getImages()))
+                .files(options.getFiles() == null ? null : new ArrayList<>(options.getFiles()))
+                .bizParams(options.getBizParams() == null ? null : options.getBizParams().deepCopy())
+                .ragOptions(copyRagOptions(options.getRagOptions()))
+                .flowStreamMode(options.getFlowStreamMode())
+                .build();
+    }
+
+    private static DashScopeAgentRagOptions copyRagOptions(DashScopeAgentRagOptions source) {
+        if (source == null) {
+            return null;
+        }
+        return DashScopeAgentRagOptions.builder()
+                .withPipelineIds(source.getPipelineIds() == null ? null : new ArrayList<>(source.getPipelineIds()))
+                .withFileIds(source.getFileIds() == null ? null : new ArrayList<>(source.getFileIds()))
+                .withTags(source.getTags() == null ? null : new ArrayList<>(source.getTags()))
+                .withMetadataFilter(source.getMetadataFilter() == null ? null : source.getMetadataFilter().deepCopy())
+                .withStructuredFilter(
+                        source.getStructuredFilter() == null ? null : source.getStructuredFilter().deepCopy())
+                .withSessionFileIds(
+                        source.getSessionFileIds() == null ? null : new ArrayList<>(source.getSessionFileIds()))
                 .build();
     }
 

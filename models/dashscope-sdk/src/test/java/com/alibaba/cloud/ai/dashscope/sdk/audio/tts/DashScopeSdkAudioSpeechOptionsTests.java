@@ -18,9 +18,11 @@ package com.alibaba.cloud.ai.dashscope.sdk.audio.tts;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
 class DashScopeSdkAudioSpeechOptionsTests {
 
@@ -45,6 +47,54 @@ class DashScopeSdkAudioSpeechOptionsTests {
 
 		assertThat(copy).usingRecursiveComparison().isEqualTo(options);
 		assertThat(copy).isNotSameAs(options);
+	}
+
+	@Test
+	void testFromOptionsReturnsNullForNullInput() {
+		assertThat(DashScopeSdkAudioSpeechOptions.fromOptions(null)).isNull();
+	}
+
+	@Test
+	void testDefaultValues() {
+		DashScopeSdkAudioSpeechOptions options = DashScopeSdkAudioSpeechOptions.builder().build();
+
+		assertThat(options.getModel()).isNull();
+		assertThat(options.getVoice()).isNull();
+		assertThat(options.getFormat()).isNull();
+		assertThat(options.getSpeed()).isNull();
+		assertThat(options.getTextType()).isNull();
+		assertThat(options.getSampleRate()).isNull();
+		assertThat(options.getVolume()).isNull();
+		assertThat(options.getRate()).isNull();
+		assertThat(options.getPitch()).isNull();
+		assertThat(options.getWordTimestampEnabled()).isNull();
+		assertThat(options.getPhonemeTimestampEnabled()).isNull();
+		assertThat(options.getHttpHeaders()).isNotNull().isEmpty();
+	}
+
+	@Test
+	void testFromOptionsCreatesIndependentHttpHeaders() {
+		Map<String, String> headers = new HashMap<>();
+		headers.put("x-source", "s1");
+
+		DashScopeSdkAudioSpeechOptions original = DashScopeSdkAudioSpeechOptions.builder().httpHeaders(headers).build();
+		DashScopeSdkAudioSpeechOptions copy = original.copy();
+
+		headers.put("x-source-2", "s2");
+		copy.getHttpHeaders().put("x-copy", "c1");
+
+		assertThat(original.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-source-2", "s2"));
+		assertThat(copy.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-copy", "c1"));
+	}
+
+	@Test
+	void testFromOptionsHandlesNullHttpHeaders() {
+		DashScopeSdkAudioSpeechOptions original = new DashScopeSdkAudioSpeechOptions();
+		original.setHttpHeaders(null);
+
+		DashScopeSdkAudioSpeechOptions copy = DashScopeSdkAudioSpeechOptions.fromOptions(original);
+
+		assertThat(copy.getHttpHeaders()).isNotNull().isEmpty();
 	}
 
 }

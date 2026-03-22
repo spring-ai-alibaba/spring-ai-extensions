@@ -17,6 +17,9 @@ package com.alibaba.cloud.ai.dashscope.rag;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
 /**
@@ -65,6 +68,7 @@ class DashScopeDocumentRetrieverOptionsTests {
 	@Test
 	void testBuilderPattern() {
 		// Test builder pattern with all properties set
+		List<Map<String, Object>> searchFilters = List.of(Map.of("key", "value"));
 		DashScopeDocumentRetrieverOptions options = DashScopeDocumentRetrieverOptions.builder()
 			.indexName(TEST_INDEX_NAME)
 			.denseSimilarityTopK(TEST_DENSE_TOP_K)
@@ -75,6 +79,7 @@ class DashScopeDocumentRetrieverOptionsTests {
 			.rerankModelName(TEST_RERANK_MODEL)
 			.rerankMinScore(TEST_RERANK_MIN_SCORE)
 			.rerankTopN(TEST_RERANK_TOP_N)
+			.searchFilters(searchFilters)
 			.build();
 
 		// Verify all properties are set correctly
@@ -87,6 +92,7 @@ class DashScopeDocumentRetrieverOptionsTests {
 		assertThat(options.getRerankModelName()).isEqualTo(TEST_RERANK_MODEL);
 		assertThat(options.getRerankMinScore()).isEqualTo(TEST_RERANK_MIN_SCORE);
 		assertThat(options.getRerankTopN()).isEqualTo(TEST_RERANK_TOP_N);
+		assertThat(options.getSearchFilters()).isEqualTo(searchFilters);
 	}
 
 	@Test
@@ -137,6 +143,34 @@ class DashScopeDocumentRetrieverOptionsTests {
 		assertThat(options.getRerankModelName()).isEqualTo("gte-rerank-hybrid");
 		assertThat(options.getRerankMinScore()).isEqualTo(0.01f);
 		assertThat(options.getRerankTopN()).isEqualTo(5);
+	}
+
+	@Test
+	void testDeprecatedWithMethods() {
+		List<Map<String, Object>> searchFilters = List.of(Map.of("type", "doc"));
+		DashScopeDocumentRetrieverOptions options = DashScopeDocumentRetrieverOptions.builder()
+			.withIndexName(TEST_INDEX_NAME)
+			.withDenseSimilarityTopK(TEST_DENSE_TOP_K)
+			.withSparseSimilarityTopK(TEST_SPARSE_TOP_K)
+			.withEnableRewrite(true)
+			.withRewriteModelName(TEST_REWRITE_MODEL)
+			.withEnableReranking(false)
+			.withRerankModelName(TEST_RERANK_MODEL)
+			.withRerankMinScore(TEST_RERANK_MIN_SCORE)
+			.withRerankTopN(TEST_RERANK_TOP_N)
+			.withSearchFilters(searchFilters)
+			.build();
+
+		assertThat(options.getIndexName()).isEqualTo(TEST_INDEX_NAME);
+		assertThat(options.getDenseSimilarityTopK()).isEqualTo(TEST_DENSE_TOP_K);
+		assertThat(options.getSparseSimilarityTopK()).isEqualTo(TEST_SPARSE_TOP_K);
+		assertThat(options.isEnableRewrite()).isTrue();
+		assertThat(options.getRewriteModelName()).isEqualTo(TEST_REWRITE_MODEL);
+		assertThat(options.isEnableReranking()).isFalse();
+		assertThat(options.getRerankModelName()).isEqualTo(TEST_RERANK_MODEL);
+		assertThat(options.getRerankMinScore()).isEqualTo(TEST_RERANK_MIN_SCORE);
+		assertThat(options.getRerankTopN()).isEqualTo(TEST_RERANK_TOP_N);
+		assertThat(options.getSearchFilters()).isEqualTo(searchFilters);
 	}
 
 }

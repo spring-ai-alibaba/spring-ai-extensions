@@ -26,15 +26,18 @@ import org.springframework.ai.embedding.EmbeddingRequest;
 import org.springframework.ai.embedding.EmbeddingResponse;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DashScopeSdkEmbeddingModelTests {
 
 	@Test
 	void testEmbeddingCall() {
+		FakeEmbeddingClient client = new FakeEmbeddingClient();
 		DashScopeSdkEmbeddingModel model = DashScopeSdkEmbeddingModel.builder()
-			.embeddingClient(new FakeEmbeddingClient())
+			.embeddingClient(client)
 			.defaultOptions(DashScopeSdkEmbeddingOptions.builder().model("text-embedding-v2").build())
 			.apiKey("test-key")
 			.build();
@@ -45,12 +48,150 @@ class DashScopeSdkEmbeddingModelTests {
 		assertThat(response.getResults()).hasSize(1);
 		assertThat(response.getResult().getOutput()).containsExactly(0.1f, 0.2f, 0.3f);
 		assertThat(response.getMetadata().getModel()).isEqualTo("text-embedding-v2");
+		assertThat(client.lastRequest).isNotNull();
+		assertThat(client.lastRequest.getModel()).isEqualTo("text-embedding-v2");
+		assertThat(client.lastRequest.getParameters()).containsEntry("text_type", "query");
+	}
+
+	@Test
+	void testHeadersAreMergedWithRuntimeOverride() {
+		FakeEmbeddingClient client = new FakeEmbeddingClient();
+		DashScopeSdkEmbeddingModel model = DashScopeSdkEmbeddingModel.builder()
+			.embeddingClient(client)
+			.defaultOptions(DashScopeSdkEmbeddingOptions.builder()
+				.model("text-embedding-v2")
+				.httpHeaders(Map.of("x-default", "d", "x-override", "default"))
+				.build())
+			.connectionHeaders(Map.of("x-conn", "c", "x-override", "conn"))
+			.build();
+
+		model.call(new EmbeddingRequest(List.of("hello"),
+				DashScopeSdkEmbeddingOptions.builder()
+					.httpHeaders(Map.of("x-runtime", "r", "x-override", "runtime"))
+					.build()));
+
+		assertThat(client.lastRequest.getHeaders()).containsEntry("x-conn", "c")
+			.containsEntry("x-runtime", "r")
+			.containsEntry("x-override", "runtime");
+	}
+
+	@Test
+	void testReturnsEmptyWhenEmbeddingsMissing() {
+		FakeEmbeddingClient client = new FakeEmbeddingClient();
+		client.callResult = instantiateTextEmbeddingResult();
+		DashScopeSdkEmbeddingModel model = DashScopeSdkEmbeddingModel.builder()
+			.embeddingClient(client)
+			.defaultOptions(DashScopeSdkEmbeddingOptions.builder().model("text-embedding-v2").build())
+			.build();
+
+		EmbeddingResponse response = model.call(new EmbeddingRequest(List.of("hello"), null));
+
+		assertThat(response.getResults()).isEmpty();
+	}
+
+	@Test
+	void testSkipsNullEmbeddingItems() {
+		FakeEmbeddingClient client = new FakeEmbeddingClient();
+		client.callResult = embeddingResultWithNullAndValidItem();
+		DashScopeSdkEmbeddingModel model = DashScopeSdkEmbeddingModel.builder()
+			.embeddingClient(client)
+			.defaultOptions(DashScopeSdkEmbeddingOptions.builder().model("text-embedding-v2").build())
+			.build();
+
+		EmbeddingResponse response = model.call(new EmbeddingRequest(List.of("hello"), null));
+
+		assertThat(response.getResults()).hasSize(1);
+		assertThat(response.getResult().getOutput()).containsExactly(1.0f, 2.0f);
+	}
+
+	@Test
+	void testWrapsClientException() {
+		FakeEmbeddingClient client = new FakeEmbeddingClient();
+		client.throwOnCall = new RuntimeException("boom");
+		DashScopeSdkEmbeddingModel model = DashScopeSdkEmbeddingModel.builder()
+			.embeddingClient(client)
+			.defaultOptions(DashScopeSdkEmbeddingOptions.builder().model("text-embedding-v2").build())
+			.build();
+
+		assertThatThrownBy(() -> model.call(new EmbeddingRequest(List.of("hello"), null)))
+			.isInstanceOf(com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException.class)
+			.hasMessageContaining("Failed to call DashScope SDK embedding API")
+			.hasCause(client.throwOnCall);
+	}
+
+	@Test
+	void testDimensionsUsesKnownModelValue() {
+		DashScopeSdkEmbeddingModel model = DashScopeSdkEmbeddingModel.builder()
+			.embeddingClient(new FakeEmbeddingClient())
+			.defaultOptions(DashScopeSdkEmbeddingOptions.builder().model("text-embedding-v2").build())
+			.build();
+
+		assertThat(model.dimensions()).isEqualTo(1536);
+	}
+
+	@Test
+	void testGetDefaultOptionsReturnsCopy() {
+		DashScopeSdkEmbeddingModel model = DashScopeSdkEmbeddingModel.builder()
+			.embeddingClient(new FakeEmbeddingClient())
+			.defaultOptions(DashScopeSdkEmbeddingOptions.builder()
+				.model("text-embedding-v2")
+				.httpHeaders(Map.of("x-default", "d"))
+				.build())
+			.build();
+
+		DashScopeSdkEmbeddingOptions copied = model.getDefaultOptions();
+		copied.getHttpHeaders().put("x-new", "n");
+
+		assertThat(model.getDefaultOptions().getHttpHeaders()).containsOnlyKeys("x-default");
+	}
+
+	private static TextEmbeddingResult embeddingResultWithNullAndValidItem() {
+		TextEmbeddingResult result = instantiateTextEmbeddingResult();
+		result.setRequestId("req-2");
+
+		TextEmbeddingResultItem nullItem = new TextEmbeddingResultItem();
+		nullItem.setTextIndex(0);
+		nullItem.setEmbedding(null);
+
+		TextEmbeddingResultItem validItem = new TextEmbeddingResultItem();
+		validItem.setTextIndex(1);
+		validItem.setEmbedding(List.of(1.0, 2.0));
+
+		TextEmbeddingOutput output = new TextEmbeddingOutput();
+		output.setEmbeddings(List.of(nullItem, validItem));
+		result.setOutput(output);
+		return result;
+	}
+
+	private static TextEmbeddingResult instantiateTextEmbeddingResult() {
+		try {
+			var constructor = TextEmbeddingResult.class.getDeclaredConstructor();
+			constructor.setAccessible(true);
+			return constructor.newInstance();
+		}
+		catch (Exception ex) {
+			throw new RuntimeException(ex);
+		}
 	}
 
 	private static final class FakeEmbeddingClient implements DashScopeSdkTextEmbeddingClient {
 
+		private TextEmbeddingResult callResult;
+
+		private RuntimeException throwOnCall;
+
+		private TextEmbeddingParam lastRequest;
+
 		@Override
 		public TextEmbeddingResult call(TextEmbeddingParam embeddingParam) {
+			this.lastRequest = embeddingParam;
+			if (this.throwOnCall != null) {
+				throw this.throwOnCall;
+			}
+			if (this.callResult != null) {
+				return this.callResult;
+			}
+
 			TextEmbeddingResult result = instantiateTextEmbeddingResult();
 			result.setRequestId("req-1");
 
@@ -66,17 +207,6 @@ class DashScopeSdkEmbeddingModelTests {
 			usage.setTotalTokens(3);
 			result.setUsage(usage);
 			return result;
-		}
-
-		private TextEmbeddingResult instantiateTextEmbeddingResult() {
-			try {
-				var constructor = TextEmbeddingResult.class.getDeclaredConstructor();
-				constructor.setAccessible(true);
-				return constructor.newInstance();
-			}
-			catch (Exception ex) {
-				throw new RuntimeException(ex);
-			}
 		}
 
 	}

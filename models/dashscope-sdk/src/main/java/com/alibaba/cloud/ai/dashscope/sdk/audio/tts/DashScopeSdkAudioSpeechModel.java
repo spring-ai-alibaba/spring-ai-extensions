@@ -195,7 +195,9 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 		byte[] bytes = result == null ? new byte[0] : toBytes(result.getAudioFrame());
 		TextToSpeechResponseMetadata metadata = new TextToSpeechResponseMetadata();
 		if (result != null) {
-			metadata.put("requestId", result.getRequestId());
+			if (StringUtils.hasText(result.getRequestId())) {
+				metadata.put("requestId", result.getRequestId());
+			}
 			if (result.getUsage() != null && result.getUsage().getCharacters() != null) {
 				metadata.put("characters", result.getUsage().getCharacters());
 			}

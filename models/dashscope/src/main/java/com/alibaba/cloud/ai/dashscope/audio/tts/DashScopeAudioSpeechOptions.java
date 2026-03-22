@@ -20,6 +20,7 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.ai.audio.tts.TextToSpeechOptions;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -189,7 +190,30 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 
     @Override
     public <T extends TextToSpeechOptions> T copy() {
-        return null;
+        DashScopeAudioSpeechOptions copied = DashScopeAudioSpeechOptions.builder()
+                .model(this.model)
+                .textType(this.textType)
+                .voice(this.voice)
+                .format(this.format)
+                .sampleRate(this.sampleRate)
+                .volume(this.volume)
+                .rate(this.rate)
+                .pitch(this.pitch)
+                .enableSsml(this.enableSsml)
+                .bitRate(this.bitRate)
+                .speed(this.speed)
+                .seed(this.seed)
+                .wordTimestampEnabled(this.wordTimestampEnabled)
+                .phonemeTimestampEnabled(this.phonemeTimestampEnabled)
+                .languageHints(this.languageHints == null ? null : new ArrayList<>(this.languageHints))
+                .instruction(this.instruction)
+                .optimizeInstructions(this.optimizeInstructions)
+                .enableAigcTag(this.enableAigcTag)
+                .aigcPropagator(this.aigcPropagator)
+                .aigcPropagateId(this.aigcPropagateId)
+                .languageType(this.languageType)
+                .build();
+        return (T) copied;
     }
 
     public void setSpeed(Double speed) {

@@ -101,4 +101,17 @@ class DashScopeRerankOptionsTests {
 		assertThat(options.getReturnDocuments()).isFalse(); // Default value
 	}
 
+	@Test
+	void testDeprecatedWithMethods() {
+		DashScopeRerankOptions options = DashScopeRerankOptions.builder()
+			.withModel(TEST_MODEL)
+			.withTopN(TEST_TOP_N)
+			.withReturnDocuments(TEST_RETURN_DOCUMENTS)
+			.build();
+
+		assertThat(options.getModel()).isEqualTo(TEST_MODEL);
+		assertThat(options.getTopN()).isEqualTo(TEST_TOP_N);
+		assertThat(options.getReturnDocuments()).isEqualTo(TEST_RETURN_DOCUMENTS);
+	}
+
 }

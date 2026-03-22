@@ -123,4 +123,21 @@ class DashScopeDocumentTransformerOptionsTests {
 		assertThat(options.getFileType()).isEqualTo("idp");
 	}
 
+	@Test
+	void testDeprecatedWithMethods() {
+		DashScopeDocumentTransformerOptions options = DashScopeDocumentTransformerOptions.builder()
+			.withChunkSize(TEST_CHUNK_SIZE)
+			.withOverlapSize(TEST_OVERLAP_SIZE)
+			.withSeparator(TEST_SEPARATOR)
+			.withFileType(TEST_FILE_TYPE)
+			.withLanguage(TEST_LANGUAGE)
+			.build();
+
+		assertThat(options.getChunkSize()).isEqualTo(TEST_CHUNK_SIZE);
+		assertThat(options.getOverlapSize()).isEqualTo(TEST_OVERLAP_SIZE);
+		assertThat(options.getSeparator()).isEqualTo(TEST_SEPARATOR);
+		assertThat(options.getFileType()).isEqualTo(TEST_FILE_TYPE);
+		assertThat(options.getLanguage()).isEqualTo(TEST_LANGUAGE);
+	}
+
 }

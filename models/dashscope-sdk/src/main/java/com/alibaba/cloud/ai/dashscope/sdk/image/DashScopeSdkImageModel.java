@@ -224,9 +224,15 @@ public class DashScopeSdkImageModel implements ImageModel {
 		}
 
 		ImageResponseMetadata metadata = new ImageResponseMetadata();
-		metadata.put("requestId", result.getRequestId());
-		metadata.put("taskId", result.getOutput().getTaskId());
-		metadata.put("taskStatus", result.getOutput().getTaskStatus());
+		if (StringUtils.hasText(result.getRequestId())) {
+			metadata.put("requestId", result.getRequestId());
+		}
+		if (StringUtils.hasText(result.getOutput().getTaskId())) {
+			metadata.put("taskId", result.getOutput().getTaskId());
+		}
+		if (StringUtils.hasText(result.getOutput().getTaskStatus())) {
+			metadata.put("taskStatus", result.getOutput().getTaskStatus());
+		}
 		if (StringUtils.hasText(result.getOutput().getCode())) {
 			metadata.put("code", result.getOutput().getCode());
 		}

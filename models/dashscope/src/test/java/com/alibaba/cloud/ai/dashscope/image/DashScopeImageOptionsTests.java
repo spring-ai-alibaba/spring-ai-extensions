@@ -188,4 +188,51 @@ class DashScopeImageOptionsTests {
         .contains("width=" + TEST_WIDTH)
         .contains("height=" + TEST_HEIGHT);
   }
+
+  @Test
+  void testExtendedBuilderFieldsAndDeprecatedWithMethods() {
+    Integer[][] sketchColor = new Integer[][] {{255, 0, 0}};
+    Integer[][] maskColor = new Integer[][] {{0, 255, 0}};
+
+    DashScopeImageOptions options =
+        DashScopeImageOptions.builder()
+            .withModel(TEST_MODEL)
+            .withN(TEST_N)
+            .withWidth(TEST_WIDTH)
+            .withHeight(TEST_HEIGHT)
+            .withStyle(TEST_STYLE)
+            .withSeed(TEST_SEED)
+            .withRefImg(TEST_REF_IMG)
+            .withRefStrength(TEST_REF_STRENGTH)
+            .withRefMode(TEST_REF_MODE)
+            .withNegativePrompt(TEST_NEGATIVE_PROMPT)
+            .withPromptExtend(true)
+            .withWatermark(false)
+            .withFunction("stylization")
+            .withBaseImageUrl("https://example.com/base.png")
+            .withMaskImageUrl("https://example.com/mask.png")
+            .withSketchImageUrl("https://example.com/sketch.png")
+            .withSketchWeight(7)
+            .withSketchExtraction(true)
+            .withSketchColor(sketchColor)
+            .withMaskColor(maskColor)
+            .withResponseFormat("b64_json")
+            .withMaxImages(3)
+            .withEnableInterleave(true)
+            .build();
+
+    assertThat(options.getPromptExtend()).isTrue();
+    assertThat(options.getWatermark()).isFalse();
+    assertThat(options.getFunction()).isEqualTo("stylization");
+    assertThat(options.getBaseImageUrl()).isEqualTo("https://example.com/base.png");
+    assertThat(options.getMaskImageUrl()).isEqualTo("https://example.com/mask.png");
+    assertThat(options.getSketchImageUrl()).isEqualTo("https://example.com/sketch.png");
+    assertThat(options.getSketchWeight()).isEqualTo(7);
+    assertThat(options.getSketchExtraction()).isTrue();
+    assertThat(options.getSketchColor()).isEqualTo(sketchColor);
+    assertThat(options.getMaskColor()).isEqualTo(maskColor);
+    assertThat(options.getResponseFormat()).isEqualTo("b64_json");
+    assertThat(options.getMaxImages()).isEqualTo(3);
+    assertThat(options.getEnableInterleave()).isTrue();
+  }
 }

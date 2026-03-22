@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -74,6 +75,8 @@ class DashScopeAgentOptionsTests {
                 .bizParams(testBizParams)
                 .files(List.of("file-123"))
                 .images(List.of("image-123"))
+                .ragOptions(DashScopeAgentRagOptions.builder().withPipelineIds(List.of("p1")).build())
+                .flowStreamMode(DashScopeAgentFlowStreamMode.AGENT_FORMAT)
                 .build();
 
         // Verify all fields are set correctly
@@ -86,6 +89,8 @@ class DashScopeAgentOptionsTests {
         assertThat(options.getBizParams()).isEqualTo(testBizParams);
         assertThat(options.getFiles()).isEqualTo(List.of("file-123"));
         assertThat(options.getImages()).isEqualTo(List.of("image-123"));
+        assertThat(options.getRagOptions().getPipelineIds()).containsExactly("p1");
+        assertThat(options.getFlowStreamMode()).isEqualTo(DashScopeAgentFlowStreamMode.AGENT_FORMAT);
     }
 
     /**
@@ -93,6 +98,12 @@ class DashScopeAgentOptionsTests {
      */
     @Test
     void testCopy() {
+        List<String> files = new ArrayList<>(List.of("file-123"));
+        List<String> images = new ArrayList<>(List.of("image-123"));
+        DashScopeAgentRagOptions ragOptions = DashScopeAgentRagOptions.builder()
+                .withPipelineIds(new ArrayList<>(List.of("p1")))
+                .build();
+
         // Create original options
         DashScopeAgentOptions original = DashScopeAgentOptions.builder()
                 .appId(TEST_APP_ID)
@@ -102,8 +113,10 @@ class DashScopeAgentOptionsTests {
                 .hasThoughts(true)
                 .enableThinking(true)
                 .bizParams(testBizParams)
-                .files(List.of("file-123"))
-                .images(List.of("image-123"))
+                .files(files)
+                .images(images)
+                .ragOptions(ragOptions)
+                .flowStreamMode(DashScopeAgentFlowStreamMode.FULL_THOUGHTS)
                 .build();
 
         // Create copy using copy() method
@@ -119,6 +132,27 @@ class DashScopeAgentOptionsTests {
         assertThat(copy.getBizParams()).isEqualTo(original.getBizParams());
         assertThat(copy.getFiles()).isEqualTo(original.getFiles());
         assertThat(copy.getImages()).isEqualTo(original.getImages());
+        assertThat(copy.getFlowStreamMode()).isEqualTo(DashScopeAgentFlowStreamMode.FULL_THOUGHTS);
+        assertThat(copy.getRagOptions().getPipelineIds()).containsExactly("p1");
+
+        files.add("file-456");
+        images.add("image-456");
+        ragOptions.getPipelineIds().add("p2");
+        ((ObjectNode) original.getBizParams()).put("key3", "value3");
+
+        assertThat(original.getFiles()).containsExactly("file-123", "file-456");
+        assertThat(copy.getFiles()).containsExactly("file-123");
+        assertThat(original.getImages()).containsExactly("image-123", "image-456");
+        assertThat(copy.getImages()).containsExactly("image-123");
+        assertThat(original.getRagOptions().getPipelineIds()).containsExactly("p1", "p2");
+        assertThat(copy.getRagOptions().getPipelineIds()).containsExactly("p1");
+        assertThat(original.getBizParams().has("key3")).isTrue();
+        assertThat(copy.getBizParams().has("key3")).isFalse();
+    }
+
+    @Test
+    void testFromOptionsWithNullInput() {
+        assertThat(DashScopeAgentOptions.fromOptions(null)).isNull();
     }
 
     /**

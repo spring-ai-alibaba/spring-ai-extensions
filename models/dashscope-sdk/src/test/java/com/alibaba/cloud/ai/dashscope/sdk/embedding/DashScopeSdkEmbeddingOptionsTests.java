@@ -18,9 +18,11 @@ package com.alibaba.cloud.ai.dashscope.sdk.embedding;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
 class DashScopeSdkEmbeddingOptionsTests {
 
@@ -37,6 +39,44 @@ class DashScopeSdkEmbeddingOptionsTests {
 
 		assertThat(copy).usingRecursiveComparison().isEqualTo(options);
 		assertThat(copy).isNotSameAs(options);
+	}
+
+	@Test
+	void testDefaultValues() {
+		DashScopeSdkEmbeddingOptions options = DashScopeSdkEmbeddingOptions.builder().build();
+
+		assertThat(options.getModel()).isNull();
+		assertThat(options.getTextType()).isNull();
+		assertThat(options.getDimensions()).isNull();
+		assertThat(options.getHttpHeaders()).isNotNull().isEmpty();
+	}
+
+	@Test
+	void testFromOptionsReturnsNullForNullInput() {
+		assertThat(DashScopeSdkEmbeddingOptions.fromOptions(null)).isNull();
+	}
+
+	@Test
+	void testFromOptionsCreatesIndependentHttpHeaders() {
+		Map<String, String> headers = new HashMap<>();
+		headers.put("x-source", "s1");
+		DashScopeSdkEmbeddingOptions original = DashScopeSdkEmbeddingOptions.builder().httpHeaders(headers).build();
+
+		DashScopeSdkEmbeddingOptions copy = DashScopeSdkEmbeddingOptions.fromOptions(original);
+		headers.put("x-source-2", "s2");
+		copy.getHttpHeaders().put("x-copy", "c1");
+
+		assertThat(original.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-source-2", "s2"));
+		assertThat(copy.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-copy", "c1"));
+	}
+
+	@Test
+	void testFromOptionsHandlesNullHttpHeaders() {
+		DashScopeSdkEmbeddingOptions original = new DashScopeSdkEmbeddingOptions();
+		original.setHttpHeaders(null);
+
+		DashScopeSdkEmbeddingOptions copy = DashScopeSdkEmbeddingOptions.fromOptions(original);
+		assertThat(copy.getHttpHeaders()).isNotNull().isEmpty();
 	}
 
 }

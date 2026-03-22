@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,9 +76,9 @@ public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscription
 		}
 		DashScopeSdkAudioTranscriptionOptions copy = new DashScopeSdkAudioTranscriptionOptions();
 		copy.setModel(options.getModel());
-		copy.setFileUrls(options.getFileUrls());
+		copy.setFileUrls(options.getFileUrls() == null ? null : new ArrayList<>(options.getFileUrls()));
 		copy.setPhraseId(options.getPhraseId());
-		copy.setChannelId(options.getChannelId());
+		copy.setChannelId(options.getChannelId() == null ? null : new ArrayList<>(options.getChannelId()));
 		copy.setDiarizationEnabled(options.getDiarizationEnabled());
 		copy.setSpeakerCount(options.getSpeakerCount());
 		copy.setDisfluencyRemovalEnabled(options.getDisfluencyRemovalEnabled());
