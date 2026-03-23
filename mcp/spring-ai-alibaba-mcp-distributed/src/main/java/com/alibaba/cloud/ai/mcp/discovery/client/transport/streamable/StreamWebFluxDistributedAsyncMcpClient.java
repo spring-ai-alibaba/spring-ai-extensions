@@ -185,9 +185,9 @@ public class StreamWebFluxDistributedAsyncMcpClient implements DistributedAsyncM
 
         WebClientStreamableHttpTransport transport;
         if (traceFilter != null) {
-            transport = WebFluxStreamableClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath);
-        } else {
             transport = WebFluxStreamableClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath, traceFilter);
+        } else {
+            transport = WebFluxStreamableClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath);
         }
 
         NamedClientMcpTransport namedClientMcpTransport = new NamedClientMcpTransport(

@@ -188,9 +188,9 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
 
         WebFluxSseClientTransport transport;
         if (traceFilter != null) {
-            transport = WebFluxSseClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath);
-        } else {
             transport = WebFluxSseClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath, traceFilter);
+        } else {
+            transport = WebFluxSseClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath);
         }
 
         NamedClientMcpTransport namedClientMcpTransport = new NamedClientMcpTransport(
