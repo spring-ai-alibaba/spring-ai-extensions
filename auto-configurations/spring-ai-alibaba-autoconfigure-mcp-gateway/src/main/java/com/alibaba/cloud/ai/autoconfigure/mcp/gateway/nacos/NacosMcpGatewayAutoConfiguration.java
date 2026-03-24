@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.autoconfigure.mcp.gateway.nacos;
 
 import com.alibaba.cloud.ai.autoconfigure.mcp.gateway.core.McpGatewayServerAutoConfiguration;
 import com.alibaba.cloud.ai.autoconfigure.mcp.gateway.security.McpGatewayOAuthAutoConfiguration;
+import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayProperties;
 import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayToolManager;
 import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayToolsInitializer;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.properties.NacosMcpGatewayProperties;
@@ -44,7 +45,7 @@ import java.util.Properties;
 /**
  * @author aias00
  */
-@EnableConfigurationProperties({ NacosMcpGatewayProperties.class, NacosMcpProperties.class })
+@EnableConfigurationProperties({ McpGatewayProperties.class, NacosMcpGatewayProperties.class, NacosMcpProperties.class })
 @AutoConfiguration(after = { McpGatewayServerAutoConfiguration.class, McpGatewayOAuthAutoConfiguration.class })
 @ConditionalOnProperty(prefix = "spring.ai.alibaba.mcp.gateway", name = "registry", havingValue = "nacos",
 		matchIfMissing = true)

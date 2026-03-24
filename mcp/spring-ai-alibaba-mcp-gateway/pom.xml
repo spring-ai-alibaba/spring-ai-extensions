@@ -88,6 +88,12 @@
             <version>4.3.1</version>
         </dependency>
 
+        <!-- Ensure Reactor Netty is available for WebClient default connector -->
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty-http</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

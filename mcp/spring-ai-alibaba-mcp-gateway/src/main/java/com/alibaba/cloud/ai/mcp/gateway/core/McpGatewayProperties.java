@@ -33,6 +33,30 @@ public class McpGatewayProperties {
 
 	private String messageEndpoint = "/message";
 
+	/**
+	 * WebClient connector mode for outbound gateway HTTP calls.
+	 * Supported values: {@code default} (use injected WebClient.Builder as-is), {@code jdk}
+	 * (JDK HttpClient connector), {@code netty-reactor} (Reactor Netty HttpClient connector). Alias:
+	 * {@code reactor-netty} is treated as {@code netty-reactor}.
+	 */
+	private String webclientConnector = "default";
+
+	/**
+	 * Outbound HTTP protocol (same accepted tokens for every connector mode). Allowed values:
+	 * {@code default}, {@code http1}, {@code http2}, {@code h2c}, {@code http3}, {@code alpn}
+	 * (HTTP/1.1 and HTTP/2 with ALPN).
+	 * <p>
+	 * <b>{@code jdk}</b> ({@link #setWebclientConnector(String)} = {@code jdk}): only {@code http1} and
+	 * {@code http2} are applied via {@link java.net.http.HttpClient.Builder#version}. Other tokens
+	 * behave like {@code default} (no explicit protocol version on the JDK client).
+	 * </p>
+	 * <p>
+	 * <b>{@code netty-reactor}</b>: each token maps to Reactor Netty {@code HttpProtocol} — including
+	 * {@code h2c} (cleartext HTTP/2), {@code http3}, and {@code alpn} — so the full set is honored.
+	 * </p>
+	 */
+	private String webclientConnectorProtocol = "default";
+
 	private SseConfig sse = new SseConfig();
 
 	private StreamableConfig streamable = new StreamableConfig();
@@ -163,6 +187,22 @@ public class McpGatewayProperties {
 
 	public void setStreamable(StreamableConfig streamable) {
 		this.streamable = streamable;
+	}
+
+	public String getWebclientConnector() {
+		return webclientConnector;
+	}
+
+	public void setWebclientConnector(String webclientConnector) {
+		this.webclientConnector = webclientConnector;
+	}
+
+	public String getWebclientConnectorProtocol() {
+		return webclientConnectorProtocol;
+	}
+
+	public void setWebclientConnectorProtocol(String webclientConnectorProtocol) {
+		this.webclientConnectorProtocol = webclientConnectorProtocol;
 	}
 
 }

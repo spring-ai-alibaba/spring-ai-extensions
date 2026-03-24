@@ -17,6 +17,7 @@
 package com.alibaba.cloud.ai.mcp.gateway.nacos.callback;
 
 import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayToolDefinition;
+import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayProperties;
 import com.alibaba.cloud.ai.mcp.gateway.core.jsontemplate.RequestTemplateInfo;
 import com.alibaba.cloud.ai.mcp.gateway.core.jsontemplate.RequestTemplateParser;
 import com.alibaba.cloud.ai.mcp.gateway.core.utils.SpringBeanUtils;
@@ -56,10 +57,14 @@ import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.lang.NonNull;
+import org.springframework.http.client.reactive.JdkClientHttpConnector;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.HttpProtocol;
+import reactor.netty.http.client.HttpClient;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -114,6 +119,69 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
 
     private WebClient.Builder initializeWebClientBuilder(String toolName) {
         WebClient.Builder baseBuilder = SpringBeanUtils.getInstance().getBean(WebClient.Builder.class);
+        String connectorMode = "default";
+        String connectorProtocol = "default";
+        try {
+            McpGatewayProperties gatewayProperties = SpringBeanUtils.getInstance().getBean(McpGatewayProperties.class);
+            if (gatewayProperties != null) {
+                if (gatewayProperties.getWebclientConnector() != null) {
+                    connectorMode = gatewayProperties.getWebclientConnector().trim();
+                }
+                if (gatewayProperties.getWebclientConnectorProtocol() != null) {
+                    connectorProtocol = gatewayProperties.getWebclientConnectorProtocol().trim();
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        String normalizedMode = connectorMode == null ? "default" : connectorMode.trim().toLowerCase();
+        if ("reactor-netty".equals(normalizedMode)) {
+            normalizedMode = "netty-reactor";
+        }
+        String protocolKey = "default";
+        if (connectorProtocol != null && !connectorProtocol.isBlank()) {
+            protocolKey = connectorProtocol.trim().toLowerCase();
+            switch (protocolKey) {
+                case "default", "http1", "http2", "h2c", "http3", "alpn" -> {
+                }
+                default -> {
+                    logger.warn("Unknown webclientConnectorProtocol '{}', using default", connectorProtocol);
+                    protocolKey = "default";
+                }
+            }
+        }
+        if ("jdk".equals(normalizedMode)) {
+            java.net.http.HttpClient.Builder jdkBuilder = java.net.http.HttpClient.newBuilder();
+            switch (protocolKey) {
+                case "http1" -> jdkBuilder.version(java.net.http.HttpClient.Version.HTTP_1_1);
+                case "http2" -> jdkBuilder.version(java.net.http.HttpClient.Version.HTTP_2);
+                default -> {
+                }
+            }
+            baseBuilder.clientConnector(new JdkClientHttpConnector(jdkBuilder.build()));
+            logger.info("MCP Gateway WebClient connector for tool {}: mode={}, protocol={}",
+                    toolName, normalizedMode, protocolKey);
+        } else if ("netty-reactor".equals(normalizedMode)) {
+            HttpClient c = HttpClient.create();
+            HttpClient reactorClient = switch (protocolKey) {
+                case "default" -> c;
+                case "http1" -> c.protocol(HttpProtocol.HTTP11);
+                case "http2" -> c.protocol(HttpProtocol.H2);
+                case "h2c" -> c.protocol(HttpProtocol.H2C);
+                case "http3" -> c.protocol(HttpProtocol.HTTP3);
+                case "alpn" -> c.protocol(HttpProtocol.HTTP11, HttpProtocol.H2);
+                default -> c;
+            };
+            baseBuilder.clientConnector(new ReactorClientHttpConnector(reactorClient));
+            logger.info("MCP Gateway WebClient connector for tool {}: mode={}, protocol={}",
+                    toolName, normalizedMode, protocolKey);
+        } else {
+            if (!"default".equals(normalizedMode)) {
+                logger.warn("Unknown webclientConnector '{}', using default WebClient.Builder connector", connectorMode);
+            }
+            logger.info("MCP Gateway WebClient connector for tool {}: mode=default, protocol={}",
+                    toolName, protocolKey);
+        }
 
         try {
             McpGatewayOAuthProperties oauthProperties = SpringBeanUtils.getInstance()
