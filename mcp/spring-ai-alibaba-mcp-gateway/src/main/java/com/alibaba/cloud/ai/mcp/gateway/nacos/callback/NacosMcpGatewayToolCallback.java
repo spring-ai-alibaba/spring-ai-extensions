@@ -182,8 +182,13 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
             if (!"default".equals(normalizedMode)) {
                 logger.warn("Unknown webclientConnector '{}', using default WebClient.Builder connector", connectorMode);
             }
-            logger.info("MCP Gateway WebClient connector for tool {}: mode=default, protocol={}",
-                    toolName, protocolKey);
+            if (!"default".equals(protocolKey)) {
+                logger.warn(
+                        "webclientConnectorProtocol '{}' is configured but ignored because webclientConnector mode is 'default'. "
+                                + "Select 'jdk' or 'netty-reactor' to apply protocol settings.",
+                        connectorProtocol);
+            }
+            logger.info("MCP Gateway WebClient connector for tool {}: mode=default, protocol=default", toolName);
         }
 
         try {
