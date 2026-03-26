@@ -92,17 +92,17 @@
         <module>memories/spring-ai-alibaba-starter-memory-tablestore</module>
 
         <!-- auto-configurations modules -->
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-dashscope</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-dashscope-sdk</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-memory</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-memory-long</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-nacos-prompt</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-arms-observation</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-registry</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-router</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-rag-elasticsearch</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-distributed</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-gateway</module>
+        <module>auto-configurations/models/spring-ai-alibaba-autoconfigure-dashscope</module>
+        <module>auto-configurations/models/spring-ai-alibaba-autoconfigure-dashscope-sdk</module>
+        <module>auto-configurations/memory/spring-ai-alibaba-autoconfigure-memory</module>
+        <module>auto-configurations/memory/spring-ai-alibaba-autoconfigure-memory-long</module>
+        <module>auto-configurations/prompt/spring-ai-alibaba-autoconfigure-nacos-prompt</module>
+        <module>auto-configurations/observation/spring-ai-alibaba-autoconfigure-arms-observation</module>
+        <module>auto-configurations/mcp/spring-ai-alibaba-autoconfigure-mcp-registry</module>
+        <module>auto-configurations/mcp/spring-ai-alibaba-autoconfigure-mcp-router</module>
+        <module>auto-configurations/rag/spring-ai-alibaba-autoconfigure-rag-elasticsearch</module>
+        <module>auto-configurations/mcp/spring-ai-alibaba-autoconfigure-mcp-distributed</module>
+        <module>auto-configurations/mcp/spring-ai-alibaba-autoconfigure-mcp-gateway</module>
 
         <!-- spring-boot-starters modules -->
         <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope</module>
@@ -180,10 +180,10 @@
 
         <module>prompt/spring-ai-alibaba-prompt-nacos</module>
 
-        <module>models/dashscope</module>
-        <module>models/dashscope-sdk</module>
+        <module>models/spring-ai-alibaba-dashscope</module>
+        <module>models/spring-ai-alibaba-dashscope-sdk</module>
         <module>rag/spring-ai-alibaba-rag</module>
-        <module>observation</module>
+        <module>observation/spring-ai-alibaba-observation</module>
         <module>spring-ai-alibaba-extensions-bom</module>
     </modules>
 
