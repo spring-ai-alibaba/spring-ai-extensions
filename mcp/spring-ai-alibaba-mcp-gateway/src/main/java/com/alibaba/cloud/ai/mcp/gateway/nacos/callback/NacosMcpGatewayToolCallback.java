@@ -131,7 +131,10 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
                     connectorProtocol = gatewayProperties.getWebclientConnectorProtocol().trim();
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception ex) {
+            logger.debug(
+                    "Unable to obtain McpGatewayProperties; using default WebClient connector settings for tool '{}'",
+                    toolName, ex);
         }
 
         String normalizedMode = connectorMode == null ? "default" : connectorMode.trim().toLowerCase();
