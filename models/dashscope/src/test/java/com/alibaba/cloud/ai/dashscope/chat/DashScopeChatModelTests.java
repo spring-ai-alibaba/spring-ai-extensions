@@ -1101,4 +1101,29 @@ class DashScopeChatModelTests {
         assertThat(firstMessage.rawContent()).isInstanceOf(String.class);
         assertThat(firstMessage.rawContent()).isEqualTo(TEST_PROMPT);
     }
+
+    @Test
+    void testCreateRequestWithEnableCodeInterpreter() {
+        Message message = new UserMessage(TEST_PROMPT);
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .enableCodeInterpreter(true)
+                .build();
+        Prompt prompt = new Prompt(List.of(message), options);
+
+        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+
+        assertThat(request).isNotNull();
+        assertThat(request.parameters().enableCodeInterpreter()).isTrue();
+    }
+
+    @Test
+    void testCreateRequestWithoutEnableCodeInterpreter() {
+        Message message = new UserMessage(TEST_PROMPT);
+        Prompt prompt = new Prompt(List.of(message), defaultOptions);
+
+        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+
+        assertThat(request).isNotNull();
+        assertThat(request.parameters().enableCodeInterpreter()).isNull();
+    }
 }

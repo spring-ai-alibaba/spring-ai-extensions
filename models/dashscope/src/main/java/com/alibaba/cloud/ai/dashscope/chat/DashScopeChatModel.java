@@ -729,6 +729,8 @@ public class DashScopeChatModel implements ChatModel {
                 options.getEnableThinking(),
                 options.getThinkingBudget(),
 
+                options.getEnableCodeInterpreter(),
+
                 options.getVlHighResolutionImages(),
                 options.getVlEnableImageHwOutput(),
 
