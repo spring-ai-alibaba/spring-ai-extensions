@@ -112,6 +112,7 @@
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-registry</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-router</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-rag</module>
+        <module>spring-boot-starters/spring-ai-alibaba-starter-rag-bailian</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-distributed</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-gateway</module>
 
@@ -192,7 +193,7 @@
     <properties>
 
         <!-- Spring AI Alibaba Version -->
-        <revision>1.1.2.2</revision>
+        <revision>1.1.2.2-retriever</revision>
 
         <!-- Maven project basic config -->
         <java.version>17</java.version>
