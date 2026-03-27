@@ -40,15 +40,18 @@ public class DistributedAsyncMcpToolCallbackProvider implements ToolCallbackProv
 
     private final BiPredicate<McpAsyncClient, McpSchema.Tool> toolFilter;
 
-    public DistributedAsyncMcpToolCallbackProvider(BiPredicate<McpAsyncClient, McpSchema.Tool> toolFilter, List<DistributedAsyncMcpClient> mcpClients) {
+    private final BiPredicate<String, Object> contextFilter;
+
+    public DistributedAsyncMcpToolCallbackProvider(BiPredicate<String, Object> contextFilter, BiPredicate<McpAsyncClient, McpSchema.Tool> toolFilter, List<DistributedAsyncMcpClient> mcpClients) {
         Assert.notNull(mcpClients, "mcpClients cannot be null");
         Assert.notNull(toolFilter, "toolFilter cannot be null");
         this.mcpClients = mcpClients;
         this.toolFilter = toolFilter;
+        this.contextFilter = contextFilter;
     }
 
     public DistributedAsyncMcpToolCallbackProvider(List<DistributedAsyncMcpClient> mcpClients) {
-        this((mcpClient, tool) -> true, mcpClients);
+        this(null, (mcpClient, tool) -> true, mcpClients);
     }
 
     @Override
@@ -62,7 +65,7 @@ public class DistributedAsyncMcpToolCallbackProvider implements ToolCallbackProv
                 return (ToolCallback[]) response.tools().stream().filter((tool) -> {
                     return this.toolFilter.test(mcpClient.getMcpAsyncClient(), tool);
                 }).map((tool) -> {
-                    return new DistributedAsyncMcpToolCallback(mcpClient, tool);
+                    return new DistributedAsyncMcpToolCallback(mcpClient, tool, this.contextFilter);
                 }).toArray((x$0) -> {
                     return new ToolCallback[x$0];
                 });

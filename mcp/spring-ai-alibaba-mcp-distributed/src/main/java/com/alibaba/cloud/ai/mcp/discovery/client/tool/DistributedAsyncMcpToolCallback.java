@@ -18,13 +18,18 @@ package com.alibaba.cloud.ai.mcp.discovery.client.tool;
 
 import com.alibaba.cloud.ai.mcp.discovery.client.transport.DistributedAsyncMcpClient;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.mcp.McpToolUtils;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Map;
+import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
 
 /**
  * @author yingzi
@@ -37,11 +42,14 @@ public class DistributedAsyncMcpToolCallback implements ToolCallback {
 
     private final McpSchema.Tool tool;
 
-    public DistributedAsyncMcpToolCallback(DistributedAsyncMcpClient distributedAsyncMcpClient, McpSchema.Tool tool) {
+    private final BiPredicate<String, Object> contextFilter;
+
+    public DistributedAsyncMcpToolCallback(DistributedAsyncMcpClient distributedAsyncMcpClient, McpSchema.Tool tool, BiPredicate<String, Object> contextFilter) {
         Assert.notNull(distributedAsyncMcpClient, "distributedSyncClient must not be null");
         Assert.notNull(tool, "tool must not be null");
         this.distributedAsyncMcpClient = distributedAsyncMcpClient;
         this.tool = tool;
+        this.contextFilter = contextFilter != null ? contextFilter : (key, value) -> key != null && key.startsWith("_meta");
     }
 
     @Override
@@ -51,6 +59,30 @@ public class DistributedAsyncMcpToolCallback implements ToolCallback {
                 .description(this.tool.description())
                 .inputSchema(ModelOptionsUtils.toJsonString(this.tool.inputSchema()))
                 .build();    }
+
+    @Override
+    public String call(String toolInput, @Nullable ToolContext toolContext) {
+        Map<String, Object> arguments = ModelOptionsUtils.jsonToMap(toolInput);
+        Map<String, Object> meta = Map.of();
+        if (toolContext != null && !CollectionUtils.isEmpty(toolContext.getContext())) {
+            meta = toolContext.getContext()
+                    .entrySet()
+                    .stream()
+                    .filter(entry -> entry.getValue() != null && this.contextFilter.test(entry.getKey(), entry.getValue()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        }
+        return this.distributedAsyncMcpClient
+                .callTool(new McpSchema.CallToolRequest(this.tool.name(), arguments, meta))
+                .map((response) -> {
+                    if (response.isError() != null && response.isError()) {
+                        throw new IllegalStateException("Error calling tool: " + String.valueOf(response.content()));
+                    }
+                    else {
+                        return ModelOptionsUtils.toJsonString(response.content());
+                    }
+                })
+                .block();
+    }
 
     @Override
     public String call(String toolInput) {
