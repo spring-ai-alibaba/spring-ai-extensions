@@ -114,32 +114,62 @@ public class DashScopeAgentRagOptions {
 			this.options = options;
 		}
 
-		public Builder withPipelineIds(List<String> pipelineIds) {
+        @Deprecated
+        public Builder withPipelineIds(List<String> pipelineIds) {
+            return this.pipelineIds(pipelineIds);
+        }
+
+        @Deprecated
+        public Builder withFileIds(List<String> fileIds) {
+            return this.fileIds(fileIds);
+        }
+
+        @Deprecated
+        public Builder withTags(List<String> tags) {
+            return this.tags(tags);
+        }
+
+        @Deprecated
+        public Builder withMetadataFilter(JsonNode metadataFilter) {
+            return this.metadataFilter(metadataFilter);
+        }
+
+        @Deprecated
+        public Builder withStructuredFilter(JsonNode structuredFilter) {
+            return this.structuredFilter(structuredFilter);
+        }
+
+        @Deprecated
+        public Builder withSessionFileIds(List<String> sessionFileIds) {
+            return this.sessionFileIds(sessionFileIds);
+        }
+
+		public Builder pipelineIds(List<String> pipelineIds) {
 			this.options.pipelineIds = pipelineIds;
 			return this;
 		}
 
-		public Builder withFileIds(List<String> fileIds) {
+		public Builder fileIds(List<String> fileIds) {
 			this.options.fileIds = fileIds;
 			return this;
 		}
 
-		public Builder withTags(List<String> tags) {
+		public Builder tags(List<String> tags) {
 			this.options.tags = tags;
 			return this;
 		}
 
-		public Builder withMetadataFilter(JsonNode metadataFilter) {
+		public Builder metadataFilter(JsonNode metadataFilter) {
 			this.options.metadataFilter = metadataFilter;
 			return this;
 		}
 
-		public Builder withStructuredFilter(JsonNode structuredFilter) {
+		public Builder structuredFilter(JsonNode structuredFilter) {
 			this.options.structuredFilter = structuredFilter;
 			return this;
 		}
 
-		public Builder withSessionFileIds(List<String> sessionFileIds) {
+		public Builder sessionFileIds(List<String> sessionFileIds) {
 			this.options.sessionFileIds = sessionFileIds;
 			return this;
 		}
