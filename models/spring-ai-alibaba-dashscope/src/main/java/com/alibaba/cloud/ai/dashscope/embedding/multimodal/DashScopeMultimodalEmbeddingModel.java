@@ -45,8 +45,8 @@ import org.springframework.ai.embedding.observation.EmbeddingModelObservationCon
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationDocumentation;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.Assert;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
@@ -188,7 +188,7 @@ public class DashScopeMultimodalEmbeddingModel implements DocumentEmbeddingModel
 						this.observationRegistry)
 				.observe(() -> {
 					ResponseEntity<DashScopeApiSpec.MultimodalEmbeddingResponse> responseEntity =
-							this.retryTemplate.execute(ctx -> this.dashscopeApi.embedding(apiRequest));
+                            RetryUtils.execute(this.retryTemplate, () -> this.dashscopeApi.embedding(apiRequest));
 					DashScopeApiSpec.MultimodalEmbeddingResponse body = responseEntity.getBody();
 
 					if (body == null) {
