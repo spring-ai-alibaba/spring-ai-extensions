@@ -33,12 +33,12 @@ class DashScopeAgentRagOptionsTests {
 		ObjectNode structuredFilter = this.objectMapper.createObjectNode().put("category", "tech");
 
 		DashScopeAgentRagOptions options = DashScopeAgentRagOptions.builder()
-			.withPipelineIds(List.of("p1", "p2"))
-			.withFileIds(List.of("f1"))
-			.withTags(List.of("tag1"))
-			.withMetadataFilter(metadataFilter)
-			.withStructuredFilter(structuredFilter)
-			.withSessionFileIds(List.of("sf1"))
+			.pipelineIds(List.of("p1", "p2"))
+			.fileIds(List.of("f1"))
+			.tags(List.of("tag1"))
+			.metadataFilter(metadataFilter)
+			.structuredFilter(structuredFilter)
+			.sessionFileIds(List.of("sf1"))
 			.build();
 
 		assertThat(options.getPipelineIds()).containsExactly("p1", "p2");
@@ -76,7 +76,7 @@ class DashScopeAgentRagOptionsTests {
 		original.setPipelineIds(List.of("old"));
 
 		DashScopeAgentRagOptions built = new DashScopeAgentRagOptions.Builder(original)
-			.withPipelineIds(List.of("new"))
+			.pipelineIds(List.of("new"))
 			.build();
 
 		assertThat(built).isSameAs(original);

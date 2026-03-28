@@ -75,7 +75,7 @@ class DashScopeAgentOptionsTests {
                 .bizParams(testBizParams)
                 .files(List.of("file-123"))
                 .images(List.of("image-123"))
-                .ragOptions(DashScopeAgentRagOptions.builder().withPipelineIds(List.of("p1")).build())
+                .ragOptions(DashScopeAgentRagOptions.builder().pipelineIds(List.of("p1")).build())
                 .flowStreamMode(DashScopeAgentFlowStreamMode.AGENT_FORMAT)
                 .build();
 
@@ -101,7 +101,7 @@ class DashScopeAgentOptionsTests {
         List<String> files = new ArrayList<>(List.of("file-123"));
         List<String> images = new ArrayList<>(List.of("image-123"));
         DashScopeAgentRagOptions ragOptions = DashScopeAgentRagOptions.builder()
-                .withPipelineIds(new ArrayList<>(List.of("p1")))
+                .pipelineIds(new ArrayList<>(List.of("p1")))
                 .build();
 
         // Create original options

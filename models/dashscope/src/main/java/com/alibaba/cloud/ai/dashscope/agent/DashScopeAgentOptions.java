@@ -232,13 +232,13 @@ public class DashScopeAgentOptions implements ChatOptions {
             return null;
         }
         return DashScopeAgentRagOptions.builder()
-                .withPipelineIds(source.getPipelineIds() == null ? null : new ArrayList<>(source.getPipelineIds()))
-                .withFileIds(source.getFileIds() == null ? null : new ArrayList<>(source.getFileIds()))
-                .withTags(source.getTags() == null ? null : new ArrayList<>(source.getTags()))
-                .withMetadataFilter(source.getMetadataFilter() == null ? null : source.getMetadataFilter().deepCopy())
-                .withStructuredFilter(
+                .pipelineIds(source.getPipelineIds() == null ? null : new ArrayList<>(source.getPipelineIds()))
+                .fileIds(source.getFileIds() == null ? null : new ArrayList<>(source.getFileIds()))
+                .tags(source.getTags() == null ? null : new ArrayList<>(source.getTags()))
+                .metadataFilter(source.getMetadataFilter() == null ? null : source.getMetadataFilter().deepCopy())
+                .structuredFilter(
                         source.getStructuredFilter() == null ? null : source.getStructuredFilter().deepCopy())
-                .withSessionFileIds(
+                .sessionFileIds(
                         source.getSessionFileIds() == null ? null : new ArrayList<>(source.getSessionFileIds()))
                 .build();
     }

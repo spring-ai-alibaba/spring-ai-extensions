@@ -114,32 +114,32 @@ public class DashScopeAgentRagOptions {
 			this.options = options;
 		}
 
-		public Builder withPipelineIds(List<String> pipelineIds) {
+		public Builder pipelineIds(List<String> pipelineIds) {
 			this.options.pipelineIds = pipelineIds;
 			return this;
 		}
 
-		public Builder withFileIds(List<String> fileIds) {
+		public Builder fileIds(List<String> fileIds) {
 			this.options.fileIds = fileIds;
 			return this;
 		}
 
-		public Builder withTags(List<String> tags) {
+		public Builder tags(List<String> tags) {
 			this.options.tags = tags;
 			return this;
 		}
 
-		public Builder withMetadataFilter(JsonNode metadataFilter) {
+		public Builder metadataFilter(JsonNode metadataFilter) {
 			this.options.metadataFilter = metadataFilter;
 			return this;
 		}
 
-		public Builder withStructuredFilter(JsonNode structuredFilter) {
+		public Builder structuredFilter(JsonNode structuredFilter) {
 			this.options.structuredFilter = structuredFilter;
 			return this;
 		}
 
-		public Builder withSessionFileIds(List<String> sessionFileIds) {
+		public Builder sessionFileIds(List<String> sessionFileIds) {
 			this.options.sessionFileIds = sessionFileIds;
 			return this;
 		}
