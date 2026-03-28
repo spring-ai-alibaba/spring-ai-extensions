@@ -113,10 +113,10 @@ class DashScopeEmbeddingOptionsTests {
 	@Test
 	void testDeprecatedWithMethodsAndEmbeddingsPath() {
 		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
-			.withModel(TEST_MODEL)
-			.withTextType(TEST_TEXT_TYPE)
-			.withDimensions(TEST_DIMENSIONS)
-			.withEmbeddingsPath("/tmp/embeddings")
+			.model(TEST_MODEL)
+			.textType(TEST_TEXT_TYPE)
+			.dimensions(TEST_DIMENSIONS)
+			.embeddingsPath("/tmp/embeddings")
 			.build();
 
 		assertThat(options.getModel()).isEqualTo(TEST_MODEL);
