@@ -34,7 +34,7 @@ import org.springframework.ai.image.observation.ImageModelObservationConvention;
 import org.springframework.ai.image.observation.ImageModelObservationDocumentation;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
-import org.springframework.retry.support.RetryTemplate;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -73,8 +73,8 @@ public class DashScopeSdkImageModel implements ImageModel {
 	private ImageModelObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
 
 	public DashScopeSdkImageModel(DashScopeSdkImageSynthesisClient imageClient, DashScopeSdkImageOptions defaultOptions,
-			RetryTemplate retryTemplate, ObservationRegistry observationRegistry, String apiKey, String workspaceId,
-			Map<String, String> connectionHeaders) {
+                                  RetryTemplate retryTemplate, ObservationRegistry observationRegistry, String apiKey, String workspaceId,
+                                  Map<String, String> connectionHeaders) {
 
 		Assert.notNull(imageClient, "imageClient cannot be null");
 		Assert.notNull(defaultOptions, "defaultOptions cannot be null");
@@ -108,7 +108,7 @@ public class DashScopeSdkImageModel implements ImageModel {
 			.observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
 					this.observationRegistry)
 			.observe(() -> {
-				ImageSynthesisResult submitResult = this.retryTemplate.execute(ctx -> executeSubmit(sdkRequest, options));
+				ImageSynthesisResult submitResult = RetryUtils.execute(this.retryTemplate, () -> executeSubmit(sdkRequest, options));
 				ImageSynthesisResult finalResult = resolveFinalResult(submitResult, options);
 				ImageResponse response = toImageResponse(finalResult);
 				observationContext.setResponse(response);
@@ -198,8 +198,8 @@ public class DashScopeSdkImageModel implements ImageModel {
 		}
 
 		try {
-			return this.retryTemplate.execute(ctx -> this.imageClient.wait(submitResult,
-					String.valueOf(options.getPollIntervalMs() == null ? 1000 : options.getPollIntervalMs())));
+            return RetryUtils.execute(this.retryTemplate, () -> this.imageClient.wait(submitResult,
+                    String.valueOf(options.getPollIntervalMs() == null ? 1000 : options.getPollIntervalMs())));
 		}
 		catch (Exception ex) {
 			throw new DashScopeSdkException("Failed to fetch DashScope SDK image task result", ex);

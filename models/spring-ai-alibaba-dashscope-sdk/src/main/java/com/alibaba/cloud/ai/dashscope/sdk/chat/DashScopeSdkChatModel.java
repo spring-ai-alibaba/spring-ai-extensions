@@ -62,7 +62,7 @@ import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.support.UsageCalculator;
 import org.springframework.ai.tool.definition.ToolDefinition;
-import org.springframework.retry.support.RetryTemplate;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -108,9 +108,9 @@ public class DashScopeSdkChatModel implements ChatModel {
 	private ChatModelObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
 
 	public DashScopeSdkChatModel(DashScopeSdkGenerationClient generationClient, DashScopeSdkChatOptions defaultOptions,
-			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
-			ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate, String apiKey, String workspaceId,
-			Map<String, String> connectionHeaders) {
+                                 ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
+                                 ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate, String apiKey, String workspaceId,
+                                 Map<String, String> connectionHeaders) {
 
 		Assert.notNull(generationClient, "generationClient cannot be null");
 		Assert.notNull(defaultOptions, "defaultOptions cannot be null");
@@ -164,7 +164,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 			.observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
 					this.observationRegistry)
 			.observe(() -> {
-				GenerationResult result = this.retryTemplate.execute(ctx -> executeCall(request));
+				GenerationResult result = RetryUtils.execute(this.retryTemplate, () -> executeCall(request));
 				ChatResponse chatResponse = toChatResponse(result, previousChatResponse, request.getModel());
 				observationContext.setResponse(chatResponse);
 				return chatResponse;
@@ -188,7 +188,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 		return Flux.deferContextual(contextView -> {
 			GenerationParam request = createRequest(prompt, true);
 
-			Flowable<GenerationResult> generationResults = this.retryTemplate.execute(ctx -> executeStream(request));
+			Flowable<GenerationResult> generationResults = RetryUtils.execute(this.retryTemplate, () -> executeStream(request));
 
 			ChatModelObservationContext observationContext = ChatModelObservationContext.builder()
 				.prompt(prompt)

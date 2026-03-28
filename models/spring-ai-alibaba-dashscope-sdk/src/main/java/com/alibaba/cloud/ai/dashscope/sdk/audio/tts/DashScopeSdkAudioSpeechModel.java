@@ -31,7 +31,7 @@ import org.springframework.ai.audio.tts.TextToSpeechResponse;
 import org.springframework.ai.audio.tts.TextToSpeechResponseMetadata;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
-import org.springframework.retry.support.RetryTemplate;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -74,7 +74,7 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 	@Override
 	public TextToSpeechResponse call(TextToSpeechPrompt prompt) {
 		SpeechSynthesisParam request = createRequest(prompt, false);
-		ByteBuffer data = this.retryTemplate.execute(ctx -> executeCall(request));
+		ByteBuffer data = RetryUtils.execute(this.retryTemplate, () -> executeCall(request));
 		byte[] bytes = toBytes(data);
 		TextToSpeechResponseMetadata metadata = new TextToSpeechResponseMetadata();
 		metadata.put("model", request.getModel());
@@ -84,7 +84,7 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 	@Override
 	public Flux<TextToSpeechResponse> stream(TextToSpeechPrompt prompt) {
 		SpeechSynthesisParam request = createRequest(prompt, true);
-		Flowable<SpeechSynthesisResult> streamResult = this.retryTemplate.execute(ctx -> executeStream(request));
+		Flowable<SpeechSynthesisResult> streamResult = RetryUtils.execute(this.retryTemplate, () -> executeStream(request));
 		return flowableToFlux(streamResult)
 			.map(this::toTextToSpeechResponse)
 			.filter(response -> !CollectionUtils.isEmpty(response.getResults())
