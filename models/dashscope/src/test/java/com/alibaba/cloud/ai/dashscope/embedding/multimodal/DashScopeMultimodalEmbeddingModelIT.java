@@ -16,6 +16,9 @@
 
 package com.alibaba.cloud.ai.dashscope.embedding.multimodal;
 
+import java.util.List;
+import java.util.Map;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeMultimodalEmbeddingApi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -27,9 +30,6 @@ import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.embedding.EmbeddingResultMetadata;
 import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.util.MimeTypeUtils;
-
-import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -81,15 +81,15 @@ public class DashScopeMultimodalEmbeddingModelIT {
 	@Test
 	public void testBatchMultimodalEmbedding() {
 		Document textDoc = new Document("multimodal vector model");
-		
+
 		Media imageMedia = Media.builder().mimeType(MimeTypeUtils.IMAGE_JPEG).data("https://img.alicdn.com/imgextra/i3/O1CN01rdstgY1uiZWt8gqSL_!!6000000006071-0-tps-1970-356.jpg").build();
 		Document imageDoc = new Document(imageMedia, Map.of());
-		
+
 		EmbeddingResponse response = this.embeddingModel.call(new DocumentEmbeddingRequest(List.of(textDoc, imageDoc), null));
 
 		// Expecting 2 results in a single call.
 		verifyEmbeddingResponse(response, 2);
-		
+
 		int textCount = 0;
 		int imageCount = 0;
 		for(Embedding e : response.getResults()) {

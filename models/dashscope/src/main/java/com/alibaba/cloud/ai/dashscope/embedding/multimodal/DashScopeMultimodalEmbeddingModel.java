@@ -15,6 +15,14 @@
  */
 package com.alibaba.cloud.ai.dashscope.embedding.multimodal;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeMultimodalEmbeddingApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
@@ -24,7 +32,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.content.Media;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.embedding.*;
+import org.springframework.ai.embedding.DocumentEmbeddingModel;
+import org.springframework.ai.embedding.DocumentEmbeddingRequest;
+import org.springframework.ai.embedding.Embedding;
+import org.springframework.ai.embedding.EmbeddingRequest;
+import org.springframework.ai.embedding.EmbeddingResponse;
+import org.springframework.ai.embedding.EmbeddingResponseMetadata;
+import org.springframework.ai.embedding.EmbeddingResultMetadata;
 import org.springframework.ai.embedding.observation.DefaultEmbeddingModelObservationConvention;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationContext;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationConvention;
@@ -37,14 +51,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.util.StringUtils;
-
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * Implementation of the DashScope Multimodal Embedding Model.

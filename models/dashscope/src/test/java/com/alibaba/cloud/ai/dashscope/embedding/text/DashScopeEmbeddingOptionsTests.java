@@ -15,11 +15,11 @@
  */
 package com.alibaba.cloud.ai.dashscope.embedding.text;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.embedding.EmbeddingOptions;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test cases for DashScopeEmbeddingOptions. Tests cover builder pattern, getters/setters,

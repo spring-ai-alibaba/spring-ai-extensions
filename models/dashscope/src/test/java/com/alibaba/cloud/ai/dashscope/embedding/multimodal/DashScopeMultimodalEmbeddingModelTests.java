@@ -15,6 +15,10 @@
  */
 package com.alibaba.cloud.ai.dashscope.embedding.multimodal;
 
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeMultimodalEmbeddingApi;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import io.micrometer.observation.ObservationRegistry;
@@ -29,10 +33,6 @@ import org.springframework.ai.embedding.EmbeddingResultMetadata;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MimeTypeUtils;
-
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
