@@ -41,7 +41,7 @@ import org.springframework.ai.embedding.observation.EmbeddingModelObservationCon
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationDocumentation;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
-import org.springframework.retry.support.RetryTemplate;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -128,7 +128,7 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 			.observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
 					this.observationRegistry)
 			.observe(() -> {
-				TextEmbeddingResult result = this.retryTemplate.execute(ctx -> executeCall(sdkRequest));
+				TextEmbeddingResult result = RetryUtils.execute(this.retryTemplate, () -> executeCall(sdkRequest));
 				EmbeddingResponse response = toEmbeddingResponse(result, sdkRequest.getModel());
 				observationContext.setResponse(response);
 				return response;

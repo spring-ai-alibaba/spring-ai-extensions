@@ -16,7 +16,6 @@
 
 package com.alibaba.cloud.ai.autoconfigure.dashscope.sdk;
 
-import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -34,7 +33,6 @@ public final class DashScopeSdkConnectionUtils {
 	private DashScopeSdkConnectionUtils() {
 	}
 
-	@NonNull
 	public static ResolvedConnectionProperties resolveConnectionProperties(
 			DashScopeSdkParentProperties commonProperties,
 			DashScopeSdkParentProperties modelProperties) {

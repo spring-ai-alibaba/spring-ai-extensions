@@ -32,7 +32,7 @@ import org.springframework.ai.audio.transcription.AudioTranscriptionResponseMeta
 import org.springframework.ai.audio.transcription.TranscriptionModel;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
-import org.springframework.retry.support.RetryTemplate;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -70,8 +70,8 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 	private final HttpClient httpClient;
 
 	public DashScopeSdkAudioTranscriptionModel(DashScopeSdkTranscriptionClient transcriptionClient,
-			DashScopeSdkAudioTranscriptionOptions defaultOptions, RetryTemplate retryTemplate, String apiKey,
-			String workspaceId, Map<String, String> connectionHeaders) {
+                                               DashScopeSdkAudioTranscriptionOptions defaultOptions, RetryTemplate retryTemplate, String apiKey,
+                                               String workspaceId, Map<String, String> connectionHeaders) {
 		this.transcriptionClient = transcriptionClient;
 		this.defaultOptions = defaultOptions;
 		this.retryTemplate = retryTemplate;
@@ -92,13 +92,13 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 
 		TranscriptionParam request = createRequest(fileUrls, options);
 
-		TranscriptionResult submitResult = this.retryTemplate.execute(ctx -> executeSubmit(request));
+		TranscriptionResult submitResult = RetryUtils.execute(this.retryTemplate, () -> executeSubmit(request));
 		if (submitResult == null || !StringUtils.hasText(submitResult.getTaskId())) {
 			return toAudioResponse(submitResult);
 		}
 
 		TranscriptionQueryParam query = TranscriptionQueryParam.FromTranscriptionParam(request, submitResult.getTaskId());
-		TranscriptionResult finalResult = this.retryTemplate.execute(ctx -> executeWait(query));
+		TranscriptionResult finalResult = RetryUtils.execute(this.retryTemplate, () -> executeWait(query));
 		return toAudioResponse(finalResult == null ? submitResult : finalResult);
 	}
 
