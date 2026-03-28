@@ -71,17 +71,17 @@ public class BailianDocumentRetrieverOptions {
 			this.options = new BailianDocumentRetrieverOptions();
 		}
 
-		public BailianDocumentRetrieverOptions.Builder withLimit(Integer limit) {
+		public BailianDocumentRetrieverOptions.Builder limit(Integer limit) {
 			this.options.setLimit(limit);
 			return this;
 		}
 
-		public BailianDocumentRetrieverOptions.Builder withScoreThreshold(Double scoreThreshold) {
+		public BailianDocumentRetrieverOptions.Builder scoreThreshold(Double scoreThreshold) {
 			this.options.setScoreThreshold(scoreThreshold);
 			return this;
 		}
 
-		public BailianDocumentRetrieverOptions.Builder withSearchFilters(List<Map<String, String>> searchFilters) {
+		public BailianDocumentRetrieverOptions.Builder searchFilters(List<Map<String, String>> searchFilters) {
 			this.options.setSearchFilters(searchFilters);
 			return this;
 		}
