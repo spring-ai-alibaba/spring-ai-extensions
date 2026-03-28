@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.rag.bailian;
 
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionFinishReason;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.api.AdvisorChain;
@@ -28,7 +29,6 @@ import org.springframework.ai.rag.Query;
 import org.springframework.ai.rag.generation.augmentation.ContextualQueryAugmenter;
 import org.springframework.ai.rag.generation.augmentation.QueryAugmenter;
 import org.springframework.ai.rag.retrieval.search.DocumentRetriever;
-import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
