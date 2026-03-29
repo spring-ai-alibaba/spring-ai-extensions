@@ -15,9 +15,10 @@
  */
 package com.alibaba.cloud.ai.tool.validator;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionFinishReason;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ToolCall;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.util.json.JsonParser;
@@ -39,12 +40,13 @@ public class DefaultToolCallValidator implements ToolCallValidator {
 
 
 	@Override
-	public List<ToolCall> validate(List<ToolCall> toolCalls, ChatCompletionFinishReason finishReason) {
+	public List<ToolCall> validate(@Nullable List<ToolCall> toolCalls,
+			DashScopeApiSpec.@Nullable ChatCompletionFinishReason finishReason) {
 		if (toolCalls == null || toolCalls.isEmpty()) {
 			return List.of();
 		}
 
-		boolean isLengthTruncated = finishReason == ChatCompletionFinishReason.LENGTH;
+		boolean isLengthTruncated = finishReason == DashScopeApiSpec.ChatCompletionFinishReason.LENGTH;
 
 		return toolCalls.stream()
 			.filter(toolCall -> isValidToolCall(toolCall, isLengthTruncated))

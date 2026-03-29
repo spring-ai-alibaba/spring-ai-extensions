@@ -30,6 +30,7 @@ import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 import org.springframework.util.CollectionUtils;
@@ -43,6 +44,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A DocumentReader implementation that reads documents from Elasticsearch. Supports basic
@@ -75,10 +77,10 @@ public class ElasticsearchDocumentReader implements DocumentReader {
 	@Override
 	public List<Document> get() {
 		try {
+			String index = getRequiredIndex();
 			// Get all documents
-			SearchResponse<Map> response = client.search(
-					s -> s.index(config.getIndex()).query(q -> q.matchAll(m -> m)).size(config.getMaxResults()),
-					Map.class);
+			SearchResponse<Map> response = client
+				.search(s -> s.index(index).query(q -> q.matchAll(m -> m)).size(config.getMaxResults()), Map.class);
 
 			return getDocuments(response);
 		}
@@ -105,9 +107,9 @@ public class ElasticsearchDocumentReader implements DocumentReader {
 	 * @param id The document ID
 	 * @return The document if found, null otherwise
 	 */
-	public Document getById(String id) {
+	public @Nullable Document getById(String id) {
 		try {
-			var response = client.get(g -> g.index(config.getIndex()).id(id), Map.class);
+			var response = client.get(g -> g.index(getRequiredIndex()).id(id), Map.class);
 
 			if (!response.found() || response.source() == null) {
 				return null;
@@ -128,8 +130,9 @@ public class ElasticsearchDocumentReader implements DocumentReader {
 	 */
 	public List<Document> readWithQuery(String query) {
 		try {
+			String index = getRequiredIndex();
 			// Build the search request with query
-			SearchResponse<Map> response = client.search(s -> s.index(config.getIndex())
+			SearchResponse<Map> response = client.search(s -> s.index(index)
 				.query(q -> q.match(new MatchQuery.Builder().field(config.getQueryField()).query(query).build()))
 				.size(config.getMaxResults()), Map.class);
 
@@ -181,9 +184,13 @@ public class ElasticsearchDocumentReader implements DocumentReader {
 			}
 		}
 
-		// Create the transport and client
-		ElasticsearchTransport transport = new Rest5ClientTransport(restClientBuilder.build(), new JacksonJsonpMapper());
-		return new ElasticsearchClient(transport);
+			// Create the transport and client
+			ElasticsearchTransport transport = new Rest5ClientTransport(restClientBuilder.build(), new JacksonJsonpMapper());
+			return new ElasticsearchClient(transport);
+	}
+
+	private String getRequiredIndex() {
+		return Objects.requireNonNull(config.getIndex(), "Elasticsearch index must not be null");
 	}
 
 }

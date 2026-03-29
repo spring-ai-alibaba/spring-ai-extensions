@@ -39,6 +39,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.ModelOptionsUtils;
@@ -101,7 +102,7 @@ public class DashScopeApi {
 
 	private final String completionsPath;
 
-	private final String workSpaceId;
+	private final @Nullable String workSpaceId;
 
 	private final String embeddingsPath;
 
@@ -159,7 +160,7 @@ public class DashScopeApi {
 			String baseUrl,
 			ApiKey apiKey,
 			HttpHeaders header,
-			String workSpaceId,
+			@Nullable String workSpaceId,
 			String completionsPath,
 			String embeddingsPath,
             String rerankPath,
@@ -266,12 +267,12 @@ public class DashScopeApi {
 		for (String key : commonResponse.data().param().headers().keySet()) {
 			headers.set(key, commonResponse.data().param().headers().get(key));
 		}
-		try {
-			HttpEntity<InputStreamResource> requestEntity = new HttpEntity<>(null, headers);
-			ResponseEntity<String> response = restTemplate.exchange(new URI(commonResponse.data().param().url()),
-					HttpMethod.GET, requestEntity, String.class);
-			return response.getBody();
-		}
+			try {
+				HttpEntity<InputStreamResource> requestEntity = new HttpEntity<>(headers);
+				ResponseEntity<String> response = restTemplate.exchange(new URI(commonResponse.data().param().url()),
+						HttpMethod.GET, requestEntity, String.class);
+				return Objects.requireNonNull(response.getBody(), "File parse result body must not be null");
+			}
 		catch (Exception ex) {
 			throw new DashScopeException("GetDocumentParseResultError");
 		}
@@ -359,7 +360,7 @@ public class DashScopeApi {
 			});
 	}
 
-	public String getPipelineIdByName(String pipelineName) {
+	public @Nullable String getPipelineIdByName(String pipelineName) {
 		ResponseEntity<DashScopeApiSpec.QueryPipelineResponse> startPipelineResponse = this.restClient.get()
 			.uri(ub -> ub.path(PIPELINE_SIMPLE_RESTFUL_URL).queryParam("pipeline_name", pipelineName).build())
 			.retrieve()
@@ -372,8 +373,10 @@ public class DashScopeApi {
 	}
 
 	public void upsertPipeline(List<Document> documents, DashScopeStoreOptions storeOptions) {
-		String embeddingModelName = (storeOptions.getEmbeddingOptions() == null ? DEFAULT_EMBEDDING_MODEL
-				: storeOptions.getEmbeddingOptions().getModel());
+		String embeddingModelName = DEFAULT_EMBEDDING_MODEL;
+		if (storeOptions.getEmbeddingOptions() != null && StringUtils.hasText(storeOptions.getEmbeddingOptions().getModel())) {
+			embeddingModelName = storeOptions.getEmbeddingOptions().getModel();
+		}
 		DashScopeApiSpec.EmbeddingConfiguredTransformations embeddingConfig = new DashScopeApiSpec.EmbeddingConfiguredTransformations(
 				"DASHSCOPE_EMBEDDING",
 				new DashScopeApiSpec.EmbeddingConfiguredTransformations.EmbeddingComponent(embeddingModelName));
@@ -560,8 +563,8 @@ public class DashScopeApi {
 	 * request.
 	 * @return Returns a {@link Flux} stream from chat completion chunks.
 	 */
-	public Flux<DashScopeApiSpec.ChatCompletionChunk> chatCompletionStream(DashScopeApiSpec.ChatCompletionRequest chatRequest,
-																		   HttpHeaders additionalHttpHeader) {
+	public Flux<DashScopeApiSpec.ChatCompletionChunk> chatCompletionStream(
+			DashScopeApiSpec.ChatCompletionRequest chatRequest, @Nullable HttpHeaders additionalHttpHeader) {
 
 		Assert.notNull(chatRequest, "The request body can not be null.");
 		Assert.isTrue(chatRequest.stream(), "Request must set the stream property to true.");
@@ -577,11 +580,13 @@ public class DashScopeApi {
 			chatCompletionUri = MULTIMODAL_GENERATION_RESTFUL_URL;
 		}
 
-		return this.webClient.post().uri(chatCompletionUri).headers(headers -> {
-			headers.addAll(additionalHttpHeader);
-			// For DashScope stream
-			headers.add(HEADER_SSE, ENABLED);
-			addDefaultHeadersIfMissing(headers);
+			return this.webClient.post().uri(chatCompletionUri).headers(headers -> {
+				if (additionalHttpHeader != null) {
+					headers.addAll(additionalHttpHeader);
+				}
+				// For DashScope stream
+				headers.add(HEADER_SSE, ENABLED);
+				addDefaultHeadersIfMissing(headers);
 		})
 			.body(Mono.just(chatRequest), DashScopeApiSpec.ChatCompletionRequest.class)
 			.retrieve()
@@ -659,9 +664,9 @@ public class DashScopeApi {
 
         private String baseUrl = DEFAULT_BASE_URL;
 
-        private ApiKey apiKey;
+        private @Nullable ApiKey apiKey;
 
-        private String workSpaceId;
+        private @Nullable String workSpaceId;
 
         private HttpHeaders headers = new HttpHeaders();
 
@@ -764,7 +769,7 @@ public class DashScopeApi {
 			return this;
 		}
 
-		public Builder workSpaceId(String workSpaceId) {
+			public Builder workSpaceId(@Nullable String workSpaceId) {
 			// Workspace ID is optional, but if provided, it must not be null.
 			if (StringUtils.hasText(workSpaceId)) {
 				Assert.notNull(workSpaceId, "Workspace ID cannot be null");
@@ -821,14 +826,14 @@ public class DashScopeApi {
 			return this;
 		}
 
-		public DashScopeApi build() {
+			public DashScopeApi build() {
 
-			Assert.notNull(apiKey, "API key cannot be null");
+				ApiKey apiKey = Objects.requireNonNull(this.apiKey, "API key cannot be null");
 
-			return new DashScopeApi(this.baseUrl, this.apiKey, this.headers, this.workSpaceId,
+				return new DashScopeApi(this.baseUrl, apiKey, this.headers, this.workSpaceId,
                     this.completionsPath, this.embeddingsPath, this.rerankPath,
                     this.restClientBuilder, this.webClientBuilder, this.responseErrorHandler);
-		}
+			}
 
 	}
 

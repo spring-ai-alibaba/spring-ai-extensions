@@ -36,12 +36,14 @@ import com.alibaba.cloud.ai.dashscope.rag.handler.FileStatusResult;
 import com.alibaba.cloud.ai.dashscope.rag.validation.FileValidator;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.Assert;
 
 /**
  * @author nuocheng.lxm
@@ -133,7 +135,9 @@ public class DashScopeDocumentCloudReader implements DocumentReader {
             logger.debug("File MD5 calculated: {} for file: {}", context.getFileMD5(), file.getName());
 
             // Step 2: Upload file
-            context.setFileId(uploadFile(context.getFileMD5()));
+            String fileMD5 = context.getFileMD5();
+            Assert.notNull(fileMD5, "File MD5 must not be null");
+            context.setFileId(uploadFile(fileMD5));
             logger.info("File uploaded successfully. FileId: {}, FileName: {}",
                         context.getFileId(), file.getName());
 
@@ -141,10 +145,12 @@ public class DashScopeDocumentCloudReader implements DocumentReader {
             pollAndWaitForCompletion(context);
 
             // Step 4: Download parse result
-            String parseResult = downloadParseResult(context.getFileId());
+            String fileId = context.getFileId();
+            Assert.notNull(fileId, "File ID must not be null");
+            String parseResult = downloadParseResult(fileId);
 
             // Step 5: Convert to Document
-            Document document = toDocument(context.getFileId(), parseResult);
+            Document document = toDocument(fileId, parseResult);
 
             logger.info("Document processing completed successfully. FileId: {}, FileName: {}",
                         context.getFileId(), file.getName());
@@ -232,8 +238,10 @@ public class DashScopeDocumentCloudReader implements DocumentReader {
         while (tryCount < maxRetryCount) {
 
             // Query file status
+            String fileId = context.getFileId();
+            Assert.notNull(fileId, "File ID must not be null");
             ResponseEntity<DashScopeApiSpec.CommonResponse<DashScopeApiSpec.QueryFileResponseData>>
-                    response = queryFileStatus(context.getFileId());
+                    response = queryFileStatus(fileId);
 
             // Validate response
             if (response == null || response.getBody() == null) {
@@ -379,7 +387,7 @@ public class DashScopeDocumentCloudReader implements DocumentReader {
     /**
      * Closes resource quietly
      */
-    private void closeQuietly(AutoCloseable closeable) {
+    private void closeQuietly(@Nullable AutoCloseable closeable) {
         if (closeable != null) {
             try {
                 closeable.close();

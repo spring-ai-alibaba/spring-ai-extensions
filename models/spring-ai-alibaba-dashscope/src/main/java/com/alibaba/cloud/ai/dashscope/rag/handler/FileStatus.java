@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.dashscope.rag.handler;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * File parsing status enumeration
  *
@@ -95,7 +97,7 @@ public enum FileStatus {
      * @param value the status string value
      * @return the corresponding FileStatus enum, or null if not found
      */
-    public static FileStatus fromValue(String value) {
+    public static @Nullable FileStatus fromValue(@Nullable String value) {
         if (value == null) {
             return null;
         }
@@ -116,7 +118,7 @@ public enum FileStatus {
      * @param defaultStatus the default status to return if value is not found
      * @return the corresponding FileStatus enum, or defaultStatus if not found
      */
-    public static FileStatus fromValueOrDefault(String value, FileStatus defaultStatus) {
+    public static FileStatus fromValueOrDefault(@Nullable String value, FileStatus defaultStatus) {
         FileStatus status = fromValue(value);
         return status != null ? status : defaultStatus;
     }

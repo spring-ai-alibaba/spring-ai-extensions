@@ -23,6 +23,7 @@ import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscri
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.transcription.AudioTranscription;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponseMetadata;
@@ -39,49 +40,49 @@ public class DashScopeTranscriptionApiSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class DashScopeAudioTranscriptionRequest {
         @JsonProperty("model")
-        private String model;
+        private @Nullable String model;
 
         @JsonProperty("messages")
-        private List<TranscriptionUserMessage> messages;
+        private @Nullable List<TranscriptionUserMessage> messages;
 
         @JsonProperty("modalities")
-        private List<String> modalities;
+        private @Nullable List<String> modalities;
 
         @JsonProperty("audio")
-        private Audio audio;
+        private @Nullable Audio audio;
 
         @JsonProperty("stream")
-        private Boolean stream;
+        private @Nullable Boolean stream;
 
         @JsonProperty("stream_options")
-        private StreamOptions streamOptions;
+        private @Nullable StreamOptions streamOptions;
 
         @JsonProperty("max_tokens")
-        private Integer maxTokens;
+        private @Nullable Integer maxTokens;
 
         @JsonProperty("seed")
-        private Integer seed;
+        private @Nullable Integer seed;
 
         @JsonProperty("temperature")
-        private Float temperature;
+        private @Nullable Float temperature;
 
         @JsonProperty("top_p")
-        private Float topP;
+        private @Nullable Float topP;
 
         @JsonProperty("presence_penalty")
-        private Float presencePenalty;
+        private @Nullable Float presencePenalty;
 
         @JsonProperty("top_k")
-        private Integer topK;
+        private @Nullable Integer topK;
 
         @JsonProperty("repetition_penalty")
-        private Float repetitionPenalty;
+        private @Nullable Float repetitionPenalty;
 
         @JsonProperty("translation_options")
-        private TranslationOptions translationOptions;
+        private @Nullable TranslationOptions translationOptions;
 
         @JsonProperty("asr_options")
-        private AsrOptions asrOptions;
+        private @Nullable AsrOptions asrOptions;
 
         public static Builder builder() {
             return new Builder();
@@ -94,22 +95,22 @@ public class DashScopeTranscriptionApiSpec {
                 this.request = new DashScopeAudioTranscriptionRequest();
             }
 
-            public Builder model(String model) {
+            public Builder model(@Nullable String model) {
                 this.request.model = model;
                 return this;
             }
 
-            public Builder messages(List<TranscriptionUserMessage> messages) {
+            public Builder messages(@Nullable List<TranscriptionUserMessage> messages) {
                 this.request.messages = messages;
                 return this;
             }
 
-            public Builder modalities(List<String> modalities) {
+            public Builder modalities(@Nullable List<String> modalities) {
                 this.request.modalities = modalities;
                 return this;
             }
 
-            public Builder audio(Audio audio) {
+            public Builder audio(@Nullable Audio audio) {
                 this.request.audio = audio;
                 return this;
             }
@@ -119,52 +120,52 @@ public class DashScopeTranscriptionApiSpec {
                 return this;
             }
 
-            public Builder streamOptions(StreamOptions streamOptions) {
+            public Builder streamOptions(@Nullable StreamOptions streamOptions) {
                 this.request.streamOptions = streamOptions;
                 return this;
             }
 
-            public Builder maxTokens(Integer maxTokens) {
+            public Builder maxTokens(@Nullable Integer maxTokens) {
                 this.request.maxTokens = maxTokens;
                 return this;
             }
 
-            public Builder seed(Integer seed) {
+            public Builder seed(@Nullable Integer seed) {
                 this.request.seed = seed;
                 return this;
             }
 
-            public Builder temperature(Float temperature) {
+            public Builder temperature(@Nullable Float temperature) {
                 this.request.temperature = temperature;
                 return this;
             }
 
-            public Builder topP(Float topP) {
+            public Builder topP(@Nullable Float topP) {
                 this.request.topP = topP;
                 return this;
             }
 
-            public Builder presencePenalty(Float presencePenalty) {
+            public Builder presencePenalty(@Nullable Float presencePenalty) {
                 this.request.presencePenalty = presencePenalty;
                 return this;
             }
 
-            public Builder topK(Integer topK) {
+            public Builder topK(@Nullable Integer topK) {
                 this.request.topK = topK;
                 return this;
             }
 
-            public Builder repetitionPenalty(Float repetitionPenalty) {
+            public Builder repetitionPenalty(@Nullable Float repetitionPenalty) {
                 this.request.repetitionPenalty = repetitionPenalty;
                 return this;
             }
 
-            public Builder translationOptions(TranslationOptions translationOptions) {
+            public Builder translationOptions(@Nullable TranslationOptions translationOptions) {
                 this.request.translationOptions = translationOptions;
                 return this;
             }
 
-            public Builder asrOptions(AsrOptions asrOptions) {
+            public Builder asrOptions(@Nullable AsrOptions asrOptions) {
                 this.request.asrOptions = asrOptions;
                 return this;
             }
@@ -180,22 +181,22 @@ public class DashScopeTranscriptionApiSpec {
     public static class DashScopeAudioTranscriptionResponse extends AudioTranscriptionResponse {
 
         @JsonProperty("id")
-        private String id;
+        private @Nullable String id;
 
         @JsonProperty("created")
-        private Integer created;
+        private @Nullable Integer created;
 
         @JsonProperty("model")
-        private String model;
+        private @Nullable String model;
 
         @JsonProperty("object")
-        private String object;
+        private @Nullable String object;
 
         @JsonProperty("usage")
-        private Usage usage;
+        private @Nullable Usage usage;
 
         @JsonProperty("choices")
-        private List<Choice> choices;
+        private @Nullable List<Choice> choices;
 
         // Default constructor for Jackson deserialization
         public DashScopeAudioTranscriptionResponse() {
@@ -212,86 +213,86 @@ public class DashScopeTranscriptionApiSpec {
             super(transcript, transcriptionResponseMetadata);
         }
 
-        public String getId() {
+        public @Nullable String getId() {
             return id;
         }
 
-        public Integer getCreated() {
+        public @Nullable Integer getCreated() {
             return created;
         }
 
-        public String getModel() {
+        public @Nullable String getModel() {
             return model;
         }
 
-        public String getObject() {
+        public @Nullable String getObject() {
             return object;
         }
 
-        public Usage getUsage() {
+        public @Nullable Usage getUsage() {
             return usage;
         }
 
-        public List<Choice> getChoices() {
+        public @Nullable List<Choice> getChoices() {
             return choices;
         }
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Choice(
-                @JsonProperty("delta") Delta delta,
-                @JsonProperty("message") Message message,
-                @JsonProperty("finish_reason") String finishReason,
-                @JsonProperty("index") Integer index
+                @JsonProperty("delta") @Nullable Delta delta,
+                @JsonProperty("message") @Nullable Message message,
+                @JsonProperty("finish_reason") @Nullable String finishReason,
+                @JsonProperty("index") @Nullable Integer index
         ) {}
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Delta(
-                @JsonProperty("content") String content,
-                @JsonProperty("role") String role,
-                @JsonProperty("audio") Audio audio
+                @JsonProperty("content") @Nullable String content,
+                @JsonProperty("role") @Nullable String role,
+                @JsonProperty("audio") @Nullable Audio audio
         ) {};
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Message(
-                @JsonProperty("content") String content,
-                @JsonProperty("role") String role,
-                @JsonProperty("annotations") List<Annotation> annotations
+                @JsonProperty("content") @Nullable String content,
+                @JsonProperty("role") @Nullable String role,
+                @JsonProperty("annotations") @Nullable List<Annotation> annotations
         ) {};
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Audio(
-                @JsonProperty("data") String data,
-                @JsonProperty("expires_at") Integer expiresAt,
-                @JsonProperty("id") String id
+                @JsonProperty("data") @Nullable String data,
+                @JsonProperty("expires_at") @Nullable Integer expiresAt,
+                @JsonProperty("id") @Nullable String id
         ) {};
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Usage(
-                @JsonProperty("prompt_tokens") Integer promptTokens,
-                @JsonProperty("completion_tokens") Integer completionTokens,
-                @JsonProperty("total_tokens") Integer totalTokens,
-                @JsonProperty("completion_tokens_details") CompletionTokensDetails completionTokensDetails,
-                @JsonProperty("prompt_tokens_details") PromptTokensDetails promptTokensDetails,
-                @JsonProperty("seconds") Integer seconds
+                @JsonProperty("prompt_tokens") @Nullable Integer promptTokens,
+                @JsonProperty("completion_tokens") @Nullable Integer completionTokens,
+                @JsonProperty("total_tokens") @Nullable Integer totalTokens,
+                @JsonProperty("completion_tokens_details") @Nullable CompletionTokensDetails completionTokensDetails,
+                @JsonProperty("prompt_tokens_details") @Nullable PromptTokensDetails promptTokensDetails,
+                @JsonProperty("seconds") @Nullable Integer seconds
                 ) {}
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record CompletionTokensDetails(
-                @JsonProperty("audio_tokens") Integer audioTokens,
-                @JsonProperty("text_tokens") Integer textTokens
+                @JsonProperty("audio_tokens") @Nullable Integer audioTokens,
+                @JsonProperty("text_tokens") @Nullable Integer textTokens
         ) {}
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record PromptTokensDetails(
-                @JsonProperty("audio_tokens") Integer audioTokens,
-                @JsonProperty("video_tokens") Integer videoTokens
+                @JsonProperty("audio_tokens") @Nullable Integer audioTokens,
+                @JsonProperty("video_tokens") @Nullable Integer videoTokens
         ) {}
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Annotation(
-                @JsonProperty("emotion") String emotion,
-                @JsonProperty("language") String language,
-                @JsonProperty("type") String type
+                @JsonProperty("emotion") @Nullable String emotion,
+                @JsonProperty("language") @Nullable String language,
+                @JsonProperty("type") @Nullable String type
         ) {}
     }
 

@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.mcp.common.tracing;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
@@ -25,9 +26,9 @@ import java.lang.reflect.Method;
 
 public class McpTraceExchangeFilterFunction implements ExchangeFilterFunction {
 
-	private final Object tracer;
+	private final @Nullable Object tracer;
 
-	public McpTraceExchangeFilterFunction(Object tracer) {
+	public McpTraceExchangeFilterFunction(@Nullable Object tracer) {
 		this.tracer = tracer;
 	}
 
@@ -65,7 +66,7 @@ public class McpTraceExchangeFilterFunction implements ExchangeFilterFunction {
 		}
 	}
 
-	private Object getCurrentSpan() {
+	private @Nullable Object getCurrentSpan() {
 		if (tracer == null) {
 			return null;
 		}
@@ -78,7 +79,7 @@ public class McpTraceExchangeFilterFunction implements ExchangeFilterFunction {
 		}
 	}
 
-	private String getTraceId(Object span) {
+	private @Nullable String getTraceId(Object span) {
 		try {
 			Method contextMethod = span.getClass().getMethod("context");
 			Object context = contextMethod.invoke(span);
@@ -90,7 +91,7 @@ public class McpTraceExchangeFilterFunction implements ExchangeFilterFunction {
 		}
 	}
 
-	private String getSpanId(Object span) {
+	private @Nullable String getSpanId(Object span) {
 		try {
 			Method contextMethod = span.getClass().getMethod("context");
 			Object context = contextMethod.invoke(span);

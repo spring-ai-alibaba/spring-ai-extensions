@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.audio.tts;
 import com.alibaba.cloud.ai.dashscope.audio.AudioCommonType.TextType;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.tts.TextToSpeechOptions;
 
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
     public static final String DEFAULT_MODEL = AudioModel.SAMBERT_ZHICHU_V1.getValue();
 
     @JsonProperty("model")
-    private String model;
+    private @Nullable String model;
 
 	@JsonProperty("text_type")
 	private String textType = TextType.PLAIN_TEXT.getValue();
@@ -44,65 +45,65 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
     private String voice = "longanyang";
 
     @JsonProperty("format")
-    private String format;
+    private @Nullable String format;
 
     @JsonProperty("sample_rate")
-    private Integer sampleRate;
+    private @Nullable Integer sampleRate;
 
     @JsonProperty("volume")
-    private Integer volume;
+    private @Nullable Integer volume;
 
     @JsonProperty("rate")
-    private Float rate;
+    private @Nullable Float rate;
 
     @JsonProperty("pitch")
-    private Float pitch;
+    private @Nullable Float pitch;
 
     @JsonProperty("enable_ssml")
-    private Boolean enableSsml;
+    private @Nullable Boolean enableSsml;
 
     @JsonProperty("bit_rate")
-    private Integer bitRate;
+    private @Nullable Integer bitRate;
 
     @JsonProperty("speed")
-    private Double speed;
+    private @Nullable Double speed;
 
     @JsonProperty("seed")
-    private Integer seed;
+    private @Nullable Integer seed;
 
     @JsonProperty("word_timestamp_enabled")
-    private Boolean wordTimestampEnabled;
+    private @Nullable Boolean wordTimestampEnabled;
 
     @JsonProperty("phoneme_timestamp_enabled")
-    private Boolean phonemeTimestampEnabled;
+    private @Nullable Boolean phonemeTimestampEnabled;
 
 	@JsonProperty("language_hints")
-	private List<String> languageHints;
+	private @Nullable List<String> languageHints;
 
     @JsonProperty("instruction")
-    private String instruction;
+    private @Nullable String instruction;
 
     @JsonProperty("optimize_instructions")
-    private Boolean optimizeInstructions;
+    private @Nullable Boolean optimizeInstructions;
 
     @JsonProperty("enable_aigc_tag")
-    private Boolean enableAigcTag;
+    private @Nullable Boolean enableAigcTag;
 
     @JsonProperty("aigc_propagator")
-    private String aigcPropagator;
+    private @Nullable String aigcPropagator;
 
     @JsonProperty("aigc_propagate_id")
-    private String aigcPropagateId;
+    private @Nullable String aigcPropagateId;
 
     @JsonProperty("language_type")
-    private String languageType;
+    private @Nullable String languageType;
 
     @Override
-    public String getModel() {
+    public @Nullable String getModel() {
         return model;
     }
 
-    public void setModel(String model) {
+    public void setModel(@Nullable String model) {
         this.model = model;
     }
 
@@ -123,7 +124,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
         this.textType = textType;
     }
 
-    public Boolean getEnableAigcTag() {
+    public @Nullable Boolean getEnableAigcTag() {
         return enableAigcTag;
     }
 
@@ -131,60 +132,60 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
         this.enableAigcTag = enableAigcTag;
     }
 
-    public String getAigcPropagator() {
+    public @Nullable String getAigcPropagator() {
         return aigcPropagator;
     }
 
-    public void setAigcPropagator(String aigcPropagator) {
+    public void setAigcPropagator(@Nullable String aigcPropagator) {
         this.aigcPropagator = aigcPropagator;
     }
 
-    public String getAigcPropagateId() {
+    public @Nullable String getAigcPropagateId() {
         return aigcPropagateId;
     }
 
-    public void setAigcPropagateId(String aigcPropagateId) {
+    public void setAigcPropagateId(@Nullable String aigcPropagateId) {
         this.aigcPropagateId = aigcPropagateId;
     }
 
-    public Integer getSampleRate() {
+    public @Nullable Integer getSampleRate() {
         return sampleRate;
     }
 
-    public void setSampleRate(Integer sampleRate) {
+    public void setSampleRate(@Nullable Integer sampleRate) {
         this.sampleRate = sampleRate;
     }
 
-    public void setFormat(String format) {
+    public void setFormat(@Nullable String format) {
         this.format = format;
     }
 
-    public Boolean getWordTimestampEnabled() {
+    public @Nullable Boolean getWordTimestampEnabled() {
         return wordTimestampEnabled;
     }
 
-    public void setWordTimestampEnabled(Boolean wordTimestampEnabled) {
+    public void setWordTimestampEnabled(@Nullable Boolean wordTimestampEnabled) {
         this.wordTimestampEnabled = wordTimestampEnabled;
     }
 
-    public Boolean getPhonemeTimestampEnabled() {
+    public @Nullable Boolean getPhonemeTimestampEnabled() {
         return phonemeTimestampEnabled;
     }
 
-    public void setPhonemeTimestampEnabled(Boolean phonemeTimestampEnabled) {
+    public void setPhonemeTimestampEnabled(@Nullable Boolean phonemeTimestampEnabled) {
         this.phonemeTimestampEnabled = phonemeTimestampEnabled;
     }
 
-    public Integer getVolume() {
+    public @Nullable Integer getVolume() {
         return volume;
     }
 
-    public void setVolume(Integer volume) {
+    public void setVolume(@Nullable Integer volume) {
         this.volume = volume;
     }
 
     @Override
-    public Double getSpeed() {
+    public @Nullable Double getSpeed() {
         return speed;
     }
 
@@ -220,84 +221,84 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
         this.speed = speed;
     }
 
-    public Float getRate() {
+    public @Nullable Float getRate() {
         return rate;
     }
 
-    public void setRate(Float rate) {
+    public void setRate(@Nullable Float rate) {
         this.rate = rate;
     }
 
-    public void setResponseFormat(String format) {
+    public void setResponseFormat(@Nullable String format) {
         this.format = format;
     }
 
     @Override
-    public String getFormat() {
+    public @Nullable String getFormat() {
         return format;
     }
 
-    public Float getPitch() {
+    public @Nullable Float getPitch() {
         return pitch;
     }
 
-    public void setPitch(Float pitch) {
+    public void setPitch(@Nullable Float pitch) {
         this.pitch = pitch;
     }
 
-    public Boolean getEnableSsml() {
+    public @Nullable Boolean getEnableSsml() {
         return enableSsml;
     }
 
-    public void setEnableSsml(Boolean enableSsml) {
+    public void setEnableSsml(@Nullable Boolean enableSsml) {
         this.enableSsml = enableSsml;
     }
 
-    public Integer getBitRate() {
+    public @Nullable Integer getBitRate() {
         return bitRate;
     }
 
-    public void setBitRate(Integer bitRate) {
+    public void setBitRate(@Nullable Integer bitRate) {
         this.bitRate = bitRate;
     }
 
-    public Integer getSeed() {
+    public @Nullable Integer getSeed() {
         return seed;
     }
 
-    public void setSeed(Integer seed) {
+    public void setSeed(@Nullable Integer seed) {
         this.seed = seed;
     }
 
-    public List<String> getLanguageHints() {
+    public @Nullable List<String> getLanguageHints() {
         return languageHints;
     }
 
-    public void setLanguageHints(List<String> languageHints) {
+    public void setLanguageHints(@Nullable List<String> languageHints) {
         this.languageHints = languageHints;
     }
 
-    public String getInstruction() {
+    public @Nullable String getInstruction() {
         return instruction;
     }
 
-    public void setInstruction(String instruction) {
+    public void setInstruction(@Nullable String instruction) {
         this.instruction = instruction;
     }
 
-    public Boolean getOptimizeInstructions() {
+    public @Nullable Boolean getOptimizeInstructions() {
         return optimizeInstructions;
     }
 
-    public void setOptimizeInstructions(Boolean optimizeInstructions) {
+    public void setOptimizeInstructions(@Nullable Boolean optimizeInstructions) {
         this.optimizeInstructions = optimizeInstructions;
     }
 
-    public String getLanguageType() {
+    public @Nullable String getLanguageType() {
         return languageType;
     }
 
-    public void setLanguageType(String languageType) {
+    public void setLanguageType(@Nullable String languageType) {
         this.languageType = languageType;
     }
 
@@ -316,7 +317,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
             this.options = new DashScopeAudioSpeechOptions();
         }
 
-        public Builder model(String model) {
+        public Builder model(@Nullable String model) {
             this.options.model = model;
             return this;
         }
@@ -331,92 +332,92 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
             return this;
         }
 
-        public Builder format(String format) {
+        public Builder format(@Nullable String format) {
             this.options.format = format;
             return this;
         }
 
-        public Builder sampleRate(Integer sampleRate) {
+        public Builder sampleRate(@Nullable Integer sampleRate) {
             this.options.sampleRate = sampleRate;
             return this;
         }
 
-        public Builder volume(Integer volume) {
+        public Builder volume(@Nullable Integer volume) {
             this.options.volume = volume;
             return this;
         }
 
-        public Builder rate(Float rate) {
+        public Builder rate(@Nullable Float rate) {
             this.options.rate = rate;
             return this;
         }
 
-        public Builder pitch(Float pitch) {
+        public Builder pitch(@Nullable Float pitch) {
             this.options.pitch = pitch;
             return this;
         }
 
-        public Builder enableSsml(Boolean enableSsml) {
+        public Builder enableSsml(@Nullable Boolean enableSsml) {
             this.options.enableSsml = enableSsml;
             return this;
         }
 
-        public Builder bitRate(Integer bitRate) {
+        public Builder bitRate(@Nullable Integer bitRate) {
             this.options.bitRate = bitRate;
             return this;
         }
 
-        public Builder speed(Double speed) {
+        public Builder speed(@Nullable Double speed) {
             this.options.speed = speed;
             return this;
         }
 
-        public Builder seed(Integer seed) {
+        public Builder seed(@Nullable Integer seed) {
             this.options.seed = seed;
             return this;
         }
 
-        public Builder wordTimestampEnabled(Boolean wordTimestampEnabled) {
+        public Builder wordTimestampEnabled(@Nullable Boolean wordTimestampEnabled) {
             this.options.wordTimestampEnabled = wordTimestampEnabled;
             return this;
         }
 
-        public Builder phonemeTimestampEnabled(Boolean phonemeTimestampEnabled) {
+        public Builder phonemeTimestampEnabled(@Nullable Boolean phonemeTimestampEnabled) {
             this.options.phonemeTimestampEnabled = phonemeTimestampEnabled;
             return this;
         }
 
-        public Builder languageHints(List<String> languageHints) {
+        public Builder languageHints(@Nullable List<String> languageHints) {
             this.options.languageHints = languageHints;
             return this;
         }
 
-        public Builder instruction(String instruction) {
+        public Builder instruction(@Nullable String instruction) {
             this.options.instruction = instruction;
             return this;
         }
 
-        public Builder optimizeInstructions(Boolean optimizeInstructions) {
+        public Builder optimizeInstructions(@Nullable Boolean optimizeInstructions) {
             this.options.optimizeInstructions = optimizeInstructions;
             return this;
         }
 
-        public Builder enableAigcTag(Boolean enableAigcTag) {
+        public Builder enableAigcTag(@Nullable Boolean enableAigcTag) {
             this.options.enableAigcTag = enableAigcTag;
             return this;
         }
 
-        public Builder aigcPropagator(String aigcPropagator) {
+        public Builder aigcPropagator(@Nullable String aigcPropagator) {
             this.options.aigcPropagator = aigcPropagator;
             return this;
         }
 
-        public Builder aigcPropagateId(String aigcPropagateId) {
+        public Builder aigcPropagateId(@Nullable String aigcPropagateId) {
             this.options.aigcPropagateId = aigcPropagateId;
             return this;
         }
 
-        public Builder languageType(String languageType) {
+        public Builder languageType(@Nullable String languageType) {
             this.options.languageType = languageType;
             return this;
         }

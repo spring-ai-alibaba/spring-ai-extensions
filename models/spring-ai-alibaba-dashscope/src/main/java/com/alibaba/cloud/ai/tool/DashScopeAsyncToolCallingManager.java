@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.tool;
 
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -76,21 +77,22 @@ public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
 
     // @formatter:on
 
-    private ObservationRegistry observationRegistry = null;
+    private ObservationRegistry observationRegistry = DEFAULT_OBSERVATION_REGISTRY;
 
-    private ToolCallbackResolver toolCallbackResolver = null;
+    private ToolCallbackResolver toolCallbackResolver = DEFAULT_TOOL_CALLBACK_RESOLVER;
 
-    private ToolExecutionExceptionProcessor toolExecutionExceptionProcessor = null;
+    private ToolExecutionExceptionProcessor toolExecutionExceptionProcessor = DEFAULT_TOOL_EXECUTION_EXCEPTION_PROCESSOR;
 
     private ToolCallingObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
 
-    private ThreadPoolExecutor asyncToolCallingTaskExecutor = null;
+    private ThreadPoolExecutor asyncToolCallingTaskExecutor;
 
     public DashScopeAsyncToolCallingManager(ObservationRegistry observationRegistry, ToolCallbackResolver toolCallbackResolver,
                                    ToolExecutionExceptionProcessor toolExecutionExceptionProcessor, ThreadPoolExecutor taskExecutor) {
         Assert.notNull(observationRegistry, "observationRegistry cannot be null");
         Assert.notNull(toolCallbackResolver, "toolCallbackResolver cannot be null");
         Assert.notNull(toolExecutionExceptionProcessor, "toolCallExceptionConverter cannot be null");
+        Assert.notNull(taskExecutor, "taskExecutor cannot be null");
 
         this.observationRegistry = observationRegistry;
         this.toolCallbackResolver = toolCallbackResolver;
@@ -274,7 +276,7 @@ public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
 
         private ToolExecutionExceptionProcessor toolExecutionExceptionProcessor = DEFAULT_TOOL_EXECUTION_EXCEPTION_PROCESSOR;
 
-        private ThreadPoolExecutor taskExecutor;
+        private @Nullable ThreadPoolExecutor taskExecutor;
 
         private Builder() {
         }
@@ -301,6 +303,7 @@ public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
         }
 
         public DashScopeAsyncToolCallingManager build() {
+            Assert.notNull(this.taskExecutor, "taskExecutor cannot be null");
             return new DashScopeAsyncToolCallingManager(this.observationRegistry, this.toolCallbackResolver,
                     this.toolExecutionExceptionProcessor, this.taskExecutor);
         }

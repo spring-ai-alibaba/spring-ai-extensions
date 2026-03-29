@@ -27,6 +27,7 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeMultimodalEmbeddingApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.metadata.DefaultUsage;
@@ -173,8 +174,11 @@ public class DashScopeMultimodalEmbeddingModel implements DocumentEmbeddingModel
 				mergedOptions.getOutputType(), mergedOptions.getDimensions(), mergedOptions.getFps(), mergedOptions.getInstruct()
 		);
 
+		String model = mergedOptions.getModel();
+		Assert.hasText(model, "model must not be empty");
+
 		DashScopeApiSpec.MultimodalEmbeddingRequest apiRequest = new DashScopeApiSpec.MultimodalEmbeddingRequest(
-				mergedOptions.getModel(), input, parameters);
+				model, input, parameters);
 
 		var observationContext = EmbeddingModelObservationContext.builder()
 				.embeddingRequest(new EmbeddingRequest(List.of(), mergedOptions))
@@ -217,14 +221,20 @@ public class DashScopeMultimodalEmbeddingModel implements DocumentEmbeddingModel
 		DashScopeApiSpec.MultimodalEmbeddingUsage usage = body.usage();
 		Integer inputTokens = (usage != null && usage.inputTokens() != null) ? usage.inputTokens() : 0;
 		DefaultUsage defaultUsage = new DefaultUsage(inputTokens, 0, inputTokens);
-		EmbeddingResponseMetadata responseMetadata = new EmbeddingResponseMetadata(finalMergedOptions.getModel(), defaultUsage, Map.of(
+		String model = finalMergedOptions.getModel() != null ? finalMergedOptions.getModel() : "";
+		EmbeddingResponseMetadata responseMetadata = new EmbeddingResponseMetadata(model, defaultUsage, Map.of(
 				"request-id", body.requestId() != null ? body.requestId() : ""
 		));
 
 		return new EmbeddingResponse(embeddingList, responseMetadata);
 	}
 
-	private EmbeddingResultMetadata getEmbeddingResultMetadata(DashScopeApiSpec.EmbeddingResult embeddingResult, DocumentMetadata docMetadata) {
+	private EmbeddingResultMetadata getEmbeddingResultMetadata(DashScopeApiSpec.EmbeddingResult embeddingResult,
+			@Nullable DocumentMetadata docMetadata) {
+		if (docMetadata == null) {
+			return EmbeddingResultMetadata.EMPTY;
+		}
+
 		EmbeddingResultMetadata.ModalityType modalityType = EmbeddingResultMetadata.ModalityType.TEXT;
 		if ("image".equalsIgnoreCase(embeddingResult.type())) {
 			modalityType = EmbeddingResultMetadata.ModalityType.IMAGE;
@@ -298,7 +308,7 @@ public class DashScopeMultimodalEmbeddingModel implements DocumentEmbeddingModel
 
 	public static final class Builder {
 
-		private DashScopeMultimodalEmbeddingApi dashScopeMultimodalEmbeddingApi;
+		private @Nullable DashScopeMultimodalEmbeddingApi dashScopeMultimodalEmbeddingApi;
 
 		private DashScopeMultimodalEmbeddingOptions defaultOptions = DashScopeMultimodalEmbeddingOptions.builder()
 				.model(DashScopeMultimodalEmbeddingApi.DEFAULT_MULTIMODAL_EMBEDDING_MODEL)
@@ -339,8 +349,10 @@ public class DashScopeMultimodalEmbeddingModel implements DocumentEmbeddingModel
 		}
 
 		public DashScopeMultimodalEmbeddingModel build() {
+			DashScopeMultimodalEmbeddingApi dashScopeMultimodalEmbeddingApi = this.dashScopeMultimodalEmbeddingApi;
+			Assert.notNull(dashScopeMultimodalEmbeddingApi, "dashScopeMultimodalEmbeddingApi must not be null");
 			return new DashScopeMultimodalEmbeddingModel(
-					this.dashScopeMultimodalEmbeddingApi, this.defaultOptions,
+					dashScopeMultimodalEmbeddingApi, this.defaultOptions,
 					this.retryTemplate, this.observationRegistry);
 		}
 	}

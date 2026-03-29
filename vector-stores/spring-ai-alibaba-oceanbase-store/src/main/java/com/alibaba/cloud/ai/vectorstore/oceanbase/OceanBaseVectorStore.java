@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
@@ -89,8 +90,8 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 	private final Double defaultSimilarityThreshold;
 	private final DataSource dataSource;
 	private final ObjectMapper objectMapper;
-	private final Integer dimension;
-	private final String hybridSearchType;
+	private final @Nullable Integer dimension;
+	private final @Nullable String hybridSearchType;
 	private final String indexType;
 	private final String indexMetricType;
 	private final String indexName;
@@ -308,7 +309,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		return false;
 	}
 
-	private String getErrorMessage(Throwable e) {
+	private @Nullable String getErrorMessage(@Nullable Throwable e) {
 		if (e == null) {
 			return null;
 		}
@@ -322,7 +323,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		return e.getMessage();
 	}
 
-	private String getDistanceFunction(String metricType) {
+	private String getDistanceFunction(@Nullable String metricType) {
 		if (metricType == null) {
 			return METRIC_TYPE_COSINE;
 		}
@@ -601,7 +602,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 			.toList();
 	}
 
-	private String getDistanceFunctionName(String metricType) {
+	private String getDistanceFunctionName(@Nullable String metricType) {
 		if (metricType == null) {
 			return DISTANCE_FUNCTION_COSINE;
 		}
@@ -728,8 +729,8 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		private final DataSource dataSource;
 		private int defaultTopK = DEFAULT_TOP_K;
 		private Double defaultSimilarityThreshold = DEFAULT_SIMILARITY_THRESHOLD;
-		private Integer dimension;
-		private String hybridSearchType;
+		private @Nullable Integer dimension;
+		private @Nullable String hybridSearchType;
 		private String indexType = INDEX_TYPE_HNSW;
 		private String indexMetricType = METRIC_TYPE_COSINE;
 		private boolean initializeSchema = false;
@@ -755,12 +756,12 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 			return this;
 		}
 
-		public Builder dimension(Integer dimension) {
+		public Builder dimension(@Nullable Integer dimension) {
 			this.dimension = dimension;
 			return this;
 		}
 
-		public Builder hybridSearchType(String hybridSearchType) {
+		public Builder hybridSearchType(@Nullable String hybridSearchType) {
 			this.hybridSearchType = hybridSearchType;
 			return this;
 		}

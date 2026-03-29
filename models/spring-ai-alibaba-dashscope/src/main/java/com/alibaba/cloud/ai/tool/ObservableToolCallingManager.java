@@ -182,6 +182,8 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 	 */
 	private InternalToolExecutionResult executeToolCall(Prompt prompt, AssistantMessage assistantMessage,
 			ToolContext toolContext) {
+		Assert.state(!CollectionUtils.isEmpty(assistantMessage.getToolCalls()), "assistantMessage must contain tool calls");
+
 		List<ToolCallback> toolCallbacks = List.of();
 		if (prompt.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions) {
 			toolCallbacks = toolCallingChatOptions.getToolCallbacks();
@@ -189,7 +191,7 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 
 		List<ToolResponseMessage.ToolResponse> toolResponses = new ArrayList<>();
 
-		Boolean returnDirect = null;
+		boolean returnDirect = true;
 
 		for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
 
@@ -207,12 +209,7 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 				throw new IllegalStateException("No ToolCallback found for tool name: " + toolName);
 			}
 
-			if (returnDirect == null) {
-				returnDirect = toolCallback.getToolMetadata().returnDirect();
-			}
-			else {
-				returnDirect = returnDirect && toolCallback.getToolMetadata().returnDirect();
-			}
+			returnDirect = returnDirect && toolCallback.getToolMetadata().returnDirect();
 
 			ArmsToolCallingObservationContext observationContext = ArmsToolCallingObservationContext.builder()
 				.toolCall(toolCall)

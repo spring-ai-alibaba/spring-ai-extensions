@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.dashscope.rag.exception;
 
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.common.ErrorCodeEnum;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Base exception for DashScope document processing operations
@@ -40,8 +41,8 @@ import com.alibaba.cloud.ai.dashscope.common.ErrorCodeEnum;
  */
 public class DashScopeDocumentException extends DashScopeException {
 
-    private String filePath;
-    private String fileId;
+    private @Nullable String filePath;
+    private @Nullable String fileId;
 
     public DashScopeDocumentException(String message) {
         super(message);
@@ -57,20 +58,20 @@ public class DashScopeDocumentException extends DashScopeException {
 
     // ==================== Getters and Setters ====================
 
-    public String getFilePath() {
+    public @Nullable String getFilePath() {
         return filePath;
     }
 
-    public DashScopeDocumentException withFilePath(String filePath) {
+    public DashScopeDocumentException withFilePath(@Nullable String filePath) {
         this.filePath = filePath;
         return this;
     }
 
-    public String getFileId() {
+    public @Nullable String getFileId() {
         return fileId;
     }
 
-    public DashScopeDocumentException withFileId(String fileId) {
+    public DashScopeDocumentException withFileId(@Nullable String fileId) {
         this.fileId = fileId;
         return this;
     }

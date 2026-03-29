@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.tool.observation;
 
 import io.micrometer.observation.Observation.Context;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.messages.AssistantMessage.ToolCall;
 import org.springframework.util.Assert;
 
@@ -23,11 +24,11 @@ public class ArmsToolCallingObservationContext extends Context {
 
 	private ToolCall toolCall;
 
-	private final String description;
+	private final @Nullable String description;
 
 	private final boolean returnDirect;
 
-	private String toolResult;
+	private @Nullable String toolResult;
 
 	public static Builder builder() {
 		return new Builder();
@@ -37,7 +38,7 @@ public class ArmsToolCallingObservationContext extends Context {
 		return toolCall;
 	}
 
-	public String getDescription() {
+	public @Nullable String getDescription() {
 		return description;
 	}
 
@@ -45,15 +46,15 @@ public class ArmsToolCallingObservationContext extends Context {
 		return returnDirect;
 	}
 
-	public void setToolResult(String toolResult) {
+	public void setToolResult(@Nullable String toolResult) {
 		this.toolResult = toolResult;
 	}
 
-	public String getToolResult() {
+	public @Nullable String getToolResult() {
 		return toolResult;
 	}
 
-	public ArmsToolCallingObservationContext(ToolCall toolCall, String description, boolean returnDirect) {
+	public ArmsToolCallingObservationContext(ToolCall toolCall, @Nullable String description, boolean returnDirect) {
 		Assert.notNull(toolCall, "toolCall cannot be null");
 		this.toolCall = toolCall;
 		this.description = description;
@@ -62,21 +63,21 @@ public class ArmsToolCallingObservationContext extends Context {
 
 	public static final class Builder {
 
-		private ToolCall toolCall;
+		private @Nullable ToolCall toolCall;
 
-		private String description;
+		private @Nullable String description;
 
 		private boolean returnDirect;
 
 		private Builder() {
 		}
 
-		public Builder toolCall(ToolCall toolCall) {
+		public Builder toolCall(@Nullable ToolCall toolCall) {
 			this.toolCall = toolCall;
 			return this;
 		}
 
-		public Builder description(String description) {
+		public Builder description(@Nullable String description) {
 			this.description = description;
 			return this;
 		}
@@ -87,6 +88,7 @@ public class ArmsToolCallingObservationContext extends Context {
 		}
 
 		public ArmsToolCallingObservationContext build() {
+			Assert.notNull(this.toolCall, "toolCall cannot be null");
 			return new ArmsToolCallingObservationContext(this.toolCall, this.description, this.returnDirect);
 		}
 

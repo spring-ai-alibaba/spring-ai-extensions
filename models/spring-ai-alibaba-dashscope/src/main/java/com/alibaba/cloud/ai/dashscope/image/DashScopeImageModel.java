@@ -32,6 +32,7 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncR
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.image.Image;
@@ -260,7 +261,7 @@ public class DashScopeImageModel implements ImageModel {
         });
     }
 
-    public String submitImageGenTask(ImagePrompt request) {
+    public @Nullable String submitImageGenTask(ImagePrompt request) {
 
         DashScopeImageOptions imageOptions = toImageOptions(request.getOptions());
         logger.debug("Image options: {}", imageOptions);
@@ -294,7 +295,7 @@ public class DashScopeImageModel implements ImageModel {
         return currentOptions;
     }
 
-    public DashScopeApiSpec.DashScopeImageAsyncResponse getImageGenTask(String taskId) {
+    public DashScopeApiSpec.@Nullable DashScopeImageAsyncResponse getImageGenTask(String taskId) {
         ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> getImageGenResponse = dashScopeImageApi.getImageGenTaskResult(taskId);
         if (getImageGenResponse == null || getImageGenResponse.getBody() == null) {
             logger.warn("No image response returned for taskId: {}", taskId);
@@ -334,8 +335,10 @@ public class DashScopeImageModel implements ImageModel {
     private DashScopeApiSpec.DashScopeImageRequest constructImageRequest(
             ImagePrompt imagePrompt,
             DashScopeImageOptions options) {
+        String model = options.getModel();
+        Assert.hasText(model, "Image model must not be empty");
         return new DashScopeApiSpec.DashScopeImageRequest(
-                options.getModel(),
+                model,
                 new DashScopeApiSpec.DashScopeImageRequest.DashScopeImageRequestInput(
                         imagePrompt.getInstructions().get(0).getText(),
                         options.getNegativePrompt(),
@@ -426,7 +429,7 @@ public class DashScopeImageModel implements ImageModel {
 
     public static final class Builder {
 
-        private DashScopeImageApi dashScopeImageApi;
+        private @Nullable DashScopeImageApi dashScopeImageApi;
 
         private DashScopeImageOptions defaultOptions = DashScopeImageOptions.builder()
                 .model(DEFAULT_MODEL)
@@ -505,6 +508,8 @@ public class DashScopeImageModel implements ImageModel {
         }
 
         public DashScopeImageModel build() {
+            DashScopeImageApi dashScopeImageApi = this.dashScopeImageApi;
+            Assert.notNull(dashScopeImageApi, "dashScopeImageApi must not be null");
             DashScopeImageModel model = new DashScopeImageModel(dashScopeImageApi, defaultOptions, retryTemplate,
                     observationRegistry, pollIntervalMs, pollTimeoutMs);
 

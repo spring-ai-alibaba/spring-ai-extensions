@@ -24,9 +24,9 @@ public class Mem0ChatMemoryProperties {
 
 	public static final String MEM0_PREFIX = "spring.ai.chat.memory.mem0";
 
-	private Mem0Client client;
+	private Mem0Client client = Mem0Client.builder().build();
 
-	private Mem0Server server;
+	private Mem0Server server = Mem0Server.builder().build();
 
 	public Mem0Client getClient() {
 		return client;

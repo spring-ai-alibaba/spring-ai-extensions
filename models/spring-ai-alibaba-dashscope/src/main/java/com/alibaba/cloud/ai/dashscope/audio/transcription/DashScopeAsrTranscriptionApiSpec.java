@@ -20,6 +20,7 @@ import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscription
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Usage;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 
 import java.util.List;
@@ -34,46 +35,46 @@ public class DashScopeAsrTranscriptionApiSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class AsrTranscriptionRequest {
         @JsonProperty("model")
-        private String model;
+        private @Nullable String model;
 
         @JsonProperty("input")
-        private Input input;
+        private @Nullable Input input;
 
         @JsonProperty("parameters")
-        private Parameters parameters;
+        private @Nullable Parameters parameters;
 
         @JsonProperty("resources")
-        private List<Resource> resources;
+        private @Nullable List<Resource> resources;
 
-        public String getModel() {
+        public @Nullable String getModel() {
             return model;
         }
 
-        public void setModel(String model) {
+        public void setModel(@Nullable String model) {
             this.model = model;
         }
 
-        public Input getInput() {
+        public @Nullable Input getInput() {
             return input;
         }
 
-        public void setInput(Input input) {
+        public void setInput(@Nullable Input input) {
             this.input = input;
         }
 
-        public Parameters getParameters() {
+        public @Nullable Parameters getParameters() {
             return parameters;
         }
 
-        public void setParameters(Parameters parameters) {
+        public void setParameters(@Nullable Parameters parameters) {
             this.parameters = parameters;
         }
 
-        public List<Resource> getResources() {
+        public @Nullable List<Resource> getResources() {
             return resources;
         }
 
-        public void setResources(List<Resource> resources) {
+        public void setResources(@Nullable List<Resource> resources) {
             this.resources = resources;
         }
 
@@ -84,22 +85,22 @@ public class DashScopeAsrTranscriptionApiSpec {
         public static class Builder {
             private final AsrTranscriptionRequest request = new AsrTranscriptionRequest();
 
-            public Builder model(String model) {
+            public Builder model(@Nullable String model) {
                 request.model = model;
                 return this;
             }
 
-            public Builder input(Input input) {
+            public Builder input(@Nullable Input input) {
                 request.input = input;
                 return this;
             }
 
-            public Builder parameters(Parameters parameters) {
+            public Builder parameters(@Nullable Parameters parameters) {
                 request.parameters = parameters;
                 return this;
             }
 
-            public Builder resources(List<Resource> resources) {
+            public Builder resources(@Nullable List<Resource> resources) {
                 request.resources = resources;
                 return this;
             }
@@ -111,13 +112,13 @@ public class DashScopeAsrTranscriptionApiSpec {
 
         public static class Input {
             @JsonProperty("file_urls")
-            private List<String> fileUrls;
+            private @Nullable List<String> fileUrls;
 
-            public List<String> getFileUrls() {
+            public @Nullable List<String> getFileUrls() {
                 return fileUrls;
             }
 
-            public void setFileUrls(List<String> fileUrls) {
+            public void setFileUrls(@Nullable List<String> fileUrls) {
                 this.fileUrls = fileUrls;
             }
 
@@ -128,7 +129,7 @@ public class DashScopeAsrTranscriptionApiSpec {
             public static class Builder {
                 private final Input input = new Input();
 
-                public Builder fileUrls(List<String> fileUrls) {
+                public Builder fileUrls(@Nullable List<String> fileUrls) {
                     input.fileUrls = fileUrls;
                     return this;
                 }
@@ -141,90 +142,90 @@ public class DashScopeAsrTranscriptionApiSpec {
 
         public static class Parameters {
             @JsonProperty("vocabulary_id")
-            private String vocabularyId;
+            private @Nullable String vocabularyId;
 
             @JsonProperty("channel_id")
-            private List<Integer> channelId;
+            private @Nullable List<Integer> channelId;
 
             @JsonProperty("special_word_filter")
-            private String specialWordFilter;
+            private @Nullable String specialWordFilter;
 
             @JsonProperty("diarization_enabled")
-            private Boolean diarizationEnabled;
+            private @Nullable Boolean diarizationEnabled;
 
             @JsonProperty("disfluency_removal_enabled")
-            private Boolean disfluencyRemovalEnabled;
+            private @Nullable Boolean disfluencyRemovalEnabled;
 
             @JsonProperty("timestamp_alignment_enabled")
-            private Boolean timestampAlignmentEnabled;
+            private @Nullable Boolean timestampAlignmentEnabled;
 
             @JsonProperty("speaker_count")
-            private Integer speakerCount;
+            private @Nullable Integer speakerCount;
 
             @JsonProperty("language_hints")
-            private List<String> languageHints;
+            private @Nullable List<String> languageHints;
 
-            public String getVocabularyId() {
+            public @Nullable String getVocabularyId() {
                 return vocabularyId;
             }
 
-            public void setVocabularyId(String vocabularyId) {
+            public void setVocabularyId(@Nullable String vocabularyId) {
                 this.vocabularyId = vocabularyId;
             }
 
-            public List<Integer> getChannelId() {
+            public @Nullable List<Integer> getChannelId() {
                 return channelId;
             }
 
-            public void setChannelId(List<Integer> channelId) {
+            public void setChannelId(@Nullable List<Integer> channelId) {
                 this.channelId = channelId;
             }
 
-            public String getSpecialWordFilter() {
+            public @Nullable String getSpecialWordFilter() {
                 return specialWordFilter;
             }
 
-            public void setSpecialWordFilter(String specialWordFilter) {
+            public void setSpecialWordFilter(@Nullable String specialWordFilter) {
                 this.specialWordFilter = specialWordFilter;
             }
 
-            public Boolean getDiarizationEnabled() {
+            public @Nullable Boolean getDiarizationEnabled() {
                 return diarizationEnabled;
             }
 
-            public void setDiarizationEnabled(Boolean diarizationEnabled) {
+            public void setDiarizationEnabled(@Nullable Boolean diarizationEnabled) {
                 this.diarizationEnabled = diarizationEnabled;
             }
 
-            public Boolean getDisfluencyRemovalEnabled() {
+            public @Nullable Boolean getDisfluencyRemovalEnabled() {
                 return disfluencyRemovalEnabled;
             }
 
-            public void setDisfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+            public void setDisfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
                 this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
             }
 
-            public Boolean getTimestampAlignmentEnabled() {
+            public @Nullable Boolean getTimestampAlignmentEnabled() {
                 return timestampAlignmentEnabled;
             }
 
-            public void setTimestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
+            public void setTimestampAlignmentEnabled(@Nullable Boolean timestampAlignmentEnabled) {
                 this.timestampAlignmentEnabled = timestampAlignmentEnabled;
             }
 
-            public Integer getSpeakerCount() {
+            public @Nullable Integer getSpeakerCount() {
                 return speakerCount;
             }
 
-            public void setSpeakerCount(Integer speakerCount) {
+            public void setSpeakerCount(@Nullable Integer speakerCount) {
                 this.speakerCount = speakerCount;
             }
 
-            public List<String> getLanguageHints() {
+            public @Nullable List<String> getLanguageHints() {
                 return languageHints;
             }
 
-            public void setLanguageHints(List<String> languageHints) {
+            public void setLanguageHints(@Nullable List<String> languageHints) {
                 this.languageHints = languageHints;
             }
 
@@ -235,42 +236,42 @@ public class DashScopeAsrTranscriptionApiSpec {
             public static class Builder {
                 private final Parameters parameters = new Parameters();
 
-                public Builder vocabularyId(String vocabularyId) {
+                public Builder vocabularyId(@Nullable String vocabularyId) {
                     parameters.vocabularyId = vocabularyId;
                     return this;
                 }
 
-                public Builder channelId(List<Integer> channelId) {
+                public Builder channelId(@Nullable List<Integer> channelId) {
                     parameters.channelId = channelId;
                     return this;
                 }
 
-                public Builder specialWordFilter(String specialWordFilter) {
+                public Builder specialWordFilter(@Nullable String specialWordFilter) {
                     parameters.specialWordFilter = specialWordFilter;
                     return this;
                 }
 
-                public Builder diarizationEnabled(Boolean diarizationEnabled) {
+                public Builder diarizationEnabled(@Nullable Boolean diarizationEnabled) {
                     parameters.diarizationEnabled = diarizationEnabled;
                     return this;
                 }
 
-                public Builder disfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+                public Builder disfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
                     parameters.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
                     return this;
                 }
 
-                public Builder timestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
+                public Builder timestampAlignmentEnabled(@Nullable Boolean timestampAlignmentEnabled) {
                     parameters.timestampAlignmentEnabled = timestampAlignmentEnabled;
                     return this;
                 }
 
-                public Builder speakerCount(Integer speakerCount) {
+                public Builder speakerCount(@Nullable Integer speakerCount) {
                     parameters.speakerCount = speakerCount;
                     return this;
                 }
 
-                public Builder languageHints(List<String> languageHints) {
+                public Builder languageHints(@Nullable List<String> languageHints) {
                     parameters.languageHints = languageHints;
                     return this;
                 }
@@ -285,42 +286,42 @@ public class DashScopeAsrTranscriptionApiSpec {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record AsrOutPut(
-            @JsonProperty("request_id") String requestId,
-            @JsonProperty("output") Output output
+            @JsonProperty("request_id") @Nullable String requestId,
+            @JsonProperty("output") @Nullable Output output
     ) {
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Output(
-                @JsonProperty("task_status") String taskStatus,
-                @JsonProperty("task_id") String taskId) {
+                @JsonProperty("task_status") @Nullable String taskStatus,
+                @JsonProperty("task_id") @Nullable String taskId) {
         }
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record AsrResponse(
-            @JsonProperty("request_id") String requestId,
-            @JsonProperty("output") Output output,
-            @JsonProperty("usage") Usage usage
+            @JsonProperty("request_id") @Nullable String requestId,
+            @JsonProperty("output") @Nullable Output output,
+            @JsonProperty("usage") @Nullable Usage usage
     ) {
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Output(
-                @JsonProperty("task_status") String taskStatus,
-                @JsonProperty("task_id") String taskId,
-                @JsonProperty("submit_time") String submitTime,
-                @JsonProperty("scheduled_time") String scheduledTime,
-                @JsonProperty("end_time") String endTime,
-                @JsonProperty("results") List<Result> results,
-                @JsonProperty("task_metrics") TaskMetrics taskMetrics
+                @JsonProperty("task_status") @Nullable String taskStatus,
+                @JsonProperty("task_id") @Nullable String taskId,
+                @JsonProperty("submit_time") @Nullable String submitTime,
+                @JsonProperty("scheduled_time") @Nullable String scheduledTime,
+                @JsonProperty("end_time") @Nullable String endTime,
+                @JsonProperty("results") @Nullable List<Result> results,
+                @JsonProperty("task_metrics") @Nullable TaskMetrics taskMetrics
         ) {
             public record Result(
-                    @JsonProperty("file_url") String fileUrl,
-                    @JsonProperty("transcription_url") String transcriptionUrl,
-                    @JsonProperty("subtask_status") String subtaskStatus
+                    @JsonProperty("file_url") @Nullable String fileUrl,
+                    @JsonProperty("transcription_url") @Nullable String transcriptionUrl,
+                    @JsonProperty("subtask_status") @Nullable String subtaskStatus
             ) {}
 
             public record TaskMetrics(
-                    @JsonProperty("TOTAL") Integer total,
-                    @JsonProperty("SUCCEEDED") Integer succeeded,
-                    @JsonProperty("FAILED") Integer failed
+                    @JsonProperty("TOTAL") @Nullable Integer total,
+                    @JsonProperty("SUCCEEDED") @Nullable Integer succeeded,
+                    @JsonProperty("FAILED") @Nullable Integer failed
             ) {}
         }
     }
@@ -351,16 +352,16 @@ public class DashScopeAsrTranscriptionApiSpec {
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record TranscriptionResult(
-                @JsonProperty("file_url") String fileUrl,
-                @JsonProperty("properties") Properties properties,
-                @JsonProperty("transcripts") List<DashScopeAudioTranscription> transcripts
+                @JsonProperty("file_url") @Nullable String fileUrl,
+                @JsonProperty("properties") @Nullable Properties properties,
+                @JsonProperty("transcripts") @Nullable List<DashScopeAudioTranscription> transcripts
         ) {
             @JsonInclude(JsonInclude.Include.NON_NULL)
             public record Properties(
-                    @JsonProperty("audio_format") String audioFormat,
-                    @JsonProperty("channels") List<Integer> channels,
-                    @JsonProperty("original_sampling_rate") Integer originalSamplingRate,
-                    @JsonProperty("original_duration_in_milliseconds") Integer originalDurationInMilliseconds
+                    @JsonProperty("audio_format") @Nullable String audioFormat,
+                    @JsonProperty("channels") @Nullable List<Integer> channels,
+                    @JsonProperty("original_sampling_rate") @Nullable Integer originalSamplingRate,
+                    @JsonProperty("original_duration_in_milliseconds") @Nullable Integer originalDurationInMilliseconds
             ) {}
         }
 

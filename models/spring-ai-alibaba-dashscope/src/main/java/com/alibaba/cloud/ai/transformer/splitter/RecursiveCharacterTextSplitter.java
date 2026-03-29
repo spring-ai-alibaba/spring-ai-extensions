@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.transformer.splitter;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -51,7 +53,7 @@ public class RecursiveCharacterTextSplitter extends TextSplitter {
 	 * @param chunkSize Maximum size of each chunk
 	 */
 	public RecursiveCharacterTextSplitter(int chunkSize) {
-		this(chunkSize, null);
+		this(chunkSize, defaultSeparators());
 	}
 
 	/**
@@ -59,14 +61,24 @@ public class RecursiveCharacterTextSplitter extends TextSplitter {
 	 * @param chunkSize Maximum size of each chunk
 	 * @param separators Array of separators to use for splitting
 	 */
-	public RecursiveCharacterTextSplitter(int chunkSize, String[] separators) {
+	public RecursiveCharacterTextSplitter(int chunkSize, String @Nullable [] separators) {
 		if (chunkSize <= 0) {
 			throw new IllegalArgumentException("Chunk size must be positive");
 		}
 
 		this.chunkSize = chunkSize;
-		this.separators = Objects.requireNonNullElse(separators,
-				new String[] { "\n\n", "\n", "。", "！", "？", "；", "，", " " });
+		this.separators = normalizeSeparators(separators);
+	}
+
+	private static String[] normalizeSeparators(String @Nullable [] separators) {
+		if (separators == null) {
+			return defaultSeparators();
+		}
+		return Objects.requireNonNull(separators);
+	}
+
+	private static String[] defaultSeparators() {
+		return new String[] { "\n\n", "\n", "。", "！", "？", "；", "，", " " };
 	}
 
 	@Override

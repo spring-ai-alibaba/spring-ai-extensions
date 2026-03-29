@@ -100,7 +100,10 @@ public class ArmsToolCallingObservationConvention implements ObservationConventi
 	}
 
 	protected KeyValues toolDescription(KeyValues keyValues, ArmsToolCallingObservationContext context) {
-		return keyValues.and(HighCardinalityKeyNames.TOOL_DESCRIPTION.asString(), context.getDescription());
+		if (StringUtils.hasText(context.getDescription())) {
+			return keyValues.and(HighCardinalityKeyNames.TOOL_DESCRIPTION.asString(), context.getDescription());
+		}
+		return keyValues;
 	}
 
 	protected KeyValues toolParameters(KeyValues keyValues, ArmsToolCallingObservationContext context) {

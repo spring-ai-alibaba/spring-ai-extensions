@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 
@@ -34,10 +35,10 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
     public static final String DEFAULT_MODEL = AudioModel.GUMMY_REALTIME_V1.getValue();
 
     @JsonProperty("model")
-    private String model;
+    private @Nullable String model;
 
     @JsonProperty("vocabulary_id")
-    private String vocabularyId;
+    private @Nullable String vocabularyId;
 
 	@JsonProperty("sample_rate")
 	private Integer sampleRate = 16000;
@@ -46,115 +47,115 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 	private String format = "pcm";
 
     @JsonProperty("source_language")
-    private String sourceLanguage;
+    private @Nullable String sourceLanguage;
 
     @JsonProperty("transcription_enabled")
-    private Boolean transcriptionEnabled;
+    private @Nullable Boolean transcriptionEnabled;
 
     @JsonProperty("translation_enabled")
-    private Boolean translationEnabled;
+    private @Nullable Boolean translationEnabled;
 
     @JsonProperty("translation_target_languages")
-    private List<String> translationTargetLanguages;
+    private @Nullable List<String> translationTargetLanguages;
 
     @JsonProperty("max_end_silence")
-    private Integer maxEndSilence;
+    private @Nullable Integer maxEndSilence;
 
     @JsonProperty("modalities")
-    private List<String> modalities;
+    private @Nullable List<String> modalities;
 
     @JsonProperty("audio")
-    private Audio audio;
+    private @Nullable Audio audio;
 
     @JsonProperty("stream")
-    private Boolean stream;
+    private @Nullable Boolean stream;
 
     @JsonProperty("stream_options")
-    private StreamOptions streamOptions;
+    private @Nullable StreamOptions streamOptions;
 
     @JsonProperty("max_tokens")
-    private Integer maxTokens;
+    private @Nullable Integer maxTokens;
 
     @JsonProperty("seed")
-    private Integer seed;
+    private @Nullable Integer seed;
 
     @JsonProperty("temperature")
-    private Float temperature;
+    private @Nullable Float temperature;
 
     @JsonProperty("top_p")
-    private Float topP;
+    private @Nullable Float topP;
 
     @JsonProperty("presence_penalty")
-    private Float presencePenalty;
+    private @Nullable Float presencePenalty;
 
     @JsonProperty("top_k")
-    private Integer topK;
+    private @Nullable Integer topK;
 
     @JsonProperty("repetition_penalty")
-    private Float repetitionPenalty;
+    private @Nullable Float repetitionPenalty;
 
     @JsonProperty("translation_options")
-    private TranslationOptions translationOptions;
+    private @Nullable TranslationOptions translationOptions;
 
     @JsonProperty("disfluency_removal_enabled")
-    private Boolean disfluencyRemovalEnabled;
+    private @Nullable Boolean disfluencyRemovalEnabled;
 
     @JsonProperty("language_hints")
-    private List<String> languageHints;
+    private @Nullable List<String> languageHints;
 
     @JsonProperty("semantic_punctuation_enabled")
-    private Boolean semanticPunctuationEnabled;
+    private @Nullable Boolean semanticPunctuationEnabled;
 
     @JsonProperty("max_sentence_silence")
-    private Integer maxSentenceSilence;
+    private @Nullable Integer maxSentenceSilence;
 
     @JsonProperty("multi_threshold_mode_enabled")
-    private Boolean multiThresholdModeEnabled;
+    private @Nullable Boolean multiThresholdModeEnabled;
 
     @JsonProperty("punctuation_prediction_enabled")
-    private Boolean punctuationPredictionEnabled;
+    private @Nullable Boolean punctuationPredictionEnabled;
 
     @JsonProperty("heartbeat")
-    private Boolean heartbeat;
+    private @Nullable Boolean heartbeat;
 
     @JsonProperty("inverse_text_normalization_enabled")
-    private Boolean inverseTextNormalizationEnabled;
+    private @Nullable Boolean inverseTextNormalizationEnabled;
 
     @JsonProperty("resources")
-    private List<Resource> resources;
+    private @Nullable List<Resource> resources;
 
     @JsonProperty("timestamp_alignment_enabled")
-    private Boolean timestampAlignmentEnabled;
+    private @Nullable Boolean timestampAlignmentEnabled;
 
     @JsonProperty("specialWordFilter")
-    private String specialWordFilter;
+    private @Nullable String specialWordFilter;
 
     @JsonProperty("diarizationEnabled")
-    private Boolean diarizationEnabled;
+    private @Nullable Boolean diarizationEnabled;
 
     @JsonProperty("speaker_count")
-    private Integer speakerCount;
+    private @Nullable Integer speakerCount;
 
     @JsonProperty("channel_id")
-    private List<Integer> channelId;
+    private @Nullable List<Integer> channelId;
 
     @JsonProperty("asr_options")
-    private AsrOptions asrOptions;
+    private @Nullable AsrOptions asrOptions;
 
     @Override
-	public String getModel() {
+	public @Nullable String getModel() {
 		return model;
 	}
 
-    public void setModel(String model) {
+    public void setModel(@Nullable String model) {
         this.model = model;
     }
 
-    public String getVocabularyId() {
+    public @Nullable String getVocabularyId() {
         return vocabularyId;
     }
 
-    public void setVocabularyId(String vocabularyId) {
+    public void setVocabularyId(@Nullable String vocabularyId) {
         this.vocabularyId = vocabularyId;
     }
 
@@ -174,259 +175,259 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
         this.sampleRate = sampleRate;
     }
 
-    public String getSourceLanguage() {
+    public @Nullable String getSourceLanguage() {
         return sourceLanguage;
     }
 
-    public void setSourceLanguage(String sourceLanguage) {
+    public void setSourceLanguage(@Nullable String sourceLanguage) {
         this.sourceLanguage = sourceLanguage;
     }
 
-    public Boolean getTranscriptionEnabled() {
+    public @Nullable Boolean getTranscriptionEnabled() {
         return transcriptionEnabled;
     }
 
-    public void setTranscriptionEnabled(Boolean transcriptionEnabled) {
+    public void setTranscriptionEnabled(@Nullable Boolean transcriptionEnabled) {
         this.transcriptionEnabled = transcriptionEnabled;
     }
 
-    public Boolean getTranslationEnabled() {
+    public @Nullable Boolean getTranslationEnabled() {
         return translationEnabled;
     }
 
-    public void setTranslationEnabled(Boolean translationEnabled) {
+    public void setTranslationEnabled(@Nullable Boolean translationEnabled) {
         this.translationEnabled = translationEnabled;
     }
 
-    public List<String> getTranslationTargetLanguages() {
+    public @Nullable List<String> getTranslationTargetLanguages() {
         return translationTargetLanguages;
     }
 
-    public void setTranslationTargetLanguages(List<String> translationTargetLanguages) {
+    public void setTranslationTargetLanguages(@Nullable List<String> translationTargetLanguages) {
         this.translationTargetLanguages = translationTargetLanguages;
     }
 
-    public AsrOptions getAsrOptions() {
+    public @Nullable AsrOptions getAsrOptions() {
         return asrOptions;
     }
 
-    public void setAsrOptions(AsrOptions asrOptions) {
+    public void setAsrOptions(@Nullable AsrOptions asrOptions) {
         this.asrOptions = asrOptions;
     }
 
-    public Integer getMaxEndSilence() {
+    public @Nullable Integer getMaxEndSilence() {
         return maxEndSilence;
     }
 
-    public void setMaxEndSilence(Integer maxEndSilence) {
+    public void setMaxEndSilence(@Nullable Integer maxEndSilence) {
         this.maxEndSilence = maxEndSilence;
     }
 
-    public List<String> getModalities() {
+    public @Nullable List<String> getModalities() {
         return modalities;
     }
 
-    public void setModalities(List<String> modalities) {
+    public void setModalities(@Nullable List<String> modalities) {
         this.modalities = modalities;
     }
 
-    public Audio getAudio() {
+    public @Nullable Audio getAudio() {
         return audio;
     }
 
-    public void setAudio(Audio audio) {
+    public void setAudio(@Nullable Audio audio) {
         this.audio = audio;
     }
 
-    public Boolean getStream() {
+    public @Nullable Boolean getStream() {
         return stream;
     }
 
-    public void setStream(Boolean stream) {
+    public void setStream(@Nullable Boolean stream) {
         this.stream = stream;
     }
 
-    public StreamOptions getStreamOptions() {
+    public @Nullable StreamOptions getStreamOptions() {
         return streamOptions;
     }
 
-    public void setStreamOptions(StreamOptions streamOptions) {
+    public void setStreamOptions(@Nullable StreamOptions streamOptions) {
         this.streamOptions = streamOptions;
     }
 
-    public Integer getMaxTokens() {
+    public @Nullable Integer getMaxTokens() {
         return maxTokens;
     }
 
-    public void setMaxTokens(Integer maxTokens) {
+    public void setMaxTokens(@Nullable Integer maxTokens) {
         this.maxTokens = maxTokens;
     }
 
-    public Integer getSeed() {
+    public @Nullable Integer getSeed() {
         return seed;
     }
 
-    public void setSeed(Integer seed) {
+    public void setSeed(@Nullable Integer seed) {
         this.seed = seed;
     }
 
-    public Float getTemperature() {
+    public @Nullable Float getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(Float temperature) {
+    public void setTemperature(@Nullable Float temperature) {
         this.temperature = temperature;
     }
 
-    public Float getTopP() {
+    public @Nullable Float getTopP() {
         return topP;
     }
 
-    public void setTopP(Float topP) {
+    public void setTopP(@Nullable Float topP) {
         this.topP = topP;
     }
 
-    public Float getPresencePenalty() {
+    public @Nullable Float getPresencePenalty() {
         return presencePenalty;
     }
 
-    public void setPresencePenalty(Float presencePenalty) {
+    public void setPresencePenalty(@Nullable Float presencePenalty) {
         this.presencePenalty = presencePenalty;
     }
 
-    public Integer getTopK() {
+    public @Nullable Integer getTopK() {
         return topK;
     }
 
-    public void setTopK(Integer topK) {
+    public void setTopK(@Nullable Integer topK) {
         this.topK = topK;
     }
 
-    public Float getRepetitionPenalty() {
+    public @Nullable Float getRepetitionPenalty() {
         return repetitionPenalty;
     }
 
-    public void setRepetitionPenalty(Float repetitionPenalty) {
+    public void setRepetitionPenalty(@Nullable Float repetitionPenalty) {
         this.repetitionPenalty = repetitionPenalty;
     }
 
-    public TranslationOptions getTranslationOptions() {
+    public @Nullable TranslationOptions getTranslationOptions() {
         return translationOptions;
     }
 
-    public void setTranslationOptions(TranslationOptions translationOptions) {
+    public void setTranslationOptions(@Nullable TranslationOptions translationOptions) {
         this.translationOptions = translationOptions;
     }
 
-    public Boolean getDisfluencyRemovalEnabled() {
+    public @Nullable Boolean getDisfluencyRemovalEnabled() {
         return disfluencyRemovalEnabled;
     }
 
-    public void setDisfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+    public void setDisfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
         this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
     }
 
-    public List<String> getLanguageHints() {
+    public @Nullable List<String> getLanguageHints() {
         return languageHints;
     }
 
-    public void setLanguageHints(List<String> languageHints) {
+    public void setLanguageHints(@Nullable List<String> languageHints) {
         this.languageHints = languageHints;
     }
 
-    public Boolean getSemanticPunctuationEnabled() {
+    public @Nullable Boolean getSemanticPunctuationEnabled() {
         return semanticPunctuationEnabled;
     }
 
-    public void setSemanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
+    public void setSemanticPunctuationEnabled(@Nullable Boolean semanticPunctuationEnabled) {
         this.semanticPunctuationEnabled = semanticPunctuationEnabled;
     }
 
-    public Integer getMaxSentenceSilence() {
+    public @Nullable Integer getMaxSentenceSilence() {
         return maxSentenceSilence;
     }
 
-    public void setMaxSentenceSilence(Integer maxSentenceSilence) {
+    public void setMaxSentenceSilence(@Nullable Integer maxSentenceSilence) {
         this.maxSentenceSilence = maxSentenceSilence;
     }
 
-    public Boolean getMultiThresholdModeEnabled() {
+    public @Nullable Boolean getMultiThresholdModeEnabled() {
         return multiThresholdModeEnabled;
     }
 
-    public void setMultiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
+    public void setMultiThresholdModeEnabled(@Nullable Boolean multiThresholdModeEnabled) {
         this.multiThresholdModeEnabled = multiThresholdModeEnabled;
     }
 
-    public Boolean getPunctuationPredictionEnabled() {
+    public @Nullable Boolean getPunctuationPredictionEnabled() {
         return punctuationPredictionEnabled;
     }
 
-    public void setPunctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
+    public void setPunctuationPredictionEnabled(@Nullable Boolean punctuationPredictionEnabled) {
         this.punctuationPredictionEnabled = punctuationPredictionEnabled;
     }
 
-    public Boolean getHeartbeat() {
+    public @Nullable Boolean getHeartbeat() {
         return heartbeat;
     }
 
-    public void setHeartbeat(Boolean heartbeat) {
+    public void setHeartbeat(@Nullable Boolean heartbeat) {
         this.heartbeat = heartbeat;
     }
 
-    public Boolean getInverseTextNormalizationEnabled() {
+    public @Nullable Boolean getInverseTextNormalizationEnabled() {
         return inverseTextNormalizationEnabled;
     }
 
-    public void setInverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
+    public void setInverseTextNormalizationEnabled(@Nullable Boolean inverseTextNormalizationEnabled) {
         this.inverseTextNormalizationEnabled = inverseTextNormalizationEnabled;
     }
 
-    public List<Resource> getResources() {
+    public @Nullable List<Resource> getResources() {
         return resources;
     }
 
-    public void setResources(List<Resource> resources) {
+    public void setResources(@Nullable List<Resource> resources) {
         this.resources = resources;
     }
 
-    public Boolean getTimestampAlignmentEnabled() {
+    public @Nullable Boolean getTimestampAlignmentEnabled() {
         return timestampAlignmentEnabled;
     }
 
-    public void setTimestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
+    public void setTimestampAlignmentEnabled(@Nullable Boolean timestampAlignmentEnabled) {
         this.timestampAlignmentEnabled = timestampAlignmentEnabled;
     }
 
-    public String getSpecialWordFilter() {
+    public @Nullable String getSpecialWordFilter() {
         return specialWordFilter;
     }
 
-    public void setSpecialWordFilter(String specialWordFilter) {
+    public void setSpecialWordFilter(@Nullable String specialWordFilter) {
         this.specialWordFilter = specialWordFilter;
     }
 
-    public Boolean getDiarizationEnabled() {
+    public @Nullable Boolean getDiarizationEnabled() {
         return diarizationEnabled;
     }
 
-    public void setDiarizationEnabled(Boolean diarizationEnabled) {
+    public void setDiarizationEnabled(@Nullable Boolean diarizationEnabled) {
         this.diarizationEnabled = diarizationEnabled;
     }
 
-    public Integer getSpeakerCount() {
+    public @Nullable Integer getSpeakerCount() {
         return speakerCount;
     }
 
-    public void setSpeakerCount(Integer speakerCount) {
+    public void setSpeakerCount(@Nullable Integer speakerCount) {
         this.speakerCount = speakerCount;
     }
 
-    public List<Integer> getChannelId() {
+    public @Nullable List<Integer> getChannelId() {
         return channelId;
     }
 
-    public void setChannelId(List<Integer> channelId) {
+    public void setChannelId(@Nullable List<Integer> channelId) {
         this.channelId = channelId;
     }
 
@@ -441,12 +442,12 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
             options = new DashScopeAudioTranscriptionOptions();
         }
 
-        public Builder model(String model) {
+        public Builder model(@Nullable String model) {
             options.setModel(model);
             return this;
         }
 
-        public Builder vocabularyId(String vocabularyId) {
+        public Builder vocabularyId(@Nullable String vocabularyId) {
             options.setVocabularyId(vocabularyId);
             return this;
         }
@@ -461,57 +462,57 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
             return this;
         }
 
-        public Builder sourceLanguage(String sourceLanguage) {
+        public Builder sourceLanguage(@Nullable String sourceLanguage) {
             options.setSourceLanguage(sourceLanguage);
             return this;
         }
 
-        public Builder transcriptionEnabled(Boolean transcriptionEnabled) {
+        public Builder transcriptionEnabled(@Nullable Boolean transcriptionEnabled) {
             options.setTranscriptionEnabled(transcriptionEnabled);
             return this;
         }
 
-        public Builder translationEnabled(Boolean translationEnabled) {
+        public Builder translationEnabled(@Nullable Boolean translationEnabled) {
             options.setTranslationEnabled(translationEnabled);
             return this;
         }
 
-        public Builder translationTargetLanguages(List<String> translationTargetLanguages) {
+        public Builder translationTargetLanguages(@Nullable List<String> translationTargetLanguages) {
             options.setTranslationTargetLanguages(translationTargetLanguages);
             return this;
         }
 
-        public Builder maxEndSilence(Integer maxEndSilence) {
+        public Builder maxEndSilence(@Nullable Integer maxEndSilence) {
             options.setMaxEndSilence(maxEndSilence);
             return this;
         }
 
-        public Builder modalities(List<String> modalities) {
+        public Builder modalities(@Nullable List<String> modalities) {
             options.setModalities(modalities);
             return this;
         }
 
-        public Builder audio(Audio audio) {
+        public Builder audio(@Nullable Audio audio) {
             options.setAudio(audio);
             return this;
         }
 
-        public Builder stream(Boolean stream) {
+        public Builder stream(@Nullable Boolean stream) {
             options.setStream(stream);
             return this;
         }
 
-        public Builder streamOptions(StreamOptions streamOptions) {
+        public Builder streamOptions(@Nullable StreamOptions streamOptions) {
             options.setStreamOptions(streamOptions);
             return this;
         }
 
-        public Builder maxTokens(Integer maxTokens) {
+        public Builder maxTokens(@Nullable Integer maxTokens) {
             options.setMaxTokens(maxTokens);
             return this;
         }
 
-        public Builder seed(Integer seed) {
+        public Builder seed(@Nullable Integer seed) {
             options.setSeed(seed);
             return this;
         }
@@ -628,131 +629,131 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 
     public static class Audio {
         @JsonProperty("voice")
-        private String voice;
+        private @Nullable String voice;
 
         @JsonProperty("format")
-        private String format;
+        private @Nullable String format;
 
         public Audio() {}
 
-        public Audio(String voice, String format) {
+        public Audio(@Nullable String voice, @Nullable String format) {
             this.voice = voice;
             this.format = format;
         }
 
-        public String getVoice() {
+        public @Nullable String getVoice() {
             return voice;
         }
 
-        public void setVoice(String voice) {
+        public void setVoice(@Nullable String voice) {
             this.voice = voice;
         }
 
-        public String getFormat() {
+        public @Nullable String getFormat() {
             return format;
         }
 
-        public void setFormat(String format) {
+        public void setFormat(@Nullable String format) {
             this.format = format;
         }
     }
 
     public static class StreamOptions {
         @JsonProperty("include_usage")
-        private Boolean includeUsage;
+        private @Nullable Boolean includeUsage;
 
         public StreamOptions() {}
 
-        public StreamOptions(Boolean includeUsage) {
+        public StreamOptions(@Nullable Boolean includeUsage) {
             this.includeUsage = includeUsage;
         }
 
-        public Boolean getIncludeUsage() {
+        public @Nullable Boolean getIncludeUsage() {
             return includeUsage;
         }
 
-        public void setIncludeUsage(Boolean includeUsage) {
+        public void setIncludeUsage(@Nullable Boolean includeUsage) {
             this.includeUsage = includeUsage;
         }
     }
 
     public static class TranslationOptions {
         @JsonProperty("source_lang")
-        private String sourceLang;
+        private @Nullable String sourceLang;
 
         @JsonProperty("target_lang")
-        private String targetLang;
+        private @Nullable String targetLang;
 
         public TranslationOptions() {}
 
-        public TranslationOptions(String sourceLang, String targetLang) {
+        public TranslationOptions(@Nullable String sourceLang, @Nullable String targetLang) {
             this.sourceLang = sourceLang;
             this.targetLang = targetLang;
         }
 
-        public String getSourceLang() {
+        public @Nullable String getSourceLang() {
             return sourceLang;
         }
 
-        public void setSourceLang(String sourceLang) {
+        public void setSourceLang(@Nullable String sourceLang) {
             this.sourceLang = sourceLang;
         }
 
-        public String getTargetLang() {
+        public @Nullable String getTargetLang() {
             return targetLang;
         }
 
-        public void setTargetLang(String targetLang) {
+        public void setTargetLang(@Nullable String targetLang) {
             this.targetLang = targetLang;
         }
     }
 
     public static class Resource {
         @JsonProperty("resource_id")
-        private String resourceId;
+        private @Nullable String resourceId;
 
         @JsonProperty("resource_type")
-        private String resourceType;
+        private @Nullable String resourceType;
 
-        public String getResourceId() {
+        public @Nullable String getResourceId() {
             return resourceId;
         }
 
-        public void setResourceId(String resourceId) {
+        public void setResourceId(@Nullable String resourceId) {
             this.resourceId = resourceId;
         }
 
-        public String getResourceType() {
+        public @Nullable String getResourceType() {
             return resourceType;
         }
 
-        public void setResourceType(String resourceType) {
+        public void setResourceType(@Nullable String resourceType) {
             this.resourceType = resourceType;
         }
     }
 
     public static class AsrOptions {
         @JsonProperty("language")
-        private String language;
+        private @Nullable String language;
 
-        public String getLanguage() {
+        public @Nullable String getLanguage() {
             return language;
         }
 
-        public void setLanguage(String language) {
+        public void setLanguage(@Nullable String language) {
             this.language = language;
         }
 
-        public Boolean getEnableItn() {
+        public @Nullable Boolean getEnableItn() {
             return enableItn;
         }
 
-        public void setEnableItn(Boolean enableItn) {
+        public void setEnableItn(@Nullable Boolean enableItn) {
             this.enableItn = enableItn;
         }
 
         @JsonProperty("enable_itn")
-        private Boolean enableItn;
+        private @Nullable Boolean enableItn;
     }
 
 }

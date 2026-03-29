@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure;
 
 import com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure.model.RedisChatMemoryCluster;
 import com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure.model.RedisChatMemoryStandalone;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.ssl.SslBundles;
@@ -24,6 +25,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Base Redis Memory Connection Configuration
@@ -37,7 +39,7 @@ public abstract class RedisChatMemoryConnectionAutoConfiguration<T extends ChatM
 
 	private final RedisChatMemoryConnectionDetails connectionDetails;
 
-	private final SslBundles sslBundles;
+	private final @Nullable SslBundles sslBundles;
 
 	public RedisChatMemoryConnectionAutoConfiguration(RedisChatMemoryProperties properties,
 			RedisChatMemoryConnectionDetails connectionDetails, ObjectProvider<SslBundles> sslBundles) {
@@ -99,7 +101,7 @@ public abstract class RedisChatMemoryConnectionAutoConfiguration<T extends ChatM
 		if (mode == null) {
 			return RedisChatMemoryProperties.Mode.STANDALONE;
 		}
-		return properties.getMode();
+		return mode;
 	}
 
 	/**
@@ -107,10 +109,11 @@ public abstract class RedisChatMemoryConnectionAutoConfiguration<T extends ChatM
 	 * @return Fully configured standalone Redis chat memory configuration
 	 */
 	protected final RedisChatMemoryStandalone getStandaloneConfiguration() {
-		RedisMemoryConnectionDetails.Standalone standalone = connectionDetails.getStandalone();
+		RedisMemoryConnectionDetails.Standalone standalone = Objects.requireNonNull(connectionDetails.getStandalone(),
+				"Redis standalone connection details must not be null");
 		return new RedisChatMemoryStandalone(standalone.getHost(), standalone.getPort(),
 				connectionDetails.getUsername(), connectionDetails.getPassword(), properties.getTimeout(),
-                standalone.getDatabase(), properties.getKeyPrefix(), properties.getSsl(), sslBundles);
+				standalone.getDatabase(), properties.getKeyPrefix(), properties.getSsl(), sslBundles);
 	}
 
 	/**
@@ -118,12 +121,16 @@ public abstract class RedisChatMemoryConnectionAutoConfiguration<T extends ChatM
 	 * @return Fully configured cluster Redis chat memory configuration
 	 */
 	protected final RedisChatMemoryCluster getClusterConfiguration() {
-		if (properties.getCluster() == null || CollectionUtils.isEmpty(properties.getCluster().getNodes())) {
+		RedisChatMemoryProperties.Cluster propertiesCluster = properties.getCluster();
+		if (propertiesCluster == null || CollectionUtils.isEmpty(propertiesCluster.getNodes())) {
 			throw new IllegalStateException("Cluster nodes configuration is required for CLUSTER mode");
 		}
-		List<String> nodes = getNodes(connectionDetails.getCluster());
-		return new RedisChatMemoryCluster(nodes, properties.getCluster().getMaxRedirects(), connectionDetails.getUsername(),
-				connectionDetails.getPassword(), properties.getTimeout(), properties.getKeyPrefix(), properties.getSsl(), sslBundles);
+		RedisMemoryConnectionDetails.Cluster cluster = Objects.requireNonNull(connectionDetails.getCluster(),
+				"Redis cluster connection details must not be null");
+		List<String> nodes = getNodes(cluster);
+		return new RedisChatMemoryCluster(nodes, propertiesCluster.getMaxRedirects(), connectionDetails.getUsername(),
+				connectionDetails.getPassword(), properties.getTimeout(), properties.getKeyPrefix(), properties.getSsl(),
+				sslBundles);
 	}
 
 	/**

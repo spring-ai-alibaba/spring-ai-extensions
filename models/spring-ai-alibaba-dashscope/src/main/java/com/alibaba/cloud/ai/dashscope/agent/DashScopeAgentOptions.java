@@ -20,7 +20,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.prompt.ChatOptions;
 
 /**
@@ -31,63 +33,63 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 public class DashScopeAgentOptions implements ChatOptions {
 
     @JsonProperty("app_id")
-    private String appId;
+    private @Nullable String appId;
 
     @JsonProperty("session_id")
-    private String sessionId;
+    private @Nullable String sessionId;
 
     @JsonProperty("memory_id")
-    private String memoryId;
+    private @Nullable String memoryId;
 
     @JsonProperty("model_id")
-    String modelId;
+    @Nullable String modelId;
 
     @JsonProperty("incremental_output")
-    private Boolean incrementalOutput;
+    private @Nullable Boolean incrementalOutput;
 
     @JsonProperty("has_thoughts")
-    private Boolean hasThoughts;
+    private @Nullable Boolean hasThoughts;
 
     @JsonProperty("enable_thinking")
-    Boolean enableThinking;
+    @Nullable Boolean enableThinking;
 
     @JsonProperty("images")
-    private List<String> images;
+    private @Nullable List<String> images;
 
     @JsonProperty("file_list")
-    List<String> files;
+    @Nullable List<String> files;
 
     @JsonProperty("biz_params")
-    private JsonNode bizParams;
+    private @Nullable JsonNode bizParams;
 
     @JsonProperty("rag_options")
-    private DashScopeAgentRagOptions ragOptions;
+    private @Nullable DashScopeAgentRagOptions ragOptions;
 
     @JsonProperty("flow_stream_mode")
-    private DashScopeAgentFlowStreamMode flowStreamMode;
+    private @Nullable DashScopeAgentFlowStreamMode flowStreamMode;
 
     @Override
-    public String getModel() {
+    public @Nullable String getModel() {
         return modelId;
     }
 
     @Override
-    public Double getFrequencyPenalty() {
+    public @Nullable Double getFrequencyPenalty() {
         return null;
     }
 
     @Override
-    public Integer getMaxTokens() {
+    public @Nullable Integer getMaxTokens() {
         return null;
     }
 
     @Override
-    public Double getPresencePenalty() {
+    public @Nullable Double getPresencePenalty() {
         return null;
     }
 
     @Override
-    public List<String> getStopSequences() {
+    public @Nullable List<String> getStopSequences() {
         return null;
     }
 
@@ -106,108 +108,108 @@ public class DashScopeAgentOptions implements ChatOptions {
         return 0;
     }
 
-    public String getAppId() {
+    public @Nullable String getAppId() {
         return appId;
     }
 
-    public void setAppId(String appId) {
+    public void setAppId(@Nullable String appId) {
         this.appId = appId;
     }
 
-    public String getSessionId() {
+    public @Nullable String getSessionId() {
         return sessionId;
     }
 
-    public void setSessionId(String sessionId) {
+    public void setSessionId(@Nullable String sessionId) {
         this.sessionId = sessionId;
     }
 
-    public String getMemoryId() {
+    public @Nullable String getMemoryId() {
         return memoryId;
     }
 
-    public void setMemoryId(String memoryId) {
+    public void setMemoryId(@Nullable String memoryId) {
         this.memoryId = memoryId;
     }
 
-    public String getModelId() {
+    public @Nullable String getModelId() {
         return modelId;
     }
 
-    public void setModelId(String modelId) {
+    public void setModelId(@Nullable String modelId) {
         this.modelId = modelId;
     }
 
-    public Boolean getIncrementalOutput() {
+    public @Nullable Boolean getIncrementalOutput() {
         return incrementalOutput;
     }
 
-    public void setIncrementalOutput(Boolean incrementalOutput) {
+    public void setIncrementalOutput(@Nullable Boolean incrementalOutput) {
         this.incrementalOutput = incrementalOutput;
     }
 
-    public Boolean getHasThoughts() {
+    public @Nullable Boolean getHasThoughts() {
         return hasThoughts;
     }
 
-    public void setHasThoughts(Boolean hasThoughts) {
+    public void setHasThoughts(@Nullable Boolean hasThoughts) {
         this.hasThoughts = hasThoughts;
     }
 
-    public Boolean getEnableThinking() {
+    public @Nullable Boolean getEnableThinking() {
         return enableThinking;
     }
 
-    public void setEnableThinking(Boolean enableThinking) {
+    public void setEnableThinking(@Nullable Boolean enableThinking) {
         this.enableThinking = enableThinking;
     }
 
-    public List<String> getImages() {
+    public @Nullable List<String> getImages() {
         return images;
     }
 
-    public void setImages(List<String> images) {
+    public void setImages(@Nullable List<String> images) {
         this.images = images;
     }
 
-    public List<String> getFiles() {
+    public @Nullable List<String> getFiles() {
         return files;
     }
 
-    public void setFiles(List<String> files) {
+    public void setFiles(@Nullable List<String> files) {
         this.files = files;
     }
 
-    public JsonNode getBizParams() {
+    public @Nullable JsonNode getBizParams() {
         return bizParams;
     }
 
-    public void setBizParams(JsonNode bizParams) {
+    public void setBizParams(@Nullable JsonNode bizParams) {
         this.bizParams = bizParams;
     }
 
-    public DashScopeAgentRagOptions getRagOptions() {
+    public @Nullable DashScopeAgentRagOptions getRagOptions() {
         return ragOptions;
     }
 
-    public void setRagOptions(DashScopeAgentRagOptions ragOptions) {
+    public void setRagOptions(@Nullable DashScopeAgentRagOptions ragOptions) {
         this.ragOptions = ragOptions;
     }
 
-    public DashScopeAgentFlowStreamMode getFlowStreamMode() {
+    public @Nullable DashScopeAgentFlowStreamMode getFlowStreamMode() {
         return flowStreamMode;
     }
 
-    public void setFlowStreamMode(DashScopeAgentFlowStreamMode flowStreamMode) {
+    public void setFlowStreamMode(@Nullable DashScopeAgentFlowStreamMode flowStreamMode) {
         this.flowStreamMode = flowStreamMode;
     }
 
     @Override
     public ChatOptions copy() {
-        return DashScopeAgentOptions.fromOptions(this);
+        return Objects.requireNonNull(DashScopeAgentOptions.fromOptions(this), "Copied options must not be null");
     }
 
-    public static DashScopeAgentOptions fromOptions(DashScopeAgentOptions options) {
+    public static @Nullable DashScopeAgentOptions fromOptions(@Nullable DashScopeAgentOptions options) {
         if (options == null) {
             return null;
         }
@@ -227,7 +229,7 @@ public class DashScopeAgentOptions implements ChatOptions {
                 .build();
     }
 
-    private static DashScopeAgentRagOptions copyRagOptions(DashScopeAgentRagOptions source) {
+    private static @Nullable DashScopeAgentRagOptions copyRagOptions(@Nullable DashScopeAgentRagOptions source) {
         if (source == null) {
             return null;
         }
@@ -263,62 +265,62 @@ public class DashScopeAgentOptions implements ChatOptions {
             this.options = options;
         }
 
-        public Builder appId(String appId) {
+        public Builder appId(@Nullable String appId) {
             this.options.setAppId(appId);
             return this;
         }
 
-        public Builder sessionId(String sessionId) {
+        public Builder sessionId(@Nullable String sessionId) {
             this.options.sessionId = sessionId;
             return this;
         }
 
-        public Builder memoryId(String memoryId) {
+        public Builder memoryId(@Nullable String memoryId) {
             this.options.memoryId = memoryId;
             return this;
         }
 
-        public Builder incrementalOutput(Boolean incrementalOutput) {
+        public Builder incrementalOutput(@Nullable Boolean incrementalOutput) {
             this.options.incrementalOutput = incrementalOutput;
             return this;
         }
 
-        public Builder hasThoughts(Boolean hasThoughts) {
+        public Builder hasThoughts(@Nullable Boolean hasThoughts) {
             this.options.hasThoughts = hasThoughts;
             return this;
         }
 
-        public Builder images(List<String> images) {
+        public Builder images(@Nullable List<String> images) {
             this.options.images = images;
             return this;
         }
 
-        public Builder bizParams(JsonNode bizParams) {
+        public Builder bizParams(@Nullable JsonNode bizParams) {
             this.options.bizParams = bizParams;
             return this;
         }
 
-        public Builder ragOptions(DashScopeAgentRagOptions ragOptions) {
+        public Builder ragOptions(@Nullable DashScopeAgentRagOptions ragOptions) {
             this.options.ragOptions = ragOptions;
             return this;
         }
 
-        public Builder flowStreamMode(DashScopeAgentFlowStreamMode flowStreamMode) {
+        public Builder flowStreamMode(@Nullable DashScopeAgentFlowStreamMode flowStreamMode) {
             this.options.flowStreamMode = flowStreamMode;
             return this;
         }
 
-        public Builder enableThinking(Boolean enableThinking) {
+        public Builder enableThinking(@Nullable Boolean enableThinking) {
             this.options.enableThinking = enableThinking;
             return this;
         }
 
-        public Builder modelId(String modelId) {
+        public Builder modelId(@Nullable String modelId) {
             this.options.modelId = modelId;
             return this;
         }
 
-        public Builder files(List<String> files) {
+        public Builder files(@Nullable List<String> files) {
             this.options.files = files;
             return this;
         }

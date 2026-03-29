@@ -15,27 +15,29 @@
  */
 package com.alibaba.cloud.ai.vectorstore.analyticdb;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * @author HeYQ
  * @since 2024-10-23 20:22
  */
 public class AnalyticDbConfig {
 
-	private String accessKeyId;
+	private @Nullable String accessKeyId;
 
-	private String accessKeySecret;
+	private @Nullable String accessKeySecret;
 
-	private String regionId;
+	private @Nullable String regionId;
 
-	private String dbInstanceId;
+	private @Nullable String dbInstanceId;
 
-	private String managerAccount;
+	private @Nullable String managerAccount;
 
-	private String managerAccountPassword;
+	private @Nullable String managerAccountPassword;
 
-	private String namespace;
+	private @Nullable String namespace;
 
-	private String namespacePassword;
+	private @Nullable String namespacePassword;
 
 	private String metrics = "cosine";
 
@@ -46,8 +48,9 @@ public class AnalyticDbConfig {
 	public AnalyticDbConfig() {
 	}
 
-	public AnalyticDbConfig(String accessKeyId, String accessKeySecret, String regionId, String dbInstanceId,
-			String managerAccount, String managerAccountPassword, String namespace, String namespacePassword,
+	public AnalyticDbConfig(@Nullable String accessKeyId, @Nullable String accessKeySecret, @Nullable String regionId,
+			@Nullable String dbInstanceId, @Nullable String managerAccount, @Nullable String managerAccountPassword,
+			@Nullable String namespace, @Nullable String namespacePassword,
 			String metrics, Integer readTimeout, String userAgent) {
 		this.accessKeyId = accessKeyId;
 		this.accessKeySecret = accessKeySecret;
@@ -62,74 +65,74 @@ public class AnalyticDbConfig {
 		this.userAgent = userAgent;
 	}
 
-	public String getAccessKeyId() {
+	public @Nullable String getAccessKeyId() {
 		return accessKeyId;
 	}
 
-	public AnalyticDbConfig setAccessKeyId(String accessKeyId) {
+	public AnalyticDbConfig setAccessKeyId(@Nullable String accessKeyId) {
 		this.accessKeyId = accessKeyId;
 		return this;
 	}
 
-	public String getAccessKeySecret() {
+	public @Nullable String getAccessKeySecret() {
 		return accessKeySecret;
 	}
 
-	public AnalyticDbConfig setAccessKeySecret(String accessKeySecret) {
+	public AnalyticDbConfig setAccessKeySecret(@Nullable String accessKeySecret) {
 		this.accessKeySecret = accessKeySecret;
 		return this;
 	}
 
-	public String getRegionId() {
+	public @Nullable String getRegionId() {
 		return regionId;
 	}
 
-	public AnalyticDbConfig setRegionId(String regionId) {
+	public AnalyticDbConfig setRegionId(@Nullable String regionId) {
 		this.regionId = regionId;
 		return this;
 	}
 
-	public String getDbInstanceId() {
+	public @Nullable String getDbInstanceId() {
 		return dbInstanceId;
 	}
 
-	public AnalyticDbConfig setDbInstanceId(String dbInstanceId) {
+	public AnalyticDbConfig setDbInstanceId(@Nullable String dbInstanceId) {
 		this.dbInstanceId = dbInstanceId;
 		return this;
 	}
 
-	public String getManagerAccount() {
+	public @Nullable String getManagerAccount() {
 		return managerAccount;
 	}
 
-	public AnalyticDbConfig setManagerAccount(String managerAccount) {
+	public AnalyticDbConfig setManagerAccount(@Nullable String managerAccount) {
 		this.managerAccount = managerAccount;
 		return this;
 	}
 
-	public String getManagerAccountPassword() {
+	public @Nullable String getManagerAccountPassword() {
 		return managerAccountPassword;
 	}
 
-	public AnalyticDbConfig setManagerAccountPassword(String managerAccountPassword) {
+	public AnalyticDbConfig setManagerAccountPassword(@Nullable String managerAccountPassword) {
 		this.managerAccountPassword = managerAccountPassword;
 		return this;
 	}
 
-	public String getNamespace() {
+	public @Nullable String getNamespace() {
 		return namespace;
 	}
 
-	public AnalyticDbConfig setNamespace(String namespace) {
+	public AnalyticDbConfig setNamespace(@Nullable String namespace) {
 		this.namespace = namespace;
 		return this;
 	}
 
-	public String getNamespacePassword() {
+	public @Nullable String getNamespacePassword() {
 		return namespacePassword;
 	}
 
-	public AnalyticDbConfig setNamespacePassword(String namespacePassword) {
+	public AnalyticDbConfig setNamespacePassword(@Nullable String namespacePassword) {
 		this.namespacePassword = namespacePassword;
 		return this;
 	}

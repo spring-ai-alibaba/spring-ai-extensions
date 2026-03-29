@@ -25,6 +25,7 @@ import com.alibaba.cloud.ai.document.DocumentWithScore;
 import com.alibaba.cloud.ai.model.RerankModel;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,7 +125,7 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 		return this.order;
 	}
 
-	protected Filter.Expression doGetFilterExpression(Map<String, Object> context) {
+	protected Filter.@Nullable Expression doGetFilterExpression(Map<String, Object> context) {
 
 		if (!context.containsKey(FILTER_EXPRESSION)
 				|| !StringUtils.hasText(context.get(FILTER_EXPRESSION).toString())) {

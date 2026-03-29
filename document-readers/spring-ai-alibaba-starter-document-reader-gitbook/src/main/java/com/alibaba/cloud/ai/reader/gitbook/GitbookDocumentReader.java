@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.reader.gitbook;
 
 import com.alibaba.cloud.ai.reader.gitbook.model.GitbookPage;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 import org.springframework.util.Assert;
@@ -47,7 +48,7 @@ public class GitbookDocumentReader implements DocumentReader {
 
 	private final String spaceId;
 
-	private final String apiUrl;
+	private final @Nullable String apiUrl;
 
 	private final List<String> metadataFields;
 
@@ -67,14 +68,15 @@ public class GitbookDocumentReader implements DocumentReader {
 	 * @param apiUrl Optional custom API URL (if null, uses default Gitbook API endpoint)
 	 * @param metadataFields Optional list of metadata fields to include in documents
 	 */
-	public GitbookDocumentReader(String apiToken, String spaceId, String apiUrl, List<String> metadataFields) {
+	public GitbookDocumentReader(String apiToken, String spaceId, @Nullable String apiUrl,
+			@Nullable List<String> metadataFields) {
 		Assert.hasText(apiToken, "API Token must not be empty");
 		Assert.hasText(spaceId, "Space ID must not be empty");
 
 		this.apiToken = apiToken;
 		this.spaceId = spaceId;
 		this.apiUrl = apiUrl;
-		this.metadataFields = metadataFields;
+		this.metadataFields = metadataFields != null ? metadataFields : List.of();
 	}
 
 	/**
@@ -108,14 +110,12 @@ public class GitbookDocumentReader implements DocumentReader {
 				metadata.put("path", page.getPath());
 
 				// Add additional metadata fields if configured
-				if (metadataFields != null) {
-					for (String field : metadataFields) {
-						switch (field) {
-							case "title" -> metadata.put(field, page.getTitle());
-							case "description" -> metadata.put(field, page.getDescription());
-							case "parent" -> metadata.put(field, page.getParent());
-							case "type" -> metadata.put(field, page.getType());
-						}
+				for (String field : metadataFields) {
+					switch (field) {
+						case "title" -> metadata.put(field, page.getTitle());
+						case "description" -> metadata.put(field, page.getDescription());
+						case "parent" -> metadata.put(field, page.getParent());
+						case "type" -> metadata.put(field, page.getType());
 					}
 				}
 

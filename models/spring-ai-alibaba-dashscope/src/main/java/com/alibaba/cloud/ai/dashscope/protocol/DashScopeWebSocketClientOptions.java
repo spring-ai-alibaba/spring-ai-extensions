@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.protocol;
 
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author kevinlin09
@@ -24,9 +25,9 @@ public class DashScopeWebSocketClientOptions {
 
     private String url = DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL;
 
-    private String apiKey;
+    private @Nullable String apiKey;
 
-    private String workSpaceId = null;
+    private @Nullable String workSpaceId = null;
 
     public String getUrl() {
         return url;
@@ -36,19 +37,19 @@ public class DashScopeWebSocketClientOptions {
         this.url = url;
     }
 
-    public String getApiKey() {
+    public @Nullable String getApiKey() {
         return apiKey;
     }
 
-    public void setApiKey(String apiKey) {
+    public void setApiKey(@Nullable String apiKey) {
         this.apiKey = apiKey;
     }
 
-    public String getWorkSpaceId() {
+    public @Nullable String getWorkSpaceId() {
         return workSpaceId;
     }
 
-    public void setWorkSpaceId(String workSpaceId) {
+    public void setWorkSpaceId(@Nullable String workSpaceId) {
         this.workSpaceId = workSpaceId;
     }
 
@@ -73,12 +74,12 @@ public class DashScopeWebSocketClientOptions {
             return this;
         }
 
-        public Builder apiKey(String apiKey) {
+        public Builder apiKey(@Nullable String apiKey) {
             options.setApiKey(apiKey);
             return this;
         }
 
-        public Builder workSpaceId(String workSpaceId) {
+        public Builder workSpaceId(@Nullable String workSpaceId) {
             options.setWorkSpaceId(workSpaceId);
             return this;
         }

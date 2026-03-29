@@ -33,6 +33,7 @@ import com.alibaba.cloud.ai.mcp.router.service.McpRouterService;
 import com.alibaba.nacos.api.exception.NacosException;
 import jakarta.annotation.PostConstruct;
 import java.util.Properties;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.MetadataMode;
@@ -61,7 +62,7 @@ public class NacosMcpRouterAutoConfiguration {
 	private static final Logger log = LoggerFactory.getLogger(NacosMcpRouterAutoConfiguration.class);
 
 	@Value("${spring.ai.dashscope.api-key:default_api_key}")
-	private String apiKey;
+	private @Nullable String apiKey;
 
 	@Bean
 	@ConditionalOnMissingBean

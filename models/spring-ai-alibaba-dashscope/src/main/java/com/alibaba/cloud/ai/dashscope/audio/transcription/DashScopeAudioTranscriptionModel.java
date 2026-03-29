@@ -26,6 +26,7 @@ import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Sentence;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Translation;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Usage;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -89,7 +90,8 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	@Override
 	public AudioTranscriptionResponse call(AudioTranscriptionPrompt prompt) {
         DashScopeAudioTranscriptionOptions options = this.mergeOptions(prompt);
-        if (DashScopeAudioApiConstants.isLiveTranslate(options.getModel())) {
+		String model = Objects.requireNonNull(options.getModel(), "model must not be null");
+        if (DashScopeAudioApiConstants.isLiveTranslate(model)) {
             // prompt 类型强转判断
             if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
                 throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
@@ -100,7 +102,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
         }
 
         // 录音文件识别Paraformer、Fun-ASR
-        if (DashScopeAudioApiConstants.isAsr(options.getModel())) {
+        if (DashScopeAudioApiConstants.isAsr(model)) {
             // prompt 类型强转判断
             if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
                 throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
@@ -109,7 +111,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
         }
 
         // 录音文件识别Qwen-ASR
-        if (DashScopeAudioApiConstants.isQwenAsr(options.getModel())) {
+        if (DashScopeAudioApiConstants.isQwenAsr(model)) {
             // prompt 类型强转判断
             if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
                 throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
@@ -117,13 +119,14 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
             return audioTranscriptionApi.callQwenAsr((DashScopeAudioTranscriptionPrompt) prompt, options);
         }
 
-        throw new IllegalArgumentException("Model " + options.getModel() + " is not supported call method.");
+        throw new IllegalArgumentException("Model " + model + " is not supported call method.");
 	}
 
 	@Override
 	public Flux<AudioTranscriptionResponse> stream(AudioTranscriptionPrompt prompt) {
         DashScopeAudioTranscriptionOptions options = this.mergeOptions(prompt);
-        if (DashScopeAudioApiConstants.isLiveTranslate(options.getModel())) {
+		String model = Objects.requireNonNull(options.getModel(), "model must not be null");
+        if (DashScopeAudioApiConstants.isLiveTranslate(model)) {
             // prompt 类型强转判断
             if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
                 throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
@@ -133,7 +136,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
                     options);
         }
         // 录音文件识别Qwen-ASR
-        if (DashScopeAudioApiConstants.isQwenAsr(options.getModel())) {
+        if (DashScopeAudioApiConstants.isQwenAsr(model)) {
             // prompt 类型强转判断
             if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
                 throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
@@ -144,13 +147,14 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
         // 下面是websocket任务
         byte[] audioBytes = null;
         try {
-            audioBytes = prompt.getInstructions().getInputStream().readAllBytes();
+			var instructions = Objects.requireNonNull(prompt.getInstructions(), "prompt instructions must not be null");
+            audioBytes = instructions.getInputStream().readAllBytes();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         ByteBuffer binaryData = ByteBuffer.wrap(audioBytes);
         return audioTranscriptionApi.createWebSocketTask(binaryData, options)
-                .map(response -> parseWebSocketResponse(response, options.getModel()));
+                .map(response -> parseWebSocketResponse(response, model));
     }
 
 	// ==================== Bidirectional Streaming Methods ====================
@@ -170,10 +174,11 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	public Flux<RecognitionResult> streamRecognition(Flux<ByteBuffer> audioStream,
 			DashScopeAudioTranscriptionOptions options) {
 		DashScopeAudioTranscriptionOptions mergedOptions = mergeOptions(options);
-		if (!DashScopeAudioApiConstants.PARAFORMER_REALTIME_ONLY_LIST.contains(mergedOptions.getModel())) {
+		String model = Objects.requireNonNull(mergedOptions.getModel(), "model must not be null");
+		if (!DashScopeAudioApiConstants.PARAFORMER_REALTIME_ONLY_LIST.contains(model)) {
 			throw new IllegalArgumentException(
 					"streamRecognition only supports models: " + DashScopeAudioApiConstants.PARAFORMER_REALTIME_ONLY_LIST
-							+ ", got: " + mergedOptions.getModel());
+							+ ", got: " + model);
 		}
 		return audioTranscriptionApi.createWebSocketStreamingTask(audioStream, mergedOptions)
 				.map(this::parseRecognitionResult);
@@ -194,10 +199,11 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	public Flux<TranslationRecognitionResult> streamTranslation(Flux<ByteBuffer> audioStream,
 			DashScopeAudioTranscriptionOptions options) {
 		DashScopeAudioTranscriptionOptions mergedOptions = mergeOptions(options);
-		if (!DashScopeAudioApiConstants.GUMMY_REALTIME_LIST.contains(mergedOptions.getModel())) {
+		String model = Objects.requireNonNull(mergedOptions.getModel(), "model must not be null");
+		if (!DashScopeAudioApiConstants.GUMMY_REALTIME_LIST.contains(model)) {
 			throw new IllegalArgumentException(
 					"streamTranslation only supports models: " + DashScopeAudioApiConstants.GUMMY_REALTIME_LIST
-							+ ", got: " + mergedOptions.getModel());
+							+ ", got: " + model);
 		}
 		return audioTranscriptionApi.createWebSocketStreamingTask(audioStream, mergedOptions)
 				.map(this::parseTranslationRecognitionResult);
@@ -217,10 +223,11 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	public Flux<TranslationRecognitionResult> streamTranslationChat(Flux<ByteBuffer> audioStream,
 			DashScopeAudioTranscriptionOptions options) {
 		DashScopeAudioTranscriptionOptions mergedOptions = mergeOptions(options);
-		if (!DashScopeAudioApiConstants.GUMMY_CHAT_LIST.contains(mergedOptions.getModel())) {
+		String model = Objects.requireNonNull(mergedOptions.getModel(), "model must not be null");
+		if (!DashScopeAudioApiConstants.GUMMY_CHAT_LIST.contains(model)) {
 			throw new IllegalArgumentException(
 					"streamTranslationChat only supports models: " + DashScopeAudioApiConstants.GUMMY_CHAT_LIST
-							+ ", got: " + mergedOptions.getModel());
+							+ ", got: " + model);
 		}
 		// Chat mode: take results until sentence-end, then complete the stream
 		return audioTranscriptionApi.createWebSocketStreamingTask(audioStream, mergedOptions)
@@ -324,7 +331,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 
     public static class Builder {
 
-        private DashScopeAudioTranscriptionApi audioTranscriptionApi;
+        private @Nullable DashScopeAudioTranscriptionApi audioTranscriptionApi;
 
         private DashScopeAudioTranscriptionOptions defaultOptions = DashScopeAudioTranscriptionOptions.builder().build();;
 
@@ -339,7 +346,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
             this.retryTemplate = model.retryTemplate;
         }
 
-        public Builder audioTranscriptionApi(DashScopeAudioTranscriptionApi audioTranscriptionApi) {
+        public Builder audioTranscriptionApi(@Nullable DashScopeAudioTranscriptionApi audioTranscriptionApi) {
             this.audioTranscriptionApi = audioTranscriptionApi;
             return this;
         }
@@ -355,6 +362,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
         }
 
         public DashScopeAudioTranscriptionModel build() {
+            Objects.requireNonNull(this.audioTranscriptionApi, "audioTranscriptionApi must not be null");
             return new DashScopeAudioTranscriptionModel(this.audioTranscriptionApi, this.defaultOptions, this.retryTemplate);
         }
     }

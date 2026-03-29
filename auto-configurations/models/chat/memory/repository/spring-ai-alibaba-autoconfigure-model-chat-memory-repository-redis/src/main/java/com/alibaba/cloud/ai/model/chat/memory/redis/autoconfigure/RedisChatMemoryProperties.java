@@ -16,6 +16,7 @@
 
 package com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.List;
@@ -44,12 +45,12 @@ public class RedisChatMemoryProperties {
 	/**
 	 * Redis server username.
 	 */
-	private String username;
+	private @Nullable String username;
 
 	/**
 	 * Redis server password.
 	 */
-	private String password;
+	private @Nullable String password;
 
     /**
      * Database index used by the connection factory.
@@ -64,22 +65,22 @@ public class RedisChatMemoryProperties {
     /**
      * The default key prefix of memory.
      */
-    private String keyPrefix;
+    private @Nullable String keyPrefix;
 
 	/**
 	 * Type of client to use. By default, auto-detected according to the classpath.
 	 */
-	private ClientType clientType;
+	private @Nullable ClientType clientType;
 
 	/**
 	 * Redis cluster properties.
 	 */
-	private Cluster cluster;
+	private @Nullable Cluster cluster;
 
 	/**
 	 * Redis memory mode.
 	 */
-	private Mode mode;
+	private @Nullable Mode mode;
 
 	/**
 	 * SSL properties.
@@ -102,19 +103,19 @@ public class RedisChatMemoryProperties {
 		this.port = port;
 	}
 
-	public String getUsername() {
+	public @Nullable String getUsername() {
 		return username;
 	}
 
-	public void setUsername(String username) {
+	public void setUsername(@Nullable String username) {
 		this.username = username;
 	}
 
-	public String getPassword() {
+	public @Nullable String getPassword() {
 		return password;
 	}
 
-	public void setPassword(String password) {
+	public void setPassword(@Nullable String password) {
 		this.password = password;
 	}
 
@@ -126,11 +127,11 @@ public class RedisChatMemoryProperties {
 		this.timeout = timeout;
 	}
 
-    public String getKeyPrefix() {
+    public @Nullable String getKeyPrefix() {
         return keyPrefix;
     }
 
-    public void setKeyPrefix(String keyPrefix) {
+    public void setKeyPrefix(@Nullable String keyPrefix) {
         this.keyPrefix = keyPrefix;
     }
 
@@ -142,27 +143,27 @@ public class RedisChatMemoryProperties {
         this.database = database;
     }
 
-    public Cluster getCluster() {
+    public @Nullable Cluster getCluster() {
 		return cluster;
 	}
 
-	public void setCluster(Cluster cluster) {
+	public void setCluster(@Nullable Cluster cluster) {
 		this.cluster = cluster;
 	}
 
-	public ClientType getClientType() {
+	public @Nullable ClientType getClientType() {
 		return clientType;
 	}
 
-	public void setClientType(ClientType clientType) {
+	public void setClientType(@Nullable ClientType clientType) {
 		this.clientType = clientType;
 	}
 
-	public Mode getMode() {
+	public @Nullable Mode getMode() {
 		return mode;
 	}
 
-	public void setMode(Mode mode) {
+	public void setMode(@Nullable Mode mode) {
 		this.mode = mode;
 	}
 
@@ -201,27 +202,27 @@ public class RedisChatMemoryProperties {
 		 * List of "host:port" pairs to bootstrap from. This represents an "initial" list
 		 * of cluster nodes and is required to have at least one entry.
 		 */
-		private List<String> nodes;
+		private @Nullable List<String> nodes;
 
         /**
          * Maximum number of redirects to follow when executing commands across the
          * cluster. Support Jedis and Lettuce clients.
          */
-        private Integer maxRedirects;
+        private @Nullable Integer maxRedirects;
 
-		public List<String> getNodes() {
+		public @Nullable List<String> getNodes() {
 			return nodes;
 		}
 
-		public void setNodes(List<String> nodes) {
+		public void setNodes(@Nullable List<String> nodes) {
 			this.nodes = nodes;
 		}
 
-        public Integer getMaxRedirects() {
+        public @Nullable Integer getMaxRedirects() {
             return maxRedirects;
         }
 
-        public void setMaxRedirects(Integer maxRedirects) {
+        public void setMaxRedirects(@Nullable Integer maxRedirects) {
             this.maxRedirects = maxRedirects;
         }
     }
@@ -249,12 +250,12 @@ public class RedisChatMemoryProperties {
 		 * Whether to enable SSL support. Enabled automatically if "bundle" is provided
 		 * unless specified otherwise.
 		 */
-		private Boolean enabled;
+		private @Nullable Boolean enabled;
 
 		/**
 		 * SSL bundle name based on spring.ssl configuration.
 		 */
-		private String bundle;
+		private @Nullable String bundle;
 
 		public boolean isEnabled() {
 			return (this.enabled != null) ? this.enabled : this.bundle != null;
@@ -264,11 +265,11 @@ public class RedisChatMemoryProperties {
 			this.enabled = enabled;
 		}
 
-		public String getBundle() {
+		public @Nullable String getBundle() {
 			return this.bundle;
 		}
 
-		public void setBundle(String bundle) {
+		public void setBundle(@Nullable String bundle) {
 			this.bundle = bundle;
 		}
 

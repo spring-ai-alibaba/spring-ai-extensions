@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 
@@ -29,9 +30,9 @@ import java.util.List;
 
 public class DashScopeAudioTranscriptionPrompt extends AudioTranscriptionPrompt {
 
-    private final List<TranscriptionUserMessage> messages;
+    private final @Nullable List<TranscriptionUserMessage> messages;
 
-    private final List<String> fileUrls;
+    private final @Nullable List<String> fileUrls;
 
     public DashScopeAudioTranscriptionPrompt(AudioTranscriptionOptions options, TranscriptionUserMessage  message) {
         super(null, options);
@@ -45,11 +46,11 @@ public class DashScopeAudioTranscriptionPrompt extends AudioTranscriptionPrompt 
         this.fileUrls = fileUrls;
     }
 
-    public List<TranscriptionUserMessage> getMessages() {
+    public @Nullable List<TranscriptionUserMessage> getMessages() {
         return messages;
     }
 
-    public List<String> getFileUrls() {
+    public @Nullable List<String> getFileUrls() {
         return fileUrls;
     }
 
@@ -79,10 +80,10 @@ public class DashScopeAudioTranscriptionPrompt extends AudioTranscriptionPrompt 
             private String type;
 
             @JsonProperty("input_audio")
-            private InputAudio inputAudio;
+            private @Nullable InputAudio inputAudio;
 
             @JsonProperty("video_url")
-            private VideoUrl videoUrl;
+            private @Nullable VideoUrl videoUrl;
 
             public Content(String type, InputAudio inputAudio) {
                 this.type = type;
@@ -98,11 +99,11 @@ public class DashScopeAudioTranscriptionPrompt extends AudioTranscriptionPrompt 
                 return type;
             }
 
-            public InputAudio getInputAudio() {
+            public @Nullable InputAudio getInputAudio() {
                 return inputAudio;
             }
 
-            public VideoUrl getVideoUrl() {
+            public @Nullable VideoUrl getVideoUrl() {
                 return videoUrl;
             }
         }

@@ -22,6 +22,7 @@ import org.jbibtex.BibTeXEntry;
 import org.jbibtex.BibTeXParser;
 import org.jbibtex.Key;
 import org.jbibtex.Value;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
@@ -55,11 +56,11 @@ public class BibtexDocumentParser implements DocumentParser {
 	// US-ASCII UTF-8
 	private final String charsetName;
 
-	private final Integer maxContentChars;
+	private final @Nullable Integer maxContentChars;
 
-	private final Integer maxDocs;
+	private final @Nullable Integer maxDocs;
 
-	private final Pattern filePattern;
+	private final @Nullable Pattern filePattern;
 
 	private final DocumentParser parser;
 
@@ -77,8 +78,8 @@ public class BibtexDocumentParser implements DocumentParser {
 					.build()));
 	}
 
-	public BibtexDocumentParser(String charsetName, Integer maxContentChars, Integer maxDocs, Pattern filePattern,
-			DocumentParser parser) {
+	public BibtexDocumentParser(String charsetName, @Nullable Integer maxContentChars, @Nullable Integer maxDocs,
+			@Nullable Pattern filePattern, DocumentParser parser) {
 		this.charsetName = charsetName;
 		this.maxContentChars = maxContentChars;
 		this.maxDocs = maxDocs;

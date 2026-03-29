@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.advisor;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.api.AdvisorChain;
@@ -37,6 +38,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -96,12 +98,14 @@ public class DashScopeDocumentAnalysisAdvisor implements BaseAdvisor {
 		Resource resource = (Resource) context.get(RESOURCE);
 		if (resource != null) {
 
-			ResponseEntity<UploadResponse> uploadResponse = upload(resource);
+			ResponseEntity<UploadResponse> uploadResponse = Objects.requireNonNull(upload(resource),
+					"upload response is null");
 			context.put(UPLOAD_RESPONSE, uploadResponse);
 
-			Assert.notNull(uploadResponse.getBody(), "upload response body is null");
+			UploadResponse uploadResponseBody = Objects.requireNonNull(uploadResponse.getBody(),
+					"upload response body is null");
 
-			String augmentSystemMessage = DEFAULT_PROMPT_TEMPLATE.render(Map.of("id", uploadResponse.getBody().id));
+			String augmentSystemMessage = DEFAULT_PROMPT_TEMPLATE.render(Map.of("id", uploadResponseBody.id));
 			return chatClientRequest.mutate()
 				.prompt(chatClientRequest.prompt().augmentSystemMessage(augmentSystemMessage))
 				.build();
@@ -124,7 +128,7 @@ public class DashScopeDocumentAnalysisAdvisor implements BaseAdvisor {
 			.build();
 	}
 
-	public ResponseEntity<UploadResponse> upload(Resource resource) {
+	public @Nullable ResponseEntity<UploadResponse> upload(Resource resource) {
 
 		MultiValueMap<String, Object> formData = new LinkedMultiValueMap<>();
 		formData.add("file", resource);

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author yingzi
@@ -127,7 +128,7 @@ public class DashScopeVideoApiConstants {
      *
      * @return API 路径，如果模型不存在则返回 null
      */
-    public static String getPathByModelName(String modelName) {
+    public static @Nullable String getPathByModelName(String modelName) {
         return model2Url.get(modelName);
     }
 

@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.dashscope.api;
 
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.NoopApiKey;
 import org.springframework.ai.model.SimpleApiKey;
@@ -99,7 +100,7 @@ public class DashScopeMultimodalEmbeddingApi {
 
 		private String baseUrl = DEFAULT_BASE_URL;
 
-		private ApiKey apiKey;
+		private @Nullable ApiKey apiKey;
 
 		private String multimodalPath = MULTIMODAL_EMBEDDING_RESTFUL_URL;
 
@@ -156,7 +157,10 @@ public class DashScopeMultimodalEmbeddingApi {
 		}
 
 		public DashScopeMultimodalEmbeddingApi build() {
-			return new DashScopeMultimodalEmbeddingApi(baseUrl, apiKey, multimodalPath, headers, restClientBuilder, responseErrorHandler);
+			ApiKey apiKey = this.apiKey;
+			Assert.notNull(apiKey, "Api key cannot be null");
+			return new DashScopeMultimodalEmbeddingApi(baseUrl, apiKey, multimodalPath, headers, restClientBuilder,
+					responseErrorHandler);
 		}
 
 	}

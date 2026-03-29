@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.model.ModelRequest;
 
 /**
@@ -42,10 +43,10 @@ public class VideoPrompt implements ModelRequest<List<VideoMessage>> {
      * @param messages the list of video messages
      * @param options  the video generation options
      */
-	public VideoPrompt(List<VideoMessage> messages, VideoOptions options) {
+	public VideoPrompt(List<VideoMessage> messages, @Nullable VideoOptions options) {
 
 		this.messages = messages;
-		this.options = options;
+		this.options = options != null ? options : DashScopeVideoOptions.builder().build();
 	}
 
 	@Override
@@ -76,7 +77,7 @@ public class VideoPrompt implements ModelRequest<List<VideoMessage>> {
 
         private List<VideoMessage> messages = new ArrayList<>();
 
-        private VideoOptions options;
+        private @Nullable VideoOptions options;
 
         private Builder() {
         }
@@ -119,7 +120,7 @@ public class VideoPrompt implements ModelRequest<List<VideoMessage>> {
          * @param options the video options
          * @return this builder
          */
-        public Builder options(VideoOptions options) {
+        public Builder options(@Nullable VideoOptions options) {
             this.options = options;
             return this;
         }

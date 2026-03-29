@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class PromptTemplateBuilderConfigure {
 
-	List<PromptTemplateCustomizer> customizers;
+	List<PromptTemplateCustomizer> customizers = List.of();
 
 	public void setPromptTemplateBuilderCustomizers(List<PromptTemplateCustomizer> customizers) {
 		this.customizers = customizers;

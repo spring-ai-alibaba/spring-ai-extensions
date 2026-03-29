@@ -154,9 +154,9 @@ public class DashScopeRerankModel implements RerankModel {
         return new Builder();
     }
 
-    public static final class Builder {
+	public static final class Builder {
 
-        private DashScopeApi dashScopeApi;
+	        private @Nullable DashScopeApi dashScopeApi;
 
         private DashScopeRerankOptions defaultOptions = DashScopeRerankOptions.builder().build();
 
@@ -186,9 +186,11 @@ public class DashScopeRerankModel implements RerankModel {
             return this;
         }
 
-        public DashScopeRerankModel build() {
-            return new DashScopeRerankModel(this.dashScopeApi, this.defaultOptions, this.retryTemplate);
-        }
+	        public DashScopeRerankModel build() {
+	            DashScopeApi dashScopeApi = this.dashScopeApi;
+	            Assert.notNull(dashScopeApi, "dashScopeApi must not be null");
+	            return new DashScopeRerankModel(dashScopeApi, this.defaultOptions, this.retryTemplate);
+	        }
     }
 
 }

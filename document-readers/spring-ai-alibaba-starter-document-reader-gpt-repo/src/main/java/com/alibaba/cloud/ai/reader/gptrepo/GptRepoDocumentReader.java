@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.reader.gptrepo;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 
@@ -73,7 +74,7 @@ public class GptRepoDocumentReader implements DocumentReader {
 	private final String encoding;
 
 	// Custom leading text
-	private final String preambleStr;
+	private final @Nullable String preambleStr;
 
 	/**
 	 * Constructor
@@ -83,11 +84,11 @@ public class GptRepoDocumentReader implements DocumentReader {
 	 * @param encoding File encoding
 	 * @param preambleStr Custom leading text, use default if null
 	 */
-	public GptRepoDocumentReader(String repoPath, boolean concatenate, List<String> extensions, String encoding,
-			String preambleStr) {
+	public GptRepoDocumentReader(String repoPath, boolean concatenate, @Nullable List<String> extensions,
+			@Nullable String encoding, @Nullable String preambleStr) {
 		this.repoPath = Paths.get(repoPath);
 		this.concatenate = concatenate;
-		this.extensions = extensions;
+		this.extensions = extensions != null ? extensions : List.of();
 		this.encoding = encoding != null ? encoding : DEFAULT_ENCODING;
 		this.preambleStr = preambleStr;
 	}
@@ -148,7 +149,7 @@ public class GptRepoDocumentReader implements DocumentReader {
 	 * @param text Formatted text content
 	 * @return File path, or null if not found
 	 */
-	private String extractFilePath(String text) {
+	private @Nullable String extractFilePath(String text) {
 		String[] lines = text.split("\n");
 		if (lines.length >= 2 && lines[0].equals(SECTION_SEPARATOR)) {
 			return lines[1].trim();
@@ -196,7 +197,7 @@ public class GptRepoDocumentReader implements DocumentReader {
 				}
 
 				// Check file extension
-				if (extensions != null && !extensions.isEmpty()) {
+				if (!extensions.isEmpty()) {
 					String ext = getFileExtension(file.toString());
 					if (!extensions.contains(ext)) {
 						return FileVisitResult.CONTINUE;

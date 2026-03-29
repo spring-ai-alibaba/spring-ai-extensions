@@ -22,6 +22,7 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.ExtractedTextFormatter;
 import org.xml.sax.ContentHandler;
@@ -73,12 +74,14 @@ public class TikaDocumentParser implements DocumentParser {
 		this((Supplier<Parser>) null, null, null, null, textFormatter);
 	}
 
-	public TikaDocumentParser(Supplier<ContentHandler> contentHandlerSupplier, ExtractedTextFormatter textFormatter) {
+	public TikaDocumentParser(@Nullable Supplier<ContentHandler> contentHandlerSupplier,
+			ExtractedTextFormatter textFormatter) {
 		this((Supplier<Parser>) null, contentHandlerSupplier, null, null, textFormatter);
 	}
 
-	public TikaDocumentParser(Supplier<Parser> parserSupplier, Supplier<ContentHandler> contentHandlerSupplier,
-			Supplier<Metadata> metadataSupplier, Supplier<ParseContext> parseContextSupplier) {
+	public TikaDocumentParser(@Nullable Supplier<Parser> parserSupplier,
+			@Nullable Supplier<ContentHandler> contentHandlerSupplier, @Nullable Supplier<Metadata> metadataSupplier,
+			@Nullable Supplier<ParseContext> parseContextSupplier) {
 		this(parserSupplier, contentHandlerSupplier, metadataSupplier, parseContextSupplier,
 				ExtractedTextFormatter.defaults());
 	}
@@ -97,9 +100,9 @@ public class TikaDocumentParser implements DocumentParser {
 	 * @param textFormatter Formatter for extracted text. Default:
 	 * {@link ExtractedTextFormatter#defaults()}
 	 */
-	public TikaDocumentParser(Supplier<Parser> parserSupplier, Supplier<ContentHandler> contentHandlerSupplier,
-			Supplier<Metadata> metadataSupplier, Supplier<ParseContext> parseContextSupplier,
-			ExtractedTextFormatter textFormatter) {
+	public TikaDocumentParser(@Nullable Supplier<Parser> parserSupplier,
+			@Nullable Supplier<ContentHandler> contentHandlerSupplier, @Nullable Supplier<Metadata> metadataSupplier,
+			@Nullable Supplier<ParseContext> parseContextSupplier, ExtractedTextFormatter textFormatter) {
 		this.parserSupplier = getOrDefault(parserSupplier, () -> DEFAULT_PARSER_SUPPLIER);
 		this.contentHandlerSupplier = getOrDefault(contentHandlerSupplier, () -> DEFAULT_CONTENT_HANDLER_SUPPLIER);
 		this.metadataSupplier = getOrDefault(metadataSupplier, () -> DEFAULT_METADATA_SUPPLIER);
@@ -140,7 +143,7 @@ public class TikaDocumentParser implements DocumentParser {
 		return new Document(docText);
 	}
 
-	private static <T> T getOrDefault(T value, Supplier<T> defaultValueSupplier) {
+	private static <T> T getOrDefault(@Nullable T value, Supplier<T> defaultValueSupplier) {
 		return value != null ? value : defaultValueSupplier.get();
 	}
 

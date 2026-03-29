@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.dashscope.rag.context;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Document processing context
  *
@@ -30,12 +32,12 @@ public class DocumentProcessContext {
     /**
      * File ID returned by upload API
      */
-    private String fileId;
+    private @Nullable String fileId;
 
     /**
      * MD5 checksum of the file
      */
-    private String fileMD5;
+    private @Nullable String fileMD5;
 
     /**
      * Default constructor
@@ -49,26 +51,26 @@ public class DocumentProcessContext {
      * @param fileId  file ID
      * @param fileMD5 file MD5 checksum
      */
-    public DocumentProcessContext(String fileId, String fileMD5) {
+    public DocumentProcessContext(@Nullable String fileId, @Nullable String fileMD5) {
         this.fileId = fileId;
         this.fileMD5 = fileMD5;
     }
 
     // ==================== Getters and Setters ====================
 
-    public String getFileId() {
+    public @Nullable String getFileId() {
         return fileId;
     }
 
-    public void setFileId(String fileId) {
+    public void setFileId(@Nullable String fileId) {
         this.fileId = fileId;
     }
 
-    public String getFileMD5() {
+    public @Nullable String getFileMD5() {
         return fileMD5;
     }
 
-    public void setFileMD5(String fileMD5) {
+    public void setFileMD5(@Nullable String fileMD5) {
         this.fileMD5 = fileMD5;
     }
 

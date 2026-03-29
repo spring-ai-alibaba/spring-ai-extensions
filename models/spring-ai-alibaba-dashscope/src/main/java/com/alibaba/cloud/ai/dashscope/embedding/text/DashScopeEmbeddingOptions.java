@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.embedding.text;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.embedding.EmbeddingOptions;
 
 /**
@@ -30,50 +31,50 @@ import org.springframework.ai.embedding.EmbeddingOptions;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 
-	private @JsonProperty("model") String model;
+	private @JsonProperty("model") @Nullable String model;
 
-	private @JsonProperty("text_type") String textType;
+	private @JsonProperty("text_type") @Nullable String textType;
 
-	private @JsonProperty("dimensions") Integer dimensions;
+	private @JsonProperty("dimensions") @Nullable Integer dimensions;
 
 	@JsonIgnore
-	private String embeddingsPath;
+	private @Nullable String embeddingsPath;
 
 	public static Builder builder() {
 		return new Builder();
 	}
 
 	@Override
-	public String getModel() {
+	public @Nullable String getModel() {
 		return this.model;
 	}
 
-	public void setModel(String model) {
+	public void setModel(@Nullable String model) {
 		this.model = model;
 	}
 
 	@Override
-	public Integer getDimensions() {
+	public @Nullable Integer getDimensions() {
 		return this.dimensions;
 	}
 
-	public void setDimensions(Integer dimensions) {
+	public void setDimensions(@Nullable Integer dimensions) {
 		this.dimensions = dimensions;
 	}
 
-	public String getTextType() {
+	public @Nullable String getTextType() {
 		return this.textType;
 	}
 
-	public void setTextType(String textType) {
+	public void setTextType(@Nullable String textType) {
 		this.textType = textType;
 	}
 
-	public String getEmbeddingsPath() {
+	public @Nullable String getEmbeddingsPath() {
 		return embeddingsPath;
 	}
 
-	public void setEmbeddingsPath(String embeddingsPath) {
+	public void setEmbeddingsPath(@Nullable String embeddingsPath) {
 		this.embeddingsPath = embeddingsPath;
 	}
 
@@ -85,22 +86,22 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 			this.options = new DashScopeEmbeddingOptions();
 		}
 
-		public Builder model(String model) {
+		public Builder model(@Nullable String model) {
 			this.options.setModel(model);
 			return this;
 		}
 
-		public Builder dimensions(Integer dimensions) {
+		public Builder dimensions(@Nullable Integer dimensions) {
 			this.options.setDimensions(dimensions);
 			return this;
 		}
 
-		public Builder textType(String textType) {
+		public Builder textType(@Nullable String textType) {
 			this.options.setTextType(textType);
 			return this;
 		}
 
-        public Builder embeddingsPath(String embeddingsPath) {
+        public Builder embeddingsPath(@Nullable String embeddingsPath) {
             this.options.setEmbeddingsPath(embeddingsPath);
             return this;
         }

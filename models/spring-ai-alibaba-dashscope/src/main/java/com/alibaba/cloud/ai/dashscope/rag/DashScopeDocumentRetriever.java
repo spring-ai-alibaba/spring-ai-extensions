@@ -36,16 +36,19 @@ public class DashScopeDocumentRetriever implements DocumentRetriever {
 
 	public DashScopeDocumentRetriever(DashScopeApi dashScopeApi, DashScopeDocumentRetrieverOptions options) {
 		Assert.notNull(options, "RetrieverOptions must not be null");
-		Assert.notNull(options.getIndexName(), "IndexName must not be null");
+		String indexName = options.getIndexName();
+		Assert.notNull(indexName, "IndexName must not be null");
 		this.options = options;
 		this.dashScopeApi = dashScopeApi;
 	}
 
 	@Override
 	public List<Document> retrieve(Query query) {
-		String pipelineId = dashScopeApi.getPipelineIdByName(options.getIndexName());
+		String indexName = options.getIndexName();
+		Assert.notNull(indexName, "IndexName must not be null");
+		String pipelineId = dashScopeApi.getPipelineIdByName(indexName);
 		if (pipelineId == null) {
-			throw new DashScopeException("Index:" + options.getIndexName() + " NotExist");
+			throw new DashScopeException("Index:" + indexName + " NotExist");
 		}
 		List<Document> documentList = dashScopeApi.retriever(pipelineId, query.text(), options);
 		return documentList;

@@ -47,16 +47,11 @@ public class DefaultFileStatusHandler implements FileStatusHandler {
     public FileStatusResult handle(DocumentProcessContext context,
                                    ResponseEntity<CommonResponse<QueryFileResponseData>> response) {
 
-        QueryFileResponseData data = response.getBody().data();
+        CommonResponse<QueryFileResponseData> body = response.getBody();
+        QueryFileResponseData data = body != null ? body.data() : null;
         String statusValue = data != null ? data.status() : null;
 
         FileStatus fileStatus = FileStatus.fromValueOrDefault(statusValue, FileStatus.UNK);
-
-        if (fileStatus == null) {
-            logger.warn("Received null status for file: {}, treating as PARSING",
-                        context.getFileId());
-            return handleParsing(context);
-        }
 
         return switch (fileStatus) {
             case PARSE_SUCCESS -> handleParseSuccess(context);

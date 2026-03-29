@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.audio.tts;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.tts.Speech;
 import org.springframework.ai.audio.tts.TextToSpeechResponse;
 
@@ -34,22 +35,23 @@ public class DashScopeTTSApiSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class DashScopeAudioTTSRequest {
         @JsonProperty("model")
-        private String model;
+        private @Nullable String model;
 
         @JsonProperty("input")
-        private TTSInput input;
+        private @Nullable TTSInput input;
 
         @JsonProperty("stream")
-        private Boolean stream;
+        private @Nullable Boolean stream;
 
         @JsonProperty("instructions")
-        private String instructions;
+        private @Nullable String instructions;
 
         @JsonProperty("optimize_instructions")
-        private Boolean optimizeInstructions;
+        private @Nullable Boolean optimizeInstructions;
 
-        public DashScopeAudioTTSRequest(String model, String text, String voice, String languageType,
-                Boolean stream, String instructions, Boolean optimizeInstructions) {
+        public DashScopeAudioTTSRequest(@Nullable String model, @Nullable String text, @Nullable String voice,
+                @Nullable String languageType, @Nullable Boolean stream, @Nullable String instructions,
+                @Nullable Boolean optimizeInstructions) {
             this.model = model;
             this.input = new TTSInput();
             this.input.text = text;
@@ -63,13 +65,13 @@ public class DashScopeTTSApiSpec {
         @JsonInclude(JsonInclude.Include.NON_NULL)
         private class TTSInput {
             @JsonProperty("text")
-            private String text;
+            private @Nullable String text;
 
             @JsonProperty("voice")
-            private String voice;
+            private @Nullable String voice;
 
             @JsonProperty("language_type")
-            private String languageType;
+            private @Nullable String languageType;
         }
 
         public static Builder builder() {
@@ -77,45 +79,45 @@ public class DashScopeTTSApiSpec {
         }
 
         public static class Builder {
-            private String model;
-            private String text;
-            private String voice;
-            private String languageType;
-            private Boolean stream;
-            private String instructions;
-            private Boolean optimizeInstructions;
+            private @Nullable String model;
+            private @Nullable String text;
+            private @Nullable String voice;
+            private @Nullable String languageType;
+            private @Nullable Boolean stream;
+            private @Nullable String instructions;
+            private @Nullable Boolean optimizeInstructions;
 
-            public Builder model(String model) {
+            public Builder model(@Nullable String model) {
                 this.model = model;
                 return this;
             }
 
-            public Builder text(String text) {
+            public Builder text(@Nullable String text) {
                 this.text = text;
                 return this;
             }
 
-            public Builder voice(String voice) {
+            public Builder voice(@Nullable String voice) {
                 this.voice = voice;
                 return this;
             }
 
-            public Builder languageType(String languageType) {
+            public Builder languageType(@Nullable String languageType) {
                 this.languageType = languageType;
                 return this;
             }
 
-            public Builder stream(Boolean stream) {
+            public Builder stream(@Nullable Boolean stream) {
                 this.stream = stream;
                 return this;
             }
 
-            public Builder instructions(String instructions) {
+            public Builder instructions(@Nullable String instructions) {
                 this.instructions = instructions;
                 return this;
             }
 
-            public Builder optimizeInstructions(Boolean optimizeInstructions) {
+            public Builder optimizeInstructions(@Nullable Boolean optimizeInstructions) {
                 this.optimizeInstructions = optimizeInstructions;
                 return this;
             }
@@ -131,68 +133,68 @@ public class DashScopeTTSApiSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class DashScopeAudioTTSResponse extends TextToSpeechResponse {
         @JsonProperty("request_id")
-        private String requestId;
+        private @Nullable String requestId;
         @JsonProperty("output")
-        private TTSOutput output;
+        private @Nullable TTSOutput output;
         @JsonProperty("usage")
-        private TTSUsage usage;
+        private @Nullable TTSUsage usage;
 
         @JsonCreator
         public DashScopeAudioTTSResponse(
-                @JsonProperty("request_id") String requestId,
-                @JsonProperty("output") TTSOutput output,
-                @JsonProperty("usage") TTSUsage usage) {
+                @JsonProperty("request_id") @Nullable String requestId,
+                @JsonProperty("output") @Nullable TTSOutput output,
+                @JsonProperty("usage") @Nullable TTSUsage usage) {
             super(createSpeechList(output), null);
             this.requestId = requestId;
             this.output = output;
             this.usage = usage;
         }
 
-        public String getRequestId() {
+        public @Nullable String getRequestId() {
             return requestId;
         }
 
-        public TTSOutput getOutput() {
+        public @Nullable TTSOutput getOutput() {
             return output;
         }
 
-        public TTSUsage getUsage() {
+        public @Nullable TTSUsage getUsage() {
             return usage;
         }
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record TTSOutput(
-                @JsonProperty("finish_reason") String finishReason,
-                @JsonProperty("audio") TTSAudio audio) {
+                @JsonProperty("finish_reason") @Nullable String finishReason,
+                @JsonProperty("audio") @Nullable TTSAudio audio) {
         }
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record TTSUsage(
-                @JsonProperty("input_tokens") Integer inputTokens,
-                @JsonProperty("output_tokens") Integer outputTokens,
-                @JsonProperty("characters") Integer characters,
-                @JsonProperty("input_tokens_details") InputTokensDetails inputTokensDetails,
-                @JsonProperty("output_tokens_details") OutputTokensDetails outputTokensDetails,
-                @JsonProperty("total_tokens") Integer totalTokens
+                @JsonProperty("input_tokens") @Nullable Integer inputTokens,
+                @JsonProperty("output_tokens") @Nullable Integer outputTokens,
+                @JsonProperty("characters") @Nullable Integer characters,
+                @JsonProperty("input_tokens_details") @Nullable InputTokensDetails inputTokensDetails,
+                @JsonProperty("output_tokens_details") @Nullable OutputTokensDetails outputTokensDetails,
+                @JsonProperty("total_tokens") @Nullable Integer totalTokens
         ){}
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record TTSAudio(
-                @JsonProperty("data") String data,
-                @JsonProperty("url") String url,
-                @JsonProperty("id") String id,
-                @JsonProperty("expires_at") Integer expiresAt
+                @JsonProperty("data") @Nullable String data,
+                @JsonProperty("url") @Nullable String url,
+                @JsonProperty("id") @Nullable String id,
+                @JsonProperty("expires_at") @Nullable Integer expiresAt
         ){}
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record InputTokensDetails(
-                @JsonProperty("text_tokens") Integer textTokens) {
+                @JsonProperty("text_tokens") @Nullable Integer textTokens) {
         }
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record OutputTokensDetails(
-                @JsonProperty("audio_tokens") Integer audioTokens,
-                @JsonProperty("text_tokens") Integer textTokens) {
+                @JsonProperty("audio_tokens") @Nullable Integer audioTokens,
+                @JsonProperty("text_tokens") @Nullable Integer textTokens) {
         }
 
 
@@ -201,7 +203,7 @@ public class DashScopeTTSApiSpec {
          * If base64 audio data is available, decode it and create a Speech object.
          * Otherwise, create an empty Speech object (the URL can be accessed via getOutput()).
          */
-        private static List<Speech> createSpeechList(TTSOutput output) {
+        private static List<Speech> createSpeechList(@Nullable TTSOutput output) {
             if (output == null || output.audio() == null) {
                 return List.of(new Speech(new byte[0]));
             }

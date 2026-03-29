@@ -19,6 +19,8 @@ import com.aliyun.openservices.tablestore.agent.model.Document;
 import com.aliyun.openservices.tablestore.agent.model.filter.Filters;
 import com.aliyun.openservices.tablestore.agent.util.Exceptions;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -32,7 +34,7 @@ import static org.springframework.ai.vectorstore.filter.Filter.Value;
 
 class TablestoreExpressionConverter {
 
-	static com.aliyun.openservices.tablestore.agent.model.filter.Filter convertOperand(Operand operand,
+	static com.aliyun.openservices.tablestore.agent.model.filter.@Nullable Filter convertOperand(@Nullable Operand operand,
 			Set<String> tenantIds, boolean enableParseTenantIds) {
 		if (operand == null) {
 			return null;

@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 /**
  * DashScope Video Generation Options.
@@ -28,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author yuluo，yingzi
  * @since 1.1.0.0
  */
-
 public class DashScopeVideoOptions implements VideoOptions {
 
     /**
@@ -37,36 +37,36 @@ public class DashScopeVideoOptions implements VideoOptions {
     public static final String DEFAULT_MODEL = DashScopeModel.VideoModel.WANX21_T2V_TURBO.getName();
 
 	@JsonProperty("model")
-	private String model;
+	private @Nullable String model;
 
     @JsonProperty("input")
-    private InputOptions input;
+    private @Nullable InputOptions input;
 
     @JsonProperty("parameters")
-    private ParametersOptions parameters;
+    private @Nullable ParametersOptions parameters;
 
 	@Override
-	public String getModel() {
+	public @Nullable String getModel() {
         return model;
 	}
 
-	public void setModel(String model) {
+	public void setModel(@Nullable String model) {
 		this.model = model;
     }
 
-    public InputOptions getInput() {
+    public @Nullable InputOptions getInput() {
         return input;
     }
 
-    public void setInput(InputOptions input) {
+    public void setInput(@Nullable InputOptions input) {
         this.input = input;
     }
 
-    public ParametersOptions getParameters() {
+    public @Nullable ParametersOptions getParameters() {
         return parameters;
     }
 
-    public void setParameters(ParametersOptions parameters) {
+    public void setParameters(@Nullable ParametersOptions parameters) {
         this.parameters = parameters;
 	}
 
@@ -76,26 +76,26 @@ public class DashScopeVideoOptions implements VideoOptions {
 
 	public static class Builder {
 
-        private String model;
+        private @Nullable String model;
 
-        private InputOptions input;
+        private @Nullable InputOptions input;
 
-        private ParametersOptions parameters;
+        private @Nullable ParametersOptions parameters;
 
         public Builder() {
         }
 
-        public Builder model(String model) {
+        public Builder model(@Nullable String model) {
             this.model = model;
             return this;
         }
 
-        public Builder input(InputOptions input) {
+        public Builder input(@Nullable InputOptions input) {
             this.input = input;
             return this;
         }
 
-        public Builder parameters(ParametersOptions parameters) {
+        public Builder parameters(@Nullable ParametersOptions parameters) {
             this.parameters = parameters;
             return this;
         }
@@ -113,214 +113,214 @@ public class DashScopeVideoOptions implements VideoOptions {
     public static class InputOptions {
 
         @JsonProperty("prompt")
-        private String prompt;
+        private @Nullable String prompt;
 
         @JsonProperty("img_url")
-        private String imgUrl;
+        private @Nullable String imgUrl;
 
         @JsonProperty("image_url")
-        private String imageUrl;
+        private @Nullable String imageUrl;
 
         @JsonProperty("audio_url")
-        private String audioUrl;
+        private @Nullable String audioUrl;
 
         @JsonProperty("template")
-        private String template;
+        private @Nullable String template;
 
         @JsonProperty("negative_prompt")
-        private String negativePrompt;
+        private @Nullable String negativePrompt;
 
         @JsonProperty("first_frame_url")
-        private String firstFrameUrl;
+        private @Nullable String firstFrameUrl;
 
         @JsonProperty("last_frame_url")
-        private String lastFrameUrl;
+        private @Nullable String lastFrameUrl;
 
         @JsonProperty("reference_video_urls")
-        private List<String> referenceVideoUrls;
+        private @Nullable List<String> referenceVideoUrls;
 
         @JsonProperty("function")
-        private String function;
+        private @Nullable String function;
 
         @JsonProperty("ref_image_url")
-        private String refImageUrl;
+        private @Nullable String refImageUrl;
 
         @JsonProperty("ref_images_url")
-        private List<String> refImagesUrl;
+        private @Nullable List<String> refImagesUrl;
 
         @JsonProperty("mask_frame_id")
-        private Integer maskFrameId;
+        private @Nullable Integer maskFrameId;
 
         @JsonProperty("first_clip_url")
-        private String firstClipUrl;
+        private @Nullable String firstClipUrl;
 
         @JsonProperty("video_url")
-        private String videoUrl;
+        private @Nullable String videoUrl;
 
         @JsonProperty("template_id")
-        private String templateId;
+        private @Nullable String templateId;
 
         @JsonProperty("face_bbox")
-        private List<Integer> faceBbox;
+        private @Nullable List<Integer> faceBbox;
 
         @JsonProperty("ext_bbox")
-        private List<Integer> extBbox;
+        private @Nullable List<Integer> extBbox;
 
         @JsonProperty("driven_id")
-        private String drivenId;
+        private @Nullable String drivenId;
 
         public InputOptions() {
         }
 
-        public String getPrompt() {
+        public @Nullable String getPrompt() {
             return prompt;
         }
 
-        public void setPrompt(String prompt) {
+        public void setPrompt(@Nullable String prompt) {
             this.prompt = prompt;
         }
 
-        public String getImgUrl() {
+        public @Nullable String getImgUrl() {
             return imgUrl;
         }
 
-        public void setImgUrl(String imgUrl) {
+        public void setImgUrl(@Nullable String imgUrl) {
             this.imgUrl = imgUrl;
         }
 
-        public String getImageUrl() {
+        public @Nullable String getImageUrl() {
             return imageUrl;
         }
 
-        public void setImageUrl(String imageUrl) {
+        public void setImageUrl(@Nullable String imageUrl) {
             this.imageUrl = imageUrl;
         }
 
-        public String getAudioUrl() {
+        public @Nullable String getAudioUrl() {
             return audioUrl;
         }
 
-        public void setAudioUrl(String audioUrl) {
+        public void setAudioUrl(@Nullable String audioUrl) {
             this.audioUrl = audioUrl;
         }
 
-        public String getTemplate() {
+        public @Nullable String getTemplate() {
             return template;
         }
 
-        public void setTemplate(String template) {
+        public void setTemplate(@Nullable String template) {
             this.template = template;
         }
 
-        public String getNegativePrompt() {
+        public @Nullable String getNegativePrompt() {
             return negativePrompt;
         }
 
-        public void setNegativePrompt(String negativePrompt) {
+        public void setNegativePrompt(@Nullable String negativePrompt) {
             this.negativePrompt = negativePrompt;
         }
 
-        public String getFirstFrameUrl() {
+        public @Nullable String getFirstFrameUrl() {
             return firstFrameUrl;
         }
 
-        public void setFirstFrameUrl(String firstFrameUrl) {
+        public void setFirstFrameUrl(@Nullable String firstFrameUrl) {
             this.firstFrameUrl = firstFrameUrl;
         }
 
-        public String getLastFrameUrl() {
+        public @Nullable String getLastFrameUrl() {
             return lastFrameUrl;
         }
 
-        public void setLastFrameUrl(String lastFrameUrl) {
+        public void setLastFrameUrl(@Nullable String lastFrameUrl) {
             this.lastFrameUrl = lastFrameUrl;
         }
 
-        public List<String> getReferenceVideoUrls() {
+        public @Nullable List<String> getReferenceVideoUrls() {
             return referenceVideoUrls;
         }
 
-        public void setReferenceVideoUrls(List<String> referenceVideoUrls) {
+        public void setReferenceVideoUrls(@Nullable List<String> referenceVideoUrls) {
             this.referenceVideoUrls = referenceVideoUrls;
         }
 
-        public String getFunction() {
+        public @Nullable String getFunction() {
             return function;
         }
 
-        public void setFunction(String function) {
+        public void setFunction(@Nullable String function) {
             this.function = function;
         }
 
-        public String getRefImageUrl() {
+        public @Nullable String getRefImageUrl() {
             return refImageUrl;
         }
 
-        public void setRefImageUrl(String refImageUrl) {
+        public void setRefImageUrl(@Nullable String refImageUrl) {
             this.refImageUrl = refImageUrl;
         }
 
-        public List<String> getRefImagesUrl() {
+        public @Nullable List<String> getRefImagesUrl() {
             return refImagesUrl;
         }
 
-        public void setRefImagesUrl(List<String> refImagesUrl) {
+        public void setRefImagesUrl(@Nullable List<String> refImagesUrl) {
             this.refImagesUrl = refImagesUrl;
         }
 
-        public Integer getMaskFrameId() {
+        public @Nullable Integer getMaskFrameId() {
             return maskFrameId;
         }
 
-        public void setMaskFrameId(Integer maskFrameId) {
+        public void setMaskFrameId(@Nullable Integer maskFrameId) {
             this.maskFrameId = maskFrameId;
         }
 
-        public String getFirstClipUrl() {
+        public @Nullable String getFirstClipUrl() {
             return firstClipUrl;
         }
 
-        public void setFirstClipUrl(String firstClipUrl) {
+        public void setFirstClipUrl(@Nullable String firstClipUrl) {
             this.firstClipUrl = firstClipUrl;
         }
 
-        public String getVideoUrl() {
+        public @Nullable String getVideoUrl() {
             return videoUrl;
         }
 
-        public void setVideoUrl(String videoUrl) {
+        public void setVideoUrl(@Nullable String videoUrl) {
             this.videoUrl = videoUrl;
         }
 
-        public String getTemplateId() {
+        public @Nullable String getTemplateId() {
             return templateId;
         }
 
-        public void setTemplateId(String templateId) {
+        public void setTemplateId(@Nullable String templateId) {
             this.templateId = templateId;
         }
 
-        public List<Integer> getFaceBbox() {
+        public @Nullable List<Integer> getFaceBbox() {
             return faceBbox;
         }
 
-        public void setFaceBbox(List<Integer> faceBbox) {
+        public void setFaceBbox(@Nullable List<Integer> faceBbox) {
             this.faceBbox = faceBbox;
         }
 
-        public List<Integer> getExtBbox() {
+        public @Nullable List<Integer> getExtBbox() {
             return extBbox;
         }
 
-        public void setExtBbox(List<Integer> extBbox) {
+        public void setExtBbox(@Nullable List<Integer> extBbox) {
             this.extBbox = extBbox;
         }
 
-        public String getDrivenId() {
+        public @Nullable String getDrivenId() {
             return drivenId;
         }
 
-        public void setDrivenId(String drivenId) {
+        public void setDrivenId(@Nullable String drivenId) {
             this.drivenId = drivenId;
         }
 
@@ -336,97 +336,97 @@ public class DashScopeVideoOptions implements VideoOptions {
                 this.options = new InputOptions();
             }
 
-            public Builder prompt(String prompt) {
+            public Builder prompt(@Nullable String prompt) {
                 this.options.setPrompt(prompt);
                 return this;
             }
 
-            public Builder imgUrl(String imgUrl) {
+            public Builder imgUrl(@Nullable String imgUrl) {
                 this.options.setImgUrl(imgUrl);
                 return this;
             }
 
-            public Builder imageUrl(String imageUrl) {
+            public Builder imageUrl(@Nullable String imageUrl) {
                 this.options.setImageUrl(imageUrl);
                 return this;
             }
 
-            public Builder audioUrl(String audioUrl) {
+            public Builder audioUrl(@Nullable String audioUrl) {
                 this.options.setAudioUrl(audioUrl);
                 return this;
             }
 
-            public Builder template(String template) {
+            public Builder template(@Nullable String template) {
                 this.options.setTemplate(template);
                 return this;
             }
 
-            public Builder negativePrompt(String negativePrompt) {
+            public Builder negativePrompt(@Nullable String negativePrompt) {
                 this.options.setNegativePrompt(negativePrompt);
                 return this;
             }
 
-            public Builder firstFrameUrl(String firstFrameUrl) {
+            public Builder firstFrameUrl(@Nullable String firstFrameUrl) {
                 this.options.setFirstFrameUrl(firstFrameUrl);
                 return this;
             }
 
-            public Builder lastFrameUrl(String lastFrameUrl) {
+            public Builder lastFrameUrl(@Nullable String lastFrameUrl) {
                 this.options.setLastFrameUrl(lastFrameUrl);
                 return this;
             }
 
-            public Builder referenceVideoUrls(List<String> referenceVideoUrls) {
+            public Builder referenceVideoUrls(@Nullable List<String> referenceVideoUrls) {
                 this.options.setReferenceVideoUrls(referenceVideoUrls);
                 return this;
             }
 
-            public Builder function(String function) {
+            public Builder function(@Nullable String function) {
                 this.options.setFunction(function);
                 return this;
             }
 
-            public Builder refImageUrl(String refImageUrl) {
+            public Builder refImageUrl(@Nullable String refImageUrl) {
                 this.options.setRefImageUrl(refImageUrl);
                 return this;
             }
 
-            public Builder refImagesUrl(List<String> refImagesUrl) {
+            public Builder refImagesUrl(@Nullable List<String> refImagesUrl) {
                 this.options.setRefImagesUrl(refImagesUrl);
                 return this;
             }
 
-            public Builder maskFrameId(Integer maskFrameId) {
+            public Builder maskFrameId(@Nullable Integer maskFrameId) {
                 this.options.setMaskFrameId(maskFrameId);
                 return this;
             }
 
-            public Builder firstClipUrl(String firstClipUrl) {
+            public Builder firstClipUrl(@Nullable String firstClipUrl) {
                 this.options.setFirstClipUrl(firstClipUrl);
                 return this;
             }
 
-            public Builder videoUrl(String videoUrl) {
+            public Builder videoUrl(@Nullable String videoUrl) {
                 this.options.setVideoUrl(videoUrl);
                 return this;
             }
 
-            public Builder templateId(String templateId) {
+            public Builder templateId(@Nullable String templateId) {
                 this.options.setTemplateId(templateId);
                 return this;
             }
 
-            public Builder faceBbox(List<Integer> faceBbox) {
+            public Builder faceBbox(@Nullable List<Integer> faceBbox) {
                 this.options.setFaceBbox(faceBbox);
                 return this;
             }
 
-            public Builder extBbox(List<Integer> extBbox) {
+            public Builder extBbox(@Nullable List<Integer> extBbox) {
                 this.options.setExtBbox(extBbox);
                 return this;
             }
 
-            public Builder drivenId(String drivenId) {
+            public Builder drivenId(@Nullable String drivenId) {
                 this.options.setDrivenId(drivenId);
                 return this;
             }
@@ -440,291 +440,291 @@ public class DashScopeVideoOptions implements VideoOptions {
     public static class ParametersOptions {
 
         @JsonProperty("resolution")
-        private String resolution;
+        private @Nullable String resolution;
 
         @JsonProperty("size")
-        private String size;
+        private @Nullable String size;
 
         @JsonProperty("prompt_extend")
-        private Boolean promptExtend;
+        private @Nullable Boolean promptExtend;
 
         @JsonProperty("video_extension")
-        private Boolean videoExtension;
+        private @Nullable Boolean videoExtension;
 
         @JsonProperty("duration")
-        private Integer duration;
+        private @Nullable Integer duration;
 
         @JsonProperty("shot_type")
-        private String shotType;
+        private @Nullable String shotType;
 
         @JsonProperty("obj_or_bg")
-        private List<String> objOrBg;
+        private @Nullable List<String> objOrBg;
 
         @JsonProperty("mask_type")
-        private String maskType;
+        private @Nullable String maskType;
 
         @JsonProperty("expand_ratio")
-        private Double expandRatio;
+        private @Nullable Double expandRatio;
 
         @JsonProperty("top_scale")
-        private Double topScale;
+        private @Nullable Double topScale;
 
         @JsonProperty("bottom_scale")
-        private Double bottomScale;
+        private @Nullable Double bottomScale;
 
         @JsonProperty("left_scale")
-        private Double leftScale;
+        private @Nullable Double leftScale;
 
         @JsonProperty("right_scale")
-        private Double rightScale;
+        private @Nullable Double rightScale;
 
         @JsonProperty("mode")
-        private String mode;
+        private @Nullable String mode;
 
         @JsonProperty("use_ref_img_bg")
-        private Boolean useRefImgBg;
+        private @Nullable Boolean useRefImgBg;
 
         @JsonProperty("video_ratio")
-        private String videoRatio;
+        private @Nullable String videoRatio;
 
         @JsonProperty("ratio")
-        private String ratio;
+        private @Nullable String ratio;
 
         @JsonProperty("style_level")
-        private String styleLevel;
+        private @Nullable String styleLevel;
 
         @JsonProperty("template_id")
-        private String templateId;
+        private @Nullable String templateId;
 
         @JsonProperty("eye_move_freq")
-        private Double eyeMoveFreq;
+        private @Nullable Double eyeMoveFreq;
 
         @JsonProperty("video_fps")
-        private Integer videoFps;
+        private @Nullable Integer videoFps;
 
         @JsonProperty("mouth_move_strength")
-        private Integer mouthMoveStrength;
+        private @Nullable Integer mouthMoveStrength;
 
         @JsonProperty("paste_back")
-        private Boolean pasteBack;
+        private @Nullable Boolean pasteBack;
 
         @JsonProperty("head_move_strength")
-        private Double headMoveStrength;
+        private @Nullable Double headMoveStrength;
 
         @JsonProperty("style")
-        private Integer style;
+        private @Nullable Integer style;
 
         @JsonProperty("seed")
-        private Long seed;
+        private @Nullable Long seed;
 
         public ParametersOptions() {
         }
 
-        public String getResolution() {
+        public @Nullable String getResolution() {
             return resolution;
         }
 
-        public void setResolution(String resolution) {
+        public void setResolution(@Nullable String resolution) {
             this.resolution = resolution;
         }
 
-        public String getSize() {
+        public @Nullable String getSize() {
             return size;
         }
 
-        public void setSize(String size) {
+        public void setSize(@Nullable String size) {
             this.size = size;
         }
 
-        public Boolean getPromptExtend() {
+        public @Nullable Boolean getPromptExtend() {
             return promptExtend;
         }
 
-        public void setPromptExtend(Boolean promptExtend) {
+        public void setPromptExtend(@Nullable Boolean promptExtend) {
             this.promptExtend = promptExtend;
         }
 
-        public Boolean getVideoExtension() {
+        public @Nullable Boolean getVideoExtension() {
             return videoExtension;
         }
 
-        public void setVideoExtension(Boolean videoExtension) {
+        public void setVideoExtension(@Nullable Boolean videoExtension) {
             this.videoExtension = videoExtension;
         }
 
-        public Integer getDuration() {
+        public @Nullable Integer getDuration() {
             return duration;
         }
 
-        public void setDuration(Integer duration) {
+        public void setDuration(@Nullable Integer duration) {
             this.duration = duration;
         }
 
-        public String getShotType() {
+        public @Nullable String getShotType() {
             return shotType;
         }
 
-        public void setShotType(String shotType) {
+        public void setShotType(@Nullable String shotType) {
             this.shotType = shotType;
         }
 
-        public List<String> getObjOrBg() {
+        public @Nullable List<String> getObjOrBg() {
             return objOrBg;
         }
 
-        public void setObjOrBg(List<String> objOrBg) {
+        public void setObjOrBg(@Nullable List<String> objOrBg) {
             this.objOrBg = objOrBg;
         }
 
-        public String getMaskType() {
+        public @Nullable String getMaskType() {
             return maskType;
         }
 
-        public void setMaskType(String maskType) {
+        public void setMaskType(@Nullable String maskType) {
             this.maskType = maskType;
         }
 
-        public Double getExpandRatio() {
+        public @Nullable Double getExpandRatio() {
             return expandRatio;
         }
 
-        public void setExpandRatio(Double expandRatio) {
+        public void setExpandRatio(@Nullable Double expandRatio) {
             this.expandRatio = expandRatio;
         }
 
-        public Double getTopScale() {
+        public @Nullable Double getTopScale() {
             return topScale;
         }
 
-        public void setTopScale(Double topScale) {
+        public void setTopScale(@Nullable Double topScale) {
             this.topScale = topScale;
         }
 
-        public Double getBottomScale() {
+        public @Nullable Double getBottomScale() {
             return bottomScale;
         }
 
-        public void setBottomScale(Double bottomScale) {
+        public void setBottomScale(@Nullable Double bottomScale) {
             this.bottomScale = bottomScale;
         }
 
-        public Double getLeftScale() {
+        public @Nullable Double getLeftScale() {
             return leftScale;
         }
 
-        public void setLeftScale(Double leftScale) {
+        public void setLeftScale(@Nullable Double leftScale) {
             this.leftScale = leftScale;
         }
 
-        public Double getRightScale() {
+        public @Nullable Double getRightScale() {
             return rightScale;
         }
 
-        public void setRightScale(Double rightScale) {
+        public void setRightScale(@Nullable Double rightScale) {
             this.rightScale = rightScale;
         }
 
-        public String getMode() {
+        public @Nullable String getMode() {
             return mode;
         }
 
-        public void setMode(String mode) {
+        public void setMode(@Nullable String mode) {
             this.mode = mode;
         }
 
-        public Boolean getUseRefImgBg() {
+        public @Nullable Boolean getUseRefImgBg() {
             return useRefImgBg;
         }
 
-        public void setUseRefImgBg(Boolean useRefImgBg) {
+        public void setUseRefImgBg(@Nullable Boolean useRefImgBg) {
             this.useRefImgBg = useRefImgBg;
         }
 
-        public String getVideoRatio() {
+        public @Nullable String getVideoRatio() {
             return videoRatio;
         }
 
-        public void setVideoRatio(String videoRatio) {
+        public void setVideoRatio(@Nullable String videoRatio) {
             this.videoRatio = videoRatio;
         }
 
-        public String getRatio() {
+        public @Nullable String getRatio() {
             return ratio;
         }
 
-        public void setRatio(String ratio) {
+        public void setRatio(@Nullable String ratio) {
             this.ratio = ratio;
         }
 
-        public String getStyleLevel() {
+        public @Nullable String getStyleLevel() {
             return styleLevel;
         }
 
-        public void setStyleLevel(String styleLevel) {
+        public void setStyleLevel(@Nullable String styleLevel) {
             this.styleLevel = styleLevel;
         }
 
-        public String getTemplateId() {
+        public @Nullable String getTemplateId() {
             return templateId;
         }
 
-        public void setTemplateId(String templateId) {
+        public void setTemplateId(@Nullable String templateId) {
             this.templateId = templateId;
         }
 
-        public Double getEyeMoveFreq() {
+        public @Nullable Double getEyeMoveFreq() {
             return eyeMoveFreq;
         }
 
-        public void setEyeMoveFreq(Double eyeMoveFreq) {
+        public void setEyeMoveFreq(@Nullable Double eyeMoveFreq) {
             this.eyeMoveFreq = eyeMoveFreq;
         }
 
-        public Integer getVideoFps() {
+        public @Nullable Integer getVideoFps() {
             return videoFps;
         }
 
-        public void setVideoFps(Integer videoFps) {
+        public void setVideoFps(@Nullable Integer videoFps) {
             this.videoFps = videoFps;
         }
 
-        public Integer getMouthMoveStrength() {
+        public @Nullable Integer getMouthMoveStrength() {
             return mouthMoveStrength;
         }
 
-        public void setMouthMoveStrength(Integer mouthMoveStrength) {
+        public void setMouthMoveStrength(@Nullable Integer mouthMoveStrength) {
             this.mouthMoveStrength = mouthMoveStrength;
         }
 
-        public Boolean getPasteBack() {
+        public @Nullable Boolean getPasteBack() {
             return pasteBack;
         }
 
-        public void setPasteBack(Boolean pasteBack) {
+        public void setPasteBack(@Nullable Boolean pasteBack) {
             this.pasteBack = pasteBack;
         }
 
-        public Double getHeadMoveStrength() {
+        public @Nullable Double getHeadMoveStrength() {
             return headMoveStrength;
         }
 
-        public void setHeadMoveStrength(Double headMoveStrength) {
+        public void setHeadMoveStrength(@Nullable Double headMoveStrength) {
             this.headMoveStrength = headMoveStrength;
         }
 
-        public Integer getStyle() {
+        public @Nullable Integer getStyle() {
             return style;
         }
 
-        public void setStyle(Integer style) {
+        public void setStyle(@Nullable Integer style) {
             this.style = style;
         }
 
-        public Long getSeed() {
+        public @Nullable Long getSeed() {
             return seed;
         }
 
-        public void setSeed(Long seed) {
+        public void setSeed(@Nullable Long seed) {
             this.seed = seed;
         }
 
@@ -740,132 +740,132 @@ public class DashScopeVideoOptions implements VideoOptions {
                 this.options = new ParametersOptions();
             }
 
-            public Builder resolution(String resolution) {
+            public Builder resolution(@Nullable String resolution) {
                 this.options.setResolution(resolution);
                 return this;
             }
 
-            public Builder size(String size) {
+            public Builder size(@Nullable String size) {
                 this.options.setSize(size);
                 return this;
             }
 
-            public Builder promptExtend(Boolean promptExtend) {
+            public Builder promptExtend(@Nullable Boolean promptExtend) {
                 this.options.setPromptExtend(promptExtend);
                 return this;
             }
 
-            public Builder videoExtension(Boolean videoExtension) {
+            public Builder videoExtension(@Nullable Boolean videoExtension) {
                 this.options.setVideoExtension(videoExtension);
                 return this;
             }
 
-            public Builder duration(Integer duration) {
+            public Builder duration(@Nullable Integer duration) {
                 this.options.setDuration(duration);
                 return this;
             }
 
-            public Builder shotType(String shotType) {
+            public Builder shotType(@Nullable String shotType) {
                 this.options.setShotType(shotType);
                 return this;
             }
 
-            public Builder objOrBg(List<String> objOrBg) {
+            public Builder objOrBg(@Nullable List<String> objOrBg) {
                 this.options.setObjOrBg(objOrBg);
                 return this;
             }
 
-            public Builder maskType(String maskType) {
+            public Builder maskType(@Nullable String maskType) {
                 this.options.setMaskType(maskType);
                 return this;
             }
 
-            public Builder expandRatio(Double expandRatio) {
+            public Builder expandRatio(@Nullable Double expandRatio) {
                 this.options.setExpandRatio(expandRatio);
                 return this;
             }
 
-            public Builder topScale(Double topScale) {
+            public Builder topScale(@Nullable Double topScale) {
                 this.options.setTopScale(topScale);
                 return this;
             }
 
-            public Builder bottomScale(Double bottomScale) {
+            public Builder bottomScale(@Nullable Double bottomScale) {
                 this.options.setBottomScale(bottomScale);
                 return this;
             }
 
-            public Builder leftScale(Double leftScale) {
+            public Builder leftScale(@Nullable Double leftScale) {
                 this.options.setLeftScale(leftScale);
                 return this;
             }
 
-            public Builder rightScale(Double rightScale) {
+            public Builder rightScale(@Nullable Double rightScale) {
                 this.options.setRightScale(rightScale);
                 return this;
             }
 
-            public Builder mode(String mode) {
+            public Builder mode(@Nullable String mode) {
                 this.options.setMode(mode);
                 return this;
             }
 
-            public Builder useRefImgBg(Boolean useRefImgBg) {
+            public Builder useRefImgBg(@Nullable Boolean useRefImgBg) {
                 this.options.setUseRefImgBg(useRefImgBg);
                 return this;
             }
 
-            public Builder videoRatio(String videoRatio) {
+            public Builder videoRatio(@Nullable String videoRatio) {
                 this.options.setVideoRatio(videoRatio);
                 return this;
             }
 
-            public Builder ratio(String ratio) {
+            public Builder ratio(@Nullable String ratio) {
                 this.options.setRatio(ratio);
                 return this;
             }
 
-            public Builder styleLevel(String styleLevel) {
+            public Builder styleLevel(@Nullable String styleLevel) {
                 this.options.setStyleLevel(styleLevel);
                 return this;
             }
 
-            public Builder templateId(String templateId) {
+            public Builder templateId(@Nullable String templateId) {
                 this.options.setTemplateId(templateId);
                 return this;
             }
 
-            public Builder eyeMoveFreq(Double eyeMoveFreq) {
+            public Builder eyeMoveFreq(@Nullable Double eyeMoveFreq) {
                 this.options.setEyeMoveFreq(eyeMoveFreq);
                 return this;
             }
 
-            public Builder videoFps(Integer videoFps) {
+            public Builder videoFps(@Nullable Integer videoFps) {
                 this.options.setVideoFps(videoFps);
                 return this;
             }
 
-            public Builder mouthMoveStrength(Integer mouthMoveStrength) {
+            public Builder mouthMoveStrength(@Nullable Integer mouthMoveStrength) {
                 this.options.setMouthMoveStrength(mouthMoveStrength);
                 return this;
             }
 
-            public Builder pasteBack(Boolean pasteBack) {
+            public Builder pasteBack(@Nullable Boolean pasteBack) {
                 this.options.setPasteBack(pasteBack);
                 return this;
             }
 
-            public Builder headMoveStrength(Double headMoveStrength) {
+            public Builder headMoveStrength(@Nullable Double headMoveStrength) {
                 this.options.setHeadMoveStrength(headMoveStrength);
                 return this;
             }
 
-            public Builder style(Integer style) {
+            public Builder style(@Nullable Integer style) {
                 this.options.setStyle(style);
                 return this;
             }
 
-            public Builder seed(Long seed) {
+            public Builder seed(@Nullable Long seed) {
                 this.options.setSeed(seed);
                 return this;
             }

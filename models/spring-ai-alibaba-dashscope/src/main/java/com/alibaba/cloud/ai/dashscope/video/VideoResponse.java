@@ -21,7 +21,9 @@ import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoResponse;
 import org.springframework.ai.model.ModelResponse;
+import org.springframework.ai.model.MutableResponseMetadata;
 import org.springframework.ai.model.ResponseMetadata;
+import org.springframework.util.Assert;
 
 /**
  * @author yuluo, yingzi
@@ -29,10 +31,12 @@ import org.springframework.ai.model.ResponseMetadata;
 
 public class VideoResponse implements ModelResponse<DashScopeVideoResponse> {
 
+    private static final ResponseMetadata EMPTY_METADATA = new MutableResponseMetadata();
+
     private final DashScopeVideoResponse result;
 
     public VideoResponse(DashScopeVideoResponse result) {
-
+        Assert.notNull(result, "result must not be null");
 		this.result = result;
 	}
 
@@ -50,8 +54,7 @@ public class VideoResponse implements ModelResponse<DashScopeVideoResponse> {
 
 	@Override
 	public ResponseMetadata getMetadata() {
-		// todo: add metadata.
-		return null;
+		return EMPTY_METADATA;
 	}
 
 }

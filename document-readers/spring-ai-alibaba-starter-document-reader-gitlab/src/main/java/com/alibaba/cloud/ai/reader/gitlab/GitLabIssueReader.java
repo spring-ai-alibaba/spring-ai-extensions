@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.reader.gitlab;
 
+import org.jspecify.annotations.Nullable;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.IssuesApi;
 import org.gitlab4j.api.models.Issue;
@@ -35,7 +36,7 @@ import java.util.*;
 public class GitLabIssueReader extends AbstractGitLabReader {
 
 	// GitLab group path for filtering issues by group
-	private final String groupPath;
+	private final @Nullable String groupPath;
 
 	// Configuration object containing all issue filtering parameters
 	private final GitLabIssueConfig config;
@@ -60,8 +61,8 @@ public class GitLabIssueReader extends AbstractGitLabReader {
 	 * @param config Issue configuration (optional, defaults to open issues)
 	 * @throws GitLabApiException if project cannot be found
 	 */
-	public GitLabIssueReader(String hostUrl, String namespace, String projectName, String groupPath,
-			GitLabIssueConfig config) throws GitLabApiException {
+	public GitLabIssueReader(String hostUrl, String namespace, String projectName, @Nullable String groupPath,
+			@Nullable GitLabIssueConfig config) throws GitLabApiException {
 		super(hostUrl, namespace, projectName);
 		this.groupPath = groupPath;
 		this.config = config != null ? config : GitLabIssueConfig.builder().state(GitLabIssueState.OPEN).build();
@@ -112,7 +113,7 @@ public class GitLabIssueReader extends AbstractGitLabReader {
 	 * @param dateTime LocalDateTime to convert
 	 * @return ISO formatted string or null
 	 */
-	private Date toGitLabDateFormat(LocalDateTime dateTime) {
+	private @Nullable Date toGitLabDateFormat(@Nullable LocalDateTime dateTime) {
 		if (dateTime == null) {
 			return null;
 		}

@@ -22,6 +22,7 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageGenera
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageGenerationRequest.DashScopeImageGenerationRequestInputMessageContent;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageRequest;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ApiKey;
@@ -103,7 +104,7 @@ public class DashScopeImageApi {
 	}
 
 	// format: off
-	public DashScopeImageApi(String baseUrl, ApiKey apiKey, String imagesPath, String queryTaskPath, String workSpaceId,
+	public DashScopeImageApi(String baseUrl, ApiKey apiKey, String imagesPath, String queryTaskPath, @Nullable String workSpaceId,
                              RestClient.Builder restClientBuilder, ResponseErrorHandler responseErrorHandler) {
 
 		this.baseUrl = baseUrl;
@@ -234,13 +235,13 @@ public class DashScopeImageApi {
 
         private String baseUrl = DEFAULT_BASE_URL;
 
-        private ApiKey apiKey;
+        private @Nullable ApiKey apiKey;
 
         private String imagesPath = TEXT2IMAGE_RESTFUL_URL;
 
         private String queryTaskPath = QUERY_TASK_RESTFUL_URL;
 
-        private String workSpaceId;
+        private @Nullable String workSpaceId;
 
         private RestClient.Builder restClientBuilder = RestClient.builder();
 
@@ -266,7 +267,7 @@ public class DashScopeImageApi {
 			return this;
 		}
 
-		public DashScopeImageApi.Builder workSpaceId(String workSpaceId) {
+		public DashScopeImageApi.Builder workSpaceId(@Nullable String workSpaceId) {
 			// Workspace ID is optional, but if provided, it must not be null.
 			if (StringUtils.hasText(workSpaceId)) {
 				Assert.notNull(workSpaceId, "Workspace ID cannot be null");
@@ -306,10 +307,10 @@ public class DashScopeImageApi {
 		}
 
 		public DashScopeImageApi build() {
-
+			ApiKey apiKey = this.apiKey;
 			Assert.notNull(apiKey, "API key cannot be null");
 
-			return new DashScopeImageApi(this.baseUrl, this.apiKey, this.imagesPath, this.queryTaskPath,
+			return new DashScopeImageApi(this.baseUrl, apiKey, this.imagesPath, this.queryTaskPath,
                     this.workSpaceId, this.restClientBuilder, this.responseErrorHandler);
 		}
 

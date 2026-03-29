@@ -26,6 +26,7 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessag
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput.Choice;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -45,8 +46,8 @@ public class DashScopeAiStreamFunctionCallingHelper {
 	public DashScopeAiStreamFunctionCallingHelper() {
 	}
 
-	public DashScopeAiStreamFunctionCallingHelper(Boolean incrementalOutput) {
-		this.incrementalOutput = incrementalOutput;
+	public DashScopeAiStreamFunctionCallingHelper(@Nullable Boolean incrementalOutput) {
+		this.incrementalOutput = incrementalOutput != null ? incrementalOutput : false;
 	}
 
 	/**
@@ -89,7 +90,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		return new ChatCompletionChunk(id, new ChatCompletionOutput(null, chunkChoices, searchInfo), usage, null);
 	}
 
-	private Choice merge(Choice previous, Choice current) {
+	private @Nullable Choice merge(@Nullable Choice previous, @Nullable Choice current) {
 		if (previous == null) {
 			return current;
 		}
@@ -108,7 +109,14 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		return new Choice(finishReason, message, logprobs, index);
 	}
 
-	private ChatCompletionMessage merge(ChatCompletionMessage previous, ChatCompletionMessage current) {
+	private @Nullable ChatCompletionMessage merge(@Nullable ChatCompletionMessage previous,
+			@Nullable ChatCompletionMessage current) {
+		if (current == null) {
+			return previous;
+		}
+		if (previous == null) {
+			return current;
+		}
 
         // response
 		Object content = (current.content() != null ? current.content()
@@ -155,22 +163,32 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		return new ChatCompletionMessage(content, role, name, toolCallId, toolCalls, reasoningContent, partial, phase, annotations, status);
 	}
 
-	private ToolCall merge(ToolCall previous, ToolCall current) {
+	private @Nullable ToolCall merge(@Nullable ToolCall previous, @Nullable ToolCall current) {
+		if (current == null) {
+			return previous;
+		}
 
         if (previous == null) {
             return current;
 		}
 
-        String id = (StringUtils.hasText(current.id()) ? current.id() : previous.id());
-		String type = (StringUtils.hasText(current.type()) ? current.type() : previous.type());
-		Integer index = (current.index() != 0 ? current.index() : previous.index());
+	        String id = (StringUtils.hasText(current.id()) ? current.id() : previous.id());
+			String type = (StringUtils.hasText(current.type()) ? current.type() : previous.type());
+			Integer index = (current.index() != null && current.index() != 0) ? current.index() : previous.index();
 
 
 		ChatCompletionFunction function = merge(previous.function(), current.function());
+		if (function == null) {
+			return current;
+		}
 		return new ToolCall(id, type, function, index);
 	}
 
-	private ChatCompletionFunction merge(ChatCompletionFunction previous, ChatCompletionFunction current) {
+	private @Nullable ChatCompletionFunction merge(@Nullable ChatCompletionFunction previous,
+			@Nullable ChatCompletionFunction current) {
+		if (current == null) {
+			return previous;
+		}
 		if (previous == null) {
 			return current;
 		}
@@ -194,7 +212,8 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		if (choice == null) {
 			return false;
 		}
-		return !CollectionUtils.isEmpty(choice.message().toolCalls());
+		ChatCompletionMessage message = choice.message();
+		return message != null && !CollectionUtils.isEmpty(message.toolCalls());
 	}
 
 	/**
@@ -219,7 +238,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		return new ChatCompletion(chunk.requestId(), chunk.output(), chunk.usage());
 	}
 
-	private Choice checkChatCompletionChunk(ChatCompletionChunk chatCompletion) {
+	private @Nullable Choice checkChatCompletionChunk(ChatCompletionChunk chatCompletion) {
 		if (chatCompletion == null || chatCompletion.output() == null
 				|| CollectionUtils.isEmpty(chatCompletion.output().choices())) {
 			return null;

@@ -19,6 +19,7 @@ import com.alibaba.cloud.ai.reader.gitbook.model.GitbookPage;
 import com.alibaba.cloud.ai.reader.gitbook.model.GitbookSpace;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -62,7 +63,7 @@ public class GitbookClient {
 	 * @param apiToken The API token for authentication with Gitbook
 	 * @param apiUrl Optional custom API URL (if null, uses default Gitbook API endpoint)
 	 */
-	public GitbookClient(String apiToken, String apiUrl) {
+	public GitbookClient(String apiToken, @Nullable String apiUrl) {
 		this.apiToken = apiToken;
 		this.baseUrl = apiUrl != null ? apiUrl : DEFAULT_API_URL;
 		this.httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();

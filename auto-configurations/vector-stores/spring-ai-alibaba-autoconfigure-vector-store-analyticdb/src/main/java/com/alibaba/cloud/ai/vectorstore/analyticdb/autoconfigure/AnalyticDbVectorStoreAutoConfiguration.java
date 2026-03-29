@@ -31,6 +31,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.util.Assert;
 
 /**
  * @author HeYQ
@@ -80,7 +81,9 @@ public class AnalyticDbVectorStoreAutoConfiguration {
 		if (properties.getUserAgent() != null) {
 			config.setUserAgent(properties.getUserAgent());
 		}
-		var builder = AnalyticDbVectorStore.builder(properties.getCollectName(), config, client, embeddingModel)
+		String collectionName = properties.getCollectName();
+		Assert.notNull(collectionName, "spring.ai.vectorstore.analyticdb.collect-name must not be null");
+		var builder = AnalyticDbVectorStore.builder(collectionName, config, client, embeddingModel)
 			.batchingStrategy(batchingStrategy)
 			.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
 			.customObservationConvention(customObservationConvention.getIfAvailable());

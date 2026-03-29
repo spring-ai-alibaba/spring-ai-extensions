@@ -24,6 +24,7 @@ import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeTtsStrategyRegistry;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.NoopApiKey;
 import org.springframework.ai.retry.RetryUtils;
@@ -35,6 +36,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * Facade for DashScope TTS APIs. Delegates to Qwen-TTS, WebSocket (Sambert/CosyVoice), and Qwen TTS
@@ -47,7 +49,7 @@ public class DashScopeAudioSpeechApi {
 	private final String baseUrl;
 	private final String websocketUrl;
 	private final ApiKey apiKey;
-	private final String workSpaceId;
+	private final @Nullable String workSpaceId;
 	private final HttpHeaders headers;
 	private final DashScopeTtsStrategyRegistry strategyRegistry;
 	private final DashScopeQwenTTSApi qwenTTSApi;
@@ -55,7 +57,7 @@ public class DashScopeAudioSpeechApi {
 	private final DashScopeQwenTTSRealtimeApi qwenTTSRealtimeApi;
 
 	public DashScopeAudioSpeechApi(String baseUrl, String websocketUrl, ApiKey apiKey,
-			String workSpaceId, HttpHeaders headers,
+			@Nullable String workSpaceId, HttpHeaders headers,
 			RestClient.Builder restClientBuilder, WebClient.Builder webClientBuilder,
 			ResponseErrorHandler responseErrorHandler) {
 		this.baseUrl = baseUrl;
@@ -117,13 +119,14 @@ public class DashScopeAudioSpeechApi {
 	}
 
 	public Flux<ByteBuffer> createWebSocketTask(String text, DashScopeAudioSpeechOptions options) {
-		if (DashScopeAudioApiConstants.isQwenTTSRealtimeModel(options.getModel())) {
+		String model = options.getModel() != null ? options.getModel() : DashScopeAudioSpeechOptions.DEFAULT_MODEL;
+		if (DashScopeAudioApiConstants.isQwenTTSRealtimeModel(model)) {
 			return qwenTTSRealtimeApi.stream(text, options);
 		}
-		if (DashScopeAudioApiConstants.isWebsocketByTTSModelName(options.getModel())) {
+		if (DashScopeAudioApiConstants.isWebsocketByTTSModelName(model)) {
 			return webSocketTTSApi.stream(text, options);
 		}
-		throw new IllegalArgumentException("Model " + options.getModel() + " is not supported.");
+		throw new IllegalArgumentException("Model " + model + " is not supported.");
 	}
 
 	/**
@@ -156,7 +159,7 @@ public class DashScopeAudioSpeechApi {
         return this.apiKey;
     }
 
-    public String getWorkSpaceId() {
+    public @Nullable String getWorkSpaceId() {
         return this.workSpaceId;
     }
 
@@ -174,9 +177,9 @@ public class DashScopeAudioSpeechApi {
 
         private String websocketUrl = DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL;
 
-        private ApiKey apiKey;
+        private @Nullable ApiKey apiKey;
 
-        private String workSpaceId;
+        private @Nullable String workSpaceId;
 
         private HttpHeaders headers = new HttpHeaders();
 
@@ -212,7 +215,7 @@ public class DashScopeAudioSpeechApi {
             return this;
         }
 
-        public Builder workSpaceId(String workSpaceId) {
+        public Builder workSpaceId(@Nullable String workSpaceId) {
             this.workSpaceId = workSpaceId;
             return this;
         }
@@ -240,16 +243,16 @@ public class DashScopeAudioSpeechApi {
         public DashScopeAudioSpeechApi build() {
             Assert.hasText(this.baseUrl, "baseUrl cannot be null or empty");
             Assert.hasText(this.websocketUrl, "websocketUrl cannot be null or empty");
-            Assert.notNull(this.apiKey, "apiKey must be set");
             Assert.notNull(this.headers, "headers cannot be null");
             Assert.notNull(this.restClientBuilder, "restClientBuilder cannot be null");
             Assert.notNull(this.webClientBuilder, "webClientBuilder cannot be null");
             Assert.notNull(this.responseErrorHandler, "responseErrorHandler cannot be null");
+            ApiKey apiKey = Objects.requireNonNull(this.apiKey, "apiKey must be set");
 
             return new DashScopeAudioSpeechApi(
                     this.baseUrl,
                     this.websocketUrl,
-                    this.apiKey,
+                    apiKey,
                     this.workSpaceId,
                     this.headers,
                     this.restClientBuilder,

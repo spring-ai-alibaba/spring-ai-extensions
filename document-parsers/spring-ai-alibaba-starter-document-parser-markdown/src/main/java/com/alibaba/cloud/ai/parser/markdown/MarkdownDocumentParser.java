@@ -93,7 +93,7 @@ public class MarkdownDocumentParser implements DocumentParser {
 
 		private final MarkdownDocumentParserConfig config;
 
-		private Document.Builder currentDocumentBuilder;
+		private Document.Builder currentDocumentBuilder = Document.builder();
 
 		DocumentVisitor(MarkdownDocumentParserConfig config) {
 			this.config = config;
