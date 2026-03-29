@@ -32,22 +32,24 @@ import java.util.function.BiPredicate;
  * @author yingzi
  * @since 2025/10/25
  */
-
 public class DistributedSyncMcpToolCallbackProvider implements ToolCallbackProvider {
 
     private final List<DistributedSyncMcpClient> mcpClients;
 
     private final BiPredicate<McpSyncClient, McpSchema.Tool> toolFilter;
 
-    public DistributedSyncMcpToolCallbackProvider(BiPredicate<McpSyncClient, McpSchema.Tool> toolFilter, List<DistributedSyncMcpClient> mcpClients) {
+    private final BiPredicate<String, Object> contextFilter;
+
+    public DistributedSyncMcpToolCallbackProvider(BiPredicate<String, Object> contextFilter, BiPredicate<McpSyncClient, McpSchema.Tool> toolFilter, List<DistributedSyncMcpClient> mcpClients) {
         Assert.notNull(mcpClients, "mcpClients cannot be null");
         Assert.notNull(toolFilter, "toolFilter cannot be null");
         this.mcpClients = mcpClients;
         this.toolFilter = toolFilter;
+        this.contextFilter = contextFilter;
     }
 
     public DistributedSyncMcpToolCallbackProvider(List<DistributedSyncMcpClient> mcpClients) {
-        this((mcpClient, tool) -> true, mcpClients);
+        this(null, (mcpClient, tool) -> true, mcpClients);
     }
 
     @Override
@@ -59,7 +61,7 @@ public class DistributedSyncMcpToolCallbackProvider implements ToolCallbackProvi
                     toolCallbacks.addAll(mcpClint.listTools().tools().stream().filter((tool) -> {
                         return this.toolFilter.test(mcpClint.getMcpSyncClient(), tool);
                     }).map((tool) -> {
-                        return new DistributedSyncMcpToolCallback(mcpClint, tool);
+                        return new DistributedSyncMcpToolCallback(mcpClint, tool, this.contextFilter);
                     }).toList());                }
         );
         ToolCallback[] array = (ToolCallback[]) toolCallbacks.toArray(new ToolCallback[0]);

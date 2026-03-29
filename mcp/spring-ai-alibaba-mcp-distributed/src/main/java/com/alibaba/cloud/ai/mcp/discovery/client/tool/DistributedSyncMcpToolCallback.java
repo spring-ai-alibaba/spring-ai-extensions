@@ -16,32 +16,42 @@
 
 package com.alibaba.cloud.ai.mcp.discovery.client.tool;
 
+import java.util.Map;
+import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
+
 import com.alibaba.cloud.ai.mcp.discovery.client.transport.DistributedSyncMcpClient;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.mcp.McpToolUtils;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.util.Assert;
-
-import java.util.Map;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author yingzi
  * @since 2025/10/25
  */
-
 public class DistributedSyncMcpToolCallback implements ToolCallback {
 
     private final DistributedSyncMcpClient distributedSyncMcpClient;
 
     private final McpSchema.Tool tool;
 
-    public DistributedSyncMcpToolCallback(DistributedSyncMcpClient distributedSyncMcpClient, McpSchema.Tool tool) {
+    private final BiPredicate<String, Object> contextFilter;
+    private final BiPredicate<String, Object> defaultContextFilter = (key, value) -> key != null && key.startsWith("_meta");
+
+    public DistributedSyncMcpToolCallback(
+            DistributedSyncMcpClient distributedSyncMcpClient,
+            McpSchema.Tool tool,
+            BiPredicate<String, Object> contextFilter) {
         Assert.notNull(distributedSyncMcpClient, "distributedSyncClient must not be null");
         Assert.notNull(tool, "tool must not be null");
         this.distributedSyncMcpClient = distributedSyncMcpClient;
         this.tool = tool;
+        this.contextFilter = contextFilter != null ? contextFilter : defaultContextFilter;
     }
 
     @Override
@@ -50,17 +60,36 @@ public class DistributedSyncMcpToolCallback implements ToolCallback {
                 .name(McpToolUtils.prefixedToolName(this.distributedSyncMcpClient.getServerName(), this.tool.name()))
                 .description(this.tool.description())
                 .inputSchema(ModelOptionsUtils.toJsonString(this.tool.inputSchema()))
-                .build();    }
+                .build();
+    }
+
+    @Override
+    public String call(String toolInput, ToolContext toolContext) {
+        Map<String, Object> arguments = ModelOptionsUtils.jsonToMap(toolInput);
+        Map<String, Object> meta = Map.of();
+        if (toolContext != null && !CollectionUtils.isEmpty(toolContext.getContext())) {
+            meta = toolContext.getContext()
+                    .entrySet()
+                    .stream()
+                    .filter(entry -> entry.getValue() != null
+                            && this.contextFilter.test(entry.getKey(), entry.getValue()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        }
+        McpSchema.CallToolResult response = this.distributedSyncMcpClient.callTool(new McpSchema.CallToolRequest(this.tool.name(), arguments, meta));
+        if (response.isError() != null && response.isError()) {
+            throw new IllegalStateException("Error calling tool: " + response.content());
+        } else {
+            return ModelOptionsUtils.toJsonString(response.content());
+        }
+    }
 
     @Override
     public String call(String toolInput) {
         Map<String, Object> arguments = ModelOptionsUtils.jsonToMap(toolInput);
-        McpSchema.CallToolResult response = this.distributedSyncMcpClient
-                .callTool(new McpSchema.CallToolRequest(this.tool.name(), arguments));
+        McpSchema.CallToolResult response = this.distributedSyncMcpClient.callTool(new McpSchema.CallToolRequest(this.tool.name(), arguments));
         if (response.isError() != null && response.isError()) {
             throw new IllegalStateException("Error calling tool: " + response.content());
-        }
-        else {
+        } else {
             return ModelOptionsUtils.toJsonString(response.content());
         }
     }
