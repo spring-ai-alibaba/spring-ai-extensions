@@ -132,7 +132,7 @@ class DashScopeImageModelObservationTests {
 
     var output =
             new DashScopeImageAsyncResponseOutput(
-            "00001", "SUCCEEDED", null, null, null, List.of(fakeResult), null, null, "code", "msg");
+            "00001", "SUCCEEDED", null, null, null, List.of(fakeResult), null, null, null, "code", "msg");
 
 
     var response = new DashScopeImageAsyncResponse("req-test", output, null);

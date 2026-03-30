@@ -62,6 +62,8 @@ public final class DashScopeApiConstants {
 
 	public static final String IMAGE_GENERATION_RESTFUL_URL = "/api/v1/services/aigc/image-generation/generation";
 
+	public static final String OUT_PAINTING_RESTFUL_URL = "/api/v1/services/aigc/image2image/out-painting";
+
 	public static final String AUDIO_TRANSCRIPTION_RESTFUL_URL = "/api/v1/services/audio/asr/transcription";
 
 	public static final String TEXT_RERANK_RESTFUL_URL = "/api/v1/services/rerank/text-rerank/text-rerank";

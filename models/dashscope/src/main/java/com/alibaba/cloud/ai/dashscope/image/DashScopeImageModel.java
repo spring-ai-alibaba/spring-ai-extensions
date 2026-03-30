@@ -374,11 +374,15 @@ public class DashScopeImageModel implements ImageModel {
     private ImageResponse toImageResponse(DashScopeApiSpec.DashScopeImageAsyncResponse asyncResp) {
         var output = asyncResp.output();
         var results = output.results();
+        String outputImageUrl = output.outputImageUrl();
         List<DashScopeImageAsyncResponseChoice> choices = output.choices();
         List<ImageGeneration> gens = new ArrayList<>();
         ImageResponseMetadata md = toMetadata(asyncResp);
         if (results != null) {
             gens = results.stream().map(r -> new ImageGeneration(new Image(r.url(), null))).collect(Collectors.toList());
+        }
+        if (outputImageUrl != null && !outputImageUrl.isEmpty()) {
+            gens.add(new ImageGeneration(new Image(outputImageUrl, null)));
         }
         if (choices != null) {
             for (DashScopeImageAsyncResponseChoice choice : choices) {
@@ -423,7 +427,17 @@ public class DashScopeImageModel implements ImageModel {
                         options.getMaskColor(),
                         options.getNegativePrompt(),
                         options.getMaxImages(),
-                        options.getEnableInterleave()));
+                        options.getEnableInterleave(),
+                        options.getOutputRatio(),
+                        options.getXScale(),
+                        options.getYScale(),
+                        options.getAngle(),
+                        options.getLeftOffset(),
+                        options.getRightOffset(),
+                        options.getTopOffset(),
+                        options.getBottomOffset(),
+                        options.getBestQuality(),
+                        options.getLimitImageSize()));
     }
 
     private ImageResponseMetadata toMetadata(DashScopeApiSpec.DashScopeImageAsyncResponse re) {
