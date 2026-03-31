@@ -115,6 +115,16 @@ public class DashScopeImageOptions implements ImageOptions {
   @JsonProperty("enable_interleave")
   private Boolean enableInterleave;
 
+  /**
+   * Enable synchronous call. When true, no async header is sent.
+   * - null: auto based on model default (backward compatible)
+   * - true: sync call (no async header)
+   * - false: async call (with async header)
+   * Note: If model doesn't support sync, will auto-downgrade to async with WARN log.
+   */
+  @JsonProperty("enable_sync")
+  private Boolean enableSync;
+
   public Boolean getPromptExtend() {
     return promptExtend;
   }
@@ -209,6 +219,14 @@ public class DashScopeImageOptions implements ImageOptions {
 
   public void setEnableInterleave(Boolean enableInterleave) {
     this.enableInterleave = enableInterleave;
+  }
+
+  public Boolean getEnableSync() {
+    return enableSync;
+  }
+
+  public void setEnableSync(Boolean enableSync) {
+    this.enableSync = enableSync;
   }
 
   public static Builder builder() {
@@ -331,7 +349,7 @@ public class DashScopeImageOptions implements ImageOptions {
         + this.maskImageUrl + '\'' + ", sketchImageUrl='" + this.sketchImageUrl + '\'' + ", sketchWeight="
         + this.sketchWeight + ", sketchExtraction=" + this.sketchExtraction + ", sketchColor="
         + Arrays.toString(this.sketchColor) + ", maskColor=" + Arrays.toString(this.maskColor) + ", maxImages="
-        + this.maxImages + ", enableInterleave=" + this.enableInterleave + '}';
+        + this.maxImages + ", enableInterleave=" + this.enableInterleave + ", enableSync=" + this.enableSync + '}';
   }
 
   public static class Builder {
@@ -576,6 +594,16 @@ public class DashScopeImageOptions implements ImageOptions {
     @Deprecated
     public Builder withEnableInterleave(Boolean enableInterleave) {
         return enableInterleave(enableInterleave);
+    }
+
+    public Builder enableSync(Boolean enableSync) {
+        this.options.enableSync = enableSync;
+        return this;
+    }
+
+    @Deprecated
+    public Builder withEnableSync(Boolean enableSync) {
+        return enableSync(enableSync);
     }
 
     public DashScopeImageOptions build() {

@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.image;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.when;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
@@ -122,7 +123,7 @@ class DashScopeImageModelTests {
 	@Test
 	void testNullResponse() {
 		// Test handling of null API response
-		when(dashScopeImageApi.submitImageGenTask(any())).thenReturn(null);
+		when(dashScopeImageApi.submitImageGenTask(any(), anyBoolean())).thenReturn(null);
 
 		ImagePrompt prompt = new ImagePrompt(TEST_PROMPT);
 		ImageResponse response = imageModel.call(prompt);
@@ -150,7 +151,7 @@ class DashScopeImageModelTests {
         DashScopeImageAsyncResponse submitResponse = new DashScopeImageAsyncResponse(TEST_REQUEST_ID,
                 new DashScopeImageAsyncResponseOutput(TEST_TASK_ID, "PENDING", null, null, null, null, null, null, null, null),
                 new DashScopeImageAsyncResponseUsage(1));
-        when(dashScopeImageApi.submitImageGenTask(any())).thenReturn(ResponseEntity.ok(submitResponse));
+        when(dashScopeImageApi.submitImageGenTask(any(), anyBoolean())).thenReturn(ResponseEntity.ok(submitResponse));
 
 
 		// Mock successful task completion
@@ -166,7 +167,7 @@ class DashScopeImageModelTests {
 		DashScopeImageAsyncResponse submitResponse = new DashScopeImageAsyncResponse(TEST_REQUEST_ID,
                 new DashScopeImageAsyncResponseOutput(TEST_TASK_ID, "PENDING", null, null, null, null, null, null, null, null),
                 new DashScopeImageAsyncResponseUsage(1));
-		when(dashScopeImageApi.submitImageGenTask(any())).thenReturn(ResponseEntity.ok(submitResponse));
+		when(dashScopeImageApi.submitImageGenTask(any(), anyBoolean())).thenReturn(ResponseEntity.ok(submitResponse));
 
 		// Mock failed task completion
 		DashScopeImageAsyncResponse failedResponse = new DashScopeImageAsyncResponse(TEST_REQUEST_ID,
@@ -202,7 +203,7 @@ class DashScopeImageModelTests {
 		DashScopeImageAsyncResponse submitResponse = new DashScopeImageAsyncResponse(TEST_REQUEST_ID,
                 new DashScopeImageAsyncResponseOutput(TEST_TASK_ID, "PENDING", null, null, null, null, null, null, null, null),
                 new DashScopeImageAsyncResponseUsage(1));
-		when(dashScopeImageApi.submitImageGenTask(any())).thenReturn(ResponseEntity.ok(submitResponse));
+		when(dashScopeImageApi.submitImageGenTask(any(), anyBoolean())).thenReturn(ResponseEntity.ok(submitResponse));
 
 		// Mock pending status for all status checks
 		DashScopeImageAsyncResponse pendingResponse = new DashScopeImageAsyncResponse(TEST_REQUEST_ID,

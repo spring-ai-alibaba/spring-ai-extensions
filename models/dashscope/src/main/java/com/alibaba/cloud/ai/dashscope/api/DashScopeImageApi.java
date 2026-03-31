@@ -123,17 +123,22 @@ public class DashScopeImageApi {
 			.build();
 	}
 
-	public ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> submitImageGenTask(DashScopeApiSpec.DashScopeImageRequest request) {
+	public ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> submitImageGenTask(DashScopeApiSpec.DashScopeImageRequest request, boolean needsAsync) {
 
 		String model = request.model();
 		ImageApiPath path = resolveImagePath(model);
 		String imagesUri = path.uri;
 		Object requestBody = path.needImageGenerationBody ? convertToImageGenerationRequest(request) : request;
 
-		return this.restClient.post()
+		var requestBuilder = this.restClient.post()
 			.uri(imagesUri)
-			.header(HEADER_ASYNC, ENABLED)
-			.body(requestBody)
+			.body(requestBody);
+
+		if (needsAsync) {
+			requestBuilder.header(HEADER_ASYNC, ENABLED);
+		}
+
+		return requestBuilder
 			.retrieve()
 			.toEntity(DashScopeApiSpec.DashScopeImageAsyncResponse.class);
 	}
@@ -157,6 +162,18 @@ public class DashScopeImageApi {
 		}
 		// Wanx 2.5 and below, wanx series: text2image/image-synthesis
 		return new ImageApiPath(this.imagesPath, false);
+	}
+
+	/**
+	 * Check if model only supports async calls.
+	 * Models that only support async will return 403 if async header is not sent.
+	 */
+	private boolean isAsyncOnlyModel(String model) {
+		return model.equals("qwen-image") ||
+			   model.equals("qwen-image-plus") ||
+			   model.equals("qwen-mt-image") ||
+			   model.equals("wanx-v1") ||
+			   model.equals("wanx2.1-imageedit");
 	}
 
 	private static final class ImageApiPath {

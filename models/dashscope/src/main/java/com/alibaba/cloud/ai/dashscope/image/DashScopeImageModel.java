@@ -269,13 +269,16 @@ public class DashScopeImageModel implements ImageModel {
     }
 
     public String submitImageGenTask(ImagePrompt request) {
-
         DashScopeImageOptions imageOptions = toImageOptions(request.getOptions());
         logger.debug("Image options: {}", imageOptions);
 
         DashScopeApiSpec.DashScopeImageRequest dashScopeImageRequest = constructImageRequest(request, imageOptions);
 
-        ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> submitResponse = dashScopeImageApi.submitImageGenTask(dashScopeImageRequest);
+        // Determine async mode based on enableSync option
+        boolean useAsync = determineUseAsync(imageOptions.getEnableSync(), imageOptions.getModel());
+
+        ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> submitResponse =
+            dashScopeImageApi.submitImageGenTask(dashScopeImageRequest, useAsync);
 
         if (submitResponse == null || submitResponse.getBody() == null) {
             logger.warn("Submit imageGen error,request: {}", request);
@@ -283,6 +286,44 @@ public class DashScopeImageModel implements ImageModel {
         }
 
         return submitResponse.getBody().output().taskId();
+    }
+
+    /**
+     * Determine whether to use async mode.
+     * @param enableSync User's sync preference (null=auto, true=sync, false=async)
+     * @param model The model name
+     * @return true if should use async, false if should use sync
+     */
+    private boolean determineUseAsync(Boolean enableSync, String model) {
+        if (Boolean.TRUE.equals(enableSync)) {
+            // User explicitly wants sync
+            if (isAsyncOnlyModelForModel(model)) {
+                // Model doesn't support sync, auto-downgrade to async
+                logger.warn("Model {} does not support sync call, auto switching to async", model);
+                return true;
+            }
+            return false;
+        }
+        if (Boolean.FALSE.equals(enableSync)) {
+            // User explicitly wants async
+            return true;
+        }
+        // User didn't specify, use model default
+        // Async-only models default to async, others default to sync
+        return !isDefaultSyncModel(model);
+    }
+
+    /**
+     * Check if model only supports async calls.
+     * Models that only support async will return 403 if async header is not sent.
+     * This logic must be consistent with DashScopeImageApi.isAsyncOnlyModel().
+     */
+    private boolean isAsyncOnlyModelForModel(String model) {
+        return model.equals("qwen-image") ||
+               model.equals("qwen-image-plus") ||
+               model.equals("qwen-mt-image") ||
+               model.equals("wanx-v1") ||
+               model.equals("wanx2.1-imageedit");
     }
 
     /**
@@ -313,6 +354,20 @@ public class DashScopeImageModel implements ImageModel {
 
     public DashScopeImageOptions getOptions() {
         return this.defaultOptions;
+    }
+
+    /**
+     * Check if model defaults to sync call.
+     * These models support both sync and async, but sync is recommended.
+     */
+    private boolean isDefaultSyncModel(String model) {
+        if (model == null) {
+            return false;
+        }
+        return model.equals("qwen-image-edit") ||
+               model.startsWith("wan2.2-t2i") ||
+               model.startsWith("wan2.5") ||
+               model.startsWith("wan2.6");
     }
 
     private ImageResponse toImageResponse(DashScopeApiSpec.DashScopeImageAsyncResponse asyncResp) {
