@@ -165,8 +165,11 @@ DashScopeChatModel 支持：
 MCP 提供了一个标准化协议，用于管理和路由 AI 模型上下文。此扩展包括：
 
 - **MCP Common**: 模型上下文协议的核心抽象和工具
+- **MCP Gateway**: 统一的 MCP 服务网关，支持多协议和 OAuth 认证
 - **MCP Registry**: 用于发现和管理 MCP 服务的注册中心
 - **MCP Router**: 智能路由功能，用于在多个模型上下文之间分发请求
+
+**MCP SDK 版本**: 0.14.0
 
 **可用的 Starter：**
 - `spring-ai-alibaba-starter-mcp-registry`

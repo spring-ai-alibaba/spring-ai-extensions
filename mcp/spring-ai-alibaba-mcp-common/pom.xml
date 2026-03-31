@@ -53,7 +53,6 @@
     </scm>
 
     <properties>
-        <mcp-spring.version>0.14.0</mcp-spring.version>
         <json-schema-validator.version>1.5.3</json-schema-validator.version>
     </properties>
 
@@ -90,7 +89,6 @@
         <dependency>
             <groupId>io.modelcontextprotocol.sdk</groupId>
             <artifactId>mcp-spring-webflux</artifactId>
-            <version>${mcp-spring.version}</version>
         </dependency>
 
         <dependency>

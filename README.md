@@ -165,8 +165,11 @@ Speech-to-text transcription model that converts audio into text with high accur
 MCP provides a standardized protocol for managing and routing AI model contexts. This extension includes:
 
 - **MCP Common**: Core abstractions and utilities for Model Context Protocol
+- **MCP Gateway**: Unified MCP service gateway with multi-protocol and OAuth authentication support
 - **MCP Registry**: Service registry for discovering and managing MCP services
 - **MCP Router**: Intelligent routing capabilities for distributing requests across multiple model contexts
+
+**MCP SDK Version**: 0.14.0
 
 **Available Starters:**
 - `spring-ai-alibaba-starter-mcp-registry`

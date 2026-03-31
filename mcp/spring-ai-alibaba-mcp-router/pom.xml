@@ -52,7 +52,7 @@
     </scm>
 
     <properties>
-        <mcp.version>0.10.0</mcp.version>
+        <mcp.version>0.14.0</mcp.version>
     </properties>
 
     <dependencies>
