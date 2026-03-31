@@ -591,7 +591,8 @@ public class DashScopeChatModel implements ChatModel {
 		}
 
 		Boolean multiModel = requestOptions.getMultiModel();
-		String model = requestOptions.getModel();
+		String model = StringUtils.hasText(requestOptions.getModel()) ? requestOptions.getModel()
+				: this.defaultOptions.getModel();
 		Assert.hasText(model, "DashScope model must not be empty");
 
 		return new ChatCompletionRequest(model,
@@ -743,6 +744,8 @@ public class DashScopeChatModel implements ChatModel {
 
                 options.getEnableThinking(),
                 options.getThinkingBudget(),
+
+                options.getEnableCodeInterpreter(),
 
                 options.getVlHighResolutionImages(),
                 options.getVlEnableImageHwOutput(),

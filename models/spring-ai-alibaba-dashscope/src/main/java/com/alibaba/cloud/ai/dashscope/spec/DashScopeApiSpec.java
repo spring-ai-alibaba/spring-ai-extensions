@@ -581,6 +581,8 @@ public class DashScopeApiSpec {
             @JsonProperty("enable_thinking") @Nullable Boolean enableThinking,
             @JsonProperty("thinking_budget") @Nullable Integer thinkingBudget,
 
+            @JsonProperty("enable_code_interpreter") @Nullable Boolean enableCodeInterpreter,
+
             @JsonProperty("vl_high_resolution_images") @Nullable Boolean vlHighResolutionImages,
             @JsonProperty("vl_enable_image_hw_output") @Nullable Boolean vlEnableImageHwOutput,
             @JsonProperty("ocr_options") @Nullable OCROption ocrOptions,
@@ -630,7 +632,7 @@ public class DashScopeApiSpec {
          */
         public ChatCompletionRequestParameter() {
 
-            this(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            this(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                     null, null, null, null, null, null, null, null, null, null, null, null, null, null);
          }
 

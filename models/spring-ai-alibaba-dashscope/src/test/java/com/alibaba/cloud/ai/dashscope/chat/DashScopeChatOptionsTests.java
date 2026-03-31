@@ -68,6 +68,7 @@ class DashScopeChatOptionsTests {
                 .repetitionPenalty(TEST_REPETITION_PENALTY)
                 .stream(true)
                 .enableSearch(true)
+                .enableCodeInterpreter(true)
                 .incrementalOutput(true)
                 .vlHighResolutionImages(true)
                 .enableThinking(true)
@@ -85,6 +86,7 @@ class DashScopeChatOptionsTests {
         assertThat(options.getRepetitionPenalty()).isEqualTo(TEST_REPETITION_PENALTY);
         assertThat(options.getStream()).isTrue();
         assertThat(options.getEnableSearch()).isTrue();
+        assertThat(options.getEnableCodeInterpreter()).isTrue();
         assertThat(options.getIncrementalOutput()).isTrue();
         assertThat(options.getVlHighResolutionImages()).isTrue();
         assertThat(options.getEnableThinking()).isTrue();
@@ -106,6 +108,7 @@ class DashScopeChatOptionsTests {
         options.setRepetitionPenalty(TEST_REPETITION_PENALTY);
         options.setStream(true);
         options.setEnableSearch(true);
+        options.setEnableCodeInterpreter(true);
         options.setIncrementalOutput(true);
         options.setVlHighResolutionImages(true);
         options.setEnableThinking(true);
@@ -122,6 +125,7 @@ class DashScopeChatOptionsTests {
         assertThat(options.getRepetitionPenalty()).isEqualTo(TEST_REPETITION_PENALTY);
         assertThat(options.getStream()).isTrue();
         assertThat(options.getEnableSearch()).isTrue();
+        assertThat(options.getEnableCodeInterpreter()).isTrue();
         assertThat(options.getIncrementalOutput()).isTrue();
         assertThat(options.getVlHighResolutionImages()).isTrue();
         assertThat(options.getEnableThinking()).isTrue();
@@ -183,6 +187,7 @@ class DashScopeChatOptionsTests {
                 .temperature(TEST_TEMPERATURE)
                 .topP(TEST_TOP_P)
                 .topK(TEST_TOP_K)
+                .enableCodeInterpreter(true)
                 .build();
 
         DashScopeChatOptions copy = (DashScopeChatOptions) original.copy();
@@ -198,18 +203,21 @@ class DashScopeChatOptionsTests {
                 .model(TEST_MODEL)
                 .temperature(TEST_TEMPERATURE)
                 .extraBody(TEST_EXTRA_BODY)
+                .enableCodeInterpreter(true)
                 .build();
 
         DashScopeChatOptions options2 = DashScopeChatOptions.builder()
                 .model(TEST_MODEL)
                 .temperature(TEST_TEMPERATURE)
                 .extraBody(TEST_EXTRA_BODY)
+                .enableCodeInterpreter(true)
                 .build();
 
         DashScopeChatOptions options3 = DashScopeChatOptions.builder()
                 .model("different-model")
                 .temperature(0.5)
                 .extraBody(Map.of())
+                .enableCodeInterpreter(false)
                 .build();
 
         assertThat(options1).isEqualTo(options2);
@@ -224,12 +232,14 @@ class DashScopeChatOptionsTests {
         DashScopeChatOptions options = DashScopeChatOptions.builder()
                 .model(TEST_MODEL)
                 .temperature(TEST_TEMPERATURE)
+                .enableCodeInterpreter(true)
                 .build();
 
         String toString = options.toString();
 
         assertThat(toString).contains("DashScopeChatOptions")
                 .contains(TEST_MODEL)
+                .contains("enable_code_interpreter")
                 .contains(TEST_TEMPERATURE.toString());
     }
 }

@@ -203,6 +203,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
     private @Nullable @JsonProperty("thinking_budget") Integer thinkingBudget;
 
     /**
+     * Whether to enable the code interpreter function.
+     */
+    private @Nullable @JsonProperty("enable_code_interpreter") Boolean enableCodeInterpreter;
+
+    /**
      * Collection of {@link ToolCallback}s to be used for tool calling in the chat completion requests.
      */
     @JsonIgnore
@@ -521,6 +526,14 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         this.thinkingBudget = thinkingBudget;
     }
 
+    public @Nullable Boolean getEnableCodeInterpreter() {
+        return this.enableCodeInterpreter;
+    }
+
+    public void setEnableCodeInterpreter(@Nullable Boolean enableCodeInterpreter) {
+        this.enableCodeInterpreter = enableCodeInterpreter;
+    }
+
     public void setResponseFormat(@Nullable DashScopeResponseFormat responseFormat) {
 
         this.responseFormat = responseFormat;
@@ -816,6 +829,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
             return this;
         }
 
+        public DashScopeChatOptionsBuilder enableCodeInterpreter(@Nullable Boolean enableCodeInterpreter) {
+            this.options.enableCodeInterpreter = enableCodeInterpreter;
+            return this;
+        }
+
         public DashScopeChatOptionsBuilder modalities(@Nullable List<String> modalities) {
             this.options.modalities = modalities;
             return this;
@@ -854,6 +872,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 .responseFormat(fromOptions.responseFormat)
                 .stream(fromOptions.stream)
                 .enableSearch(fromOptions.enableSearch)
+                .enableCodeInterpreter(fromOptions.enableCodeInterpreter)
                 .incrementalOutput(fromOptions.incrementalOutput)
                 .toolCallbacks(fromOptions.toolCallbacks)
                 .toolNames(fromOptions.toolNames)
@@ -886,6 +905,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 && Objects.equals(this.temperature, that.temperature) && Objects.equals(this.seed, that.seed)
                 && Objects.equals(this.topP, that.topP) && Objects.equals(this.topK, that.topK)
                 && Objects.equals(this.stop, that.stop) && Objects.equals(this.enableSearch, that.enableSearch)
+                && Objects.equals(this.enableCodeInterpreter, that.enableCodeInterpreter)
                 && Objects.equals(this.responseFormat, that.responseFormat)
                 && Objects.equals(this.incrementalOutput, that.incrementalOutput)
                 && Objects.equals(this.repetitionPenalty, that.repetitionPenalty)
@@ -908,7 +928,13 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.model, this.stream, this.temperature, this.seed, this.topP, this.topK, this.stop, this.enableSearch, this.responseFormat, this.incrementalOutput, this.repetitionPenalty, this.tools, this.toolChoice, this.vlHighResolutionImages, this.enableThinking, this.thinkingBudget, this.toolCallbacks, this.toolNames, this.internalToolExecutionEnabled, this.multiModel, this.searchOptions, this.parallelToolCalls, this.httpHeaders, this.toolContext, this.modalities, this.audio, this.streamOptions, this.extraBody);
+        return Objects.hash(this.model, this.stream, this.temperature, this.seed, this.topP, this.topK, this.stop,
+                this.enableSearch, this.enableCodeInterpreter, this.responseFormat, this.incrementalOutput,
+                this.repetitionPenalty, this.tools, this.toolChoice, this.vlHighResolutionImages,
+                this.enableThinking, this.thinkingBudget, this.toolCallbacks, this.toolNames,
+                this.internalToolExecutionEnabled, this.multiModel, this.searchOptions, this.parallelToolCalls,
+                this.httpHeaders, this.toolContext, this.modalities, this.audio, this.streamOptions,
+                this.extraBody);
     }
 
     @Override
