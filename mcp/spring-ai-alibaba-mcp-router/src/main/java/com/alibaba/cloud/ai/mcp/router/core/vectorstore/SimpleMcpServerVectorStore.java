@@ -19,6 +19,7 @@ package com.alibaba.cloud.ai.mcp.router.core.vectorstore;
 
 import com.alibaba.cloud.ai.mcp.router.model.McpServerInfo;
 import org.apache.commons.collections.CollectionUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
@@ -44,12 +45,12 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 
 	private static final Logger logger = LoggerFactory.getLogger(SimpleMcpServerVectorStore.class);
 
-	private final EmbeddingModel embeddingModel;
+	private final @Nullable EmbeddingModel embeddingModel;
 
-	private final SimpleVectorStore vectorStore;
+	private final @Nullable SimpleVectorStore vectorStore;
 
 	@Autowired(required = false)
-	public SimpleMcpServerVectorStore(EmbeddingModel embeddingModel) {
+	public SimpleMcpServerVectorStore(@Nullable EmbeddingModel embeddingModel) {
 		this.embeddingModel = embeddingModel;
 		if (embeddingModel != null) {
 			this.vectorStore = SimpleVectorStore.builder(embeddingModel).build();
@@ -121,7 +122,7 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 	}
 
 	@Override
-	public McpServerInfo getServer(String serviceName) {
+	public @Nullable McpServerInfo getServer(String serviceName) {
 		if (vectorStore == null) {
 			logger.warn("Cannot get server '{}': vectorStore is null", serviceName);
 			return null;
@@ -213,8 +214,8 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 			// 去重并排序
 			return documents.stream().filter(doc -> {
 				// 降低分数阈值，或者对于关键词匹配的结果不进行分数过滤
-                Double scoreObj = doc.getScore();
-                double score = (scoreObj!=null)?scoreObj.doubleValue():0.0;
+				Double scoreObj = doc.getScore();
+				double score = (scoreObj != null) ? scoreObj.doubleValue() : 0.0;
 				Object keywordScore = doc.getMetadata().get("keywordScore");
 				if (keywordScore != null) {
 					// 关键词匹配的结果，使用关键词分数
@@ -240,6 +241,11 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 	 * 关键词匹配搜索
 	 */
 	private List<Document> searchByKeywords(String query, int limit) {
+		if (vectorStore == null) {
+			logger.warn("Cannot search keywords: vectorStore is null");
+			return new ArrayList<>();
+		}
+
 		try {
 			// 获取所有文档进行关键词匹配
 			SearchRequest searchRequest = SearchRequest.builder().query(" ").topK(Integer.MAX_VALUE).build();
@@ -363,11 +369,13 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 	 * 将 McpServerInfo 转换为 Document
 	 */
 	private Document convertToDocument(McpServerInfo serverInfo) {
+		String serviceName = Objects.requireNonNull(serverInfo.getName(), "serverInfo.name must not be null");
+
 		// 构建更丰富的搜索文本，增加描述信息的权重
 		StringBuilder textBuilder = new StringBuilder();
 
 		// 服务名称（高权重）
-		textBuilder.append(serverInfo.getName()).append(" ");
+		textBuilder.append(serviceName).append(" ");
 
 		// 描述信息（高权重，重复添加以增加权重）
 		if (serverInfo.getDescription() != null && !serverInfo.getDescription().trim().isEmpty()) {
@@ -396,7 +404,7 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 			textBuilder.append(String.join(" ", serverInfo.getTags())).append(" ");
 		}
 
-		Map<String, Object> metadata = Map.of("serviceName", serverInfo.getName(), "description",
+		Map<String, Object> metadata = Map.of("serviceName", serviceName, "description",
 				Optional.ofNullable(serverInfo.getDescription()).orElse(""), "protocol",
 				Optional.ofNullable(serverInfo.getProtocol()).orElse(""), "version",
 				Optional.ofNullable(serverInfo.getVersion()).orElse(""), "endpoint",
@@ -404,13 +412,13 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 				Optional.ofNullable(serverInfo.getEnabled()).orElse(true), "tags",
 				Optional.ofNullable(serverInfo.getTags()).orElse(List.of()), "vectorType", "mcp_service");
 
-		return new Document(serverInfo.getName(), textBuilder.toString().trim(), metadata);
+		return new Document(serviceName, textBuilder.toString().trim(), metadata);
 	}
 
 	/**
 	 * 将 Document 转换为 McpServerInfo
 	 */
-	private McpServerInfo convertFromDocument(Document document) {
+	private @Nullable McpServerInfo convertFromDocument(Document document) {
 		try {
 			String serviceName = (String) document.getMetadata().get("serviceName");
 			String description = (String) document.getMetadata().get("description");
@@ -430,8 +438,8 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 				serverInfo.setScore(((Number) keywordScore).doubleValue());
 			}
 			else {
-                Double scoreObj = document.getScore();
-                serverInfo.setScore((scoreObj!=null)?scoreObj.doubleValue():0.0);
+				Double scoreObj = document.getScore();
+				serverInfo.setScore((scoreObj != null) ? scoreObj.doubleValue() : 0.0);
 			}
 
 			return serverInfo;
@@ -468,8 +476,9 @@ public class SimpleMcpServerVectorStore implements McpServerVectorStore {
 				logger.info("  Version: {}", doc.getMetadata().get("version"));
 				logger.info("  Endpoint: {}", doc.getMetadata().get("endpoint"));
 				logger.info("  Tags: {}", doc.getMetadata().get("tags"));
-				logger.info("  Text content: {}",
-						doc.getText().substring(0, Math.min(100, doc.getText().length())) + "...");
+				String text = doc.getText();
+				String preview = (text == null) ? "" : text.substring(0, Math.min(100, text.length())) + "...";
+				logger.info("  Text content: {}", preview);
 			}
 			logger.info("=== End Debug Information ===");
 		}

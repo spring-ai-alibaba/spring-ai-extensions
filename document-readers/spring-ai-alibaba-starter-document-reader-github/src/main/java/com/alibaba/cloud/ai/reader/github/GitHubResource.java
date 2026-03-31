@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.reader.github;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -44,7 +45,7 @@ public class GitHubResource implements Resource {
 
 	private final GHContent content;
 
-	public GitHubResource(GitHub gitHub, String owner, String repo, String branch, String path) {
+	public GitHubResource(GitHub gitHub, String owner, String repo, @Nullable String branch, String path) {
 		if (Objects.isNull(branch)) {
 			branch = "main";
 		}
@@ -83,17 +84,17 @@ public class GitHubResource implements Resource {
 
 	@Override
 	public URL getURL() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("GitHubResource does not expose a direct URL");
 	}
 
 	@Override
 	public URI getURI() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("GitHubResource does not expose a direct URI");
 	}
 
 	@Override
 	public File getFile() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("GitHubResource does not expose a local file");
 	}
 
 	@Override
@@ -108,7 +109,7 @@ public class GitHubResource implements Resource {
 
 	@Override
 	public Resource createRelative(String relativePath) throws IOException {
-		return null;
+		throw new UnsupportedOperationException("GitHubResource does not support createRelative");
 	}
 
 	@Override
@@ -132,66 +133,69 @@ public class GitHubResource implements Resource {
 
 	public static class Builder {
 
-		private String apiUrl;
+			private @Nullable String apiUrl;
 
-		private String gitHubToken;
+			private @Nullable String gitHubToken;
 
-		private String gitHubTokenOrganization;
+			private @Nullable String gitHubTokenOrganization;
 
-		private GitHub gitHub;
+			private @Nullable GitHub gitHub;
 
-		private String owner;
+			private @Nullable String owner;
 
-		private String repo;
+			private @Nullable String repo;
 
-		private String branch;
+			private @Nullable String branch;
 
-		private String path;
+			private @Nullable String path;
 
-		public Builder apiUrl(String apiUrl) {
-			this.apiUrl = apiUrl;
-			return this;
-		}
+			public Builder apiUrl(@Nullable String apiUrl) {
+				this.apiUrl = apiUrl;
+				return this;
+			}
 
-		public Builder gitHubToken(String gitHubToken) {
-			this.gitHubToken = gitHubToken;
-			return this;
-		}
+			public Builder gitHubToken(@Nullable String gitHubToken) {
+				this.gitHubToken = gitHubToken;
+				return this;
+			}
 
-		public Builder gitHubTokenOrganization(String gitHubTokenOrganization) {
-			this.gitHubTokenOrganization = gitHubTokenOrganization;
-			return this;
-		}
+			public Builder gitHubTokenOrganization(@Nullable String gitHubTokenOrganization) {
+				this.gitHubTokenOrganization = gitHubTokenOrganization;
+				return this;
+			}
 
-		public Builder gitHub(GitHub gitHub) {
-			this.gitHub = gitHub;
-			return this;
-		}
+			public Builder gitHub(@Nullable GitHub gitHub) {
+				this.gitHub = gitHub;
+				return this;
+			}
 
-		public Builder owner(String owner) {
-			this.owner = owner;
-			return this;
-		}
+			public Builder owner(@Nullable String owner) {
+				this.owner = owner;
+				return this;
+			}
 
-		public Builder repo(String repo) {
-			this.repo = repo;
-			return this;
-		}
+			public Builder repo(@Nullable String repo) {
+				this.repo = repo;
+				return this;
+			}
 
-		public Builder branch(String branch) {
-			this.branch = branch;
-			return this;
-		}
+			public Builder branch(@Nullable String branch) {
+				this.branch = branch;
+				return this;
+			}
 
-		public Builder path(String path) {
-			this.path = path;
-			return this;
-		}
+			public Builder path(@Nullable String path) {
+				this.path = path;
+				return this;
+			}
 
-		public GitHubResource build() {
-			createGithub();
-			return new GitHubResource(gitHub, owner, repo, branch, path);
-		}
+			public GitHubResource build() {
+				createGithub();
+				return new GitHubResource(Objects.requireNonNull(gitHub, "GitHub must not be null"),
+						Objects.requireNonNull(owner, "Owner must not be null"),
+						Objects.requireNonNull(repo, "Repo must not be null"), branch,
+						Objects.requireNonNull(path, "Path must not be null"));
+			}
 
 		public List<GitHubResource> buildBatch() {
 			createGithub();
@@ -225,13 +229,17 @@ public class GitHubResource implements Resource {
 			}
 		}
 
-		private List<GitHubResource> loadGitHubResources() {
-			List<GitHubResource> gitHubResources = new ArrayList<>();
-			try {
-				gitHub.getRepository(owner + "/" + repo)
-					.getDirectoryContent(path, branch)
-					.forEach(ghDirectoryContent -> Builder.scanDirectory(ghDirectoryContent, gitHubResources));
-			}
+			private List<GitHubResource> loadGitHubResources() {
+				List<GitHubResource> gitHubResources = new ArrayList<>();
+				GitHub currentGitHub = Objects.requireNonNull(gitHub, "GitHub must not be null");
+				String currentOwner = Objects.requireNonNull(owner, "Owner must not be null");
+				String currentRepo = Objects.requireNonNull(repo, "Repo must not be null");
+				String currentPath = Objects.requireNonNull(path, "Path must not be null");
+				try {
+					currentGitHub.getRepository(currentOwner + "/" + currentRepo)
+						.getDirectoryContent(currentPath, branch)
+						.forEach(ghDirectoryContent -> Builder.scanDirectory(ghDirectoryContent, gitHubResources));
+				}
 			catch (IOException ioException) {
 				throw new RuntimeException(ioException);
 			}

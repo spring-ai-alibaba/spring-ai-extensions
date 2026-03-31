@@ -19,6 +19,7 @@ package com.alibaba.cloud.ai.dashscope.sdk.image;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.image.ImageOptions;
 
 import java.util.HashMap;
@@ -32,34 +33,34 @@ import java.util.Objects;
 public class DashScopeSdkImageOptions implements ImageOptions {
 
 	@JsonProperty("model")
-	private String model;
+	private @Nullable String model;
 
 	@JsonProperty("n")
-	private Integer n;
+	private @Nullable Integer n;
 
 	@JsonProperty("width")
-	private Integer width;
+	private @Nullable Integer width;
 
 	@JsonProperty("height")
-	private Integer height;
+	private @Nullable Integer height;
 
 	@JsonProperty("size")
-	private String size;
+	private @Nullable String size;
 
 	@JsonProperty("style")
-	private String style;
+	private @Nullable String style;
 
 	@JsonProperty("response_format")
-	private String responseFormat;
+	private @Nullable String responseFormat;
 
 	@JsonProperty("seed")
-	private Integer seed;
+	private @Nullable Integer seed;
 
 	@JsonProperty("negative_prompt")
-	private String negativePrompt;
+	private @Nullable String negativePrompt;
 
 	@JsonProperty("ref_image")
-	private String refImage;
+	private @Nullable String refImage;
 
 	@JsonProperty("poll_interval_ms")
 	private Integer pollIntervalMs = 1000;
@@ -71,13 +72,13 @@ public class DashScopeSdkImageOptions implements ImageOptions {
 	private Map<String, String> httpHeaders = new HashMap<>();
 
 	@JsonProperty("extra_body")
-	private Map<String, Object> extraBody;
+	private @Nullable Map<String, Object> extraBody;
 
 	public static DashScopeSdkImageOptionsBuilder builder() {
 		return new DashScopeSdkImageOptionsBuilder();
 	}
 
-	public static DashScopeSdkImageOptions fromOptions(DashScopeSdkImageOptions options) {
+	public static @Nullable DashScopeSdkImageOptions fromOptions(@Nullable DashScopeSdkImageOptions options) {
 		if (options == null) {
 			return null;
 		}
@@ -100,91 +101,91 @@ public class DashScopeSdkImageOptions implements ImageOptions {
 	}
 
 	@Override
-	public Integer getN() {
+	public @Nullable Integer getN() {
 		return this.n;
 	}
 
-	public void setN(Integer n) {
+	public void setN(@Nullable Integer n) {
 		this.n = n;
 	}
 
 	@Override
-	public String getModel() {
+	public @Nullable String getModel() {
 		return this.model;
 	}
 
-	public void setModel(String model) {
+	public void setModel(@Nullable String model) {
 		this.model = model;
 	}
 
 	@Override
-	public Integer getWidth() {
+	public @Nullable Integer getWidth() {
 		return this.width;
 	}
 
-	public void setWidth(Integer width) {
+	public void setWidth(@Nullable Integer width) {
 		this.width = width;
 	}
 
 	@Override
-	public Integer getHeight() {
+	public @Nullable Integer getHeight() {
 		return this.height;
 	}
 
-	public void setHeight(Integer height) {
+	public void setHeight(@Nullable Integer height) {
 		this.height = height;
 	}
 
-	public String getSize() {
+	public @Nullable String getSize() {
 		if (this.size != null) {
 			return this.size;
 		}
 		return (this.width != null && this.height != null) ? this.width + "*" + this.height : null;
 	}
 
-	public void setSize(String size) {
+	public void setSize(@Nullable String size) {
 		this.size = size;
 	}
 
 	@Override
-	public String getResponseFormat() {
+	public @Nullable String getResponseFormat() {
 		return this.responseFormat;
 	}
 
-	public void setResponseFormat(String responseFormat) {
+	public void setResponseFormat(@Nullable String responseFormat) {
 		this.responseFormat = responseFormat;
 	}
 
 	@Override
-	public String getStyle() {
+	public @Nullable String getStyle() {
 		return this.style;
 	}
 
-	public void setStyle(String style) {
+	public void setStyle(@Nullable String style) {
 		this.style = style;
 	}
 
-	public Integer getSeed() {
+	public @Nullable Integer getSeed() {
 		return this.seed;
 	}
 
-	public void setSeed(Integer seed) {
+	public void setSeed(@Nullable Integer seed) {
 		this.seed = seed;
 	}
 
-	public String getNegativePrompt() {
+	public @Nullable String getNegativePrompt() {
 		return this.negativePrompt;
 	}
 
-	public void setNegativePrompt(String negativePrompt) {
+	public void setNegativePrompt(@Nullable String negativePrompt) {
 		this.negativePrompt = negativePrompt;
 	}
 
-	public String getRefImage() {
+	public @Nullable String getRefImage() {
 		return this.refImage;
 	}
 
-	public void setRefImage(String refImage) {
+	public void setRefImage(@Nullable String refImage) {
 		this.refImage = refImage;
 	}
 
@@ -212,11 +213,11 @@ public class DashScopeSdkImageOptions implements ImageOptions {
 		this.httpHeaders = httpHeaders;
 	}
 
-	public Map<String, Object> getExtraBody() {
+	public @Nullable Map<String, Object> getExtraBody() {
 		return this.extraBody;
 	}
 
-	public void setExtraBody(Map<String, Object> extraBody) {
+	public void setExtraBody(@Nullable Map<String, Object> extraBody) {
 		this.extraBody = extraBody;
 	}
 
@@ -254,52 +255,52 @@ public class DashScopeSdkImageOptions implements ImageOptions {
 			this.options = new DashScopeSdkImageOptions();
 		}
 
-		public DashScopeSdkImageOptionsBuilder model(String model) {
+		public DashScopeSdkImageOptionsBuilder model(@Nullable String model) {
 			this.options.model = model;
 			return this;
 		}
 
-		public DashScopeSdkImageOptionsBuilder n(Integer n) {
+		public DashScopeSdkImageOptionsBuilder n(@Nullable Integer n) {
 			this.options.n = n;
 			return this;
 		}
 
-		public DashScopeSdkImageOptionsBuilder width(Integer width) {
+		public DashScopeSdkImageOptionsBuilder width(@Nullable Integer width) {
 			this.options.width = width;
 			return this;
 		}
 
-		public DashScopeSdkImageOptionsBuilder height(Integer height) {
+		public DashScopeSdkImageOptionsBuilder height(@Nullable Integer height) {
 			this.options.height = height;
 			return this;
 		}
 
-		public DashScopeSdkImageOptionsBuilder size(String size) {
+		public DashScopeSdkImageOptionsBuilder size(@Nullable String size) {
 			this.options.size = size;
 			return this;
 		}
 
-		public DashScopeSdkImageOptionsBuilder style(String style) {
+		public DashScopeSdkImageOptionsBuilder style(@Nullable String style) {
 			this.options.style = style;
 			return this;
 		}
 
-		public DashScopeSdkImageOptionsBuilder responseFormat(String responseFormat) {
+		public DashScopeSdkImageOptionsBuilder responseFormat(@Nullable String responseFormat) {
 			this.options.responseFormat = responseFormat;
 			return this;
 		}
 
-		public DashScopeSdkImageOptionsBuilder seed(Integer seed) {
+		public DashScopeSdkImageOptionsBuilder seed(@Nullable Integer seed) {
 			this.options.seed = seed;
 			return this;
 		}
 
-		public DashScopeSdkImageOptionsBuilder negativePrompt(String negativePrompt) {
+		public DashScopeSdkImageOptionsBuilder negativePrompt(@Nullable String negativePrompt) {
 			this.options.negativePrompt = negativePrompt;
 			return this;
 		}
 
-		public DashScopeSdkImageOptionsBuilder refImage(String refImage) {
+		public DashScopeSdkImageOptionsBuilder refImage(@Nullable String refImage) {
 			this.options.refImage = refImage;
 			return this;
 		}
@@ -319,7 +320,7 @@ public class DashScopeSdkImageOptions implements ImageOptions {
 			return this;
 		}
 
-		public DashScopeSdkImageOptionsBuilder extraBody(Map<String, Object> extraBody) {
+		public DashScopeSdkImageOptionsBuilder extraBody(@Nullable Map<String, Object> extraBody) {
 			this.options.extraBody = extraBody;
 			return this;
 		}

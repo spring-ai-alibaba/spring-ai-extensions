@@ -30,6 +30,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -70,10 +71,10 @@ public class RestClientTool {
 	}
 
 	public String get(String uri, MultiValueMap<String, String> params, Map<String, ?> variables) {
-		return restClient.get()
+		return Objects.requireNonNull(restClient.get()
 			.uri(uriBuilder -> uriBuilder.path(uri).queryParams(params).build(variables))
 			.retrieve()
-			.body(String.class);
+			.body(String.class), "Response body must not be null");
 	}
 
 	public String get(String uri, MultiValueMap<String, String> params) {
@@ -90,12 +91,12 @@ public class RestClientTool {
 
 	public <T> String post(String uri, MultiValueMap<String, String> params, Map<String, ?> variables, T value,
 			MediaType mediaType) {
-		return restClient.post()
+		return Objects.requireNonNull(restClient.post()
 			.uri(uriBuilder -> uriBuilder.path(uri).queryParams(params).build(variables))
 			.contentType(mediaType)
 			.body(value)
 			.retrieve()
-			.body(String.class);
+			.body(String.class), "Response body must not be null");
 	}
 
 	public <T> String post(String uri, MultiValueMap<String, String> params, Map<String, ?> variables, T value) {

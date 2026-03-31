@@ -15,7 +15,10 @@
  */
 package com.alibaba.cloud.ai.memory.jdbc;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.util.Objects;
 
 public class SQLiteChatMemoryRepository extends JdbcChatMemoryRepository {
 
@@ -29,15 +32,15 @@ public class SQLiteChatMemoryRepository extends JdbcChatMemoryRepository {
 
 	public static class SQLiteBuilder {
 
-		private JdbcTemplate jdbcTemplate;
+		private @Nullable JdbcTemplate jdbcTemplate;
 
-		public SQLiteBuilder jdbcTemplate(JdbcTemplate jdbcTemplate) {
+		public SQLiteBuilder jdbcTemplate(@Nullable JdbcTemplate jdbcTemplate) {
 			this.jdbcTemplate = jdbcTemplate;
 			return this;
 		}
 
 		public SQLiteChatMemoryRepository build() {
-			return new SQLiteChatMemoryRepository(this.jdbcTemplate);
+			return new SQLiteChatMemoryRepository(Objects.requireNonNull(this.jdbcTemplate, "jdbcTemplate must not be null"));
 		}
 
 	}

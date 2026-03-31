@@ -35,6 +35,7 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
@@ -99,9 +100,9 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	private final ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate;
 
-	private final String apiKey;
+	private final @Nullable String apiKey;
 
-	private final String workspaceId;
+	private final @Nullable String workspaceId;
 
 	private final Map<String, String> connectionHeaders;
 
@@ -109,7 +110,8 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	public DashScopeSdkChatModel(DashScopeSdkGenerationClient generationClient, DashScopeSdkChatOptions defaultOptions,
                                  ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
-                                 ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate, String apiKey, String workspaceId,
+                                 ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate, @Nullable String apiKey,
+                                 @Nullable String workspaceId,
                                  Map<String, String> connectionHeaders) {
 
 		Assert.notNull(generationClient, "generationClient cannot be null");
@@ -149,10 +151,10 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	@Override
 	public ChatOptions getDefaultOptions() {
-		return DashScopeSdkChatOptions.fromOptions(this.defaultOptions);
+		return java.util.Objects.requireNonNull(DashScopeSdkChatOptions.fromOptions(this.defaultOptions));
 	}
 
-	public ChatResponse internalCall(Prompt prompt, ChatResponse previousChatResponse) {
+	public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
 		GenerationParam request = createRequest(prompt, false);
 
 		ChatModelObservationContext observationContext = ChatModelObservationContext.builder()
@@ -184,7 +186,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 		return response;
 	}
 
-	public Flux<ChatResponse> internalStream(Prompt prompt, ChatResponse previousChatResponse) {
+	public Flux<ChatResponse> internalStream(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
 		return Flux.deferContextual(contextView -> {
 			GenerationParam request = createRequest(prompt, true);
 
@@ -278,17 +280,29 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	GenerationParam createRequest(Prompt prompt, boolean stream) {
 		DashScopeSdkChatOptions requestOptions = (DashScopeSdkChatOptions) prompt.getOptions();
+		Assert.notNull(requestOptions, "DashScopeSdkChatOptions cannot be null");
+		String model = java.util.Objects.requireNonNull(requestOptions.getModel(),
+				"DashScopeSdkChatOptions model cannot be null");
 		List<Message> sdkMessages = toSdkMessages(prompt);
 
 		GenerationParam.GenerationParamBuilder<?, ?> requestBuilder = GenerationParam.builder()
-			.model(requestOptions.getModel())
+			.model(model)
 			.messages(sdkMessages)
 			.resultFormat("message")
-			.enableSearch(requestOptions.getEnableSearch())
-			.maxTokens(requestOptions.getMaxTokens())
-			.topP(requestOptions.getTopP())
-			.topK(requestOptions.getTopK())
-			.seed(requestOptions.getSeed());
+			.enableSearch(requestOptions.getEnableSearch());
+
+		if (requestOptions.getMaxTokens() != null) {
+			requestBuilder.maxTokens(requestOptions.getMaxTokens());
+		}
+		if (requestOptions.getTopP() != null) {
+			requestBuilder.topP(requestOptions.getTopP());
+		}
+		if (requestOptions.getTopK() != null) {
+			requestBuilder.topK(requestOptions.getTopK());
+		}
+		if (requestOptions.getSeed() != null) {
+			requestBuilder.seed(requestOptions.getSeed());
+		}
 
 		if (requestOptions.getTemperature() != null) {
 			requestBuilder.temperature(requestOptions.getTemperature().floatValue());
@@ -353,7 +367,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 		});
 	}
 
-	private ChatResponse toChatResponse(GenerationResult generationResult, ChatResponse previousChatResponse,
+	private ChatResponse toChatResponse(GenerationResult generationResult, @Nullable ChatResponse previousChatResponse,
 			String requestModel) {
 		if (generationResult == null || generationResult.getOutput() == null) {
 			return new ChatResponse(List.of());
@@ -504,7 +518,10 @@ public class DashScopeSdkChatModel implements ChatModel {
 		}).map(ToolBase.class::cast).toList();
 	}
 
-	private void applyStop(GenerationParam.GenerationParamBuilder<?, ?> requestBuilder, List<Object> stop) {
+	private void applyStop(GenerationParam.GenerationParamBuilder<?, ?> requestBuilder, @Nullable List<Object> stop) {
+		if (stop == null) {
+			return;
+		}
 		if (CollectionUtils.isEmpty(stop)) {
 			return;
 		}
@@ -546,8 +563,8 @@ public class DashScopeSdkChatModel implements ChatModel {
 		return headers;
 	}
 
-	private Map<String, Object> mergeExtraBody(Map<String, Object> runtimeExtraBody,
-			Map<String, Object> defaultExtraBody) {
+	private @Nullable Map<String, Object> mergeExtraBody(@Nullable Map<String, Object> runtimeExtraBody,
+			@Nullable Map<String, Object> defaultExtraBody) {
 		if (defaultExtraBody == null && runtimeExtraBody == null) {
 			return null;
 		}
@@ -602,9 +619,9 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 		private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
-		private String apiKey;
+		private @Nullable String apiKey;
 
-		private String workspaceId;
+		private @Nullable String workspaceId;
 
 		private Map<String, String> connectionHeaders = new HashMap<>();
 
@@ -654,12 +671,12 @@ public class DashScopeSdkChatModel implements ChatModel {
 			return this;
 		}
 
-		public Builder apiKey(String apiKey) {
+		public Builder apiKey(@Nullable String apiKey) {
 			this.apiKey = apiKey;
 			return this;
 		}
 
-		public Builder workspaceId(String workspaceId) {
+		public Builder workspaceId(@Nullable String workspaceId) {
 			this.workspaceId = workspaceId;
 			return this;
 		}

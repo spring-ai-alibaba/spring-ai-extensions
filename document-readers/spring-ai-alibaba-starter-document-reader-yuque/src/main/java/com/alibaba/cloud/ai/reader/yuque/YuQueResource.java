@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
@@ -154,25 +155,26 @@ public class YuQueResource implements Resource {
 
 	public static class Builder {
 
-		private String yuQueToken;
+			private @Nullable String yuQueToken;
 
-		private String resourcePath;
+			private @Nullable String resourcePath;
 
-		public Builder yuQueToken(String yuQueToken) {
-			this.yuQueToken = yuQueToken;
-			return this;
-		}
+			public Builder yuQueToken(@Nullable String yuQueToken) {
+				this.yuQueToken = yuQueToken;
+				return this;
+			}
 
-		public Builder resourcePath(String resourcePath) {
-			this.resourcePath = resourcePath;
-			return this;
-		}
+			public Builder resourcePath(@Nullable String resourcePath) {
+				this.resourcePath = resourcePath;
+				return this;
+			}
 
-		public YuQueResource build() {
-			Assert.notNull(yuQueToken, "YuQueToken must not be null");
-			Assert.notNull(resourcePath, "ResourcePath must not be null");
-			return new YuQueResource(yuQueToken, resourcePath);
-		}
+			public YuQueResource build() {
+				Assert.notNull(yuQueToken, "YuQueToken must not be null");
+				Assert.notNull(resourcePath, "ResourcePath must not be null");
+				return new YuQueResource(Objects.requireNonNull(yuQueToken, "YuQueToken must not be null"),
+						Objects.requireNonNull(resourcePath, "ResourcePath must not be null"));
+			}
 
 	}
 
@@ -187,7 +189,7 @@ public class YuQueResource implements Resource {
 
 	@Override
 	public URL getURL() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("YuQueResource does not expose a direct URL");
 	}
 
 	@Override
@@ -197,7 +199,7 @@ public class YuQueResource implements Resource {
 
 	@Override
 	public File getFile() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("YuQueResource does not expose a local file");
 	}
 
 	@Override
@@ -212,7 +214,7 @@ public class YuQueResource implements Resource {
 
 	@Override
 	public Resource createRelative(String relativePath) throws IOException {
-		return null;
+		throw new UnsupportedOperationException("YuQueResource does not support createRelative");
 	}
 
 	@Override

@@ -19,6 +19,7 @@ package com.alibaba.cloud.ai.mcp.router.model.response;
 import com.alibaba.cloud.ai.mcp.router.model.McpServerInfo;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -41,13 +42,13 @@ public class McpServerSearchResponse {
 	 * 错误消息（当 success 为 false 时）
 	 */
 	@JsonProperty("error_message")
-	private String errorMessage;
+	private @Nullable String errorMessage;
 
 	/**
 	 * 搜索查询
 	 */
 	@JsonProperty("search_query")
-	private String searchQuery;
+	private @Nullable String searchQuery;
 
 	/**
 	 * 匹配的服务数量
@@ -59,18 +60,19 @@ public class McpServerSearchResponse {
 	 * 匹配的 MCP Server 列表
 	 */
 	@JsonProperty("servers")
-	private List<McpServerSearchResult> servers;
+	private @Nullable List<McpServerSearchResult> servers;
 
 	/**
 	 * 搜索建议（当没有找到结果时）
 	 */
 	@JsonProperty("suggestions")
-	private List<String> suggestions;
+	private @Nullable List<String> suggestions;
 
 	public McpServerSearchResponse() {
 	}
 
-	public McpServerSearchResponse(boolean success, String searchQuery, List<McpServerSearchResult> servers) {
+	public McpServerSearchResponse(boolean success, @Nullable String searchQuery,
+			@Nullable List<McpServerSearchResult> servers) {
 		this.success = success;
 		this.searchQuery = searchQuery;
 		this.servers = servers;
@@ -80,14 +82,15 @@ public class McpServerSearchResponse {
 	/**
 	 * 创建成功响应
 	 */
-	public static McpServerSearchResponse success(String searchQuery, List<McpServerSearchResult> servers) {
+	public static McpServerSearchResponse success(@Nullable String searchQuery,
+			@Nullable List<McpServerSearchResult> servers) {
 		return new McpServerSearchResponse(true, searchQuery, servers);
 	}
 
 	/**
 	 * 创建失败响应
 	 */
-	public static McpServerSearchResponse error(String searchQuery, String errorMessage) {
+	public static McpServerSearchResponse error(@Nullable String searchQuery, @Nullable String errorMessage) {
 		McpServerSearchResponse response = new McpServerSearchResponse();
 		response.success = false;
 		response.searchQuery = searchQuery;
@@ -106,43 +109,43 @@ public class McpServerSearchResponse {
 		 * 服务名称
 		 */
 		@JsonProperty("name")
-		private String name;
+		private @Nullable String name;
 
 		/**
 		 * 服务描述
 		 */
 		@JsonProperty("description")
-		private String description;
+		private @Nullable String description;
 
 		/**
 		 * 协议类型
 		 */
 		@JsonProperty("protocol")
-		private String protocol;
+		private @Nullable String protocol;
 
 		/**
 		 * 服务版本
 		 */
 		@JsonProperty("version")
-		private String version;
+		private @Nullable String version;
 
 		/**
 		 * 服务端点
 		 */
 		@JsonProperty("endpoint")
-		private String endpoint;
+		private @Nullable String endpoint;
 
 		/**
 		 * 是否启用
 		 */
 		@JsonProperty("enabled")
-		private Boolean enabled;
+		private @Nullable Boolean enabled;
 
 		/**
 		 * 服务标签
 		 */
 		@JsonProperty("tags")
-		private List<String> tags;
+		private @Nullable List<String> tags;
 
 		/**
 		 * 相似度分数 (0.0 - 1.0)
@@ -165,59 +168,59 @@ public class McpServerSearchResponse {
 		}
 
 		// Getters and Setters
-		public String getName() {
+		public @Nullable String getName() {
 			return name;
 		}
 
-		public void setName(String name) {
+		public void setName(@Nullable String name) {
 			this.name = name;
 		}
 
-		public String getDescription() {
+		public @Nullable String getDescription() {
 			return description;
 		}
 
-		public void setDescription(String description) {
+		public void setDescription(@Nullable String description) {
 			this.description = description;
 		}
 
-		public String getProtocol() {
+		public @Nullable String getProtocol() {
 			return protocol;
 		}
 
-		public void setProtocol(String protocol) {
+		public void setProtocol(@Nullable String protocol) {
 			this.protocol = protocol;
 		}
 
-		public String getVersion() {
+		public @Nullable String getVersion() {
 			return version;
 		}
 
-		public void setVersion(String version) {
+		public void setVersion(@Nullable String version) {
 			this.version = version;
 		}
 
-		public String getEndpoint() {
+		public @Nullable String getEndpoint() {
 			return endpoint;
 		}
 
-		public void setEndpoint(String endpoint) {
+		public void setEndpoint(@Nullable String endpoint) {
 			this.endpoint = endpoint;
 		}
 
-		public Boolean getEnabled() {
+		public @Nullable Boolean getEnabled() {
 			return enabled;
 		}
 
-		public void setEnabled(Boolean enabled) {
+		public void setEnabled(@Nullable Boolean enabled) {
 			this.enabled = enabled;
 		}
 
-		public List<String> getTags() {
+		public @Nullable List<String> getTags() {
 			return tags;
 		}
 
-		public void setTags(List<String> tags) {
+		public void setTags(@Nullable List<String> tags) {
 			this.tags = tags;
 		}
 
@@ -240,19 +243,19 @@ public class McpServerSearchResponse {
 		this.success = success;
 	}
 
-	public String getErrorMessage() {
+	public @Nullable String getErrorMessage() {
 		return errorMessage;
 	}
 
-	public void setErrorMessage(String errorMessage) {
+	public void setErrorMessage(@Nullable String errorMessage) {
 		this.errorMessage = errorMessage;
 	}
 
-	public String getSearchQuery() {
+	public @Nullable String getSearchQuery() {
 		return searchQuery;
 	}
 
-	public void setSearchQuery(String searchQuery) {
+	public void setSearchQuery(@Nullable String searchQuery) {
 		this.searchQuery = searchQuery;
 	}
 
@@ -264,20 +267,20 @@ public class McpServerSearchResponse {
 		this.totalCount = totalCount;
 	}
 
-	public List<McpServerSearchResult> getServers() {
+	public @Nullable List<McpServerSearchResult> getServers() {
 		return servers;
 	}
 
-	public void setServers(List<McpServerSearchResult> servers) {
+	public void setServers(@Nullable List<McpServerSearchResult> servers) {
 		this.servers = servers;
 		this.totalCount = servers != null ? servers.size() : 0;
 	}
 
-	public List<String> getSuggestions() {
+	public @Nullable List<String> getSuggestions() {
 		return suggestions;
 	}
 
-	public void setSuggestions(List<String> suggestions) {
+	public void setSuggestions(@Nullable List<String> suggestions) {
 		this.suggestions = suggestions;
 	}
 

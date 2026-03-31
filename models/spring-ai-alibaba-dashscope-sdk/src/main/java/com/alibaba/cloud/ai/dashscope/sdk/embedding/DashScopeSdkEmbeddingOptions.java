@@ -19,6 +19,7 @@ package com.alibaba.cloud.ai.dashscope.sdk.embedding;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.embedding.EmbeddingOptions;
 
 import java.util.HashMap;
@@ -32,13 +33,13 @@ import java.util.Objects;
 public class DashScopeSdkEmbeddingOptions implements EmbeddingOptions {
 
 	@JsonProperty("model")
-	private String model;
+	private @Nullable String model;
 
 	@JsonProperty("text_type")
-	private String textType;
+	private @Nullable String textType;
 
 	@JsonProperty("dimensions")
-	private Integer dimensions;
+	private @Nullable Integer dimensions;
 
 	@JsonIgnore
 	private Map<String, String> httpHeaders = new HashMap<>();
@@ -47,7 +48,7 @@ public class DashScopeSdkEmbeddingOptions implements EmbeddingOptions {
 		return new DashScopeSdkEmbeddingOptionsBuilder();
 	}
 
-	public static DashScopeSdkEmbeddingOptions fromOptions(DashScopeSdkEmbeddingOptions options) {
+	public static @Nullable DashScopeSdkEmbeddingOptions fromOptions(@Nullable DashScopeSdkEmbeddingOptions options) {
 		if (options == null) {
 			return null;
 		}
@@ -60,28 +61,28 @@ public class DashScopeSdkEmbeddingOptions implements EmbeddingOptions {
 	}
 
 	@Override
-	public String getModel() {
+	public @Nullable String getModel() {
 		return this.model;
 	}
 
-	public void setModel(String model) {
+	public void setModel(@Nullable String model) {
 		this.model = model;
 	}
 
-	public String getTextType() {
+	public @Nullable String getTextType() {
 		return this.textType;
 	}
 
-	public void setTextType(String textType) {
+	public void setTextType(@Nullable String textType) {
 		this.textType = textType;
 	}
 
 	@Override
-	public Integer getDimensions() {
+	public @Nullable Integer getDimensions() {
 		return this.dimensions;
 	}
 
-	public void setDimensions(Integer dimensions) {
+	public void setDimensions(@Nullable Integer dimensions) {
 		this.dimensions = dimensions;
 	}
 
@@ -119,17 +120,17 @@ public class DashScopeSdkEmbeddingOptions implements EmbeddingOptions {
 			this.options = new DashScopeSdkEmbeddingOptions();
 		}
 
-		public DashScopeSdkEmbeddingOptionsBuilder model(String model) {
+		public DashScopeSdkEmbeddingOptionsBuilder model(@Nullable String model) {
 			this.options.model = model;
 			return this;
 		}
 
-		public DashScopeSdkEmbeddingOptionsBuilder textType(String textType) {
+		public DashScopeSdkEmbeddingOptionsBuilder textType(@Nullable String textType) {
 			this.options.textType = textType;
 			return this;
 		}
 
-		public DashScopeSdkEmbeddingOptionsBuilder dimensions(Integer dimensions) {
+		public DashScopeSdkEmbeddingOptionsBuilder dimensions(@Nullable Integer dimensions) {
 			this.options.dimensions = dimensions;
 			return this;
 		}

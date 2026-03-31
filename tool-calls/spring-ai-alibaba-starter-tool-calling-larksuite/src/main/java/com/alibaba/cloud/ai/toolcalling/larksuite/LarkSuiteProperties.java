@@ -27,12 +27,12 @@ public class LarkSuiteProperties {
 	/**
 	 * AppId
 	 */
-	private String appId;
+	private String appId = "";
 
 	/**
 	 * AppSecret
 	 */
-	private String appSecret;
+	private String appSecret = "";
 
 	public String getAppId() {
 		return appId;

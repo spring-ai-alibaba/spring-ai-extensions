@@ -126,30 +126,30 @@ public class GitLabIssueReader extends AbstractGitLabReader {
 			IssuesApi issuesApi = gitLabApi.getIssuesApi();
 
 			// Convert Integer iids to Long iids
-			List<Long> longIids = config.getIids() != null ? config.getIids().stream().map(Long::valueOf).toList()
-					: null;
+			@Nullable List<Integer> iids = config.getIids();
+			@Nullable GitLabIssueState state = config.getState();
+			@Nullable GitLabScope scope = config.getScope();
+			@Nullable LocalDateTime createdAfter = config.getCreatedAfter();
+			@Nullable LocalDateTime createdBefore = config.getCreatedBefore();
+			@Nullable LocalDateTime updatedAfter = config.getUpdatedAfter();
+			@Nullable LocalDateTime updatedBefore = config.getUpdatedBefore();
+			@Nullable List<Long> longIids = iids != null ? iids.stream().map(Long::valueOf).toList() : null;
 
 			// Build the filter parameters
 			IssueFilter filter = new IssueFilter().withIids(longIids)
-				.withState(config.getState() != null
-						? Constants.IssueState.valueOf(config.getState().getValue().toUpperCase())
-						: Constants.IssueState.OPENED)
+				.withState(
+						state != null ? Constants.IssueState.valueOf(state.getValue().toUpperCase()) : Constants.IssueState.OPENED)
 				.withLabels(config.getLabels())
 				.withMilestone(config.getMilestone())
-				.withScope(config.getScope() != null
-						? Constants.IssueScope.valueOf(config.getScope().getValue().toUpperCase()) : null)
+				.withScope(scope != null ? Constants.IssueScope.valueOf(scope.getValue().toUpperCase()) : null)
 				.withSearch(config.getSearch())
-				.withCreatedAfter(
-						config.getCreatedAfter() != null ? toGitLabDateFormat(config.getCreatedAfter()) : null)
-				.withCreatedBefore(
-						config.getCreatedBefore() != null ? toGitLabDateFormat(config.getCreatedBefore()) : null)
-				.withUpdatedAfter(
-						config.getUpdatedAfter() != null ? toGitLabDateFormat(config.getUpdatedAfter()) : null)
-				.withUpdatedBefore(
-						config.getUpdatedBefore() != null ? toGitLabDateFormat(config.getUpdatedBefore()) : null);
+				.withCreatedAfter(createdAfter != null ? toGitLabDateFormat(createdAfter) : null)
+				.withCreatedBefore(createdBefore != null ? toGitLabDateFormat(createdBefore) : null)
+				.withUpdatedAfter(updatedAfter != null ? toGitLabDateFormat(updatedAfter) : null)
+				.withUpdatedBefore(updatedBefore != null ? toGitLabDateFormat(updatedBefore) : null);
 
 			// Handle assignee and author
-			String assignee = config.getAssignee();
+			@Nullable String assignee = config.getAssignee();
 			if (assignee != null) {
 				try {
 					Long assigneeId = Long.parseLong(assignee);
@@ -161,7 +161,7 @@ public class GitLabIssueReader extends AbstractGitLabReader {
 				}
 			}
 
-			String author = config.getAuthor();
+			@Nullable String author = config.getAuthor();
 			if (author != null) {
 				try {
 					Long authorId = Long.parseLong(author);

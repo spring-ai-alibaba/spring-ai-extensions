@@ -17,6 +17,9 @@ package com.alibaba.cloud.ai.toolcalling.larksuite.param.req;
 
 import com.google.gson.annotations.SerializedName;
 import com.lark.oapi.core.annotation.Body;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author NewGK
@@ -46,8 +49,8 @@ public class ValuesAppendReq {
 	}
 
 	public ValuesAppendReq(Builder builder) {
-		this.body = builder.body;
-		this.spreadsheetToken = builder.spreadsheetToken;
+		this.body = Objects.requireNonNull(builder.body, "body must not be null");
+		this.spreadsheetToken = Objects.requireNonNull(builder.spreadsheetToken, "spreadsheetToken must not be null");
 	}
 
 	public static Builder newBuilder() {
@@ -56,16 +59,16 @@ public class ValuesAppendReq {
 
 	public static class Builder {
 
-		private ValuesAppendReqBody body;
+		private @Nullable ValuesAppendReqBody body;
 
-		private String spreadsheetToken;
+		private @Nullable String spreadsheetToken;
 
-		public Builder body(ValuesAppendReqBody body) {
+		public Builder body(@Nullable ValuesAppendReqBody body) {
 			this.body = body;
 			return this;
 		}
 
-		public Builder spreadsheetToken(String spreadsheetToken) {
+		public Builder spreadsheetToken(@Nullable String spreadsheetToken) {
 			this.spreadsheetToken = spreadsheetToken;
 			return this;
 		}

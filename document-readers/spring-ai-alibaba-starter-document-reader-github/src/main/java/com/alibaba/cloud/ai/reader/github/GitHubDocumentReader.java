@@ -16,7 +16,7 @@
 package com.alibaba.cloud.ai.reader.github;
 
 import org.kohsuke.github.GHContent;
-
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 
@@ -36,9 +36,9 @@ public class GitHubDocumentReader implements DocumentReader {
 
 	private final DocumentParser parser;
 
-	private GitHubResource gitHubResource;
+	private @Nullable GitHubResource gitHubResource;
 
-	private List<GitHubResource> gitHubResourceList;
+	private @Nullable List<GitHubResource> gitHubResourceList;
 
 	public GitHubDocumentReader(GitHubResource gitHubResource, DocumentParser parser) {
 		this.gitHubResource = gitHubResource;
@@ -64,7 +64,7 @@ public class GitHubDocumentReader implements DocumentReader {
 	}
 
 	private void processResourceList(List<Document> documents) {
-		for (GitHubResource resource : gitHubResourceList) {
+		for (GitHubResource resource : Objects.requireNonNull(gitHubResourceList, "gitHubResourceList must not be null")) {
 			loadDocuments(documents, resource);
 		}
 	}

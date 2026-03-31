@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.mcp.router.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -41,13 +42,13 @@ public class McpDebugResponse {
 	 * 错误消息（当 success 为 false 时）
 	 */
 	@JsonProperty("error_message")
-	private String errorMessage;
+	private @Nullable String errorMessage;
 
 	/**
 	 * 服务名称
 	 */
 	@JsonProperty("service_name")
-	private String serviceName;
+	private @Nullable String serviceName;
 
 	/**
 	 * 调试时间戳
@@ -59,25 +60,25 @@ public class McpDebugResponse {
 	 * 服务状态检查
 	 */
 	@JsonProperty("service_status")
-	private McpServiceStatus serviceStatus;
+	private @Nullable McpServiceStatus serviceStatus;
 
 	/**
 	 * 连接诊断信息
 	 */
 	@JsonProperty("connection_diagnosis")
-	private McpConnectionDiagnosis connectionDiagnosis;
+	private @Nullable McpConnectionDiagnosis connectionDiagnosis;
 
 	/**
 	 * 问题排查建议
 	 */
 	@JsonProperty("troubleshooting_suggestions")
-	private List<String> troubleshootingSuggestions;
+	private @Nullable List<String> troubleshootingSuggestions;
 
 	/**
 	 * 系统环境信息
 	 */
 	@JsonProperty("system_info")
-	private Map<String, Object> systemInfo;
+	private @Nullable Map<String, Object> systemInfo;
 
 	public McpDebugResponse() {
 		this.debugTimestamp = System.currentTimeMillis();
@@ -86,8 +87,8 @@ public class McpDebugResponse {
 	/**
 	 * 创建成功响应
 	 */
-	public static McpDebugResponse success(String serviceName, McpServiceStatus serviceStatus,
-			McpConnectionDiagnosis connectionDiagnosis, List<String> suggestions) {
+	public static McpDebugResponse success(@Nullable String serviceName, @Nullable McpServiceStatus serviceStatus,
+			@Nullable McpConnectionDiagnosis connectionDiagnosis, @Nullable List<String> suggestions) {
 		McpDebugResponse response = new McpDebugResponse();
 		response.success = true;
 		response.serviceName = serviceName;
@@ -100,7 +101,7 @@ public class McpDebugResponse {
 	/**
 	 * 创建失败响应
 	 */
-	public static McpDebugResponse error(String serviceName, String errorMessage) {
+	public static McpDebugResponse error(@Nullable String serviceName, @Nullable String errorMessage) {
 		McpDebugResponse response = new McpDebugResponse();
 		response.success = false;
 		response.serviceName = serviceName;
@@ -154,7 +155,7 @@ public class McpDebugResponse {
 		 * 服务基本信息
 		 */
 		@JsonProperty("service_info")
-		private Map<String, String> serviceInfo;
+		private @Nullable Map<String, String> serviceInfo;
 
 		public McpServiceStatus() {
 		}
@@ -208,11 +209,11 @@ public class McpDebugResponse {
 			this.connectionCached = connectionCached;
 		}
 
-		public Map<String, String> getServiceInfo() {
+		public @Nullable Map<String, String> getServiceInfo() {
 			return serviceInfo;
 		}
 
-		public void setServiceInfo(Map<String, String> serviceInfo) {
+		public void setServiceInfo(@Nullable Map<String, String> serviceInfo) {
 			this.serviceInfo = serviceInfo;
 		}
 
@@ -228,7 +229,7 @@ public class McpDebugResponse {
 		 * 完整连接 URL
 		 */
 		@JsonProperty("full_url")
-		private String fullUrl;
+		private @Nullable String fullUrl;
 
 		/**
 		 * 基础 URL 是否可达
@@ -246,35 +247,35 @@ public class McpDebugResponse {
 		 * HTTP 状态码
 		 */
 		@JsonProperty("http_status_code")
-		private Integer httpStatusCode;
+		private @Nullable Integer httpStatusCode;
 
 		/**
 		 * 响应时间（毫秒）
 		 */
 		@JsonProperty("response_time_ms")
-		private Long responseTimeMs;
+		private @Nullable Long responseTimeMs;
 
 		/**
 		 * 诊断详情
 		 */
 		@JsonProperty("diagnosis_details")
-		private List<String> diagnosisDetails;
+		private @Nullable List<String> diagnosisDetails;
 
 		/**
 		 * 网络错误信息
 		 */
 		@JsonProperty("network_error")
-		private String networkError;
+		private @Nullable String networkError;
 
 		public McpConnectionDiagnosis() {
 		}
 
 		// Getters and Setters
-		public String getFullUrl() {
+		public @Nullable String getFullUrl() {
 			return fullUrl;
 		}
 
-		public void setFullUrl(String fullUrl) {
+		public void setFullUrl(@Nullable String fullUrl) {
 			this.fullUrl = fullUrl;
 		}
 
@@ -294,35 +295,35 @@ public class McpDebugResponse {
 			this.endpointReachable = endpointReachable;
 		}
 
-		public Integer getHttpStatusCode() {
+		public @Nullable Integer getHttpStatusCode() {
 			return httpStatusCode;
 		}
 
-		public void setHttpStatusCode(Integer httpStatusCode) {
+		public void setHttpStatusCode(@Nullable Integer httpStatusCode) {
 			this.httpStatusCode = httpStatusCode;
 		}
 
-		public Long getResponseTimeMs() {
+		public @Nullable Long getResponseTimeMs() {
 			return responseTimeMs;
 		}
 
-		public void setResponseTimeMs(Long responseTimeMs) {
+		public void setResponseTimeMs(@Nullable Long responseTimeMs) {
 			this.responseTimeMs = responseTimeMs;
 		}
 
-		public List<String> getDiagnosisDetails() {
+		public @Nullable List<String> getDiagnosisDetails() {
 			return diagnosisDetails;
 		}
 
-		public void setDiagnosisDetails(List<String> diagnosisDetails) {
+		public void setDiagnosisDetails(@Nullable List<String> diagnosisDetails) {
 			this.diagnosisDetails = diagnosisDetails;
 		}
 
-		public String getNetworkError() {
+		public @Nullable String getNetworkError() {
 			return networkError;
 		}
 
-		public void setNetworkError(String networkError) {
+		public void setNetworkError(@Nullable String networkError) {
 			this.networkError = networkError;
 		}
 
@@ -337,19 +338,19 @@ public class McpDebugResponse {
 		this.success = success;
 	}
 
-	public String getErrorMessage() {
+	public @Nullable String getErrorMessage() {
 		return errorMessage;
 	}
 
-	public void setErrorMessage(String errorMessage) {
+	public void setErrorMessage(@Nullable String errorMessage) {
 		this.errorMessage = errorMessage;
 	}
 
-	public String getServiceName() {
+	public @Nullable String getServiceName() {
 		return serviceName;
 	}
 
-	public void setServiceName(String serviceName) {
+	public void setServiceName(@Nullable String serviceName) {
 		this.serviceName = serviceName;
 	}
 
@@ -361,35 +362,35 @@ public class McpDebugResponse {
 		this.debugTimestamp = debugTimestamp;
 	}
 
-	public McpServiceStatus getServiceStatus() {
+	public @Nullable McpServiceStatus getServiceStatus() {
 		return serviceStatus;
 	}
 
-	public void setServiceStatus(McpServiceStatus serviceStatus) {
+	public void setServiceStatus(@Nullable McpServiceStatus serviceStatus) {
 		this.serviceStatus = serviceStatus;
 	}
 
-	public McpConnectionDiagnosis getConnectionDiagnosis() {
+	public @Nullable McpConnectionDiagnosis getConnectionDiagnosis() {
 		return connectionDiagnosis;
 	}
 
-	public void setConnectionDiagnosis(McpConnectionDiagnosis connectionDiagnosis) {
+	public void setConnectionDiagnosis(@Nullable McpConnectionDiagnosis connectionDiagnosis) {
 		this.connectionDiagnosis = connectionDiagnosis;
 	}
 
-	public List<String> getTroubleshootingSuggestions() {
+	public @Nullable List<String> getTroubleshootingSuggestions() {
 		return troubleshootingSuggestions;
 	}
 
-	public void setTroubleshootingSuggestions(List<String> troubleshootingSuggestions) {
+	public void setTroubleshootingSuggestions(@Nullable List<String> troubleshootingSuggestions) {
 		this.troubleshootingSuggestions = troubleshootingSuggestions;
 	}
 
-	public Map<String, Object> getSystemInfo() {
+	public @Nullable Map<String, Object> getSystemInfo() {
 		return systemInfo;
 	}
 
-	public void setSystemInfo(Map<String, Object> systemInfo) {
+	public void setSystemInfo(@Nullable Map<String, Object> systemInfo) {
 		this.systemInfo = systemInfo;
 	}
 

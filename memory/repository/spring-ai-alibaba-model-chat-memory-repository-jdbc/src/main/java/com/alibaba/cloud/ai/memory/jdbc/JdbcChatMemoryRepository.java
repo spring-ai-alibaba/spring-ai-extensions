@@ -21,13 +21,13 @@ import org.springframework.ai.chat.messages.*;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 import java.sql.*;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class JdbcChatMemoryRepository implements ChatMemoryRepository {
@@ -138,10 +138,9 @@ public abstract class JdbcChatMemoryRepository implements ChatMemoryRepository {
 	private static class MessageRowMapper implements RowMapper<Message> {
 
 		@Override
-		@Nullable
 		public Message mapRow(ResultSet rs, int i) throws SQLException {
-			var content = rs.getString(1);
-			var type = MessageType.valueOf(rs.getString(2));
+			var content = Objects.requireNonNull(rs.getString(1), "message content must not be null");
+			var type = MessageType.valueOf(Objects.requireNonNull(rs.getString(2), "message type must not be null"));
 
 			return switch (type) {
 				case USER -> new UserMessage(content);

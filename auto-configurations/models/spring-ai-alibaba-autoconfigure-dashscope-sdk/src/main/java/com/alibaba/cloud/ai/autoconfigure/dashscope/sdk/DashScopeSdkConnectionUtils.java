@@ -49,13 +49,14 @@ public final class DashScopeSdkConnectionUtils {
 
 		Assert.hasText(apiKey,
 				"DashScope SDK API key must be set. Use spring.ai.dashscope.sdk.api-key or spring.ai.dashscope.sdk.chat.api-key");
+		String resolvedApiKey = Objects.requireNonNull(apiKey);
 
 		Map<String, String> headers = new HashMap<>();
 		if (StringUtils.hasText(workspaceId)) {
 			headers.put("DashScope-Workspace", workspaceId);
 		}
 
-		return new ResolvedConnectionProperties(apiKey, workspaceId, headers);
+		return new ResolvedConnectionProperties(resolvedApiKey, workspaceId, headers);
 	}
 
 }

@@ -32,6 +32,7 @@ import com.alibaba.nacos.api.ai.model.mcp.McpToolMeta;
 import com.alibaba.nacos.api.ai.model.mcp.McpToolSpecification;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -197,7 +199,9 @@ public class McpRouterService {
 			// 3. 建立连接
 			boolean connected = mcpProxyService.establishConnection(mcpServerName);
 			String connectionMessage = connected ? "连接成功" : "连接失败，请检查服务是否正在运行";
-			String connectionUrl = String.format("%s://%s", serverInfo.getProtocol(), serverInfo.getEndpoint());
+			String protocol = Objects.requireNonNullElse(serverInfo.getProtocol(), "http");
+			String endpoint = Objects.requireNonNullElse(serverInfo.getEndpoint(), "");
+			String connectionUrl = String.format("%s://%s", protocol, endpoint);
 
 			McpServerAddResponse.McpConnectionStatus connectionStatus = new McpServerAddResponse.McpConnectionStatus(
 					connected, connectionUrl, connectionMessage);
@@ -265,7 +269,9 @@ public class McpRouterService {
 			}
 
 			// 初始化执行元信息
-			String connectionUrl = String.format("%s://%s", serverInfo.getProtocol(), serverInfo.getEndpoint());
+			String protocol = Objects.requireNonNullElse(serverInfo.getProtocol(), "http");
+			String endpoint = Objects.requireNonNullElse(serverInfo.getEndpoint(), "");
+			String connectionUrl = String.format("%s://%s", protocol, endpoint);
 			executionMeta = McpToolExecutionResponse.McpExecutionMeta.start(serverInfo.getProtocol(), connectionUrl);
 
 			// 检查连接状态
@@ -353,7 +359,7 @@ public class McpRouterService {
 	 * @param serviceName 服务名称
 	 * @return 服务详细信息
 	 */
-	private McpServerDetailInfo getServerDetailFromNacos(String serviceName) {
+	private @Nullable McpServerDetailInfo getServerDetailFromNacos(String serviceName) {
 		try {
 			// 这里需要注入 NacosMcpOperationService 来获取服务详情
 			// 由于当前类没有直接访问，我们通过服务发现来获取基本信息
@@ -522,11 +528,11 @@ public class McpRouterService {
 		status.setFoundInVectorStore(serverInfo != null);
 
 		if (serverInfo != null) {
-			serviceInfo.put("name", serverInfo.getName());
-			serviceInfo.put("description", serverInfo.getDescription());
-			serviceInfo.put("protocol", serverInfo.getProtocol());
-			serviceInfo.put("version", serverInfo.getVersion());
-			serviceInfo.put("endpoint", serverInfo.getEndpoint());
+			putIfNotNull(serviceInfo, "name", serverInfo.getName());
+			putIfNotNull(serviceInfo, "description", serverInfo.getDescription());
+			putIfNotNull(serviceInfo, "protocol", serverInfo.getProtocol());
+			putIfNotNull(serviceInfo, "version", serverInfo.getVersion());
+			putIfNotNull(serviceInfo, "endpoint", serverInfo.getEndpoint());
 		}
 
 		// 检查Nacos
@@ -624,7 +630,7 @@ public class McpRouterService {
 	/**
 	 * 从调试信息中提取URL
 	 */
-	private String extractUrlFromDebugInfo(String debugInfo) {
+	private @Nullable String extractUrlFromDebugInfo(String debugInfo) {
 		// 简单的字符串匹配，实际实现可能需要更复杂的解析
 		String[] lines = debugInfo.split("\n");
 		for (String line : lines) {
@@ -638,7 +644,7 @@ public class McpRouterService {
 	/**
 	 * 从调试信息中提取状态码
 	 */
-	private Integer extractStatusCodeFromDebugInfo(String debugInfo) {
+	private @Nullable Integer extractStatusCodeFromDebugInfo(String debugInfo) {
 		String[] lines = debugInfo.split("\n");
 		for (String line : lines) {
 			if (line.contains("Status Code:")) {
@@ -683,6 +689,12 @@ public class McpRouterService {
 			return parameters;
 		}
 
+	}
+
+	private void putIfNotNull(Map<String, String> serviceInfo, String key, @Nullable String value) {
+		if (value != null) {
+			serviceInfo.put(key, value);
+		}
 	}
 
 }

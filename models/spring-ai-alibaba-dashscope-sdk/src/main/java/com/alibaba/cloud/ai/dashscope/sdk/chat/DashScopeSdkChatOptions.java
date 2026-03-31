@@ -19,6 +19,7 @@ package com.alibaba.cloud.ai.dashscope.sdk.chat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallback;
@@ -39,40 +40,40 @@ import java.util.Set;
 public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 
 	@JsonProperty("model")
-	private String model;
+	private @Nullable String model;
 
 	@JsonIgnore
-	private Boolean stream;
+	private @Nullable Boolean stream;
 
 	@JsonProperty("temperature")
-	private Double temperature;
+	private @Nullable Double temperature;
 
 	@JsonProperty("seed")
-	private Integer seed;
+	private @Nullable Integer seed;
 
 	@JsonProperty("top_p")
-	private Double topP;
+	private @Nullable Double topP;
 
 	@JsonProperty("top_k")
-	private Integer topK;
+	private @Nullable Integer topK;
 
 	@JsonProperty("stop")
-	private List<Object> stop;
+	private @Nullable List<Object> stop;
 
 	@JsonProperty("enable_search")
 	private Boolean enableSearch = false;
 
 	@JsonProperty("max_tokens")
-	private Integer maxTokens;
+	private @Nullable Integer maxTokens;
 
 	@JsonProperty("incremental_output")
 	private Boolean incrementalOutput = true;
 
 	@JsonProperty("repetition_penalty")
-	private Double repetitionPenalty;
+	private @Nullable Double repetitionPenalty;
 
 	@JsonProperty("tool_choice")
-	private Object toolChoice;
+	private @Nullable Object toolChoice;
 
 	@JsonIgnore
 	private Map<String, String> httpHeaders = new HashMap<>();
@@ -84,19 +85,19 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 	private Set<String> toolNames = new HashSet<>();
 
 	@JsonIgnore
-	private Boolean internalToolExecutionEnabled;
+	private @Nullable Boolean internalToolExecutionEnabled;
 
 	@JsonIgnore
 	private Map<String, Object> toolContext = new HashMap<>();
 
 	@JsonProperty("extra_body")
-	private Map<String, Object> extraBody;
+	private @Nullable Map<String, Object> extraBody;
 
 	public static DashScopeSdkChatOptionsBuilder builder() {
 		return new DashScopeSdkChatOptionsBuilder();
 	}
 
-	public static DashScopeSdkChatOptions fromOptions(DashScopeSdkChatOptions options) {
+	public static @Nullable DashScopeSdkChatOptions fromOptions(@Nullable DashScopeSdkChatOptions options) {
 		if (options == null) {
 			return null;
 		}
@@ -124,62 +125,62 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 	}
 
 	@Override
-	public String getModel() {
+	public @Nullable String getModel() {
 		return this.model;
 	}
 
-	public void setModel(String model) {
+	public void setModel(@Nullable String model) {
 		this.model = model;
 	}
 
-	public Boolean getStream() {
+	public @Nullable Boolean getStream() {
 		return this.stream;
 	}
 
-	public void setStream(Boolean stream) {
+	public void setStream(@Nullable Boolean stream) {
 		this.stream = stream;
 	}
 
 	@Override
-	public Double getTemperature() {
+	public @Nullable Double getTemperature() {
 		return this.temperature;
 	}
 
-	public void setTemperature(Double temperature) {
+	public void setTemperature(@Nullable Double temperature) {
 		this.temperature = temperature;
 	}
 
-	public Integer getSeed() {
+	public @Nullable Integer getSeed() {
 		return this.seed;
 	}
 
-	public void setSeed(Integer seed) {
+	public void setSeed(@Nullable Integer seed) {
 		this.seed = seed;
 	}
 
 	@Override
-	public Double getTopP() {
+	public @Nullable Double getTopP() {
 		return this.topP;
 	}
 
-	public void setTopP(Double topP) {
+	public void setTopP(@Nullable Double topP) {
 		this.topP = topP;
 	}
 
 	@Override
-	public Integer getTopK() {
+	public @Nullable Integer getTopK() {
 		return this.topK;
 	}
 
-	public void setTopK(Integer topK) {
+	public void setTopK(@Nullable Integer topK) {
 		this.topK = topK;
 	}
 
-	public List<Object> getStop() {
+	public @Nullable List<Object> getStop() {
 		return this.stop;
 	}
 
-	public void setStop(List<Object> stop) {
+	public void setStop(@Nullable List<Object> stop) {
 		this.stop = stop;
 	}
 
@@ -192,11 +193,11 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 	}
 
 	@Override
-	public Integer getMaxTokens() {
+	public @Nullable Integer getMaxTokens() {
 		return this.maxTokens;
 	}
 
-	public void setMaxTokens(Integer maxTokens) {
+	public void setMaxTokens(@Nullable Integer maxTokens) {
 		this.maxTokens = maxTokens;
 	}
 
@@ -208,19 +209,19 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		this.incrementalOutput = incrementalOutput;
 	}
 
-	public Double getRepetitionPenalty() {
+	public @Nullable Double getRepetitionPenalty() {
 		return this.repetitionPenalty;
 	}
 
-	public void setRepetitionPenalty(Double repetitionPenalty) {
+	public void setRepetitionPenalty(@Nullable Double repetitionPenalty) {
 		this.repetitionPenalty = repetitionPenalty;
 	}
 
-	public Object getToolChoice() {
+	public @Nullable Object getToolChoice() {
 		return this.toolChoice;
 	}
 
-	public void setToolChoice(Object toolChoice) {
+	public void setToolChoice(@Nullable Object toolChoice) {
 		this.toolChoice = toolChoice;
 	}
 
@@ -232,26 +233,26 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		this.httpHeaders = httpHeaders;
 	}
 
-	public Map<String, Object> getExtraBody() {
+	public @Nullable Map<String, Object> getExtraBody() {
 		return this.extraBody;
 	}
 
-	public void setExtraBody(Map<String, Object> extraBody) {
+	public void setExtraBody(@Nullable Map<String, Object> extraBody) {
 		this.extraBody = extraBody;
 	}
 
 	@Override
-	public Double getFrequencyPenalty() {
+	public @Nullable Double getFrequencyPenalty() {
 		return null;
 	}
 
 	@Override
-	public Double getPresencePenalty() {
+	public @Nullable Double getPresencePenalty() {
 		return null;
 	}
 
 	@Override
-	public List<String> getStopSequences() {
+	public @Nullable List<String> getStopSequences() {
 		if (this.stop == null) {
 			return null;
 		}
@@ -261,7 +262,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 
 	@Override
 	public ChatOptions copy() {
-		return DashScopeSdkChatOptions.fromOptions(this);
+		return Objects.requireNonNull(DashScopeSdkChatOptions.fromOptions(this));
 	}
 
 	@Override
@@ -295,13 +296,13 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 
 	@Override
 	@JsonIgnore
-	public Boolean getInternalToolExecutionEnabled() {
+	public @Nullable Boolean getInternalToolExecutionEnabled() {
 		return this.internalToolExecutionEnabled;
 	}
 
 	@Override
 	@JsonIgnore
-	public void setInternalToolExecutionEnabled(Boolean internalToolExecutionEnabled) {
+	public void setInternalToolExecutionEnabled(@Nullable Boolean internalToolExecutionEnabled) {
 		this.internalToolExecutionEnabled = internalToolExecutionEnabled;
 	}
 
@@ -366,37 +367,37 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			this.options = new DashScopeSdkChatOptions();
 		}
 
-		public DashScopeSdkChatOptionsBuilder model(String model) {
+		public DashScopeSdkChatOptionsBuilder model(@Nullable String model) {
 			this.options.model = model;
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder stream(Boolean stream) {
+		public DashScopeSdkChatOptionsBuilder stream(@Nullable Boolean stream) {
 			this.options.stream = stream;
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder temperature(Double temperature) {
+		public DashScopeSdkChatOptionsBuilder temperature(@Nullable Double temperature) {
 			this.options.temperature = temperature;
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder seed(Integer seed) {
+		public DashScopeSdkChatOptionsBuilder seed(@Nullable Integer seed) {
 			this.options.seed = seed;
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder topP(Double topP) {
+		public DashScopeSdkChatOptionsBuilder topP(@Nullable Double topP) {
 			this.options.topP = topP;
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder topK(Integer topK) {
+		public DashScopeSdkChatOptionsBuilder topK(@Nullable Integer topK) {
 			this.options.topK = topK;
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder stop(List<Object> stop) {
+		public DashScopeSdkChatOptionsBuilder stop(@Nullable List<Object> stop) {
 			this.options.stop = stop;
 			return this;
 		}
@@ -406,7 +407,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder maxTokens(Integer maxTokens) {
+		public DashScopeSdkChatOptionsBuilder maxTokens(@Nullable Integer maxTokens) {
 			this.options.maxTokens = maxTokens;
 			return this;
 		}
@@ -416,12 +417,12 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder repetitionPenalty(Double repetitionPenalty) {
+		public DashScopeSdkChatOptionsBuilder repetitionPenalty(@Nullable Double repetitionPenalty) {
 			this.options.repetitionPenalty = repetitionPenalty;
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder toolChoice(Object toolChoice) {
+		public DashScopeSdkChatOptionsBuilder toolChoice(@Nullable Object toolChoice) {
 			this.options.toolChoice = toolChoice;
 			return this;
 		}
@@ -441,7 +442,8 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder internalToolExecutionEnabled(Boolean internalToolExecutionEnabled) {
+		public DashScopeSdkChatOptionsBuilder internalToolExecutionEnabled(
+				@Nullable Boolean internalToolExecutionEnabled) {
 			this.options.internalToolExecutionEnabled = internalToolExecutionEnabled;
 			return this;
 		}
@@ -451,7 +453,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder extraBody(Map<String, Object> extraBody) {
+		public DashScopeSdkChatOptionsBuilder extraBody(@Nullable Map<String, Object> extraBody) {
 			this.options.extraBody = extraBody;
 			return this;
 		}

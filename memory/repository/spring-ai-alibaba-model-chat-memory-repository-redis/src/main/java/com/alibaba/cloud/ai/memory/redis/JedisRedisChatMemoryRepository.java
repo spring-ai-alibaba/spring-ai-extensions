@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.memory.redis;
 
 import com.alibaba.cloud.ai.memory.redis.builder.RedisChatMemoryBuilder;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.PropertyMapper;
@@ -75,46 +76,47 @@ public class JedisRedisChatMemoryRepository extends BaseRedisChatMemoryRepositor
 		return new RedisBuilder();
 	}
 
-	public static class RedisBuilder extends RedisChatMemoryBuilder<RedisBuilder> {
+		public static class RedisBuilder extends RedisChatMemoryBuilder<RedisBuilder> {
 
-		private JedisPoolConfig poolConfig;
+		private @Nullable JedisPoolConfig poolConfig;
 
-        protected Integer maxRedirects;
+		protected @Nullable Integer maxRedirects;
 
 		@Override
 		protected RedisBuilder self() {
 			return this;
 		}
 
-        public RedisBuilder poolConfig(JedisPoolConfig poolConfig) {
-            this.poolConfig = poolConfig;
-            return this;
-        }
+		public RedisBuilder poolConfig(@Nullable JedisPoolConfig poolConfig) {
+			this.poolConfig = poolConfig;
+			return this;
+		}
 
-        public RedisBuilder maxRedirects(Integer maxRedirects) {
-            this.maxRedirects = maxRedirects;
-            return this;
-        }
+		public RedisBuilder maxRedirects(@Nullable Integer maxRedirects) {
+			this.maxRedirects = maxRedirects;
+			return this;
+		}
 
 		public JedisRedisChatMemoryRepository build() {
-            CUSTOM_KEY_PREFIX = this.keyPrefix;
+			CUSTOM_KEY_PREFIX = this.keyPrefix;
 			JedisConnectionFactory jedisConnectionFactory;
 			if (useCluster) {
-				RedisClusterConfiguration clusterConfig = new RedisClusterConfiguration(Set.copyOf(nodes));
+				RedisClusterConfiguration clusterConfig = new RedisClusterConfiguration(
+						Set.copyOf(Objects.requireNonNull(nodes, "nodes cannot be null when useCluster is true")));
 				if (StringUtils.hasText(username)) {
 					clusterConfig.setUsername(username);
 				}
 				if (StringUtils.hasText(password)) {
 					clusterConfig.setPassword(password);
 				}
-                if (maxRedirects != null) {
-                    clusterConfig.setMaxRedirects(maxRedirects);
-                }
+				if (maxRedirects != null) {
+					clusterConfig.setMaxRedirects(maxRedirects);
+				}
 				jedisConnectionFactory = new JedisConnectionFactory(clusterConfig, applyConfiguration());
 			}
 			else {
 				RedisStandaloneConfiguration standaloneConfig = new RedisStandaloneConfiguration(host, port);
-                standaloneConfig.setDatabase(database);
+				standaloneConfig.setDatabase(database);
 				if (StringUtils.hasText(username)) {
 					standaloneConfig.setUsername(username);
 				}
@@ -165,14 +167,14 @@ public class JedisRedisChatMemoryRepository extends BaseRedisChatMemoryRepositor
 	}
 
 	@Override
-	public List<Message> findByConversationId(String conversationId) {
+		public List<Message> findByConversationId(String conversationId) {
 		Assert.hasText(conversationId, "conversationId cannot be null or empty");
 		String key = getKeyPrefix() + conversationId;
 		List<String> messageStrings = redisTemplate.opsForList().range(key, 0, -1);
 		if (CollectionUtils.isEmpty(messageStrings)) {
 			return Collections.emptyList();
 		}
-		return messageStrings.stream().map(this::deserializeMessage).collect(Collectors.toList());
+		return messageStrings.stream().map(this::deserializeMessage).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
 	@Override
@@ -182,7 +184,9 @@ public class JedisRedisChatMemoryRepository extends BaseRedisChatMemoryRepositor
 		Assert.noNullElements(messages, "messages cannot contain null elements");
 		String key = getKeyPrefix() + conversationId;
 		List<String> messageJsons = messages.stream().map(this::serializeMessage).toList();
-		try (RedisConnection connection = redisTemplate.getConnectionFactory().getConnection()) {
+		RedisConnectionFactory redisConnectionFactory = Objects.requireNonNull(redisTemplate.getConnectionFactory(),
+				"RedisConnectionFactory cannot be null");
+		try (RedisConnection connection = redisConnectionFactory.getConnection()) {
 			connection.keyCommands().del(key.getBytes());
 			if (!messageJsons.isEmpty()) {
 				byte[][] values = new byte[messageJsons.size()][];

@@ -20,6 +20,7 @@ import com.alibaba.cloud.ai.mcp.router.config.DbMcpProperties;
 import com.alibaba.cloud.ai.mcp.router.model.McpServerInfo;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -47,7 +48,7 @@ public class DbMcpServiceDiscovery implements McpServiceDiscovery {
 	}
 
 	@Override
-	public McpServerInfo getService(String serviceName) {
+	public @Nullable McpServerInfo getService(String serviceName) {
 		McpServerInfo serverInfo = null;
 		Connection connection = null;
 		PreparedStatement preparedStatement = null;
@@ -115,13 +116,14 @@ public class DbMcpServiceDiscovery implements McpServiceDiscovery {
 		return serverInfo;
 	}
 
-	private void closeResources(ResultSet resultSet, PreparedStatement statement, Connection connection) {
+	private void closeResources(@Nullable ResultSet resultSet, @Nullable PreparedStatement statement,
+			@Nullable Connection connection) {
 		closeQuietly(resultSet, "ResultSet");
 		closeQuietly(statement, "PreparedStatement");
 		closeQuietly(connection, "Connection");
 	}
 
-	private void closeQuietly(AutoCloseable resource, String name) {
+	private void closeQuietly(@Nullable AutoCloseable resource, String name) {
 		if (resource != null) {
 			try {
 				if (resource instanceof Connection conn) {

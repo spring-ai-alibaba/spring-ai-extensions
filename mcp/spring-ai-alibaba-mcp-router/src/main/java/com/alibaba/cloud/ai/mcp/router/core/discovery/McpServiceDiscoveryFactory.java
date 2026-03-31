@@ -16,6 +16,7 @@
 
 package com.alibaba.cloud.ai.mcp.router.core.discovery;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -62,7 +63,7 @@ public class McpServiceDiscoveryFactory {
 		}
 	}
 
-	public McpServiceDiscovery getDiscovery(String type) {
+	public @Nullable McpServiceDiscovery getDiscovery(String type) {
 		return discoveryMap.get(type);
 	}
 
@@ -78,7 +79,7 @@ public class McpServiceDiscoveryFactory {
 		return discoveryMap.containsKey(type);
 	}
 
-	public McpServiceDiscovery removeDiscovery(String type) {
+	public @Nullable McpServiceDiscovery removeDiscovery(String type) {
 		McpServiceDiscovery removed = discoveryMap.remove(type);
 		if (removed != null) {
 			log.info("Removed MCP service discovery for type: {}", type);

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
@@ -40,7 +41,7 @@ public abstract class BaseRedisChatMemoryRepository implements ChatMemoryReposit
 
 	protected static final String DEFAULT_KEY_PREFIX = "spring_ai_alibaba_chat_memory:";
 
-    protected static String CUSTOM_KEY_PREFIX;
+	protected static @Nullable String CUSTOM_KEY_PREFIX;
 
 	protected final ObjectMapper objectMapper;
 
@@ -55,7 +56,7 @@ public abstract class BaseRedisChatMemoryRepository implements ChatMemoryReposit
 		this.objectMapper.registerModule(module);
 	}
 
-	protected Message deserializeMessage(String messageStr) {
+	protected @Nullable Message deserializeMessage(String messageStr) {
 		try {
 			return objectMapper.readValue(messageStr, Message.class);
 		}
@@ -74,7 +75,7 @@ public abstract class BaseRedisChatMemoryRepository implements ChatMemoryReposit
 		}
 	}
 
-    protected String getKeyPrefix() {
-        return CUSTOM_KEY_PREFIX != null ? CUSTOM_KEY_PREFIX : DEFAULT_KEY_PREFIX;
-    }
+	protected String getKeyPrefix() {
+		return CUSTOM_KEY_PREFIX != null ? CUSTOM_KEY_PREFIX : DEFAULT_KEY_PREFIX;
+	}
 }

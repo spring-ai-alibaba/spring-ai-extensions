@@ -28,6 +28,7 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A client for interacting with the Gitbook API. This client provides methods to fetch
@@ -117,7 +118,7 @@ public class GitbookClient {
 
 		Map<String, Object> response = makeRequest(uri.toString(), new TypeReference<Map<String, Object>>() {
 		});
-		return (String) response.get("markdown");
+		return Objects.requireNonNullElse((String) response.get("markdown"), "");
 	}
 
 	/**
@@ -185,7 +186,7 @@ public class GitbookClient {
 	 * @param prevTitle The title path up to this point
 	 * @param parent The ID of the parent page
 	 */
-	private void extractPageInfo(List<GitbookPage> pages, GitbookPage page, String prevTitle, String parent) {
+	private void extractPageInfo(List<GitbookPage> pages, GitbookPage page, String prevTitle, @Nullable String parent) {
 		String title = buildTitle(prevTitle, page.getTitle());
 		page.setParent(parent);
 

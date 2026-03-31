@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.reader.gitlab;
 
+import org.jspecify.annotations.Nullable;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.RepositoryApi;
 import org.gitlab4j.api.models.RepositoryFile;
@@ -35,9 +36,9 @@ public class GitLabRepositoryReader extends AbstractGitLabReader {
 
 	private String ref;
 
-	private String filePath;
+	private @Nullable String filePath;
 
-	private String pattern;
+	private @Nullable String pattern;
 
 	private boolean recursive;
 
@@ -68,7 +69,7 @@ public class GitLabRepositoryReader extends AbstractGitLabReader {
 	 * @param filePath File path relative to repository root
 	 * @return this reader instance
 	 */
-	public GitLabRepositoryReader setFilePath(String filePath) {
+	public GitLabRepositoryReader setFilePath(@Nullable String filePath) {
 		this.filePath = filePath;
 		return this;
 	}
@@ -80,7 +81,7 @@ public class GitLabRepositoryReader extends AbstractGitLabReader {
 	 * @param pattern File pattern in glob format
 	 * @return this reader instance
 	 */
-	public GitLabRepositoryReader setPattern(String pattern) {
+	public GitLabRepositoryReader setPattern(@Nullable String pattern) {
 		this.pattern = pattern;
 		return this;
 	}
@@ -114,10 +115,11 @@ public class GitLabRepositoryReader extends AbstractGitLabReader {
 	 * @return List of documents
 	 * @throws GitLabApiException if API call fails
 	 */
-	List<Document> loadData(String ref, String filePath, String pattern, boolean recursive) throws GitLabApiException {
+	List<Document> loadData(String ref, @Nullable String filePath, @Nullable String pattern, boolean recursive)
+			throws GitLabApiException {
 		try {
 			if (StringUtils.hasText(filePath)) {
-				return Collections.singletonList(loadSingleFile(filePath, ref));
+				return Collections.singletonList(loadSingleFile(Objects.requireNonNull(filePath), ref));
 			}
 
 			RepositoryApi repositoryApi = gitLabApi.getRepositoryApi();

@@ -21,6 +21,7 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Base class for all email elements Represents different parts of an email like subject,
@@ -179,9 +180,9 @@ class ReceivedInfo extends EmailElement {
 
 	private final String name;
 
-	private final ZonedDateTime datestamp;
+	private final @Nullable ZonedDateTime datestamp;
 
-	public ReceivedInfo(String name, String text, ZonedDateTime datestamp) {
+	public ReceivedInfo(String name, String text, @Nullable ZonedDateTime datestamp) {
 		super(text);
 		this.name = name;
 		this.datestamp = datestamp;
@@ -191,7 +192,7 @@ class ReceivedInfo extends EmailElement {
 		return name;
 	}
 
-	public ZonedDateTime getDatestamp() {
+	public @Nullable ZonedDateTime getDatestamp() {
 		return datestamp;
 	}
 

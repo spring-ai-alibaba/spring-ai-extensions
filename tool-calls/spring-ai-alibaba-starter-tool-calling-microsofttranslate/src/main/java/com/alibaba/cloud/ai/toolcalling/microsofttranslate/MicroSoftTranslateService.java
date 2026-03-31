@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -30,10 +31,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class MicroSoftTranslateService
-		implements Function<MicroSoftTranslateService.Request, MicroSoftTranslateService.Response> {
+		implements Function<MicroSoftTranslateService.@Nullable Request, MicroSoftTranslateService.@Nullable Response> {
 
 	private static final Logger logger = LoggerFactory.getLogger(MicroSoftTranslateService.class);
 
@@ -49,7 +51,7 @@ public class MicroSoftTranslateService
 	}
 
 	@Override
-	public Response apply(Request request) {
+	public @Nullable Response apply(@Nullable Request request) {
 		if (request == null || !StringUtils.hasText(request.text) || !StringUtils.hasText(request.targetLanguage)) {
 			return null;
 		}
@@ -61,13 +63,13 @@ public class MicroSoftTranslateService
 			String body = constructRequestBody(request);
 			logger.info("Request body: {}", body);
 
-			String responseData = webClientTool.getWebClient()
+			String responseData = Objects.requireNonNull(webClientTool.getWebClient()
 				.post()
 				.uri(uri)
 				.bodyValue(body)
 				.retrieve()
 				.bodyToMono(String.class)
-				.block();
+				.block(), "Microsoft translate API returned empty response");
 
 			logger.info("Translation request: {}, response: {}", request.text, responseData);
 			return parseResponse(responseData);

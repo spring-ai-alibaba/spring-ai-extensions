@@ -15,7 +15,10 @@
  */
 package com.alibaba.cloud.ai.memory.jdbc;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.util.Objects;
 
 /**
  * Oracle implementation of the chat memory repository
@@ -38,15 +41,15 @@ public class OracleChatMemoryRepository extends JdbcChatMemoryRepository {
 
 	public static class OracleBuilder {
 
-		private JdbcTemplate jdbcTemplate;
+		private @Nullable JdbcTemplate jdbcTemplate;
 
-		public OracleBuilder jdbcTemplate(JdbcTemplate jdbcTemplate) {
+		public OracleBuilder jdbcTemplate(@Nullable JdbcTemplate jdbcTemplate) {
 			this.jdbcTemplate = jdbcTemplate;
 			return this;
 		}
 
 		public OracleChatMemoryRepository build() {
-			return new OracleChatMemoryRepository(this.jdbcTemplate);
+			return new OracleChatMemoryRepository(Objects.requireNonNull(this.jdbcTemplate, "jdbcTemplate must not be null"));
 		}
 
 	}

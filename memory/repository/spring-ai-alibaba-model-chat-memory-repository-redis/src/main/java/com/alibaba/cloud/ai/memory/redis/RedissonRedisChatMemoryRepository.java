@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.memory.redis;
 
 import com.alibaba.cloud.ai.memory.redis.builder.RedisChatMemoryBuilder;
+import org.jspecify.annotations.Nullable;
 import org.redisson.Redisson;
 import org.redisson.api.RKeys;
 import org.redisson.api.RList;
@@ -62,7 +63,7 @@ public class RedissonRedisChatMemoryRepository extends BaseRedisChatMemoryReposi
 
 		private int poolSize = 32;
 
-		private Config redissonConfig;
+		private @Nullable Config redissonConfig;
 
 		@Override
 		protected RedissonBuilder self() {
@@ -74,13 +75,13 @@ public class RedissonRedisChatMemoryRepository extends BaseRedisChatMemoryReposi
 			return this;
 		}
 
-		public RedissonBuilder redissonConfig(Config redissonConfig) {
+		public RedissonBuilder redissonConfig(@Nullable Config redissonConfig) {
 			this.redissonConfig = redissonConfig;
 			return this;
 		}
 
 		public RedissonRedisChatMemoryRepository build() {
-            CUSTOM_KEY_PREFIX = this.keyPrefix;
+			CUSTOM_KEY_PREFIX = this.keyPrefix;
 			if (redissonConfig != null) {
 				// when the user does not set redisson serialization, maintain String
 				// serialization consistent with jedis and lettuce
@@ -92,7 +93,8 @@ public class RedissonRedisChatMemoryRepository extends BaseRedisChatMemoryReposi
 			Config config = new Config();
 			config.setCodec(new StringCodec());
 			if (useCluster) {
-				List<String> nodesUrl = nodes.stream().map(node -> "redis://" + node).toList();
+				List<String> clusterNodes = Objects.requireNonNull(nodes, "nodes cannot be null when useCluster is true");
+				List<String> nodesUrl = clusterNodes.stream().map(node -> "redis://" + node).toList();
 				if (useSsl && StringUtils.hasText(bundle)) {
 					if (sslBundles == null) {
 						throw new IllegalStateException(
@@ -101,7 +103,7 @@ public class RedissonRedisChatMemoryRepository extends BaseRedisChatMemoryReposi
 					SslBundle sslBundle = sslBundles.getBundle(bundle);
 					SslManagerBundle managers = sslBundle.getManagers();
 					config.useClusterServers().setSslTrustManagerFactory(managers.getTrustManagerFactory());
-					nodesUrl = nodes.stream().map(node -> "rediss://" + node).toList();
+					nodesUrl = clusterNodes.stream().map(node -> "rediss://" + node).toList();
 				}
 				config.useClusterServers()
 					.addNodeAddress(nodesUrl.toArray(new String[0]))

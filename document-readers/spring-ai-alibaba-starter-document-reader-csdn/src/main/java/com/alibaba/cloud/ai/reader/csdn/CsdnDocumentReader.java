@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.reader.csdn;
 
 import com.alibaba.cloud.ai.document.DocumentParser;
 import com.alibaba.cloud.ai.parser.bshtml.BsHtmlDocumentParser;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jsoup.Jsoup;
@@ -232,7 +233,7 @@ public class CsdnDocumentReader implements DocumentReader {
 		return matcher.find() ? matcher.group(1) : "";
 	}
 
-	private String normalizedText(Element element) {
+	private String normalizedText(@Nullable Element element) {
 		if (element == null) {
 			return "";
 		}
@@ -247,7 +248,7 @@ public class CsdnDocumentReader implements DocumentReader {
 	 * If title is missing, only {@code Content: ...} is returned.
 	 * If body already starts with title, the duplicated prefix is removed.
 	 */
-	private String buildDocumentText(Object titleObj, String bodyText) {
+	private String buildDocumentText(@Nullable Object titleObj, String bodyText) {
 		String title = titleObj instanceof String ? ((String) titleObj).trim() : "";
 		String body = bodyText == null ? "" : bodyText.trim();
 		if (!StringUtils.hasText(title)) {

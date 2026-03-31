@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.api.reader.onenote;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
 
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.util.Objects;
 
 /**
  * @author sparkle6979l
@@ -41,6 +43,8 @@ public class OneNoteResource implements Resource {
 
 	private final String resourceId;
 
+	private final URI uri;
+
 	public ResourceType getResourceType() {
 		return resourceType;
 	}
@@ -55,6 +59,7 @@ public class OneNoteResource implements Resource {
 
 		this.resourceId = resourceId;
 		this.resourceType = resourceType;
+		this.uri = URI.create(String.format("onenote://%s/%s", resourceType.name().toLowerCase(), resourceId));
 	}
 
 	public static Builder builder() {
@@ -63,24 +68,25 @@ public class OneNoteResource implements Resource {
 
 	public static class Builder {
 
-		private ResourceType resourceType;
+		private @Nullable ResourceType resourceType;
 
-		private String resourceId;
+		private @Nullable String resourceId;
 
-		public Builder resourceType(ResourceType resourceType) {
+		public Builder resourceType(@Nullable ResourceType resourceType) {
 			this.resourceType = resourceType;
 			return this;
 		}
 
-		public Builder resourceId(String resourceId) {
+		public Builder resourceId(@Nullable String resourceId) {
 			this.resourceId = resourceId;
 			return this;
 		}
 
 		public OneNoteResource build() {
-			Assert.hasText(resourceId, "ResourceId must not be empty");
-			Assert.notNull(resourceType, "ResourceType must not be null");
-			return new OneNoteResource(resourceId, resourceType);
+			String resolvedResourceId = Objects.requireNonNull(resourceId, "ResourceId must not be empty");
+			Assert.hasText(resolvedResourceId, "ResourceId must not be empty");
+			return new OneNoteResource(resolvedResourceId,
+					Objects.requireNonNull(resourceType, "ResourceType must not be null"));
 		}
 
 	}
@@ -92,17 +98,17 @@ public class OneNoteResource implements Resource {
 
 	@Override
 	public URL getURL() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("OneNoteResource does not expose a URL");
 	}
 
 	@Override
 	public URI getURI() throws IOException {
-		return null;
+		return uri;
 	}
 
 	@Override
 	public File getFile() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("OneNoteResource is not backed by a local file");
 	}
 
 	@Override
@@ -117,22 +123,22 @@ public class OneNoteResource implements Resource {
 
 	@Override
 	public Resource createRelative(String relativePath) throws IOException {
-		return null;
+		throw new UnsupportedOperationException("OneNoteResource does not support relative resources");
 	}
 
 	@Override
 	public String getFilename() {
-		return null;
+		return resourceId;
 	}
 
 	@Override
 	public String getDescription() {
-		return null;
+		return "OneNote resource [type=" + resourceType + ", id=" + resourceId + "]";
 	}
 
 	@Override
 	public InputStream getInputStream() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("OneNoteResource does not expose a raw input stream");
 	}
 
 }

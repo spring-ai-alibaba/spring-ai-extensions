@@ -24,6 +24,7 @@ import org.springframework.util.Assert;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -31,16 +32,16 @@ public class Mem0ServerRequest {
 
 	public static class Message {
 
-		private String role;
+		private String role = "";
 
-		private String content;
+		private String content = "";
 
 		public Message() {
 		}
 
 		public Message(String role, String content) {
-			this.role = role;
-			this.content = content;
+			this.role = Objects.requireNonNullElse(role, "");
+			this.content = Objects.requireNonNullElse(content, "");
 		}
 
 		private Message(Builder builder) {
@@ -66,9 +67,9 @@ public class Mem0ServerRequest {
 
 		public static final class Builder {
 
-			private String role;
+			private String role = "";
 
-			private String content;
+			private String content = "";
 
 			private Builder() {
 			}
@@ -97,28 +98,28 @@ public class Mem0ServerRequest {
 
 	public static class MemoryCreate implements Serializable {
 
-		private List<Message> messages;
+		private List<Message> messages = List.of();
 
 		@JsonProperty("user_id")
-		private String userId;
+		private @Nullable String userId;
 
 		@JsonProperty("agent_id")
-		private String agentId;
+		private @Nullable String agentId;
 
 		@JsonProperty("run_id")
-		private String runId;
+		private @Nullable String runId;
 
-		private Map<String, Object> metadata;
+		private Map<String, Object> metadata = Map.of();
 
 		public MemoryCreate() {
 		}
 
 		private MemoryCreate(Builder builder) {
-			setMessages(builder.messages);
+			setMessages(Objects.requireNonNullElse(builder.messages, List.of()));
 			setUserId(builder.userId);
 			setAgentId(builder.agentId);
 			setRunId(builder.runId);
-			setMetadata(builder.metadata);
+			setMetadata(Objects.requireNonNullElse(builder.metadata, Map.of()));
 		}
 
 		public static Builder builder() {
@@ -133,27 +134,27 @@ public class Mem0ServerRequest {
 			this.messages = messages;
 		}
 
-		public String getUserId() {
+		public @Nullable String getUserId() {
 			return userId;
 		}
 
-		public void setUserId(String userId) {
+		public void setUserId(@Nullable String userId) {
 			this.userId = userId;
 		}
 
-		public String getAgentId() {
+		public @Nullable String getAgentId() {
 			return agentId;
 		}
 
-		public void setAgentId(String agentId) {
+		public void setAgentId(@Nullable String agentId) {
 			this.agentId = agentId;
 		}
 
-		public String getRunId() {
+		public @Nullable String getRunId() {
 			return runId;
 		}
 
-		public void setRunId(String runId) {
+		public void setRunId(@Nullable String runId) {
 			this.runId = runId;
 		}
 
@@ -167,15 +168,15 @@ public class Mem0ServerRequest {
 
 		public static final class Builder {
 
-			private List<Message> messages;
+			private List<Message> messages = List.of();
 
-			private String userId;
+			private @Nullable String userId;
 
-			private String agentId;
+			private @Nullable String agentId;
 
-			private String runId;
+			private @Nullable String runId;
 
-			private Map<String, Object> metadata;
+			private Map<String, Object> metadata = Map.of();
 
 			private Builder() {
 			}
@@ -189,17 +190,17 @@ public class Mem0ServerRequest {
 				return this;
 			}
 
-			public Builder userId(String val) {
+			public Builder userId(@Nullable String val) {
 				userId = val;
 				return this;
 			}
 
-			public Builder agentId(String val) {
+			public Builder agentId(@Nullable String val) {
 				agentId = val;
 				return this;
 			}
 
-			public Builder runId(String val) {
+			public Builder runId(@Nullable String val) {
 				runId = val;
 				return this;
 			}
@@ -219,18 +220,18 @@ public class Mem0ServerRequest {
 
 	public static class SearchRequest extends org.springframework.ai.vectorstore.SearchRequest implements Serializable {
 
-		private String query;
+		private String query = "";
 
 		@JsonProperty("user_id")
-		private String userId;
+		private @Nullable String userId;
 
 		@JsonProperty("run_id")
-		private String runId;
+		private @Nullable String runId;
 
 		@JsonProperty("agent_id")
-		private String agentId;
+		private @Nullable String agentId;
 
-		private Map<String, Object> filters;
+		private @Nullable Map<String, Object> filters;
 
 		public SearchRequest() {
 		}
@@ -257,35 +258,35 @@ public class Mem0ServerRequest {
 			this.query = query;
 		}
 
-		public String getUserId() {
+		public @Nullable String getUserId() {
 			return userId;
 		}
 
-		public void setUserId(String userId) {
+		public void setUserId(@Nullable String userId) {
 			this.userId = userId;
 		}
 
-		public String getRunId() {
+		public @Nullable String getRunId() {
 			return runId;
 		}
 
-		public void setRunId(String runId) {
+		public void setRunId(@Nullable String runId) {
 			this.runId = runId;
 		}
 
-		public String getAgentId() {
+		public @Nullable String getAgentId() {
 			return agentId;
 		}
 
-		public void setAgentId(String agentId) {
+		public void setAgentId(@Nullable String agentId) {
 			this.agentId = agentId;
 		}
 
-		public Map<String, Object> getFilters() {
+		public @Nullable Map<String, Object> getFilters() {
 			return filters;
 		}
 
-		public void setFilters(Map<String, Object> filters) {
+		public void setFilters(@Nullable Map<String, Object> filters) {
 			this.filters = filters;
 		}
 
@@ -296,35 +297,35 @@ public class Mem0ServerRequest {
 
             private Filter.@Nullable Expression filterExpression;
 
-			private String userId;
+			private @Nullable String userId;
 
-			private String runId;
+			private @Nullable String runId;
 
-			private String agentId;
+			private @Nullable String agentId;
 
-			private Map<String, Object> filters;
+			private @Nullable Map<String, Object> filters;
 
 			public Builder query(String val) {
 				query = val;
 				return this;
 			}
 
-			public Builder userId(String val) {
+			public Builder userId(@Nullable String val) {
 				userId = val;
 				return this;
 			}
 
-			public Builder runId(String val) {
+			public Builder runId(@Nullable String val) {
 				runId = val;
 				return this;
 			}
 
-			public Builder agentId(String val) {
+			public Builder agentId(@Nullable String val) {
 				agentId = val;
 				return this;
 			}
 
-			public Builder filters(Map<String, Object> val) {
+			public Builder filters(@Nullable Map<String, Object> val) {
 				filters = val;
 				return this;
 			}

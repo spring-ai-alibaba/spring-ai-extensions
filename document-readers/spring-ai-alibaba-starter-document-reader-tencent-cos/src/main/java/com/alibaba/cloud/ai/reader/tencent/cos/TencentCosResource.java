@@ -24,6 +24,7 @@ import com.qcloud.cos.model.GetObjectRequest;
 import com.qcloud.cos.model.ListObjectsRequest;
 import com.qcloud.cos.model.ObjectListing;
 import com.qcloud.cos.region.Region;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
 
@@ -68,17 +69,17 @@ public class TencentCosResource implements Resource {
 
 	@Override
 	public URL getURL() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("TencentCosResource does not expose a URL");
 	}
 
 	@Override
 	public URI getURI() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("TencentCosResource does not expose a URI");
 	}
 
 	@Override
 	public File getFile() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("TencentCosResource is not backed by a local file");
 	}
 
 	@Override
@@ -93,17 +94,18 @@ public class TencentCosResource implements Resource {
 
 	@Override
 	public Resource createRelative(String relativePath) throws IOException {
-		return null;
+		throw new UnsupportedOperationException("TencentCosResource does not support relative resources");
 	}
 
 	@Override
 	public String getFilename() {
-		return "";
+		int lastSlash = key.lastIndexOf('/');
+		return lastSlash >= 0 ? key.substring(lastSlash + 1) : key;
 	}
 
 	@Override
 	public String getDescription() {
-		return "";
+		return "Tencent COS resource [bucket=" + bucket + ", key=" + key + "]";
 	}
 
 	@Override
@@ -129,31 +131,31 @@ public class TencentCosResource implements Resource {
 
 	public static class Builder {
 
-		private Region region;
+		private @Nullable Region region;
 
-		private TencentCredentials tencentCredentials;
+		private @Nullable TencentCredentials tencentCredentials;
 
-		private String secretId;
+		private @Nullable String secretId;
 
-		private String secretKey;
+		private @Nullable String secretKey;
 
-		private String sessionToken;
+		private @Nullable String sessionToken;
 
-		private String bucket;
+		private @Nullable String bucket;
 
-		private String key;
+		private @Nullable String key;
 
-		private String prefix;
+		private @Nullable String prefix;
 
-		private COSClient cosClient;
+		private @Nullable COSClient cosClient;
 
 		/**
 		 * Set the Tencent region.
 		 * @param region The Tencent region.
 		 * @return The builder instance.
 		 */
-		public Builder region(String region) {
-			this.region = new Region(Region.formatRegion(region));
+		public Builder region(@Nullable String region) {
+			this.region = region != null ? new Region(Region.formatRegion(region)) : null;
 			return this;
 		}
 
@@ -162,7 +164,7 @@ public class TencentCosResource implements Resource {
 		 * @param region The Tencent region.
 		 * @return The builder instance.
 		 */
-		public Builder region(Region region) {
+		public Builder region(@Nullable Region region) {
 			this.region = region;
 			return this;
 		}
@@ -172,65 +174,68 @@ public class TencentCosResource implements Resource {
 		 * @param tencentCredentials The Tencent credentials.
 		 * @return The builder instance.
 		 */
-		public Builder tencentCredentials(TencentCredentials tencentCredentials) {
+		public Builder tencentCredentials(@Nullable TencentCredentials tencentCredentials) {
 			this.tencentCredentials = tencentCredentials;
 			return this;
 		}
 
-		public Builder secretId(String secretId) {
+		public Builder secretId(@Nullable String secretId) {
 			this.secretId = secretId;
 			return this;
 		}
 
-		public Builder secretKey(String secretKey) {
+		public Builder secretKey(@Nullable String secretKey) {
 			this.secretKey = secretKey;
 			return this;
 		}
 
-		public Builder sessionToken(String sessionToken) {
+		public Builder sessionToken(@Nullable String sessionToken) {
 			this.sessionToken = sessionToken;
 			return this;
 		}
 
-		public Builder bucket(String bucket) {
+		public Builder bucket(@Nullable String bucket) {
 			this.bucket = bucket;
 			return this;
 		}
 
-		public Builder key(String key) {
+		public Builder key(@Nullable String key) {
 			this.key = key;
 			return this;
 		}
 
-		public Builder prefix(String prefix) {
+		public Builder prefix(@Nullable String prefix) {
 			this.prefix = prefix;
 			return this;
 		}
 
-		public Builder cosClient(COSClient cosClient) {
+		public Builder cosClient(@Nullable COSClient cosClient) {
 			this.cosClient = cosClient;
 			return this;
 		}
 
 		public TencentCosResource build() {
-			Assert.notNull(bucket, "Bucket must not be null");
-			Assert.notNull(key, "Key must not be null");
+			String resolvedBucket = Objects.requireNonNull(bucket, "Bucket must not be null");
+			String resolvedKey = Objects.requireNonNull(key, "Key must not be null");
 			judgeAndCreateCosClient();
-			return new TencentCosResource(this.cosClient, bucket, key);
+			return new TencentCosResource(Objects.requireNonNull(this.cosClient), resolvedBucket, resolvedKey);
 		}
 
 		public List<TencentCosResource> buildBatch() {
-			Assert.notNull(bucket, "Bucket must not be null");
+			String resolvedBucket = Objects.requireNonNull(bucket, "Bucket must not be null");
 			judgeAndCreateCosClient();
-			ListObjectsRequest listObjectsRequest = new ListObjectsRequest().withBucketName(bucket).withPrefix(prefix);
-			ObjectListing objectListing = this.cosClient.listObjects(listObjectsRequest);
+			ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
+				.withBucketName(resolvedBucket)
+				.withPrefix(prefix);
+			ObjectListing objectListing = Objects.requireNonNull(this.cosClient).listObjects(listObjectsRequest);
 			List<COSObjectSummary> filteredObjects = objectListing.getObjectSummaries()
 				.stream()
 				.filter(object -> !object.getKey().endsWith("/") && object.getSize() > 0)
 				.toList();
 			List<TencentCosResource> tencentCosResourceList = new ArrayList<>();
 			for (COSObjectSummary object : filteredObjects) {
-				tencentCosResourceList.add(new TencentCosResource(this.cosClient, bucket, object.getKey()));
+				tencentCosResourceList
+					.add(new TencentCosResource(Objects.requireNonNull(this.cosClient), resolvedBucket, object.getKey()));
 			}
 			return tencentCosResourceList;
 		}
@@ -244,14 +249,15 @@ public class TencentCosResource implements Resource {
 		}
 
 		private COSClient createCosClient(COSCredentialsProvider cosCredentialsProvider) {
-			ClientConfig clientConfig = new ClientConfig(region);
+			ClientConfig clientConfig = new ClientConfig(Objects.requireNonNull(region, "Region must not be null"));
 			return new COSClient(cosCredentialsProvider, clientConfig);
 		}
 
 		private void judgeAndCreateCosClient() {
 			if (Objects.isNull(this.cosClient)) {
 				if (Objects.isNull(tencentCredentials)) {
-					this.tencentCredentials = new TencentCredentials(secretId, secretKey, sessionToken);
+					this.tencentCredentials = new TencentCredentials(Objects.requireNonNull(secretId, "SecretId is required"),
+							Objects.requireNonNull(secretKey, "SecretKey is required"), sessionToken);
 				}
 				Assert.notNull(region, "Region must not be null");
 				COSCredentialsProvider credentialsProvider = createCredentialsProvider();

@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.toolcalling.memcached;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import net.spy.memcached.MemcachedClient;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,10 +74,10 @@ public class MemcachedService {
 
 	}
 
-	public class MemcachedServiceGetter implements Function<MemcachedServiceGetter.Request, Object> {
+	public class MemcachedServiceGetter implements Function<MemcachedServiceGetter.Request, @Nullable Object> {
 
 		@Override
-		public Object apply(MemcachedServiceGetter.Request request) {
+		public @Nullable Object apply(MemcachedServiceGetter.Request request) {
 			try {
 				return memcachedClient.get(request.key());
 			}

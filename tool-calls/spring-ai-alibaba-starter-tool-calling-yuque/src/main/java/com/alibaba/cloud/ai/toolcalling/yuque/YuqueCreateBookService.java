@@ -21,7 +21,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.function.Function;
+import org.springframework.util.StringUtils;
 
 /**
  * @author hiriki
@@ -42,17 +44,19 @@ public class YuqueCreateBookService
 
 	@Override
 	public CreateBookResponse apply(CreateBookRequest request) {
-		if (request.login == null || request.name == null || request.slug == null) {
-			return null;
+		if (request == null || !StringUtils.hasText(request.login) || !StringUtils.hasText(request.name)
+				|| !StringUtils.hasText(request.slug)) {
+			throw new IllegalArgumentException("Yuque create book request login, name and slug must not be empty");
 		}
 		String uri = "/groups/" + request.login + "/repos";
 		try {
-			String json = webClientTool.post(uri, request).block();
+			String json = Objects.requireNonNull(webClientTool.post(uri, request).block(),
+					"Yuque create book API returned empty response");
 			return jsonParseTool.jsonToObject(json, CreateBookResponse.class);
 		}
 		catch (Exception e) {
 			logger.error("Failed to create the Yuque book.", e);
-			return null;
+			throw new RuntimeException("Failed to create the Yuque book", e);
 		}
 	}
 

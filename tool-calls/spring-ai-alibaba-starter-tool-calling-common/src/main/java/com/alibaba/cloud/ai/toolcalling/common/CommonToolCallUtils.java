@@ -20,6 +20,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -71,7 +72,8 @@ public final class CommonToolCallUtils {
 	 * @param logger Logger instance
 	 * @return Operation result
 	 */
-	public static <T> T handleServiceError(String serviceName, Supplier<T> operation, Logger logger) {
+	public static <T> @Nullable T handleServiceError(String serviceName, Supplier<@Nullable T> operation,
+			Logger logger) {
 		try {
 			return operation.get();
 		}
@@ -100,7 +102,8 @@ public final class CommonToolCallUtils {
 	 * @param logger Logger instance
 	 * @return Parsed response or null if handling fails
 	 */
-	public static <T> T handleResponse(String responseData, Function<String, T> parser, Logger logger) {
+	public static <T> @Nullable T handleResponse(@Nullable String responseData, Function<String, @Nullable T> parser,
+			Logger logger) {
 		if (responseData == null) {
 			logger.error("Response data is null");
 			return null;

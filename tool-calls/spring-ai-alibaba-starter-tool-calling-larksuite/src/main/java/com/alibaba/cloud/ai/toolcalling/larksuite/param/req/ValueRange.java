@@ -16,8 +16,10 @@
 package com.alibaba.cloud.ai.toolcalling.larksuite.param.req;
 
 import com.google.gson.annotations.SerializedName;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author NewGK
@@ -47,8 +49,8 @@ public class ValueRange {
 	}
 
 	public ValueRange(Builder builder) {
-		this.range = builder.range;
-		this.values = builder.values;
+		this.range = Objects.requireNonNull(builder.range, "range must not be null");
+		this.values = Objects.requireNonNull(builder.values, "values must not be null");
 	}
 
 	public static Builder newBuilder() {
@@ -58,17 +60,17 @@ public class ValueRange {
 	public static class Builder {
 
 		@SerializedName("range")
-		private String range;
+		private @Nullable String range;
 
 		@SerializedName("values")
-		private List<List<String>> values;
+		private @Nullable List<List<String>> values;
 
-		public Builder range(String range) {
+		public Builder range(@Nullable String range) {
 			this.range = range;
 			return this;
 		}
 
-		public Builder values(List<List<String>> values) {
+		public Builder values(@Nullable List<List<String>> values) {
 			this.values = values;
 			return this;
 		}
