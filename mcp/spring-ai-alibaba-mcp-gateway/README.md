@@ -149,12 +149,9 @@ spring:
 | `retry.max-attempts` | 最大重试次数 |
 | `retry.backoff` | 重试间隔 |
 
-### 支持的授权类型
+### 当前支持的授权类型
 
 - `client_credentials`: 客户端凭证模式（推荐用于服务间通信）
-- `authorization_code`: 授权码模式
-- `password`: 密码模式
-- `refresh_token`: 刷新令牌模式
 
 ## 核心组件
 
