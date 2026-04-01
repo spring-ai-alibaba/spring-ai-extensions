@@ -116,7 +116,7 @@ public class MemcachedChatMemoryRepository implements ChatMemoryRepository, Auto
 
 	@Override
 	public void deleteByConversationId(String conversationId) {
-		List<String> conversationIds = findConversationIds();
+		List<String> conversationIds = new ArrayList<>(findConversationIds());
 		conversationIds.remove(conversationId);
 		this.memcachedService.setter()
 			.apply(new MemcachedService.MemcachedServiceSetter.Request(DEFAULT_CONVERSATION, conversationIds, 0));
