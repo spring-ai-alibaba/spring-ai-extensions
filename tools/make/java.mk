@@ -48,4 +48,4 @@ checkstyle-check: ## Checkstyle Check the code and output to target/checkstyle-r
 .PHONY: compile-for-nullaway
 compile-for-nullaway: ## Compile the code with nullaway to check for nullability issues
 	@$(LOG_TARGET)
-	mvn clean compile -Dmaven.test.skip=true
+	mvnd clean compile -Dmaven.test.skip=true
