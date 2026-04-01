@@ -22,11 +22,13 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -57,9 +59,10 @@ public class JinaCrawlerService implements Function<JinaCrawlerService.Request, 
 		if (!StringUtils.hasText(properties.getApiKey())) {
 			throw new RuntimeException("Please set api key");
 		}
-		String responseStr = "";
+		@Nullable String responseStr = null;
 		try {
-			responseStr = webClientTool.post("/", request).block();
+			responseStr = Objects.requireNonNull(webClientTool.post("/", request).block(),
+					"Jina crawler response must not be null");
 			return new Response(jsonParseTool.jsonToMap(responseStr, Object.class),
 					jsonParseTool.getDepthFieldValue(responseStr, new TypeReference<String>() {
 					}, "data", "content"));
@@ -67,7 +70,8 @@ public class JinaCrawlerService implements Function<JinaCrawlerService.Request, 
 		catch (Exception e) {
 			log.error("Jina reader request failed: ", e);
 			if (e instanceof JsonProcessingException && StringUtils.hasText(responseStr)) {
-				return new Response(Map.of("data", responseStr), null);
+				String rawResponse = Objects.requireNonNull(responseStr, "Jina crawler response must not be null");
+				return new Response(Map.of("data", rawResponse), null);
 			}
 			throw new RuntimeException(e);
 		}
@@ -79,7 +83,7 @@ public class JinaCrawlerService implements Function<JinaCrawlerService.Request, 
 
 	@JsonClassDescription("Jina Reader API result")
 	public record Response(@JsonPropertyDescription("Jina Response Json Object") Map<String, Object> json,
-			@JsonPropertyDescription("Reader result from url") String content) {
+			@JsonPropertyDescription("Reader result from url") @Nullable String content) {
 	}
 
 }

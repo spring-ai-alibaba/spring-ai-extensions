@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.toolcalling.firecrawl;
 
 import com.alibaba.cloud.ai.toolcalling.common.CommonToolCallProperties;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.Arrays;
@@ -32,19 +33,19 @@ public class FireCrawlProperties extends CommonToolCallProperties {
 
 	private FireCrawlFormatsEnum[] formats = new FireCrawlFormatsEnum[] { FireCrawlFormatsEnum.MARKDOWN };
 
-	private Boolean removeBase64Images;
+	private @Nullable Boolean removeBase64Images;
 
-	private Boolean skipTlsVerification;
+	private @Nullable Boolean skipTlsVerification;
 
-	private Boolean mobile;
+	private @Nullable Boolean mobile;
 
-	private Integer waitFor;
+	private @Nullable Integer waitFor;
 
-	private Boolean onlyMainContent;
+	private @Nullable Boolean onlyMainContent;
 
-	private String[] includeTags;
+	private String[] includeTags = new String[0];
 
-	private String[] excludeTags;
+	private String[] excludeTags = new String[0];
 
 	public FireCrawlModeEnum getMode() {
 		return mode;
@@ -62,43 +63,43 @@ public class FireCrawlProperties extends CommonToolCallProperties {
 		this.formats = formats;
 	}
 
-	public Boolean getRemoveBase64Images() {
+	public @Nullable Boolean getRemoveBase64Images() {
 		return removeBase64Images;
 	}
 
-	public void setRemoveBase64Images(Boolean removeBase64Images) {
+	public void setRemoveBase64Images(@Nullable Boolean removeBase64Images) {
 		this.removeBase64Images = removeBase64Images;
 	}
 
-	public Boolean getSkipTlsVerification() {
+	public @Nullable Boolean getSkipTlsVerification() {
 		return skipTlsVerification;
 	}
 
-	public void setSkipTlsVerification(Boolean skipTlsVerification) {
+	public void setSkipTlsVerification(@Nullable Boolean skipTlsVerification) {
 		this.skipTlsVerification = skipTlsVerification;
 	}
 
-	public Boolean getMobile() {
+	public @Nullable Boolean getMobile() {
 		return mobile;
 	}
 
-	public void setMobile(Boolean mobile) {
+	public void setMobile(@Nullable Boolean mobile) {
 		this.mobile = mobile;
 	}
 
-	public Integer getWaitFor() {
+	public @Nullable Integer getWaitFor() {
 		return waitFor;
 	}
 
-	public void setWaitFor(Integer waitFor) {
+	public void setWaitFor(@Nullable Integer waitFor) {
 		this.waitFor = waitFor;
 	}
 
-	public Boolean getOnlyMainContent() {
+	public @Nullable Boolean getOnlyMainContent() {
 		return onlyMainContent;
 	}
 
-	public void setOnlyMainContent(Boolean onlyMainContent) {
+	public void setOnlyMainContent(@Nullable Boolean onlyMainContent) {
 		this.onlyMainContent = onlyMainContent;
 	}
 
@@ -106,16 +107,26 @@ public class FireCrawlProperties extends CommonToolCallProperties {
 		return includeTags;
 	}
 
-	public void setIncludeTags(String[] includeTags) {
-		this.includeTags = includeTags;
+	public void setIncludeTags(@Nullable String[] includeTags) {
+		if (includeTags == null) {
+			this.includeTags = new String[0];
+			return;
+		}
+		String[] resolvedIncludeTags = Arrays.copyOf(includeTags, includeTags.length);
+		this.includeTags = resolvedIncludeTags;
 	}
 
 	public String[] getExcludeTags() {
 		return excludeTags;
 	}
 
-	public void setExcludeTags(String[] excludeTags) {
-		this.excludeTags = excludeTags;
+	public void setExcludeTags(@Nullable String[] excludeTags) {
+		if (excludeTags == null) {
+			this.excludeTags = new String[0];
+			return;
+		}
+		String[] resolvedExcludeTags = Arrays.copyOf(excludeTags, excludeTags.length);
+		this.excludeTags = resolvedExcludeTags;
 	}
 
 	@Override

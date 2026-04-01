@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.mcp.gateway.core;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
@@ -69,7 +70,7 @@ public class McpGatewayProperties {
 
 		private String sseMessageEndpoint = "/mcp/message";
 
-		private Duration keepAliveInterval;
+		private @Nullable Duration keepAliveInterval;
 
 		public Boolean getEnabled() {
 			return enabled;
@@ -95,11 +96,11 @@ public class McpGatewayProperties {
 			this.sseMessageEndpoint = sseMessageEndpoint;
 		}
 
-		public Duration getKeepAliveInterval() {
+		public @Nullable Duration getKeepAliveInterval() {
 			return keepAliveInterval;
 		}
 
-		public void setKeepAliveInterval(Duration keepAliveInterval) {
+		public void setKeepAliveInterval(@Nullable Duration keepAliveInterval) {
 			this.keepAliveInterval = keepAliveInterval;
 		}
 
@@ -111,7 +112,7 @@ public class McpGatewayProperties {
 
 		private String mcpEndpoint = "/mcp";
 
-		private Duration keepAliveInterval;
+		private @Nullable Duration keepAliveInterval;
 
 		private boolean disallowDelete;
 
@@ -131,11 +132,11 @@ public class McpGatewayProperties {
 			this.mcpEndpoint = mcpEndpoint;
 		}
 
-		public Duration getKeepAliveInterval() {
+		public @Nullable Duration getKeepAliveInterval() {
 			return keepAliveInterval;
 		}
 
-		public void setKeepAliveInterval(Duration keepAliveInterval) {
+		public void setKeepAliveInterval(@Nullable Duration keepAliveInterval) {
 			this.keepAliveInterval = keepAliveInterval;
 		}
 

@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.toolcalling.githubtoolkit;
 
 import com.alibaba.cloud.ai.toolcalling.common.CommonToolCallProperties;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -26,28 +27,28 @@ public class GithubToolKitProperties extends CommonToolCallProperties {
 
 	public static final String X_GitHub_Api_Version = "2022-11-28";
 
-	private String owner;
+	private @Nullable String owner;
 
-	private String repository;
+	private @Nullable String repository;
 
 	public GithubToolKitProperties() {
 		super("https://api.github.com");
 		setPropertiesFromEnv(null, null, null, GithubToolKitConstants.TOKEN_ENV);
 	}
 
-	public String getOwner() {
+	public @Nullable String getOwner() {
 		return owner;
 	}
 
-	public void setOwner(String owner) {
+	public void setOwner(@Nullable String owner) {
 		this.owner = owner;
 	}
 
-	public String getRepository() {
+	public @Nullable String getRepository() {
 		return repository;
 	}
 
-	public void setRepository(String repository) {
+	public void setRepository(@Nullable String repository) {
 		this.repository = repository;
 	}
 

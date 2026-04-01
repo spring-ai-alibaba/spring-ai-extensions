@@ -16,6 +16,7 @@
 
 package com.alibaba.cloud.ai.mcp.gateway.core.security;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
@@ -52,27 +53,27 @@ public class McpGatewayOAuthProperties {
 		/**
 		 * 客户端ID
 		 */
-		private String clientId;
+			private @Nullable String clientId;
 
 		/**
 		 * 客户端密钥
 		 */
-		private String clientSecret;
+			private @Nullable String clientSecret;
 
 		/**
 		 * 授权URL
 		 */
-		private String authorizationUri;
+			private @Nullable String authorizationUri;
 
 		/**
 		 * Token获取URL
 		 */
-		private String tokenUri;
+			private @Nullable String tokenUri;
 
 		/**
 		 * 用户信息URL
 		 */
-		private String userInfoUri;
+			private @Nullable String userInfoUri;
 
 		/**
 		 * 授权范围
@@ -82,7 +83,7 @@ public class McpGatewayOAuthProperties {
 		/**
 		 * 重定向URI
 		 */
-		private String redirectUri;
+			private @Nullable String redirectUri;
 
 		/**
 		 * 授权类型
@@ -92,45 +93,45 @@ public class McpGatewayOAuthProperties {
 		/**
 		 * 额外的请求参数
 		 */
-		private Map<String, String> additionalParameters;
+			private @Nullable Map<String, String> additionalParameters;
 
-		public String getClientId() {
+		public @Nullable String getClientId() {
 			return clientId;
 		}
 
-		public void setClientId(String clientId) {
+		public void setClientId(@Nullable String clientId) {
 			this.clientId = clientId;
 		}
 
-		public String getClientSecret() {
+		public @Nullable String getClientSecret() {
 			return clientSecret;
 		}
 
-		public void setClientSecret(String clientSecret) {
+		public void setClientSecret(@Nullable String clientSecret) {
 			this.clientSecret = clientSecret;
 		}
 
-		public String getAuthorizationUri() {
+		public @Nullable String getAuthorizationUri() {
 			return authorizationUri;
 		}
 
-		public void setAuthorizationUri(String authorizationUri) {
+		public void setAuthorizationUri(@Nullable String authorizationUri) {
 			this.authorizationUri = authorizationUri;
 		}
 
-		public String getTokenUri() {
+		public @Nullable String getTokenUri() {
 			return tokenUri;
 		}
 
-		public void setTokenUri(String tokenUri) {
+		public void setTokenUri(@Nullable String tokenUri) {
 			this.tokenUri = tokenUri;
 		}
 
-		public String getUserInfoUri() {
+		public @Nullable String getUserInfoUri() {
 			return userInfoUri;
 		}
 
-		public void setUserInfoUri(String userInfoUri) {
+		public void setUserInfoUri(@Nullable String userInfoUri) {
 			this.userInfoUri = userInfoUri;
 		}
 
@@ -142,11 +143,11 @@ public class McpGatewayOAuthProperties {
 			this.scope = scope;
 		}
 
-		public String getRedirectUri() {
+		public @Nullable String getRedirectUri() {
 			return redirectUri;
 		}
 
-		public void setRedirectUri(String redirectUri) {
+		public void setRedirectUri(@Nullable String redirectUri) {
 			this.redirectUri = redirectUri;
 		}
 
@@ -158,11 +159,11 @@ public class McpGatewayOAuthProperties {
 			this.grantType = grantType;
 		}
 
-		public Map<String, String> getAdditionalParameters() {
+		public @Nullable Map<String, String> getAdditionalParameters() {
 			return additionalParameters;
 		}
 
-		public void setAdditionalParameters(Map<String, String> additionalParameters) {
+		public void setAdditionalParameters(@Nullable Map<String, String> additionalParameters) {
 			this.additionalParameters = additionalParameters;
 		}
 

@@ -25,6 +25,7 @@ import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +51,7 @@ public class AgentBayToolService {
 		this.properties = properties;
 	}
 
-	private Session getSession(String sessionId) throws com.aliyun.agentbay.exception.AgentBayException {
+	private @Nullable Session getSession(String sessionId) throws com.aliyun.agentbay.exception.AgentBayException {
 		SessionResult result = agentBay.get(sessionId);
 		if (result.isSuccess()) {
 			return result.getSession();
@@ -93,11 +94,11 @@ public class AgentBayToolService {
 
 	@JsonClassDescription("Create a new AgentBay cloud sandbox session")
 	public record CreateSessionRequest(
-			@JsonProperty(value = "imageId") @JsonPropertyDescription("Runtime image ID, such as 'code_latest', 'browser_latest', 'linux_latest'. Optional, defaults to 'code_latest'") String imageId) {
+			@JsonProperty(value = "imageId") @JsonPropertyDescription("Runtime image ID, such as 'code_latest', 'browser_latest', 'linux_latest'. Optional, defaults to 'code_latest'") @Nullable String imageId) {
 	}
 
 	public record CreateSessionResponse(
-			@JsonProperty("sessionId") @JsonPropertyDescription("Unique session identifier") String sessionId,
+			@JsonProperty("sessionId") @JsonPropertyDescription("Unique session identifier") @Nullable String sessionId,
 			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
 			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
@@ -222,13 +223,14 @@ public class AgentBayToolService {
 	public record ExecuteShellRequest(
 			@JsonProperty(required = true, value = "command") @JsonPropertyDescription("Shell command to execute. Single-line command. Use && or ; to connect multiple commands") String command,
 			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("Session ID to use (required). Must create a session first using createSessionTool") String sessionId,
-			@JsonProperty(value = "autoCleanup") @JsonPropertyDescription("Whether to automatically delete the session after execution (optional). Defaults to false") Boolean autoCleanup) {
+			@JsonProperty(value = "autoCleanup") @JsonPropertyDescription("Whether to automatically delete the session after execution (optional). Defaults to false") @Nullable Boolean autoCleanup) {
 	}
 
-	public record ExecuteShellResponse(@JsonProperty("output") @JsonPropertyDescription("Command output") String output,
+	public record ExecuteShellResponse(
+			@JsonProperty("output") @JsonPropertyDescription("Command output") @Nullable String output,
 			@JsonProperty("exitCode") @JsonPropertyDescription("Command exit code") int exitCode,
 			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
-			@JsonProperty("sessionId") @JsonPropertyDescription("Session ID used") String sessionId,
+			@JsonProperty("sessionId") @JsonPropertyDescription("Session ID used") @Nullable String sessionId,
 			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
 
@@ -292,7 +294,8 @@ public class AgentBayToolService {
 			@JsonProperty(required = true, value = "port") @JsonPropertyDescription("Port number (required), range 30100-30199") Integer port) {
 	}
 
-	public record GetLinkResponse(@JsonProperty("url") @JsonPropertyDescription("Public access URL") String url,
+	public record GetLinkResponse(
+			@JsonProperty("url") @JsonPropertyDescription("Public access URL") @Nullable String url,
 			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
 			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
@@ -353,7 +356,8 @@ public class AgentBayToolService {
 			@JsonProperty(required = true, value = "path") @JsonPropertyDescription("File path (required)") String path) {
 	}
 
-	public record ReadFileResponse(@JsonProperty("content") @JsonPropertyDescription("File content") String content,
+	public record ReadFileResponse(
+			@JsonProperty("content") @JsonPropertyDescription("File content") @Nullable String content,
 			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
 			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
@@ -491,10 +495,11 @@ public class AgentBayToolService {
 	@JsonClassDescription("List files and subdirectories in sandbox directory")
 	public record ListFilesRequest(
 			@JsonProperty(required = true, value = "sessionId") @JsonPropertyDescription("Session ID (required)") String sessionId,
-			@JsonProperty(value = "path") @JsonPropertyDescription("Directory path (optional, defaults to current directory)") String path) {
+			@JsonProperty(value = "path") @JsonPropertyDescription("Directory path (optional, defaults to current directory)") @Nullable String path) {
 	}
 
-	public record ListFilesResponse(@JsonProperty("listing") @JsonPropertyDescription("Directory listing") String listing,
+	public record ListFilesResponse(
+			@JsonProperty("listing") @JsonPropertyDescription("Directory listing") @Nullable String listing,
 			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
 			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
@@ -559,12 +564,12 @@ public class AgentBayToolService {
 			@JsonProperty(required = true, value = "language") @JsonPropertyDescription("Programming language (required, e.g., 'python', 'javascript')") String language) {
 	}
 
-	public record RunCodeResponse(@JsonProperty("output") @JsonPropertyDescription("Code execution output") String output,
-			@JsonProperty("requestId") @JsonPropertyDescription("Request ID") String requestId,
+	public record RunCodeResponse(
+			@JsonProperty("output") @JsonPropertyDescription("Code execution output") @Nullable String output,
+			@JsonProperty("requestId") @JsonPropertyDescription("Request ID") @Nullable String requestId,
 			@JsonProperty("success") @JsonPropertyDescription("Whether the operation was successful") boolean success,
 			@JsonProperty("message") @JsonPropertyDescription("Additional information or error message") String message) {
 	}
 
 }
-
 

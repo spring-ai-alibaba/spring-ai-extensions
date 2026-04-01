@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Bean;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author yingzi
@@ -52,16 +53,18 @@ public class NacosMcpSseClientAutoConfiguration {
             NacosMcpSseClientProperties nacosMcpSseClientProperties, ApplicationContext applicationContext,
             NacosMcpClientProperties nacosMcpClientProperties) {
         Map<String, NacosMcpOperationService> nacosMcpOperationServiceMap = nacosMcpOperationServiceMapProvider.getObject();
-        List<DistributedSyncMcpClient> clients = new ArrayList<>();
+		List<DistributedSyncMcpClient> clients = new ArrayList<>();
 
-        nacosMcpSseClientProperties.getConnections().forEach((name, nacosSseParameters) -> {
-            SseWebFluxDistributedSyncMcpClient client = SseWebFluxDistributedSyncMcpClient.builder()
-                    .serverName(nacosSseParameters.serviceName())
-                    .version(nacosSseParameters.version())
-                    .nacosMcpOperationService(nacosMcpOperationServiceMap.get(name))
-                    .applicationContext(applicationContext)
-                    .lazyInit(nacosMcpClientProperties.isLazyInit())
-                    .build();
+		nacosMcpSseClientProperties.getConnections().forEach((name, nacosSseParameters) -> {
+			NacosMcpOperationService operationService = Objects.requireNonNull(nacosMcpOperationServiceMap.get(name),
+					() -> "No NacosMcpOperationService found for connection: " + name);
+			SseWebFluxDistributedSyncMcpClient client = SseWebFluxDistributedSyncMcpClient.builder()
+					.serverName(nacosSseParameters.serviceName())
+					.version(nacosSseParameters.version())
+					.nacosMcpOperationService(operationService)
+					.applicationContext(applicationContext)
+					.lazyInit(nacosMcpClientProperties.isLazyInit())
+					.build();
             client.init();
             client.subscribe();
             clients.add(client);
@@ -77,16 +80,18 @@ public class NacosMcpSseClientAutoConfiguration {
             NacosMcpSseClientProperties nacosMcpSseClientProperties, ApplicationContext applicationContext,
             NacosMcpClientProperties nacosMcpClientProperties) {
         Map<String, NacosMcpOperationService> nacosMcpOperationServiceMap = nacosMcpOperationServiceMapProvider.getObject();
-        List<DistributedAsyncMcpClient> clients = new ArrayList<>();
+		List<DistributedAsyncMcpClient> clients = new ArrayList<>();
 
-        nacosMcpSseClientProperties.getConnections().forEach((name, nacosSseParameters) -> {
-            SseWebFluxDistributedAsyncMcpClient client = SseWebFluxDistributedAsyncMcpClient.builder()
-                    .serverName(nacosSseParameters.serviceName())
-                    .version(nacosSseParameters.version())
-                    .nacosMcpOperationService(nacosMcpOperationServiceMap.get(name))
-                    .applicationContext(applicationContext)
-                    .lazyInit(nacosMcpClientProperties.isLazyInit())
-                    .build();
+		nacosMcpSseClientProperties.getConnections().forEach((name, nacosSseParameters) -> {
+			NacosMcpOperationService operationService = Objects.requireNonNull(nacosMcpOperationServiceMap.get(name),
+					() -> "No NacosMcpOperationService found for connection: " + name);
+			SseWebFluxDistributedAsyncMcpClient client = SseWebFluxDistributedAsyncMcpClient.builder()
+					.serverName(nacosSseParameters.serviceName())
+					.version(nacosSseParameters.version())
+					.nacosMcpOperationService(operationService)
+					.applicationContext(applicationContext)
+					.lazyInit(nacosMcpClientProperties.isLazyInit())
+					.build();
             client.init();
             client.subscribe();
             clients.add(client);

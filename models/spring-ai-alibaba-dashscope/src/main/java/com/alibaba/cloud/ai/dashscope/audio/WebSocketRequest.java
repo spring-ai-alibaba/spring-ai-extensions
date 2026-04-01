@@ -801,67 +801,67 @@ public class WebSocketRequest {
                 return this;
             }
 
-            public Builder vocabularyId(String vocabularyId) {
+            public Builder vocabularyId(@Nullable String vocabularyId) {
                 this.parameters.vocabularyId = vocabularyId;
                 return this;
             }
 
-            public Builder sourceLanguage(String sourceLanguage) {
+            public Builder sourceLanguage(@Nullable String sourceLanguage) {
                 this.parameters.sourceLanguage = sourceLanguage;
                 return this;
             }
 
-            public Builder transcriptionEnabled(Boolean transcriptionEnabled) {
+            public Builder transcriptionEnabled(@Nullable Boolean transcriptionEnabled) {
                 this.parameters.transcriptionEnabled = transcriptionEnabled;
                 return this;
             }
 
-            public Builder translationEnabled(Boolean translationEnabled) {
+            public Builder translationEnabled(@Nullable Boolean translationEnabled) {
                 this.parameters.translationEnabled = translationEnabled;
                 return this;
             }
 
-            public Builder translationTargetLanguages(List<String> translationTargetLanguages) {
+            public Builder translationTargetLanguages(@Nullable List<String> translationTargetLanguages) {
                 this.parameters.translationTargetLanguages = translationTargetLanguages;
                 return this;
             }
 
-            public Builder maxEndSilence(Integer maxEndSilence) {
+            public Builder maxEndSilence(@Nullable Integer maxEndSilence) {
                 this.parameters.maxEndSilence = maxEndSilence;
                 return this;
             }
 
-            public Builder disfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+            public Builder disfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
                 this.parameters.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
                 return this;
             }
 
-            public Builder semanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
+            public Builder semanticPunctuationEnabled(@Nullable Boolean semanticPunctuationEnabled) {
                 this.parameters.semanticPunctuationEnabled = semanticPunctuationEnabled;
                 return this;
             }
 
-            public Builder maxSentenceSilence(Integer maxSentenceSilence) {
+            public Builder maxSentenceSilence(@Nullable Integer maxSentenceSilence) {
                 this.parameters.maxSentenceSilence = maxSentenceSilence;
                 return this;
             }
 
-            public Builder multiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
+            public Builder multiThresholdModeEnabled(@Nullable Boolean multiThresholdModeEnabled) {
                 this.parameters.multiThresholdModeEnabled = multiThresholdModeEnabled;
                 return this;
             }
 
-            public Builder punctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
+            public Builder punctuationPredictionEnabled(@Nullable Boolean punctuationPredictionEnabled) {
                 this.parameters.punctuationPredictionEnabled = punctuationPredictionEnabled;
                 return this;
             }
 
-            public Builder heartbeat(Boolean heartbeat) {
+            public Builder heartbeat(@Nullable Boolean heartbeat) {
                 this.parameters.heartbeat = heartbeat;
                 return this;
             }
 
-            public Builder inverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
+            public Builder inverseTextNormalizationEnabled(@Nullable Boolean inverseTextNormalizationEnabled) {
                 this.parameters.inverseTextNormalizationEnabled = inverseTextNormalizationEnabled;
                 return this;
             }

@@ -27,8 +27,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.util.JacksonUtils;
+import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 
 import java.nio.ByteBuffer;
@@ -43,18 +45,18 @@ import java.util.UUID;
 public class DashScopeWebSocketTTSApi {
 
 	private final String websocketUrl;
-	private final ApiKey apiKey;
-	private final String workSpaceId;
+	private final @Nullable ApiKey apiKey;
+	private final @Nullable String workSpaceId;
 	private final DashScopeWebSocketClientOptions clientOptions;
 	private final ObjectMapper objectMapper;
 
-	public DashScopeWebSocketTTSApi(String websocketUrl, ApiKey apiKey, String workSpaceId,
-			DashScopeWebSocketClientOptions options) {
+	public DashScopeWebSocketTTSApi(String websocketUrl, @Nullable ApiKey apiKey, @Nullable String workSpaceId,
+			@Nullable DashScopeWebSocketClientOptions options) {
 		this.websocketUrl = websocketUrl;
 		this.apiKey = apiKey;
 		this.workSpaceId = workSpaceId;
 		this.clientOptions = options != null ? options : DashScopeWebSocketClientOptions.builder()
-				.apiKey(apiKey.getValue())
+				.apiKey(apiKey != null ? apiKey.getValue() : null)
 				.workSpaceId(workSpaceId)
 				.url(websocketUrl)
 				.build();
@@ -147,7 +149,7 @@ public class DashScopeWebSocketTTSApi {
 	}
 
 	private WebSocketRequest buildRunTaskRequest(String taskId, String streamingMode,
-			DashScopeAudioSpeechOptions options, String text) {
+			DashScopeAudioSpeechOptions options, @Nullable String text) {
 		return WebSocketRequest.builder()
 				.header(WebSocketRequest.RequestHeader.builder()
 						.action(EventType.RUN_TASK)
@@ -167,7 +169,7 @@ public class DashScopeWebSocketTTSApi {
 				.build();
 	}
 
-	private WebSocketRequest buildContinueTaskRequest(String taskId, String streamingMode, String text) {
+	private WebSocketRequest buildContinueTaskRequest(String taskId, String streamingMode, @Nullable String text) {
 		return WebSocketRequest.builder()
 				.header(WebSocketRequest.RequestHeader.builder()
 						.action(EventType.CONTINUE_TASK)
@@ -200,9 +202,9 @@ public class DashScopeWebSocketTTSApi {
 	public static class Builder {
 
 		private String websocketUrl = DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL;
-		private ApiKey apiKey;
-		private String workSpaceId;
-		private DashScopeWebSocketClientOptions options;
+		private @Nullable ApiKey apiKey;
+		private @Nullable String workSpaceId;
+		private @Nullable DashScopeWebSocketClientOptions options;
 
 		public Builder websocketUrl(String websocketUrl) {
 			this.websocketUrl = websocketUrl;
@@ -214,17 +216,18 @@ public class DashScopeWebSocketTTSApi {
 			return this;
 		}
 
-		public Builder workSpaceId(String workSpaceId) {
+		public Builder workSpaceId(@Nullable String workSpaceId) {
 			this.workSpaceId = workSpaceId;
 			return this;
 		}
 
-		public Builder options(DashScopeWebSocketClientOptions options) {
+		public Builder options(@Nullable DashScopeWebSocketClientOptions options) {
 			this.options = options;
 			return this;
 		}
 
 		public DashScopeWebSocketTTSApi build() {
+			Assert.isTrue(this.options != null || this.apiKey != null, "apiKey must be set when options are not provided");
 			if (options == null && apiKey != null) {
 				options = DashScopeWebSocketClientOptions.builder()
 						.apiKey(apiKey.getValue())
@@ -232,7 +235,7 @@ public class DashScopeWebSocketTTSApi {
 						.url(websocketUrl)
 						.build();
 			}
-			return new DashScopeWebSocketTTSApi(websocketUrl, apiKey, workSpaceId, options);
+			return new DashScopeWebSocketTTSApi(websocketUrl, this.apiKey, this.workSpaceId, this.options);
 		}
 	}
 }

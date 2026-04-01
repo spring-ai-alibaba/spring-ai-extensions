@@ -25,6 +25,7 @@ import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.util.Assert;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author yingzi
@@ -52,19 +53,19 @@ public class DistributedAsyncMcpToolCallback implements ToolCallback {
                 .inputSchema(ModelOptionsUtils.toJsonString(this.tool.inputSchema()))
                 .build();    }
 
-    @Override
-    public String call(String toolInput) {
-        Map<String, Object> arguments = ModelOptionsUtils.jsonToMap(toolInput);
-        return this.distributedAsyncMcpClient
-                .callTool(new McpSchema.CallToolRequest(this.tool.name(), arguments))
-                .map((response) -> {
-                    if (response.isError() != null && response.isError()) {
-                        throw new IllegalStateException("Error calling tool: " + String.valueOf(response.content()));
-                    }
+	@Override
+	public String call(String toolInput) {
+		Map<String, Object> arguments = ModelOptionsUtils.jsonToMap(toolInput);
+		return Objects.requireNonNull(this.distributedAsyncMcpClient
+				.callTool(new McpSchema.CallToolRequest(this.tool.name(), arguments))
+				.map((response) -> {
+					if (response.isError() != null && response.isError()) {
+						throw new IllegalStateException("Error calling tool: " + String.valueOf(response.content()));
+					}
                     else {
                         return ModelOptionsUtils.toJsonString(response.content());
                     }
-                })
-                .block();
-    }
+				})
+				.block(), "Distributed async MCP tool call must not return null");
+	}
 }

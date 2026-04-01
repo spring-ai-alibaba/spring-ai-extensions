@@ -74,7 +74,8 @@ public final class BaiDuMapTools {
 			.add("extensions_code", "1")
 			.build();
 		try {
-			String response = webClientTool.get(path, params).block();
+			String response = Objects.requireNonNull(webClientTool.get(path, params).block(),
+					"Baidu map region response must not be null");
 			return jsonParseTool.jsonToObject(response, new TypeReference<Region>() {
 			});
 		}
@@ -99,7 +100,8 @@ public final class BaiDuMapTools {
 			.add("data_type", "all")
 			.build();
 		try {
-			return webClientTool.get(path, params).block();
+			return Objects.requireNonNull(webClientTool.get(path, params).block(),
+					"Baidu map weather response must not be null");
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to get weather information", e);
@@ -129,7 +131,8 @@ public final class BaiDuMapTools {
 			.add("scope", isDetail ? "2" : "1") // get detail information
 			.build();
 		try {
-			return webClientTool.get(path, params).block();
+			return Objects.requireNonNull(webClientTool.get(path, params).block(),
+					"Baidu map address response must not be null");
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to get information", e);

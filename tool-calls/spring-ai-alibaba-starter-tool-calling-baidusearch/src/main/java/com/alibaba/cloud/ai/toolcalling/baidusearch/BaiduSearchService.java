@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import org.jspecify.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -36,6 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.util.CollectionUtils;
+
+import java.util.Objects;
 
 /**
  * @author KrakenZJC
@@ -63,39 +66,43 @@ public class BaiduSearchService
 	@Override
 	public BaiduSearchService.Response apply(BaiduSearchService.Request request) {
 		if (CommonToolCallUtils.isInvalidateRequestParams(request, request.query)) {
-			return null;
+			return new Response(List.of());
 		}
 
-		return CommonToolCallUtils.handleServiceError("BaiduSearch", () -> {
+		BaiduSearchService.Response response = CommonToolCallUtils.handleServiceError("BaiduSearch", () -> {
 			int limit = request.limit == null ? properties.getMaxResults() : request.limit;
 			String url = properties.getBaseUrl() + request.query;
 
-			String html = webClientTool.getWebClient()
+			String html = Objects.requireNonNull(webClientTool.getWebClient()
 				.get()
 				.uri(url)
 				.acceptCharset(StandardCharsets.UTF_8)
 				.retrieve()
 				.bodyToMono(String.class)
-				.block();
+				.block(), "Baidu search HTML response must not be null");
 
 			List<SearchResult> results = CommonToolCallUtils.handleResponse(html, this::parseHtml, logger);
 
 			if (CollectionUtils.isEmpty(results)) {
-				return null;
+				return new Response(List.of());
 			}
 
 			logger.info("baidu search: {},result number:{}", request.query, results.size());
 			for (SearchResult d : results) {
 				logger.info("{}\n{}\n{}", d.title(), d.abstractText(), d.sourceUrl());
 			}
-			return new Response(results.subList(0, Math.min(results.size(), limit)));
-		}, logger);
+				return new Response(results.subList(0, Math.min(results.size(), limit)));
+			}, logger);
+		return response != null ? response : new Response(List.of());
 	}
 
 	private List<SearchResult> parseHtml(String htmlContent) {
 		try {
 			Document doc = Jsoup.parse(htmlContent);
 			Element contentLeft = doc.selectFirst("div#content_left");
+			if (contentLeft == null) {
+				return List.of();
+			}
 			Elements divContents = contentLeft.children();
 			List<SearchResult> listData = new ArrayList<>();
 
@@ -162,18 +169,18 @@ public class BaiduSearchService
 		}
 		catch (Exception e) {
 			logger.error("Failed to parse HTML content: {}", e.getMessage());
-			return null;
+			return List.of();
 		}
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@JsonClassDescription("Baidu search API request")
 	public record Request(
-			@JsonProperty(required = true, value = "query") @JsonPropertyDescription("The search query") String query,
-			@JsonProperty(required = false,
-					value = "limit") @JsonPropertyDescription("Maximum number of results to return") Integer limit)
-			implements
-				SearchService.Request {
+				@JsonProperty(required = true, value = "query") @JsonPropertyDescription("The search query") String query,
+				@JsonProperty(required = false,
+						value = "limit") @JsonPropertyDescription("Maximum number of results to return") @Nullable Integer limit)
+				implements
+					SearchService.Request {
 		@Override
 		public String getQuery() {
 			return this.query();

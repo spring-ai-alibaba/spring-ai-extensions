@@ -25,11 +25,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -70,7 +72,8 @@ public class AliyunAiSearchService
 			throw new RuntimeException("Service Api Key is Invalid.");
 		}
 		try {
-			String responseStr = webClientTool.post(properties.getPath(), request).block();
+			String responseStr = Objects.requireNonNull(webClientTool.post(properties.getPath(), request).block(),
+					"Aliyun AI Search response must not be null");
 			log.debug("Response: {}", responseStr);
 			return jsonParseTool.getFieldValue(responseStr, new TypeReference<Response>() {
 			}, "result");
@@ -87,14 +90,14 @@ public class AliyunAiSearchService
 			@JsonProperty(required = true, value = "query") @JsonPropertyDescription("Search query") String query,
 			@JsonProperty(value = "way",
 					defaultValue = "fast") @JsonPropertyDescription("Search result filtering modes: `normal` (applies vector-based filtering to results), `fast` (performs no vector-based filtering on results), `full` (uses large models to conduct evaluation and filtering of results).") String way,
-			@JsonProperty(value = "query_rewrite",
-					defaultValue = "true") @JsonPropertyDescription("Whether to enable LLM-based query rewriting. (Default value: `true`)") Boolean isRewrite,
-			@JsonProperty(value = "top_k",
-					defaultValue = "5") @JsonPropertyDescription("The number of search results returned. Default: 5") Integer topK,
-			@JsonProperty(value = "history",
-					defaultValue = "null") @JsonPropertyDescription("The conversation history between user and model uses a list of {\"role\": role, \"content\": content} elements, where role accepts `system`, `user`, or `assistant`; the optional system role can only appear as the first message (messages[0]) if present, while user and assistant roles must strictly alternate throughout the dialogue to simulate real conversation flow.") List<History> history,
-			@JsonProperty(value = "content_type",
-					defaultValue = "snippet") @JsonPropertyDescription("Search result content types: `snippet` (a brief description of webpage content) and `summary` (a text summary of webpage content, which takes longer to generate than a snippet).") String contentType)
+				@JsonProperty(value = "query_rewrite",
+						defaultValue = "true") @JsonPropertyDescription("Whether to enable LLM-based query rewriting. (Default value: `true`)") Boolean isRewrite,
+				@JsonProperty(value = "top_k",
+						defaultValue = "5") @JsonPropertyDescription("The number of search results returned. Default: 5") Integer topK,
+				@JsonProperty(value = "history",
+						defaultValue = "null") @JsonPropertyDescription("The conversation history between user and model uses a list of {\"role\": role, \"content\": content} elements, where role accepts `system`, `user`, or `assistant`; the optional system role can only appear as the first message (messages[0]) if present, while user and assistant roles must strictly alternate throughout the dialogue to simulate real conversation flow.") @Nullable List<History> history,
+				@JsonProperty(value = "content_type",
+						defaultValue = "snippet") @JsonPropertyDescription("Search result content types: `snippet` (a brief description of webpage content) and `summary` (a text summary of webpage content, which takes longer to generate than a snippet).") String contentType)
 			implements
 				SearchService.Request {
 

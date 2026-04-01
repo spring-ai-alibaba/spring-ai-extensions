@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.toolcalling.tripadvisor;
 
 import com.alibaba.cloud.ai.toolcalling.common.CommonToolCallProperties;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = TripAdvisorConstants.CONFIG_PREFIX)
@@ -23,18 +24,18 @@ public class TripAdvisorProperties extends CommonToolCallProperties {
 
 	public static final String BASE_URL = "https://api.content.tripadvisor.com/api/v1/";
 
-	private String referer;
+	private @Nullable String referer;
 
 	public TripAdvisorProperties() {
 		super(BASE_URL);
 		this.setPropertiesFromEnv(TripAdvisorConstants.API_KEY_ENV, null, null, null);
 	}
 
-	public String getReferer() {
+	public @Nullable String getReferer() {
 		return referer;
 	}
 
-	public void setReferer(String referer) {
+	public void setReferer(@Nullable String referer) {
 		this.referer = referer;
 	}
 

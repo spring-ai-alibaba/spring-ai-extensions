@@ -25,11 +25,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.jspecify.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,14 +71,15 @@ public class SerpApiService implements SearchService, Function<SerpApiService.Re
 	@Override
 	public SerpApiService.Response apply(SerpApiService.Request request) {
 		if (CommonToolCallUtils.isInvalidateRequestParams(request, request.query)) {
-			return null;
+			return new Response(List.of());
 		}
 
-		return CommonToolCallUtils.handleServiceError("SerpApi", () -> {
+		Response serviceResponse = CommonToolCallUtils.handleServiceError("SerpApi", () -> {
+			String engine = properties.getEngine() != null ? properties.getEngine() : "google";
 			String response = webClientTool.getWebClient()
 				.get()
 				.uri(uriBuilder -> uriBuilder.queryParam("api_key", properties.getApiKey())
-					.queryParam("engine", properties.getEngine())
+					.queryParam("engine", engine)
 					.queryParam("q", request.query)
 					.build())
 				.acceptCharset(StandardCharsets.UTF_8)
@@ -87,7 +90,7 @@ public class SerpApiService implements SearchService, Function<SerpApiService.Re
 			List<SearchResult> results = CommonToolCallUtils.handleResponse(response, this::parseJson, logger);
 
 			if (CollectionUtils.isEmpty(results)) {
-				return null;
+				return new Response(List.of());
 			}
 
 			logger.info("serpapi search: {},result:{}", request.query, response);
@@ -97,6 +100,7 @@ public class SerpApiService implements SearchService, Function<SerpApiService.Re
 			}
 			return new Response(results);
 		}, logger);
+		return serviceResponse != null ? serviceResponse : new Response(List.of());
 	}
 
 	private List<SearchResult> parseJson(String jsonResponse) {
@@ -126,6 +130,9 @@ public class SerpApiService implements SearchService, Function<SerpApiService.Re
 				}
 
 				try {
+					if (!StringUtils.hasText(link)) {
+						throw new IllegalArgumentException("SERP result link is empty");
+					}
 					Document document = Jsoup.connect(link).userAgent(SerpApiProperties.USER_AGENT_VALUE).get();
 					String textContent = document.body().text();
 					resultList.add(new SearchResult(title, textContent, link, icon));
@@ -167,7 +174,8 @@ public class SerpApiService implements SearchService, Function<SerpApiService.Re
 		}
 	}
 
-	public record SearchResult(String title, String text, String url, String icon) {
+	public record SearchResult(@Nullable String title, @Nullable String text, @Nullable String url,
+			@Nullable String icon) {
 	}
 
 }

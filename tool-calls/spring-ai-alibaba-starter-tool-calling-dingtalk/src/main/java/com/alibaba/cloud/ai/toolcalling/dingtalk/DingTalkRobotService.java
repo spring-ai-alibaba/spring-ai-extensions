@@ -71,7 +71,7 @@ public class DingTalkRobotService implements Function<DingTalkRobotService.Reque
 			throw new RuntimeException("Custom robot message sending failed!");
 		}
 
-		return null;
+		return new Response("Custom robot message sending failed.");
 	}
 
 	@JsonClassDescription("Send group chat messages using a custom robot")

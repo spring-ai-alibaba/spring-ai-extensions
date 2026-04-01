@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -76,7 +77,7 @@ public class Kuaidi100Service implements Function<Kuaidi100Service.Request, Kuai
 		return queryTrackResp;
 	}
 
-	private String queryCourierCompany(String num, String key) throws Exception {
+	private @Nullable String queryCourierCompany(String num, String key) throws Exception {
 		MultiValueMap<String, String> params = CommonToolCallUtils.<String, String>multiValueMapBuilder()
 			.add("num", num)
 			.add("key", key)

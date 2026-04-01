@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.toolcalling.agentbay;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -33,7 +34,7 @@ public class AgentBayProperties {
 	/**
 	 * AgentBay API Key. Can also be set via AGENTBAY_API_KEY environment variable.
 	 */
-	private String apiKey;
+	private @Nullable String apiKey;
 
 	/**
 	 * AgentBay region ID.
@@ -63,11 +64,11 @@ public class AgentBayProperties {
 		this.enabled = enabled;
 	}
 
-	public String getApiKey() {
+	public @Nullable String getApiKey() {
 		return apiKey;
 	}
 
-	public void setApiKey(String apiKey) {
+	public void setApiKey(@Nullable String apiKey) {
 		this.apiKey = apiKey;
 	}
 
@@ -104,4 +105,3 @@ public class AgentBayProperties {
 	}
 
 }
-

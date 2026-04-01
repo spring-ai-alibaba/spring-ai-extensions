@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import org.jspecify.annotations.Nullable;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -140,7 +141,7 @@ public class GoogleScholarService
 		return results;
 	}
 
-	private ScholarResult parseScholarResult(Element element) {
+	private @Nullable ScholarResult parseScholarResult(Element element) {
 		// Extract title and URL
 		Element titleElement = element.selectFirst("h3.gs_rt a");
 		String title = titleElement != null ? titleElement.text() : "";
@@ -159,7 +160,7 @@ public class GoogleScholarService
 		String snippet = snippetElement != null ? snippetElement.text() : "";
 
 		// Extract citation count
-		Integer citationCount = null;
+		@Nullable Integer citationCount = null;
 		Element citationElement = element.selectFirst("div.gs_fl a:contains(Cited by)");
 		if (citationElement != null && properties.isIncludeCitations()) {
 			String citationText = citationElement.text();
@@ -171,14 +172,14 @@ public class GoogleScholarService
 		}
 
 		// Extract PDF link if available
-		String pdfUrl = null;
+		@Nullable String pdfUrl = null;
 		Element pdfElement = element.selectFirst("div.gs_ggs.gs_fl a");
 		if (pdfElement != null) {
 			pdfUrl = pdfElement.attr("href");
 		}
 
 		// Extract publication year
-		Integer year = null;
+		@Nullable Integer year = null;
 		if (StringUtils.hasText(authors)) {
 			Pattern yearPattern = Pattern.compile("(\\d{4})");
 			Matcher yearMatcher = yearPattern.matcher(authors);
@@ -190,8 +191,8 @@ public class GoogleScholarService
 		return new ScholarResult(title, url, authors, snippet, citationCount, pdfUrl, year);
 	}
 
-	public record ScholarResult(String title, String url, String authors, String snippet, Integer citationCount,
-			String pdfUrl, Integer year) {
+	public record ScholarResult(String title, String url, String authors, String snippet,
+			@Nullable Integer citationCount, @Nullable String pdfUrl, @Nullable Integer year) {
 
 	}
 
@@ -200,15 +201,15 @@ public class GoogleScholarService
 	public record Request(
 			@JsonProperty(required = true,
 					value = "query") @JsonPropertyDescription("Search query for academic papers") String query,
-			@JsonProperty(value = "author") @JsonPropertyDescription("Filter by author name") String author,
+			@JsonProperty(value = "author") @JsonPropertyDescription("Filter by author name") @Nullable String author,
 			@JsonProperty(
-					value = "publication") @JsonPropertyDescription("Filter by publication name or journal") String publication,
+					value = "publication") @JsonPropertyDescription("Filter by publication name or journal") @Nullable String publication,
 			@JsonProperty(
-					value = "yearFrom") @JsonPropertyDescription("Start year for publication date filter") Integer yearFrom,
+					value = "yearFrom") @JsonPropertyDescription("Start year for publication date filter") @Nullable Integer yearFrom,
 			@JsonProperty(
-					value = "yearTo") @JsonPropertyDescription("End year for publication date filter") Integer yearTo,
+					value = "yearTo") @JsonPropertyDescription("End year for publication date filter") @Nullable Integer yearTo,
 			@JsonProperty(value = "numResults",
-					defaultValue = "10") @JsonPropertyDescription("Number of results to return (max 20)") Integer numResults)
+					defaultValue = "10") @JsonPropertyDescription("Number of results to return (max 20)") @Nullable Integer numResults)
 			implements
 				SearchService.Request {
 

@@ -25,6 +25,7 @@ import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -69,16 +70,16 @@ public class QwenTTSRealtimeWebSocketClient extends WebSocketListener {
 
 	private final String url;
 	private final String apiKey;
-	private final String workSpaceId;
+	private final @Nullable String workSpaceId;
 	private final Map<String, String> customHeaders;
 	private final ObjectMapper objectMapper;
 
-	private WebSocket webSocket;
-	private FluxSink<ByteBuffer> binarySink;
+	private @Nullable WebSocket webSocket;
+	private @Nullable FluxSink<ByteBuffer> binarySink;
 	private volatile boolean sessionCreated = false;
 	private final AtomicBoolean completed = new AtomicBoolean(false);
 
-	public QwenTTSRealtimeWebSocketClient(String url, String apiKey, String workSpaceId,
+	public QwenTTSRealtimeWebSocketClient(String url, String apiKey, @Nullable String workSpaceId,
 			Map<String, String> customHeaders, ObjectMapper objectMapper) {
 		this.url = url;
 		this.apiKey = apiKey;
@@ -349,7 +350,7 @@ public class QwenTTSRealtimeWebSocketClient extends WebSocketListener {
 	}
 
 	@Override
-	public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+	public void onFailure(WebSocket webSocket, Throwable t, @Nullable Response response) {
 		log.error("WebSocket failed: {}", t.getMessage());
 		safeCompleteError(t);
 	}

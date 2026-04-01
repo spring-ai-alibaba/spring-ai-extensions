@@ -20,9 +20,11 @@ import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MultiValueMap;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -51,11 +53,11 @@ public class TencentMapWeatherService
 	 */
 	private String getAddressInfo(String address) {
 		try {
-			return webClientTool
+			return Objects.requireNonNull(webClientTool
 				.get("geocoder/v1/",
 						MultiValueMap
 							.fromSingleValue(Map.of("key", tencentMapProperties.getApiKey(), "address", address)))
-				.block();
+				.block(), "Tencent geocoder response must not be null");
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to get address adcode", e);
@@ -70,11 +72,11 @@ public class TencentMapWeatherService
 	 */
 	private String getWeather(String adcode, String type) {
 		try {
-			return webClientTool
+			return Objects.requireNonNull(webClientTool
 				.get("weather/v1/",
 						MultiValueMap.fromSingleValue(
 								Map.of("key", tencentMapProperties.getApiKey(), "adcode", adcode, "type", type)))
-				.block();
+				.block(), "Tencent weather response must not be null");
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to get weather information", e);
@@ -95,8 +97,9 @@ public class TencentMapWeatherService
 			String weatherInfo = request.getTypeOrDefault().equals("now")
 					? jsonParseTool.getFieldValueAsString(weatherResult, "realtime")
 					: jsonParseTool.getDepthFieldValueAsString(weatherResult, "forecast");
-			String weather = jsonParseTool
-				.getFieldValueAsString(jsonParseTool.getFirstElementFromJsonArrayString(weatherInfo), "infos");
+			String firstForecast = Objects.requireNonNull(jsonParseTool.getFirstElementFromJsonArrayString(weatherInfo),
+					"Weather forecast result must not be empty");
+			String weather = jsonParseTool.getFieldValueAsString(firstForecast, "infos");
 			return new Response(weather);
 		}
 		catch (Exception e) {
@@ -108,7 +111,7 @@ public class TencentMapWeatherService
 	public record Request(
 			@JsonProperty(required = true, value = "address") @JsonPropertyDescription("地址") String address,
 			@JsonProperty(required = false,
-					value = "type") @JsonPropertyDescription("查询天气类型，取值：now[默认] 实时天气预报; future 未来天气预报（默认获取当天和未来3天的天气信息）") String type) {
+					value = "type") @JsonPropertyDescription("查询天气类型，取值：now[默认] 实时天气预报; future 未来天气预报（默认获取当天和未来3天的天气信息）") @Nullable String type) {
 		public String getTypeOrDefault() {
 			return type == null || type.isEmpty() ? "now" : type;
 		}

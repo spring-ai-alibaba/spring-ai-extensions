@@ -48,7 +48,7 @@ public class BaiDuMapWeatherService
 	// Query regionCodes by province → city → district
 	private String getUnitRegionCode(AddressResult addressResult) {
 		if (!StringUtils.hasText(addressResult.province())) {
-			return null;
+			return "";
 		}
 
 		BaiDuMapTools.Region region = baiDuMapTools.getRegionInformation(addressResult.province(), 3);
@@ -58,7 +58,7 @@ public class BaiDuMapWeatherService
 			.findFirst()
 			.orElse(null);
 		if (province == null) {
-			return null;
+			return "";
 		}
 		String regionCode = province.code();
 		// Get city Info (if have)
@@ -81,10 +81,10 @@ public class BaiDuMapWeatherService
 		return regionCode;
 	}
 
-	@Override
+		@Override
 	public Response apply(Request request) {
 		try {
-			String addressInfoStr = baiDuMapTools.getAddressInformation(null, request.address(), false);
+			String addressInfoStr = baiDuMapTools.getAddressInformation("", request.address(), false);
 			AddressInfo addressInfo = jsonParseTool.jsonToObject(addressInfoStr, new TypeReference<AddressInfo>() {
 			});
 			if (addressInfo.status() != 0) {
@@ -101,13 +101,13 @@ public class BaiDuMapWeatherService
 			// When the user provides a specific venue address, the API returns resultType
 			// as 'poi_type' per documentation; otherwise (indicating an administrative
 			// region query), directly call the method to obtain regionCode.
-			String regionCode = addressInfo.resultType().equals("poi_type") ? this.getUnitRegionCode(addressResult)
+			String regionCode = "poi_type".equals(addressInfo.resultType()) ? this.getUnitRegionCode(addressResult)
 					: baiDuMapTools.getRegionInformation(addressResult.name(), 0)
 						.districts()
 						.stream()
 						.map(BaiDuMapTools.District::code)
 						.findFirst()
-						.orElse(null);
+						.orElse("");
 
 			if (!StringUtils.hasText(regionCode)) {
 				return new Response("Get AddressWeatherInfo failed, message: RegionCode Not Found");
