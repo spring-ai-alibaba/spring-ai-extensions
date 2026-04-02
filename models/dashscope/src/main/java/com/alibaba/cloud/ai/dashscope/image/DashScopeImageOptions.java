@@ -116,14 +116,14 @@ public class DashScopeImageOptions implements ImageOptions {
   private Boolean enableInterleave;
 
   /**
-   * Enable synchronous call. When true, no async header is sent.
-   * - null: auto based on model default (backward compatible)
-   * - true: sync call (no async header)
-   * - false: async call (with async header)
+   * Invocation mode for the API call.
+   * - AUTO: automatically choose based on model defaults (backward compatible)
+   * - SYNC: synchronous call (no async header)
+   * - ASYNC: asynchronous call (with async header, returns task_id for polling)
    * Note: If model doesn't support sync, will auto-downgrade to async with WARN log.
    */
-  @JsonProperty("enable_sync")
-  private Boolean enableSync;
+  @JsonProperty("invoke_mode")
+  private InvokeMode invokeMode;
 
   public Boolean getPromptExtend() {
     return promptExtend;
@@ -221,12 +221,12 @@ public class DashScopeImageOptions implements ImageOptions {
     this.enableInterleave = enableInterleave;
   }
 
-  public Boolean getEnableSync() {
-    return enableSync;
+  public InvokeMode getInvokeMode() {
+    return invokeMode;
   }
 
-  public void setEnableSync(Boolean enableSync) {
-    this.enableSync = enableSync;
+  public void setInvokeMode(InvokeMode invokeMode) {
+    this.invokeMode = invokeMode;
   }
 
   public static Builder builder() {
@@ -349,7 +349,7 @@ public class DashScopeImageOptions implements ImageOptions {
         + this.maskImageUrl + '\'' + ", sketchImageUrl='" + this.sketchImageUrl + '\'' + ", sketchWeight="
         + this.sketchWeight + ", sketchExtraction=" + this.sketchExtraction + ", sketchColor="
         + Arrays.toString(this.sketchColor) + ", maskColor=" + Arrays.toString(this.maskColor) + ", maxImages="
-        + this.maxImages + ", enableInterleave=" + this.enableInterleave + ", enableSync=" + this.enableSync + '}';
+        + this.maxImages + ", enableInterleave=" + this.enableInterleave + ", invokeMode=" + this.invokeMode + '}';
   }
 
   public static class Builder {
@@ -596,14 +596,14 @@ public class DashScopeImageOptions implements ImageOptions {
         return enableInterleave(enableInterleave);
     }
 
-    public Builder enableSync(Boolean enableSync) {
-        this.options.enableSync = enableSync;
+    public Builder invokeMode(InvokeMode invokeMode) {
+        this.options.invokeMode = invokeMode;
         return this;
     }
 
     @Deprecated
-    public Builder withEnableSync(Boolean enableSync) {
-        return enableSync(enableSync);
+    public Builder withInvokeMode(InvokeMode invokeMode) {
+        return invokeMode(invokeMode);
     }
 
     public DashScopeImageOptions build() {

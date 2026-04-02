@@ -274,8 +274,8 @@ public class DashScopeImageModel implements ImageModel {
 
         DashScopeApiSpec.DashScopeImageRequest dashScopeImageRequest = constructImageRequest(request, imageOptions);
 
-        // Determine async mode based on enableSync option
-        boolean useAsync = determineUseAsync(imageOptions.getEnableSync(), imageOptions.getModel());
+        // Determine async mode based on invokeMode option
+        boolean useAsync = determineUseAsync(imageOptions.getInvokeMode(), imageOptions.getModel());
 
         ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> submitResponse =
             dashScopeImageApi.submitImageGenTask(dashScopeImageRequest, useAsync);
@@ -290,12 +290,12 @@ public class DashScopeImageModel implements ImageModel {
 
     /**
      * Determine whether to use async mode.
-     * @param enableSync User's sync preference (null=auto, true=sync, false=async)
+     * @param invokeMode User's invoke mode preference (null=auto, SYNC, ASYNC)
      * @param model The model name
      * @return true if should use async, false if should use sync
      */
-    private boolean determineUseAsync(Boolean enableSync, String model) {
-        if (Boolean.TRUE.equals(enableSync)) {
+    private boolean determineUseAsync(InvokeMode invokeMode, String model) {
+        if (invokeMode == InvokeMode.SYNC) {
             // User explicitly wants sync
             if (isAsyncOnlyModelForModel(model)) {
                 // Model doesn't support sync, auto-downgrade to async
@@ -304,11 +304,11 @@ public class DashScopeImageModel implements ImageModel {
             }
             return false;
         }
-        if (Boolean.FALSE.equals(enableSync)) {
+        if (invokeMode == InvokeMode.ASYNC) {
             // User explicitly wants async
             return true;
         }
-        // User didn't specify, use model default
+        // User didn't specify (AUTO or null), use model default
         // Async-only models default to async, others default to sync
         return !isDefaultSyncModel(model);
     }
