@@ -36,6 +36,28 @@ import org.springframework.ai.model.ModelOptionsUtils;
 
 public class DashScopeApiSpec {
 
+    /**
+     * Invocation mode for DashScope Image API.
+     */
+    public enum InvokeMode {
+
+        /**
+         * Auto mode - automatically choose based on model defaults for backward compatibility.
+         */
+        AUTO,
+
+        /**
+         * Synchronous mode - call without async header, blocks until completion.
+         */
+        SYNC,
+
+        /**
+         * Asynchronous mode - call with async header, returns task_id for polling.
+         */
+        ASYNC
+
+    }
+
     public static final String DEFAULT_EMBEDDING_MODEL = DashScopeModel.EmbeddingModel.EMBEDDING_V2.getValue();
 
     public static final String DEFAULT_EMBEDDING_TEXT_TYPE = DashScopeModel.EmbeddingTextType.DOCUMENT.getValue();

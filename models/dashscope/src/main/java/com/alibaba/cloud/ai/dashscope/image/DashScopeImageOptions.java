@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.dashscope.image;
 
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.InvokeMode;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;
@@ -122,8 +124,8 @@ public class DashScopeImageOptions implements ImageOptions {
    * - ASYNC: asynchronous call (with async header, returns task_id for polling)
    * Note: If model doesn't support sync, will auto-downgrade to async with WARN log.
    */
-  @JsonProperty("invoke_mode")
-  private InvokeMode invokeMode;
+  @JsonIgnore
+  private InvokeMode invokeMode = InvokeMode.AUTO;
 
   public Boolean getPromptExtend() {
     return promptExtend;
@@ -599,11 +601,6 @@ public class DashScopeImageOptions implements ImageOptions {
     public Builder invokeMode(InvokeMode invokeMode) {
         this.options.invokeMode = invokeMode;
         return this;
-    }
-
-    @Deprecated
-    public Builder withInvokeMode(InvokeMode invokeMode) {
-        return invokeMode(invokeMode);
     }
 
     public DashScopeImageOptions build() {

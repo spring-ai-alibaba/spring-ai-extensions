@@ -21,6 +21,7 @@ import com.alibaba.cloud.ai.dashscope.image.observation.DashScopeImageModelObser
 import com.alibaba.cloud.ai.dashscope.image.observation.DashScopeImagePromptContentObservationHandler;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseChoice;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.InvokeMode;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseChoice.DashScopeImageAsyncResponseContent;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseChoice.DashScopeImageAsyncResponseMessage;
 import io.micrometer.observation.Observation;
