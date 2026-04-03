@@ -17,3 +17,5 @@ com.alibaba.cloud.ai.autoconfigure.mcp.gateway.core.McpGatewayServerAutoConfigur
 #com.alibaba.cloud.ai.autoconfigure.mcp.gateway.core.McpGatewaySseServerAutoConfiguration
 #com.alibaba.cloud.ai.autoconfigure.mcp.gateway.core.McpGatewayStreamableServerAutoConfiguration
 com.alibaba.cloud.ai.autoconfigure.mcp.gateway.nacos.NacosMcpGatewayAutoConfiguration
+com.alibaba.cloud.ai.autoconfigure.mcp.gateway.core.McpGatewayMultiServerWebMvcAutoConfiguration
+com.alibaba.cloud.ai.autoconfigure.mcp.gateway.core.McpGatewayMultiServerWebFluxAutoConfiguration
