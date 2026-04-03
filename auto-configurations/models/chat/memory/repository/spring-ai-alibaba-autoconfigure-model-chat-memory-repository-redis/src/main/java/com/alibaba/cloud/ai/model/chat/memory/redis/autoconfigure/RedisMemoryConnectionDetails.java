@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public interface RedisMemoryConnectionDetails {
 	 * Login username of the redis server.
 	 * @return the login username of the redis server
 	 */
-	default String getUsername() {
+	default @Nullable String getUsername() {
 		return null;
 	}
 
@@ -39,7 +40,7 @@ public interface RedisMemoryConnectionDetails {
 	 * Login password of the redis server.
 	 * @return the login password of the redis server
 	 */
-	default String getPassword() {
+	default @Nullable String getPassword() {
 		return null;
 	}
 
@@ -48,7 +49,7 @@ public interface RedisMemoryConnectionDetails {
 	 * {@link #getCluster()}.
 	 * @return the Redis standalone configuration
 	 */
-	default Standalone getStandalone() {
+	default @Nullable Standalone getStandalone() {
 		return null;
 	}
 
@@ -57,7 +58,7 @@ public interface RedisMemoryConnectionDetails {
 	 * {@link #getCluster()}.
 	 * @return the Redis sentinel configuration
 	 */
-	default Sentinel getSentinel() {
+	default @Nullable Sentinel getSentinel() {
 		return null;
 	}
 
@@ -66,7 +67,7 @@ public interface RedisMemoryConnectionDetails {
 	 * {@link #getSentinel()}.
 	 * @return the Redis cluster configuration
 	 */
-	default Cluster getCluster() {
+	default @Nullable Cluster getCluster() {
 		return null;
 	}
 
@@ -150,12 +151,14 @@ public interface RedisMemoryConnectionDetails {
 		 * Login username for authenticating with sentinel(s).
 		 * @return the login username for authenticating with sentinel(s) or {@code null}
 		 */
+		@Nullable
 		String getUsername();
 
 		/**
 		 * Password for authenticating with sentinel(s).
 		 * @return the password for authenticating with sentinel(s) or {@code null}
 		 */
+		@Nullable
 		String getPassword();
 
 	}

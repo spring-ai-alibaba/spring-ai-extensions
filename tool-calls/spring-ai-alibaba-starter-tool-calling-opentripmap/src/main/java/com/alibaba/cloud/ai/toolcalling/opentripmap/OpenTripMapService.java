@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.MultiValueMap;
@@ -60,7 +61,7 @@ public class OpenTripMapService
 	@Override
 	public SearchService.Response query(String query) {
 		// For simple search, we'll try to get coordinates first, then search places
-		return CommonToolCallUtils.handleServiceError("OpenTripMap", () -> {
+		SearchService.@Nullable Response response = CommonToolCallUtils.handleServiceError("OpenTripMap", () -> {
 			// First try to get coordinates for the query location
 			Request coordRequest = new Request(null, null, null, null, null, null, query, null, "coordinates");
 			Response coordResponse = this.apply(coordRequest);
@@ -103,16 +104,17 @@ public class OpenTripMapService
 
 			return () -> new SearchService.SearchResult(new ArrayList<>());
 		}, logger);
+		return response != null ? response : () -> new SearchService.SearchResult(new ArrayList<>());
 	}
 
 	@Override
 	public Response apply(Request request) {
 		if (CommonToolCallUtils.isInvalidateRequestParams(request)) {
 			logger.error("Invalid request: request cannot be null");
-			return null;
+			return Response.empty();
 		}
 
-		return CommonToolCallUtils.handleServiceError("OpenTripMap", () -> {
+		Response response = CommonToolCallUtils.handleServiceError("OpenTripMap", () -> {
 			String responseData;
 
 			if ("coordinates".equals(request.operation) && StringUtils.hasText(request.placeName)) {
@@ -132,9 +134,10 @@ public class OpenTripMapService
 			}
 			else {
 				logger.error("Invalid request: missing required parameters for operation {}", request.operation);
-				return null;
+				return Response.empty();
 			}
 		}, logger);
+		return response != null ? response : Response.empty();
 	}
 
 	private String searchPlaces(Request request) {
@@ -156,7 +159,7 @@ public class OpenTripMapService
 
 		String response = webClientTool.get("/places/radius", params).block();
 		logger.info("OpenTripMap places search completed for coordinates: {}, {}", request.latitude, request.longitude);
-		return response;
+		return response != null ? response : "";
 	}
 
 	private String getPlaceDetails(String xid) {
@@ -166,7 +169,7 @@ public class OpenTripMapService
 
 		String response = webClientTool.get("/places/xid/" + xid, params).block();
 		logger.info("OpenTripMap place details retrieved for xid: {}", xid);
-		return response;
+		return response != null ? response : "";
 	}
 
 	private String getCoordinates(String placeName) {
@@ -177,34 +180,26 @@ public class OpenTripMapService
 
 		String response = webClientTool.get("/places/geoname", params).block();
 		logger.info("OpenTripMap coordinates retrieved for place: {}", placeName);
-		return response;
+		return response != null ? response : "";
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@JsonClassDescription("OpenTripMap service for searching places, getting place details, or finding coordinates.")
-	public record Request(@JsonProperty(
-			value = "latitude") @JsonPropertyDescription("Latitude coordinate for place search") Double latitude,
+	public record Request(@JsonProperty(value = "latitude") @JsonPropertyDescription("Latitude coordinate for place search") @Nullable Double latitude,
 
-			@JsonProperty(
-					value = "longitude") @JsonPropertyDescription("Longitude coordinate for place search") Double longitude,
+			@JsonProperty(value = "longitude") @JsonPropertyDescription("Longitude coordinate for place search") @Nullable Double longitude,
 
-			@JsonProperty(
-					value = "radius") @JsonPropertyDescription("Search radius in meters (default: 1000, max: 50000)") Integer radius,
+			@JsonProperty(value = "radius") @JsonPropertyDescription("Search radius in meters (default: 1000, max: 50000)") @Nullable Integer radius,
 
-			@JsonProperty(
-					value = "limit") @JsonPropertyDescription("Maximum number of results (default: 10, max: 500)") Integer limit,
+			@JsonProperty(value = "limit") @JsonPropertyDescription("Maximum number of results (default: 10, max: 500)") @Nullable Integer limit,
 
-			@JsonProperty(
-					value = "kinds") @JsonPropertyDescription("Categories of places (e.g., 'museums', 'restaurants', 'hotels')") String kinds,
+			@JsonProperty(value = "kinds") @JsonPropertyDescription("Categories of places (e.g., 'museums', 'restaurants', 'hotels')") @Nullable String kinds,
 
-			@JsonProperty(
-					value = "rate") @JsonPropertyDescription("Minimum rating (1-3, where 3 is highest)") String rate,
+			@JsonProperty(value = "rate") @JsonPropertyDescription("Minimum rating (1-3, where 3 is highest)") @Nullable String rate,
 
-			@JsonProperty(
-					value = "placeName") @JsonPropertyDescription("Place name to get coordinates for") String placeName,
+			@JsonProperty(value = "placeName") @JsonPropertyDescription("Place name to get coordinates for") @Nullable String placeName,
 
-			@JsonProperty(
-					value = "xid") @JsonPropertyDescription("Unique place identifier for getting details") String xid,
+			@JsonProperty(value = "xid") @JsonPropertyDescription("Unique place identifier for getting details") @Nullable String xid,
 
 			@JsonProperty(required = true,
 					value = "operation") @JsonPropertyDescription("Operation type: 'search' (find places), 'details' (get place details), 'coordinates' (get coordinates for place name)") String operation)
@@ -217,7 +212,13 @@ public class OpenTripMapService
 	}
 
 	@JsonClassDescription("OpenTripMap service response")
-	public record Response(String places, String details, String coordinates) implements SearchService.Response {
+	public record Response(@Nullable String places, @Nullable String details, @Nullable String coordinates)
+			implements SearchService.Response {
+
+		public static Response empty() {
+			return new Response(null, null, null);
+		}
+
 		@Override
 		public SearchService.SearchResult getSearchResult() {
 			// This is mainly used for the SearchService interface

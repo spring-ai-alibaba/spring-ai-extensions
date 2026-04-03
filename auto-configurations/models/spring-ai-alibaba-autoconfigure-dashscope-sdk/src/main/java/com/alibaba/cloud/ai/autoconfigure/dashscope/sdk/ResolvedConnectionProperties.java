@@ -16,7 +16,9 @@
 
 package com.alibaba.cloud.ai.autoconfigure.dashscope.sdk;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.Map;
 
-record ResolvedConnectionProperties(String apiKey, String workspaceId, Map<String, String> headers) {
+record ResolvedConnectionProperties(String apiKey, @Nullable String workspaceId, Map<String, String> headers) {
 }

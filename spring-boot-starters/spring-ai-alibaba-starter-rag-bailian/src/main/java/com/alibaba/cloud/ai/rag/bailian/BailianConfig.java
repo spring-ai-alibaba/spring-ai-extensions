@@ -18,6 +18,9 @@ package com.alibaba.cloud.ai.rag.bailian;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
+import org.jspecify.annotations.Nullable;
 
 /**
  * Configuration for Alibaba Cloud Bailian Knowledge Base.
@@ -59,26 +62,26 @@ public class BailianConfig {
 
 	private final String workspaceId;
 
-	private final String indexId;
+	private final @Nullable String indexId;
 
 	private final String endpoint;
 
 	// Retrieval configuration (knowledge base defaults)
-	private final Integer denseSimilarityTopK;
+	private final @Nullable Integer denseSimilarityTopK;
 
-	private final Integer sparseSimilarityTopK;
+	private final @Nullable Integer sparseSimilarityTopK;
 
-	private final Boolean enableReranking;
+	private final @Nullable Boolean enableReranking;
 
-	private final RerankConfig rerankConfig;
+	private final @Nullable RerankConfig rerankConfig;
 
-	private final Boolean enableRewrite;
+	private final @Nullable Boolean enableRewrite;
 
-	private final RewriteConfig rewriteConfig;
+	private final @Nullable RewriteConfig rewriteConfig;
 
-	private final List<Map<String, String>> searchFilters;
+	private final @Nullable List<Map<String, String>> searchFilters;
 
-	private final Boolean saveRetrieverHistory;
+	private final @Nullable Boolean saveRetrieverHistory;
 
 	private BailianConfig(Builder builder) {
 		if (builder.accessKeyId == null || builder.accessKeyId.trim().isEmpty()) {
@@ -92,9 +95,10 @@ public class BailianConfig {
 		}
 
 		// Connection configuration
-		this.accessKeyId = builder.accessKeyId;
-		this.accessKeySecret = builder.accessKeySecret;
-		this.workspaceId = builder.workspaceId;
+		this.accessKeyId = Objects.requireNonNull(builder.accessKeyId, "AccessKeyId cannot be null or empty");
+		this.accessKeySecret = Objects.requireNonNull(builder.accessKeySecret,
+				"AccessKeySecret cannot be null or empty");
+		this.workspaceId = Objects.requireNonNull(builder.workspaceId, "WorkspaceId cannot be null or empty");
 		this.indexId = builder.indexId;
 		this.endpoint = builder.endpoint != null ? builder.endpoint : DEFAULT_ENDPOINT;
 
@@ -152,7 +156,7 @@ public class BailianConfig {
 	 * Gets the knowledge base index ID.
 	 * @return the index ID, or null if not set
 	 */
-	public String getIndexId() {
+	public @Nullable String getIndexId() {
 		return indexId;
 	}
 
@@ -168,7 +172,7 @@ public class BailianConfig {
 	 * Gets the dense similarity top K value.
 	 * @return the dense similarity top K (0-100), or null if not set
 	 */
-	public Integer getDenseSimilarityTopK() {
+	public @Nullable Integer getDenseSimilarityTopK() {
 		return denseSimilarityTopK;
 	}
 
@@ -176,7 +180,7 @@ public class BailianConfig {
 	 * Gets the sparse similarity top K value.
 	 * @return the sparse similarity top K (0-100), or null if not set
 	 */
-	public Integer getSparseSimilarityTopK() {
+	public @Nullable Integer getSparseSimilarityTopK() {
 		return sparseSimilarityTopK;
 	}
 
@@ -184,7 +188,7 @@ public class BailianConfig {
 	 * Checks if reranking is enabled.
 	 * @return true if reranking is enabled, null if not configured
 	 */
-	public Boolean getEnableReranking() {
+	public @Nullable Boolean getEnableReranking() {
 		return enableReranking;
 	}
 
@@ -192,7 +196,7 @@ public class BailianConfig {
 	 * Gets the rerank configuration.
 	 * @return the rerank config, or null if not set
 	 */
-	public RerankConfig getRerankConfig() {
+	public @Nullable RerankConfig getRerankConfig() {
 		return rerankConfig;
 	}
 
@@ -200,7 +204,7 @@ public class BailianConfig {
 	 * Checks if query rewrite is enabled.
 	 * @return true if rewrite is enabled, null if not configured
 	 */
-	public Boolean getEnableRewrite() {
+	public @Nullable Boolean getEnableRewrite() {
 		return enableRewrite;
 	}
 
@@ -208,7 +212,7 @@ public class BailianConfig {
 	 * Gets the rewrite configuration.
 	 * @return the rewrite config, or null if not set
 	 */
-	public RewriteConfig getRewriteConfig() {
+	public @Nullable RewriteConfig getRewriteConfig() {
 		return rewriteConfig;
 	}
 
@@ -216,7 +220,7 @@ public class BailianConfig {
 	 * Gets the search filters.
 	 * @return the search filters list, or null if not set
 	 */
-	public List<Map<String, String>> getSearchFilters() {
+	public @Nullable List<Map<String, String>> getSearchFilters() {
 		return searchFilters;
 	}
 
@@ -224,7 +228,7 @@ public class BailianConfig {
 	 * Checks if retriever history should be saved.
 	 * @return true if history should be saved, null if not configured
 	 */
-	public Boolean getSaveRetrieverHistory() {
+	public @Nullable Boolean getSaveRetrieverHistory() {
 		return saveRetrieverHistory;
 	}
 
@@ -234,32 +238,32 @@ public class BailianConfig {
 	public static class Builder {
 
 		// Connection configuration
-		private String accessKeyId;
+		private @Nullable String accessKeyId;
 
-		private String accessKeySecret;
+		private @Nullable String accessKeySecret;
 
-		private String workspaceId;
+		private @Nullable String workspaceId;
 
-		private String indexId;
+		private @Nullable String indexId;
 
-		private String endpoint;
+		private @Nullable String endpoint;
 
 		// Retrieval configuration
-		private Integer denseSimilarityTopK;
+		private @Nullable Integer denseSimilarityTopK;
 
-		private Integer sparseSimilarityTopK;
+		private @Nullable Integer sparseSimilarityTopK;
 
-		private Boolean enableReranking;
+		private @Nullable Boolean enableReranking;
 
-		private RerankConfig rerankConfig;
+		private @Nullable RerankConfig rerankConfig;
 
-		private Boolean enableRewrite;
+		private @Nullable Boolean enableRewrite;
 
-		private RewriteConfig rewriteConfig;
+		private @Nullable RewriteConfig rewriteConfig;
 
-		private List<Map<String, String>> searchFilters;
+		private @Nullable List<Map<String, String>> searchFilters;
 
-		private Boolean saveRetrieverHistory;
+		private @Nullable Boolean saveRetrieverHistory;
 
 		private Builder() {
 		}
@@ -269,7 +273,7 @@ public class BailianConfig {
 		 * @param accessKeyId the access key ID
 		 * @return this builder for method chaining
 		 */
-		public Builder accessKeyId(String accessKeyId) {
+		public Builder accessKeyId(@Nullable String accessKeyId) {
 			this.accessKeyId = accessKeyId;
 			return this;
 		}
@@ -279,7 +283,7 @@ public class BailianConfig {
 		 * @param accessKeySecret the access key secret
 		 * @return this builder for method chaining
 		 */
-		public Builder accessKeySecret(String accessKeySecret) {
+		public Builder accessKeySecret(@Nullable String accessKeySecret) {
 			this.accessKeySecret = accessKeySecret;
 			return this;
 		}
@@ -289,7 +293,7 @@ public class BailianConfig {
 		 * @param workspaceId the workspace ID
 		 * @return this builder for method chaining
 		 */
-		public Builder workspaceId(String workspaceId) {
+		public Builder workspaceId(@Nullable String workspaceId) {
 			this.workspaceId = workspaceId;
 			return this;
 		}
@@ -302,7 +306,7 @@ public class BailianConfig {
 		 * @param indexId the index ID
 		 * @return this builder for method chaining
 		 */
-		public Builder indexId(String indexId) {
+		public Builder indexId(@Nullable String indexId) {
 			this.indexId = indexId;
 			return this;
 		}
@@ -324,7 +328,7 @@ public class BailianConfig {
 		 * @param endpoint the API endpoint
 		 * @return this builder for method chaining
 		 */
-		public Builder endpoint(String endpoint) {
+		public Builder endpoint(@Nullable String endpoint) {
 			this.endpoint = endpoint;
 			return this;
 		}
@@ -338,7 +342,7 @@ public class BailianConfig {
 		 * @param denseSimilarityTopK the top K value
 		 * @return this builder
 		 */
-		public Builder denseSimilarityTopK(Integer denseSimilarityTopK) {
+		public Builder denseSimilarityTopK(@Nullable Integer denseSimilarityTopK) {
 			if (denseSimilarityTopK != null && (denseSimilarityTopK < 0 || denseSimilarityTopK > 100)) {
 				throw new IllegalArgumentException("denseSimilarityTopK must be between 0 and 100");
 			}
@@ -355,7 +359,7 @@ public class BailianConfig {
 		 * @param sparseSimilarityTopK the top K value
 		 * @return this builder
 		 */
-		public Builder sparseSimilarityTopK(Integer sparseSimilarityTopK) {
+		public Builder sparseSimilarityTopK(@Nullable Integer sparseSimilarityTopK) {
 			if (sparseSimilarityTopK != null && (sparseSimilarityTopK < 0 || sparseSimilarityTopK > 100)) {
 				throw new IllegalArgumentException("sparseSimilarityTopK must be between 0 and 100");
 			}
@@ -371,7 +375,7 @@ public class BailianConfig {
 		 * @param enableReranking true to enable reranking
 		 * @return this builder
 		 */
-		public Builder enableReranking(Boolean enableReranking) {
+		public Builder enableReranking(@Nullable Boolean enableReranking) {
 			this.enableReranking = enableReranking;
 			return this;
 		}
@@ -381,7 +385,7 @@ public class BailianConfig {
 		 * @param rerankConfig the rerank config
 		 * @return this builder
 		 */
-		public Builder rerankConfig(RerankConfig rerankConfig) {
+		public Builder rerankConfig(@Nullable RerankConfig rerankConfig) {
 			this.rerankConfig = rerankConfig;
 			return this;
 		}
@@ -394,7 +398,7 @@ public class BailianConfig {
 		 * @param enableRewrite true to enable rewrite
 		 * @return this builder
 		 */
-		public Builder enableRewrite(Boolean enableRewrite) {
+		public Builder enableRewrite(@Nullable Boolean enableRewrite) {
 			this.enableRewrite = enableRewrite;
 			return this;
 		}
@@ -404,7 +408,7 @@ public class BailianConfig {
 		 * @param rewriteConfig the rewrite config
 		 * @return this builder
 		 */
-		public Builder rewriteConfig(RewriteConfig rewriteConfig) {
+		public Builder rewriteConfig(@Nullable RewriteConfig rewriteConfig) {
 			this.rewriteConfig = rewriteConfig;
 			return this;
 		}
@@ -418,7 +422,7 @@ public class BailianConfig {
 		 * @param searchFilters the search filters
 		 * @return this builder
 		 */
-		public Builder searchFilters(List<Map<String, String>> searchFilters) {
+		public Builder searchFilters(@Nullable List<Map<String, String>> searchFilters) {
 			this.searchFilters = searchFilters != null ? new ArrayList<>(searchFilters) : null;
 			return this;
 		}
@@ -431,7 +435,7 @@ public class BailianConfig {
 		 * @param saveRetrieverHistory true to save history
 		 * @return this builder
 		 */
-		public Builder saveRetrieverHistory(Boolean saveRetrieverHistory) {
+		public Builder saveRetrieverHistory(@Nullable Boolean saveRetrieverHistory) {
 			this.saveRetrieverHistory = saveRetrieverHistory;
 			return this;
 		}

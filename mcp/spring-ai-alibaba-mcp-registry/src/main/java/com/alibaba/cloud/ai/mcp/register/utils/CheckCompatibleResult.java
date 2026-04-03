@@ -16,6 +16,8 @@
 
 package com.alibaba.cloud.ai.mcp.register.utils;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * @author Sunrisea
  */
@@ -23,9 +25,9 @@ public class CheckCompatibleResult {
 
     private final boolean compatible;
 
-    private String message;
+    private @Nullable String message;
 
-    public CheckCompatibleResult(boolean compatible, String message) {
+    public CheckCompatibleResult(boolean compatible, @Nullable String message) {
         this.compatible = compatible;
         this.message = message;
     }
@@ -38,7 +40,7 @@ public class CheckCompatibleResult {
         return compatible;
     }
 
-    public String getMessage() {
+    public @Nullable String getMessage() {
         return message;
     }
 

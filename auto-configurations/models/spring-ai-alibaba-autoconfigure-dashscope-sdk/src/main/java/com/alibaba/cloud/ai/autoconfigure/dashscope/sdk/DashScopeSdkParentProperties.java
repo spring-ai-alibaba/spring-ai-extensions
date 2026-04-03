@@ -16,25 +16,27 @@
 
 package com.alibaba.cloud.ai.autoconfigure.dashscope.sdk;
 
+import org.jspecify.annotations.Nullable;
+
 class DashScopeSdkParentProperties {
 
-	private String apiKey;
+	private @Nullable String apiKey;
 
-	private String workspaceId;
+	private @Nullable String workspaceId;
 
-	public String getApiKey() {
+	public @Nullable String getApiKey() {
 		return this.apiKey;
 	}
 
-	public void setApiKey(String apiKey) {
+	public void setApiKey(@Nullable String apiKey) {
 		this.apiKey = apiKey;
 	}
 
-	public String getWorkspaceId() {
+	public @Nullable String getWorkspaceId() {
 		return this.workspaceId;
 	}
 
-	public void setWorkspaceId(String workspaceId) {
+	public void setWorkspaceId(@Nullable String workspaceId) {
 		this.workspaceId = workspaceId;
 	}
 

@@ -25,9 +25,11 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Iterator;
+import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
@@ -291,32 +293,31 @@ public class NotionResource implements Resource {
 
 	public static class Builder {
 
-		private String notionToken;
+		private @Nullable String notionToken;
 
-		private String resourceId;
+		private @Nullable String resourceId;
 
-		private ResourceType resourceType;
+		private @Nullable ResourceType resourceType;
 
-		public Builder notionToken(String notionToken) {
+		public Builder notionToken(@Nullable String notionToken) {
 			this.notionToken = notionToken;
 			return this;
 		}
 
-		public Builder resourceId(String resourceId) {
+		public Builder resourceId(@Nullable String resourceId) {
 			this.resourceId = resourceId;
 			return this;
 		}
 
-		public Builder resourceType(ResourceType resourceType) {
+		public Builder resourceType(@Nullable ResourceType resourceType) {
 			this.resourceType = resourceType;
 			return this;
 		}
 
 		public NotionResource build() {
-			Assert.notNull(notionToken, "NotionToken must not be null");
-			Assert.notNull(resourceId, "ResourceId must not be null");
-			Assert.notNull(resourceType, "ResourceType must not be null");
-			return new NotionResource(notionToken, resourceId, resourceType);
+			return new NotionResource(Objects.requireNonNull(notionToken, "NotionToken must not be null"),
+					Objects.requireNonNull(resourceId, "ResourceId must not be null"),
+					Objects.requireNonNull(resourceType, "ResourceType must not be null"));
 		}
 
 	}
@@ -328,7 +329,7 @@ public class NotionResource implements Resource {
 
 	@Override
 	public URL getURL() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("NotionResource does not expose a URL");
 	}
 
 	@Override
@@ -338,7 +339,7 @@ public class NotionResource implements Resource {
 
 	@Override
 	public File getFile() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("NotionResource is not backed by a local file");
 	}
 
 	@Override
@@ -353,7 +354,7 @@ public class NotionResource implements Resource {
 
 	@Override
 	public Resource createRelative(String relativePath) throws IOException {
-		return null;
+		throw new UnsupportedOperationException("NotionResource does not support relative resources");
 	}
 
 	@Override

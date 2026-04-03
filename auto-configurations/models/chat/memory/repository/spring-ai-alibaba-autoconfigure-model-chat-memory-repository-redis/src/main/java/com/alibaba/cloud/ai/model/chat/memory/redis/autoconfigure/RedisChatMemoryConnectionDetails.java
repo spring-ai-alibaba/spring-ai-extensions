@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.List;
 
 /**
@@ -32,12 +34,12 @@ public class RedisChatMemoryConnectionDetails implements RedisMemoryConnectionDe
 	}
 
 	@Override
-	public String getUsername() {
+	public @Nullable String getUsername() {
 		return properties.getUsername();
 	}
 
 	@Override
-	public String getPassword() {
+	public @Nullable String getPassword() {
 		return properties.getPassword();
 	}
 
@@ -47,9 +49,10 @@ public class RedisChatMemoryConnectionDetails implements RedisMemoryConnectionDe
 	}
 
 	@Override
-	public Cluster getCluster() {
-		RedisChatMemoryProperties.Cluster cluster = this.properties.getCluster();
-		List<Node> nodes = (cluster != null) ? cluster.getNodes().stream().map(this::asNode).toList() : null;
+	public @Nullable Cluster getCluster() {
+		RedisChatMemoryProperties.@Nullable Cluster cluster = this.properties.getCluster();
+		List<Node> nodes = (cluster != null && cluster.getNodes() != null)
+				? cluster.getNodes().stream().map(this::asNode).toList() : null;
 		return (nodes != null) ? () -> nodes : null;
 	}
 

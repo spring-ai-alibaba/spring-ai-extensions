@@ -129,7 +129,7 @@ public class NacosMcpGatewayToolsInitializer implements McpGatewayToolsInitializ
 			logger.warn("Failed to get or parse nacos mcp service tools info (mcpName {})",
 					mcpServerDetailInfo.getName() + mcpServerDetailInfo.getVersionDetail().getVersion(), e);
 		}
-		return null;
+		return new ArrayList<>();
 	}
 
 }

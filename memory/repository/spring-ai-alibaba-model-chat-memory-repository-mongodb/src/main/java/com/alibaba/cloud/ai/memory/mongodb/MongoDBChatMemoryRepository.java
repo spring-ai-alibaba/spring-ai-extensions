@@ -23,6 +23,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.client.*;
 import com.mongodb.client.model.Indexes;
 import io.micrometer.common.util.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -193,7 +194,7 @@ public class MongoDBChatMemoryRepository implements ChatMemoryRepository, AutoCl
 		}
 	}
 
-	private Message documentToMessage(Document doc) {
+	private @Nullable Message documentToMessage(Document doc) {
 		try {
 			String messageType = doc.getString(MESSAGE_TYPE_FIELD);
 			String messageText = doc.getString(MESSAGE_TEXT_FIELD);
@@ -233,9 +234,9 @@ public class MongoDBChatMemoryRepository implements ChatMemoryRepository, AutoCl
 
 		private int port = 27017;
 
-		private String userName;
+		private @Nullable String userName;
 
-		private String password;
+		private @Nullable String password;
 
 		private String authDatabaseName = "admin";
 
@@ -251,12 +252,12 @@ public class MongoDBChatMemoryRepository implements ChatMemoryRepository, AutoCl
 			return this;
 		}
 
-		public MongoDBBuilder userName(String userName) {
+		public MongoDBBuilder userName(@Nullable String userName) {
 			this.userName = userName;
 			return this;
 		}
 
-		public MongoDBBuilder password(String password) {
+		public MongoDBBuilder password(@Nullable String password) {
 			this.password = password;
 			return this;
 		}

@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ApiKey;
@@ -40,6 +41,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -58,13 +60,13 @@ public class DashScopeQwenTTSApi {
 
 	private final String baseUrl;
 	private final ApiKey apiKey;
-	private final String workSpaceId;
+	private final @Nullable String workSpaceId;
 	private final RestClient restClient;
 	private final WebClient webClient;
 	private final ObjectMapper objectMapper;
 
-	public DashScopeQwenTTSApi(String baseUrl, ApiKey apiKey, String workSpaceId,
-			HttpHeaders headers, RestClient.Builder restClientBuilder,
+	public DashScopeQwenTTSApi(String baseUrl, ApiKey apiKey, @Nullable String workSpaceId,
+			@Nullable HttpHeaders headers, RestClient.Builder restClientBuilder,
 			WebClient.Builder webClientBuilder, ResponseErrorHandler responseErrorHandler) {
 		this.baseUrl = baseUrl;
 		this.apiKey = apiKey;
@@ -118,7 +120,7 @@ public class DashScopeQwenTTSApi {
 				.toEntity(DashScopeAudioTTSResponse.class);
 
 		if (response.getStatusCode().is2xxSuccessful()) {
-			return response.getBody();
+			return Objects.requireNonNull(response.getBody(), "DashScope Qwen TTS response body must not be null");
 		}
 		log.error("Failed to call Qwen TTS API: " + response.getStatusCode());
 		throw new RuntimeException("Failed to call Qwen TTS API: " + response.getStatusCode());
@@ -161,13 +163,13 @@ public class DashScopeQwenTTSApi {
 
 	public static class Builder {
 
-		private String baseUrl;
-		private ApiKey apiKey;
-		private String workSpaceId;
-		private HttpHeaders headers;
-		private RestClient.Builder restClientBuilder;
-		private WebClient.Builder webClientBuilder;
-		private ResponseErrorHandler responseErrorHandler;
+		private @Nullable String baseUrl;
+		private @Nullable ApiKey apiKey;
+		private @Nullable String workSpaceId;
+		private @Nullable HttpHeaders headers;
+		private RestClient.@Nullable Builder restClientBuilder;
+		private WebClient.@Nullable Builder webClientBuilder;
+		private @Nullable ResponseErrorHandler responseErrorHandler;
 
 		public Builder baseUrl(String baseUrl) {
 			this.baseUrl = baseUrl;
@@ -179,7 +181,7 @@ public class DashScopeQwenTTSApi {
 			return this;
 		}
 
-		public Builder workSpaceId(String workSpaceId) {
+		public Builder workSpaceId(@Nullable String workSpaceId) {
 			this.workSpaceId = workSpaceId;
 			return this;
 		}
@@ -210,7 +212,15 @@ public class DashScopeQwenTTSApi {
 			Assert.notNull(restClientBuilder, "restClientBuilder cannot be null");
 			Assert.notNull(webClientBuilder, "webClientBuilder cannot be null");
 			Assert.notNull(responseErrorHandler, "responseErrorHandler cannot be null");
-			return new DashScopeQwenTTSApi(baseUrl, apiKey, workSpaceId, headers, restClientBuilder,
+			String baseUrl = Objects.requireNonNull(this.baseUrl, "baseUrl cannot be null");
+			ApiKey apiKey = Objects.requireNonNull(this.apiKey, "apiKey must be set");
+			RestClient.Builder restClientBuilder = Objects.requireNonNull(this.restClientBuilder,
+					"restClientBuilder cannot be null");
+			WebClient.Builder webClientBuilder = Objects.requireNonNull(this.webClientBuilder,
+					"webClientBuilder cannot be null");
+			ResponseErrorHandler responseErrorHandler = Objects.requireNonNull(this.responseErrorHandler,
+					"responseErrorHandler cannot be null");
+			return new DashScopeQwenTTSApi(baseUrl, apiKey, this.workSpaceId, this.headers, restClientBuilder,
 					webClientBuilder, responseErrorHandler);
 		}
 	}

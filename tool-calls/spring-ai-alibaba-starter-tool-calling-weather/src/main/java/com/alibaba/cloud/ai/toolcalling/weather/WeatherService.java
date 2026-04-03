@@ -24,13 +24,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -50,11 +53,21 @@ public class WeatherService implements Function<WeatherService.Request, WeatherS
 	}
 
 	public static Response fromJson(Map<String, Object> json) {
-		Map<String, Object> location = (Map<String, Object>) json.get("location");
-		Map<String, Object> current = (Map<String, Object>) json.get("current");
-		Map<String, Object> forecast = (Map<String, Object>) json.get("forecast");
-		List<Map<String, Object>> forecastDays = (List<Map<String, Object>>) forecast.get("forecastday");
-		String city = (String) location.get("name");
+		Map<String, Object> location = asMap(json.get("location"), "location");
+		Map<String, Object> current = asMap(json.get("current"), "current");
+		Map<String, Object> forecast = asMap(json.get("forecast"), "forecast");
+		Object forecastDayObject = forecast.get("forecastday");
+		if (!(forecastDayObject instanceof List<?> forecastDayList) || CollectionUtils.isEmpty(forecastDayList)) {
+			throw new IllegalArgumentException("Weather response forecastday is missing");
+		}
+		List<Map<String, Object>> forecastDays = forecastDayList.stream()
+				.filter(Map.class::isInstance)
+				.map(entry -> (Map<String, Object>) entry)
+				.toList();
+		String city = Objects.toString(location.get("name"), "");
+		if (!StringUtils.hasText(city)) {
+			throw new IllegalArgumentException("Weather response city is missing");
+		}
 		return new Response(city, current, forecastDays);
 	}
 
@@ -62,7 +75,7 @@ public class WeatherService implements Function<WeatherService.Request, WeatherS
 	public Response apply(Request request) {
 		if (request == null || !StringUtils.hasText(request.city())) {
 			logger.error("Invalid request: city is required.");
-			return null;
+			throw new IllegalArgumentException("Weather request city is required");
 		}
 		String location = preprocessLocation(request.city());
 		try {
@@ -80,7 +93,7 @@ public class WeatherService implements Function<WeatherService.Request, WeatherS
 		}
 		catch (Exception e) {
 			logger.error("Failed to fetch weather data: {}", e.getMessage());
-			return null;
+			throw new RuntimeException("Failed to fetch weather data", e);
 		}
 	}
 
@@ -94,6 +107,14 @@ public class WeatherService implements Function<WeatherService.Request, WeatherS
 
 	private boolean containsChinese(String str) {
 		return str.matches(".*[\u4e00-\u9fa5].*");
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, Object> asMap(@Nullable Object value, String fieldName) {
+		if (value instanceof Map<?, ?> map) {
+			return (Map<String, Object>) map;
+		}
+		throw new IllegalArgumentException("Weather response " + fieldName + " is missing");
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)

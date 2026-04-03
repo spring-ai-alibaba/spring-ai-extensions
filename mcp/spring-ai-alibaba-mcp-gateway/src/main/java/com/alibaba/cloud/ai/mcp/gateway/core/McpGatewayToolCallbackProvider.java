@@ -42,7 +42,7 @@ public class McpGatewayToolCallbackProvider implements ToolCallbackProvider {
 
 	public static class Builder {
 
-		private ToolCallback[] toolCallbacks;
+		private ToolCallback[] toolCallbacks = new ToolCallback[0];
 
 		private Builder() {
 		}

@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.mcp.router.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 
@@ -40,37 +41,37 @@ public class McpToolExecutionResponse {
 	 * 错误消息（当 success 为 false 时）
 	 */
 	@JsonProperty("error_message")
-	private String errorMessage;
+	private @Nullable String errorMessage;
 
 	/**
 	 * 服务名称
 	 */
 	@JsonProperty("service_name")
-	private String serviceName;
+	private @Nullable String serviceName;
 
 	/**
 	 * 工具名称
 	 */
 	@JsonProperty("tool_name")
-	private String toolName;
+	private @Nullable String toolName;
 
 	/**
 	 * 执行参数
 	 */
 	@JsonProperty("execution_parameters")
-	private Map<String, Object> executionParameters;
+	private @Nullable Map<String, Object> executionParameters;
 
 	/**
 	 * 执行结果
 	 */
 	@JsonProperty("result")
-	private McpToolExecutionResult result;
+	private @Nullable McpToolExecutionResult result;
 
 	/**
 	 * 执行元信息
 	 */
 	@JsonProperty("execution_meta")
-	private McpExecutionMeta executionMeta;
+	private @Nullable McpExecutionMeta executionMeta;
 
 	public McpToolExecutionResponse() {
 	}
@@ -78,8 +79,9 @@ public class McpToolExecutionResponse {
 	/**
 	 * 创建成功响应
 	 */
-	public static McpToolExecutionResponse success(String serviceName, String toolName, Map<String, Object> parameters,
-			McpToolExecutionResult result, McpExecutionMeta meta) {
+	public static McpToolExecutionResponse success(@Nullable String serviceName, @Nullable String toolName,
+			@Nullable Map<String, Object> parameters, @Nullable McpToolExecutionResult result,
+			@Nullable McpExecutionMeta meta) {
 		McpToolExecutionResponse response = new McpToolExecutionResponse();
 		response.success = true;
 		response.serviceName = serviceName;
@@ -93,8 +95,8 @@ public class McpToolExecutionResponse {
 	/**
 	 * 创建失败响应
 	 */
-	public static McpToolExecutionResponse error(String serviceName, String toolName, Map<String, Object> parameters,
-			String errorMessage) {
+	public static McpToolExecutionResponse error(@Nullable String serviceName, @Nullable String toolName,
+			@Nullable Map<String, Object> parameters, @Nullable String errorMessage) {
 		McpToolExecutionResponse response = new McpToolExecutionResponse();
 		response.success = false;
 		response.serviceName = serviceName;
@@ -114,30 +116,31 @@ public class McpToolExecutionResponse {
 		 * 结果数据类型（text, json, binary 等）
 		 */
 		@JsonProperty("content_type")
-		private String contentType;
+		private @Nullable String contentType;
 
 		/**
 		 * 结果内容
 		 */
 		@JsonProperty("content")
-		private Object content;
+		private @Nullable Object content;
 
 		/**
 		 * 原始响应（调试用）
 		 */
 		@JsonProperty("raw_response")
-		private String rawResponse;
+		private @Nullable String rawResponse;
 
 		/**
 		 * 结果大小（字节）
 		 */
 		@JsonProperty("content_size")
-		private Long contentSize;
+		private @Nullable Long contentSize;
 
 		public McpToolExecutionResult() {
 		}
 
-		public McpToolExecutionResult(String contentType, Object content, String rawResponse) {
+		public McpToolExecutionResult(@Nullable String contentType, @Nullable Object content,
+				@Nullable String rawResponse) {
 			this.contentType = contentType;
 			this.content = content;
 			this.rawResponse = rawResponse;
@@ -147,48 +150,48 @@ public class McpToolExecutionResponse {
 		/**
 		 * 创建文本结果
 		 */
-		public static McpToolExecutionResult text(String content) {
+		public static McpToolExecutionResult text(@Nullable String content) {
 			return new McpToolExecutionResult("text", content, content);
 		}
 
 		/**
 		 * 创建JSON结果
 		 */
-		public static McpToolExecutionResult json(Object content, String rawResponse) {
+		public static McpToolExecutionResult json(@Nullable Object content, @Nullable String rawResponse) {
 			return new McpToolExecutionResult("json", content, rawResponse);
 		}
 
 		// Getters and Setters
-		public String getContentType() {
+		public @Nullable String getContentType() {
 			return contentType;
 		}
 
-		public void setContentType(String contentType) {
+		public void setContentType(@Nullable String contentType) {
 			this.contentType = contentType;
 		}
 
-		public Object getContent() {
+		public @Nullable Object getContent() {
 			return content;
 		}
 
-		public void setContent(Object content) {
+		public void setContent(@Nullable Object content) {
 			this.content = content;
 		}
 
-		public String getRawResponse() {
+		public @Nullable String getRawResponse() {
 			return rawResponse;
 		}
 
-		public void setRawResponse(String rawResponse) {
+		public void setRawResponse(@Nullable String rawResponse) {
 			this.rawResponse = rawResponse;
 			this.contentSize = rawResponse != null ? (long) rawResponse.length() : null;
 		}
 
-		public Long getContentSize() {
+		public @Nullable Long getContentSize() {
 			return contentSize;
 		}
 
-		public void setContentSize(Long contentSize) {
+		public void setContentSize(@Nullable Long contentSize) {
 			this.contentSize = contentSize;
 		}
 
@@ -204,42 +207,43 @@ public class McpToolExecutionResponse {
 		 * 执行开始时间戳
 		 */
 		@JsonProperty("execution_start")
-		private Long executionStart;
+		private @Nullable Long executionStart;
 
 		/**
 		 * 执行结束时间戳
 		 */
 		@JsonProperty("execution_end")
-		private Long executionEnd;
+		private @Nullable Long executionEnd;
 
 		/**
 		 * 执行耗时（毫秒）
 		 */
 		@JsonProperty("execution_duration_ms")
-		private Long executionDurationMs;
+		private @Nullable Long executionDurationMs;
 
 		/**
 		 * 使用的协议
 		 */
 		@JsonProperty("protocol_used")
-		private String protocolUsed;
+		private @Nullable String protocolUsed;
 
 		/**
 		 * 连接URL
 		 */
 		@JsonProperty("connection_url")
-		private String connectionUrl;
+		private @Nullable String connectionUrl;
 
 		/**
 		 * 重试次数
 		 */
 		@JsonProperty("retry_count")
-		private Integer retryCount;
+		private @Nullable Integer retryCount;
 
 		public McpExecutionMeta() {
 		}
 
-		public McpExecutionMeta(Long executionStart, Long executionEnd, String protocolUsed, String connectionUrl) {
+		public McpExecutionMeta(@Nullable Long executionStart, @Nullable Long executionEnd,
+				@Nullable String protocolUsed, @Nullable String connectionUrl) {
 			this.executionStart = executionStart;
 			this.executionEnd = executionEnd;
 			this.executionDurationMs = executionEnd != null && executionStart != null ? executionEnd - executionStart
@@ -252,7 +256,7 @@ public class McpToolExecutionResponse {
 		/**
 		 * 创建执行开始的元信息
 		 */
-		public static McpExecutionMeta start(String protocolUsed, String connectionUrl) {
+		public static McpExecutionMeta start(@Nullable String protocolUsed, @Nullable String connectionUrl) {
 			return new McpExecutionMeta(System.currentTimeMillis(), null, protocolUsed, connectionUrl);
 		}
 
@@ -267,51 +271,51 @@ public class McpToolExecutionResponse {
 		}
 
 		// Getters and Setters
-		public Long getExecutionStart() {
+		public @Nullable Long getExecutionStart() {
 			return executionStart;
 		}
 
-		public void setExecutionStart(Long executionStart) {
+		public void setExecutionStart(@Nullable Long executionStart) {
 			this.executionStart = executionStart;
 		}
 
-		public Long getExecutionEnd() {
+		public @Nullable Long getExecutionEnd() {
 			return executionEnd;
 		}
 
-		public void setExecutionEnd(Long executionEnd) {
+		public void setExecutionEnd(@Nullable Long executionEnd) {
 			this.executionEnd = executionEnd;
 		}
 
-		public Long getExecutionDurationMs() {
+		public @Nullable Long getExecutionDurationMs() {
 			return executionDurationMs;
 		}
 
-		public void setExecutionDurationMs(Long executionDurationMs) {
+		public void setExecutionDurationMs(@Nullable Long executionDurationMs) {
 			this.executionDurationMs = executionDurationMs;
 		}
 
-		public String getProtocolUsed() {
+		public @Nullable String getProtocolUsed() {
 			return protocolUsed;
 		}
 
-		public void setProtocolUsed(String protocolUsed) {
+		public void setProtocolUsed(@Nullable String protocolUsed) {
 			this.protocolUsed = protocolUsed;
 		}
 
-		public String getConnectionUrl() {
+		public @Nullable String getConnectionUrl() {
 			return connectionUrl;
 		}
 
-		public void setConnectionUrl(String connectionUrl) {
+		public void setConnectionUrl(@Nullable String connectionUrl) {
 			this.connectionUrl = connectionUrl;
 		}
 
-		public Integer getRetryCount() {
+		public @Nullable Integer getRetryCount() {
 			return retryCount;
 		}
 
-		public void setRetryCount(Integer retryCount) {
+		public void setRetryCount(@Nullable Integer retryCount) {
 			this.retryCount = retryCount;
 		}
 
@@ -326,51 +330,51 @@ public class McpToolExecutionResponse {
 		this.success = success;
 	}
 
-	public String getErrorMessage() {
+	public @Nullable String getErrorMessage() {
 		return errorMessage;
 	}
 
-	public void setErrorMessage(String errorMessage) {
+	public void setErrorMessage(@Nullable String errorMessage) {
 		this.errorMessage = errorMessage;
 	}
 
-	public String getServiceName() {
+	public @Nullable String getServiceName() {
 		return serviceName;
 	}
 
-	public void setServiceName(String serviceName) {
+	public void setServiceName(@Nullable String serviceName) {
 		this.serviceName = serviceName;
 	}
 
-	public String getToolName() {
+	public @Nullable String getToolName() {
 		return toolName;
 	}
 
-	public void setToolName(String toolName) {
+	public void setToolName(@Nullable String toolName) {
 		this.toolName = toolName;
 	}
 
-	public Map<String, Object> getExecutionParameters() {
+	public @Nullable Map<String, Object> getExecutionParameters() {
 		return executionParameters;
 	}
 
-	public void setExecutionParameters(Map<String, Object> executionParameters) {
+	public void setExecutionParameters(@Nullable Map<String, Object> executionParameters) {
 		this.executionParameters = executionParameters;
 	}
 
-	public McpToolExecutionResult getResult() {
+	public @Nullable McpToolExecutionResult getResult() {
 		return result;
 	}
 
-	public void setResult(McpToolExecutionResult result) {
+	public void setResult(@Nullable McpToolExecutionResult result) {
 		this.result = result;
 	}
 
-	public McpExecutionMeta getExecutionMeta() {
+	public @Nullable McpExecutionMeta getExecutionMeta() {
 		return executionMeta;
 	}
 
-	public void setExecutionMeta(McpExecutionMeta executionMeta) {
+	public void setExecutionMeta(@Nullable McpExecutionMeta executionMeta) {
 		this.executionMeta = executionMeta;
 	}
 

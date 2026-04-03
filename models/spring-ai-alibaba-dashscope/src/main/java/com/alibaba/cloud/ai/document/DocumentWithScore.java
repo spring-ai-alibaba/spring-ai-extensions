@@ -17,6 +17,7 @@
 package com.alibaba.cloud.ai.document;
 
 import com.alibaba.cloud.ai.model.RerankResultMetadata;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.model.ModelResult;
 import org.springframework.ai.model.ResultMetadata;
@@ -36,29 +37,29 @@ public class DocumentWithScore implements ModelResult<Document> {
 	/**
 	 * Score of document
 	 */
-	private Double score;
+	private @Nullable Double score;
 
 	/**
 	 * document information
 	 */
-	private Document document;
+	private @Nullable Document document;
 
-	private RerankResultMetadata metadata;
+	private RerankResultMetadata metadata = new RerankResultMetadata();
 
 	public Double getScore() {
-		return score;
+		return Objects.requireNonNull(this.score, "score must be set");
 	}
 
 	public void setScore(Double score) {
-		this.score = score;
+		this.score = Objects.requireNonNull(score, "score must not be null");
 	}
 
 	public void setDocument(Document document) {
-		this.document = document;
+		this.document = Objects.requireNonNull(document, "document must not be null");
 	}
 
-	public void setMetadata(RerankResultMetadata metadata) {
-		this.metadata = metadata;
+	public void setMetadata(@Nullable RerankResultMetadata metadata) {
+		this.metadata = metadata != null ? metadata : new RerankResultMetadata();
 	}
 
 	public static Builder builder() {
@@ -67,7 +68,7 @@ public class DocumentWithScore implements ModelResult<Document> {
 
 	@Override
 	public Document getOutput() {
-		return this.document;
+		return Objects.requireNonNull(this.document, "document must be set");
 	}
 
 	@Override
@@ -99,7 +100,9 @@ public class DocumentWithScore implements ModelResult<Document> {
 		}
 
 		public DocumentWithScore build() {
-			return documentWithScore;
+			this.documentWithScore.getScore();
+			this.documentWithScore.getOutput();
+			return this.documentWithScore;
 		}
 
 	}

@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.toolcalling.common;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.StringUtils;
 
 /**
@@ -24,21 +25,21 @@ import org.springframework.util.StringUtils;
  */
 public class CommonToolCallProperties {
 
-	private String apiKey;
+	private String apiKey = "";
 
-	private String secretKey;
+	private String secretKey = "";
 
 	private String baseUrl;
 
-    private String path;
+	private String path = "";
 
 	private Integer networkTimeout;
 
-	private String appId;
+	private String appId = "";
 
-	private String token;
+	private String token = "";
 
-	private String accessKeyId;
+	private String accessKeyId = "";
 
 	private boolean enabled = true;
 
@@ -89,11 +90,11 @@ public class CommonToolCallProperties {
 		this.baseUrl = baseUrl;
 	}
 
-    public String getPath() {
+	public String getPath() {
 		return path;
 	}
 
-    public void setPath(String path) {
+	public void setPath(String path) {
 		this.path = path;
 	}
 
@@ -132,7 +133,8 @@ public class CommonToolCallProperties {
 	// Invoked after PropertiesBean instantiation to load default values from system
 	// environment variables using keys associated with derived Properties class
 	// attributes.
-	protected void setPropertiesFromEnv(String apiKeyEnv, String secretKeyEnv, String appIdEnv, String tokenEnv) {
+	protected void setPropertiesFromEnv(@Nullable String apiKeyEnv, @Nullable String secretKeyEnv,
+			@Nullable String appIdEnv, @Nullable String tokenEnv) {
 		if (StringUtils.hasText(apiKeyEnv) && !StringUtils.hasText(this.apiKey)) {
 			this.apiKey = System.getenv(apiKeyEnv);
 		}

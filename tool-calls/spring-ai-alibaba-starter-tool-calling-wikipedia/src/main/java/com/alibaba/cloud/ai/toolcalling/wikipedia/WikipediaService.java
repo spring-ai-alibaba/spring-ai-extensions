@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.MultiValueMap;
@@ -140,6 +141,9 @@ public class WikipediaService implements SearchService, Function<WikipediaServic
 	private void enrichPagesWithContent(List<WikiPage> pages) {
 		for (WikiPage page : pages) {
 			try {
+				if (page.pageId() == null) {
+					continue;
+				}
 				String path = "w/api.php";
 				MultiValueMap<String, String> contentParams = CommonToolCallUtils.<String, String>multiValueMapBuilder()
 					.add("action", "query")
@@ -168,7 +172,7 @@ public class WikipediaService implements SearchService, Function<WikipediaServic
 		}
 	}
 
-	private String extractPageContent(Map<String, Object> contentResult, Integer pageId) {
+	private @Nullable String extractPageContent(Map<String, Object> contentResult, Integer pageId) {
 		try {
 			Map<String, Object> query = (Map<String, Object>) contentResult.get("query");
 			if (query != null) {
@@ -220,7 +224,7 @@ public class WikipediaService implements SearchService, Function<WikipediaServic
 				.toList());
 		}
 
-		private String buildWikipediaUrl(String title) {
+		private String buildWikipediaUrl(@Nullable String title) {
 			if (title == null) {
 				return "https://" + (language != null ? language : "zh") + ".wikipedia.org/";
 			}
@@ -232,12 +236,12 @@ public class WikipediaService implements SearchService, Function<WikipediaServic
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@JsonClassDescription("Wikipedia页面信息")
-	public record WikiPage(@JsonProperty @JsonPropertyDescription("页面标题") String title,
-			@JsonProperty @JsonPropertyDescription("页面摘要片段") String snippet,
-			@JsonProperty @JsonPropertyDescription("页面详细内容（如果请求）") String content,
-			@JsonProperty @JsonPropertyDescription("页面ID") Integer pageId,
-			@JsonProperty @JsonPropertyDescription("页面大小（字节）") Integer size,
-			@JsonProperty @JsonPropertyDescription("最后修改时间") String timestamp) {
+	public record WikiPage(@JsonProperty @JsonPropertyDescription("页面标题") @Nullable String title,
+			@JsonProperty @JsonPropertyDescription("页面摘要片段") @Nullable String snippet,
+			@JsonProperty @JsonPropertyDescription("页面详细内容（如果请求）") @Nullable String content,
+			@JsonProperty @JsonPropertyDescription("页面ID") @Nullable Integer pageId,
+			@JsonProperty @JsonPropertyDescription("页面大小（字节）") @Nullable Integer size,
+			@JsonProperty @JsonPropertyDescription("最后修改时间") @Nullable String timestamp) {
 	}
 
 }

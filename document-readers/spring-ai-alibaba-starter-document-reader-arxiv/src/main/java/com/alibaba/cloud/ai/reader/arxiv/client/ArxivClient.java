@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.reader.arxiv.client;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -63,7 +64,7 @@ public class ArxivClient {
 
 	private final int numRetries; // Number of retry attempts on failure
 
-	private LocalDateTime lastRequestTime; // Last request timestamp
+	private @Nullable LocalDateTime lastRequestTime; // Last request timestamp
 
 	private final HttpClient httpClient;
 
@@ -185,13 +186,13 @@ public class ArxivClient {
 		ArxivResult result = new ArxivResult();
 
 		// Set basic fields
-		result.setEntryId(getElementText(entry, "id"));
-		result.setTitle(getElementText(entry, "title").replaceAll("\\s+", " "));
-		result.setSummary(getElementText(entry, "summary"));
+			result.setEntryId(getRequiredElementText(entry, "id"));
+			result.setTitle(getRequiredElementText(entry, "title").replaceAll("\\s+", " "));
+			result.setSummary(getRequiredElementText(entry, "summary"));
 
 		// Set dates
-		String updated = getElementText(entry, "updated");
-		String published = getElementText(entry, "published");
+			String updated = getRequiredElementText(entry, "updated");
+			String published = getRequiredElementText(entry, "published");
 		result.setUpdated(LocalDateTime.parse(updated, ATOM_DATE_FORMAT));
 		result.setPublished(LocalDateTime.parse(published, ATOM_DATE_FORMAT));
 
@@ -199,8 +200,8 @@ public class ArxivClient {
 		NodeList authors = entry.getElementsByTagName("author");
 		result.setAuthors(IntStream.range(0, authors.getLength())
 			.mapToObj(i -> authors.item(i))
-			.map(node -> new ArxivResult.ArxivAuthor(getElementText((Element) node, "name")))
-			.collect(Collectors.toList()));
+				.map(node -> new ArxivResult.ArxivAuthor(getRequiredElementText((Element) node, "name")))
+				.collect(Collectors.toList()));
 
 		// Set categories
 		NodeList categories = entry.getElementsByTagName("category");
@@ -234,12 +235,16 @@ public class ArxivClient {
 	/**
 	 * Get text content of XML element
 	 */
-	private String getElementText(Element parent, String tagName) {
+	private @Nullable String getElementText(Element parent, String tagName) {
 		NodeList nodes = parent.getElementsByTagName(tagName);
 		if (nodes.getLength() == 0) {
 			return null;
 		}
 		return nodes.item(0).getTextContent();
+	}
+
+	private String getRequiredElementText(Element parent, String tagName) {
+		return Objects.requireNonNull(getElementText(parent, tagName), "Missing required element: " + tagName);
 	}
 
 	/**
@@ -251,7 +256,7 @@ public class ArxivClient {
 
 		private int offset;
 
-		private NodeList currentPage;
+			private @Nullable NodeList currentPage;
 
 		private int currentIndex;
 
@@ -292,15 +297,17 @@ public class ArxivClient {
 					&& (search.getMaxResults() == null || returnedResults < search.getMaxResults());
 		}
 
-		@Override
-		public ArxivResult next() {
-			if (!hasNext()) {
-				throw new NoSuchElementException();
-			}
+			@Override
+			public ArxivResult next() {
+				if (!hasNext()) {
+					throw new NoSuchElementException();
+				}
 
-			returnedResults++; // Increment counter
-			return resultFromEntry((Element) currentPage.item(currentIndex++));
-		}
+				returnedResults++; // Increment counter
+				Node currentNode = Objects.requireNonNull(currentPage, "currentPage must not be null")
+					.item(currentIndex++);
+				return resultFromEntry((Element) Objects.requireNonNull(currentNode, "current node must not be null"));
+			}
 
 		private void fetchNextPage(boolean firstPage) throws IOException {
 			// If maxResults is set, adjust pageSize to avoid fetching too many results
@@ -335,9 +342,9 @@ public class ArxivClient {
 			// Create a wrapper NodeList that limits the number of entries to pageSize
 			currentPage = new NodeList() {
 				@Override
-				public Node item(int index) {
-					return index < numEntries ? entries.item(index) : null;
-				}
+					public @Nullable Node item(int index) {
+						return index < numEntries ? entries.item(index) : null;
+					}
 
 				@Override
 				public int getLength() {
@@ -357,8 +364,9 @@ public class ArxivClient {
 	 * @return Path to saved file
 	 * @throws IOException If error occurs during download or saving
 	 */
-	public Path downloadPdf(ArxivResult result, String dirPath, String filename) throws IOException {
-		if (result.getPdfUrl() == null) {
+	public Path downloadPdf(ArxivResult result, String dirPath, @Nullable String filename) throws IOException {
+		String pdfUrl = result.getPdfUrl();
+		if (pdfUrl == null) {
 			throw new IOException("PDF URL not available for this result");
 		}
 
@@ -373,11 +381,11 @@ public class ArxivClient {
 		Path targetPath = dir.resolve(actualFilename);
 
 		// Build download request
-		HttpRequest request = HttpRequest.newBuilder()
-			.uri(URI.create(result.getPdfUrl()))
-			.header("User-Agent", "arxiv-java-client/1.0.0")
-			.GET()
-			.build();
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create(pdfUrl))
+				.header("User-Agent", "arxiv-java-client/1.0.0")
+				.GET()
+				.build();
 
 		// Execute download
 		try {
@@ -390,7 +398,7 @@ public class ArxivClient {
 				}
 			}
 
-			logger.info("Downloading PDF: {}", result.getPdfUrl());
+				logger.info("Downloading PDF: {}", pdfUrl);
 
 			HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
 			lastRequestTime = LocalDateTime.now();

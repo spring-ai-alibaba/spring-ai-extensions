@@ -23,9 +23,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -232,7 +232,7 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 	}
 
 	public record OpenAlexResult(String id, String title, String displayName, String description, String url,
-			String doi, Integer citationCount, Integer year, String entityType) {
+			@Nullable String doi, @Nullable Integer citationCount, @Nullable Integer year, String entityType) {
 	}
 
 	@JsonClassDescription("OpenAlex Search Request. Search for scholarly works, authors, institutions, etc.")
@@ -243,25 +243,25 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 			@JsonProperty(value = "entity_type",
 					defaultValue = "works") @JsonPropertyDescription("Type of entity to search: works, authors, sources, institutions, topics, publishers, funders") String entityType,
 
-			@JsonProperty(value = "author") @JsonPropertyDescription("Filter by author ID or name") String author,
+			@JsonProperty(value = "author") @JsonPropertyDescription("Filter by author ID or name") @Nullable String author,
 
 			@JsonProperty(
-					value = "institution") @JsonPropertyDescription("Filter by institution ID or name") String institution,
+					value = "institution") @JsonPropertyDescription("Filter by institution ID or name") @Nullable String institution,
 
 			@JsonProperty(
-					value = "from_year") @JsonPropertyDescription("Start year for publication date filter") Integer fromYear,
+					value = "from_year") @JsonPropertyDescription("Start year for publication date filter") @Nullable Integer fromYear,
 
 			@JsonProperty(
-					value = "to_year") @JsonPropertyDescription("End year for publication date filter") Integer toYear,
+					value = "to_year") @JsonPropertyDescription("End year for publication date filter") @Nullable Integer toYear,
 
 			@JsonProperty(
-					value = "is_open_access") @JsonPropertyDescription("Filter for open access works only") Boolean isOpenAccess,
+					value = "is_open_access") @JsonPropertyDescription("Filter for open access works only") @Nullable Boolean isOpenAccess,
 
 			@JsonProperty(value = "per_page",
-					defaultValue = "25") @JsonPropertyDescription("Number of results per page (max 200)") Integer perPage,
+					defaultValue = "25") @JsonPropertyDescription("Number of results per page (max 200)") @Nullable Integer perPage,
 
 			@JsonProperty(value = "sort_by",
-					defaultValue = "cited_by_count:desc") @JsonPropertyDescription("Sort order: cited_by_count:desc, publication_date:desc, relevance_score:desc") String sortBy)
+					defaultValue = "cited_by_count:desc") @JsonPropertyDescription("Sort order: cited_by_count:desc, publication_date:desc, relevance_score:desc") @Nullable String sortBy)
 			implements
 				SearchService.Request {
 
@@ -285,8 +285,9 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 
 	@JsonClassDescription("OpenAlex Search Response")
 	@JsonIgnoreProperties(ignoreUnknown = true)
-	public record Response(@JsonProperty("query") String query, @JsonProperty("results") List<OpenAlexResult> results,
-			@JsonProperty("error") String error) implements SearchService.Response {
+	public record Response(@JsonProperty("query") String query,
+			@JsonProperty("results") @Nullable List<OpenAlexResult> results,
+			@JsonProperty("error") @Nullable String error) implements SearchService.Response {
 
 		public static Response errorResponse(String query, String errorMsg) {
 			return new Response(query, null, errorMsg);
@@ -294,10 +295,11 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 
 		@Override
 		public SearchService.SearchResult getSearchResult() {
+			List<OpenAlexResult> results = this.results();
 			if (results == null) {
 				return new SearchService.SearchResult(List.of());
 			}
-			return new SearchService.SearchResult(this.results()
+			return new SearchService.SearchResult(results
 				.stream()
 				.map(item -> new SearchService.SearchContent(item.title(), item.description(), item.url(), null))
 				.toList());

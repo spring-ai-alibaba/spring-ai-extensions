@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.api;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -36,11 +37,12 @@ public class ApiUtils {
 		return getJsonContentHeaders(apiKey, null);
 	}
 
-	public static Consumer<HttpHeaders> getJsonContentHeaders(String apiKey, String workspaceId) {
+	public static Consumer<HttpHeaders> getJsonContentHeaders(String apiKey, @Nullable String workspaceId) {
 		return getJsonContentHeaders(apiKey, workspaceId, false);
 	}
 
-	public static Consumer<HttpHeaders> getJsonContentHeaders(String apiKey, String workspaceId, boolean stream) {
+	public static Consumer<HttpHeaders> getJsonContentHeaders(String apiKey, @Nullable String workspaceId,
+			boolean stream) {
 		return (headers) -> {
 			headers.setBearerAuth(apiKey);
 			headers.set(DashScopeApiConstants.HEADER_OPENAPI_SOURCE, DashScopeApiConstants.SOURCE_FLAG);
@@ -56,8 +58,8 @@ public class ApiUtils {
 		};
 	}
 
-	public static Map<String, String> getMapContentHeaders(String apiKey, boolean isSecurityCheck, String workspace,
-			Map<String, String> customHeaders) {
+	public static Map<String, String> getMapContentHeaders(String apiKey, boolean isSecurityCheck,
+			@Nullable String workspace, @Nullable Map<String, String> customHeaders) {
 		Map<String, String> headers = new HashMap<>();
 		headers.put(HttpHeaders.AUTHORIZATION, "bearer " + apiKey);
 		headers.put(HttpHeaders.USER_AGENT, USER_AGENT);
@@ -73,7 +75,7 @@ public class ApiUtils {
 		return headers;
 	}
 
-	public static Consumer<HttpHeaders> getAudioTranscriptionHeaders(String workspace, Boolean isAsyncTask,
+	public static Consumer<HttpHeaders> getAudioTranscriptionHeaders(@Nullable String workspace, Boolean isAsyncTask,
 			Boolean isSecurityCheck, Boolean isSSE) {
 
 		return (headers) -> {

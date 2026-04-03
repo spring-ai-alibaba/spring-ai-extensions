@@ -17,6 +17,7 @@
 package com.alibaba.cloud.ai.mcp.router.core.discovery;
 
 import com.alibaba.cloud.ai.mcp.router.model.McpServerInfo;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +50,7 @@ public class CompositeMcpServiceDiscovery implements McpServiceDiscovery {
 	}
 
 	@Override
-	public McpServerInfo getService(String serviceName) {
+	public @Nullable McpServerInfo getService(String serviceName) {
 		if (serviceName == null || serviceName.trim().isEmpty()) {
 			log.warn("Service name is null or empty");
 			return null;

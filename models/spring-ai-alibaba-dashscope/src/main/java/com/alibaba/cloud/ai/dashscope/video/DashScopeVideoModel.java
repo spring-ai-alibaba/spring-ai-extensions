@@ -22,6 +22,7 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeVideoApiConstants;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoResponse;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ModelOptionsUtils;
@@ -30,6 +31,7 @@ import org.springframework.ai.retry.TransientAiException;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * DashScope Video Generation Model.
@@ -79,17 +81,19 @@ public class DashScopeVideoModel implements VideoModel {
         DashScopeVideoRequest request = buildDashScopeVideoRequest(prompt);
         // send request to DashScope Video API
         ResponseEntity<DashScopeVideoResponse> responseEntity = this.dashScopeVideoApi.submitVideoGenTask(request);
-        // 图像检测直接返回
-        if (DashScopeVideoApiConstants.isDetect(request.getModel())) {
-            logger.info("Video detect task completed successfully:");
-            return new VideoResponse(responseEntity.getBody());
-        }
-
         if (Objects.isNull(responseEntity) || Objects.isNull(responseEntity.getBody())) {
             logger.error("Failed to submit video generation task: null response");
             throw new IllegalStateException("Failed to submit video generation task: null response");
         }
-        DashScopeVideoResponse response = responseEntity.getBody();
+        DashScopeVideoResponse responseBody = responseEntity.getBody();
+        String requestModel = request.getModel();
+        Assert.hasText(requestModel, "Video model must not be empty");
+        // 图像检测直接返回
+        if (DashScopeVideoApiConstants.isDetect(requestModel)) {
+            logger.info("Video detect task completed successfully:");
+            return new VideoResponse(responseBody);
+        }
+        DashScopeVideoResponse response = responseBody;
         if (Objects.isNull(response.getOutput()) || Objects.isNull(response.getOutput().taskId())) {
             logger.error("Failed to submit video generation task: {}", response);
             throw new IllegalStateException("Failed to submit video generation task: invalid output");
@@ -104,6 +108,9 @@ public class DashScopeVideoModel implements VideoModel {
             if (Objects.nonNull(resp)) {
                 logger.debug(String.valueOf(resp));
                 String status = resp.getOutput().taskStatus();
+                if (!StringUtils.hasText(status)) {
+                    throw new IllegalStateException("Video generation task status is empty");
+                }
                 switch (status) {
                     // status enum SUCCEEDED, FAILED, PENDING, RUNNING
                     case "SUCCEEDED" -> {
@@ -120,7 +127,7 @@ public class DashScopeVideoModel implements VideoModel {
         });
 	}
 
-    private DashScopeVideoResponse getVideoTask(String taskId) {
+    private @Nullable DashScopeVideoResponse getVideoTask(String taskId) {
 
         ResponseEntity<DashScopeVideoResponse> videoGenerationResponseResponseEntity = this.dashScopeVideoApi.queryVideoGenTask(taskId);
         if (videoGenerationResponseResponseEntity.getStatusCode().is2xxSuccessful()) {
@@ -140,9 +147,11 @@ public class DashScopeVideoModel implements VideoModel {
 
         DashScopeVideoOptions options = toVideoOptions(prompt.getOptions());
         logger.debug("Submitting video generation task with options: {}", options);
+        String model = options.getModel();
+        Assert.hasText(model, "Video model must not be empty");
 
         return DashScopeVideoRequest.builder()
-                .model(options.getModel())
+                .model(model)
                 .input(DashScopeVideoRequest.VideoInput.optionsConvertReq(options.getInput()))
                 .parameters(DashScopeVideoRequest.VideoParameters.optionsConvertReq(options.getParameters()))
                 .build();
@@ -167,7 +176,7 @@ public class DashScopeVideoModel implements VideoModel {
 
     public static final class Builder {
 
-        private DashScopeVideoApi videoApi;
+        private @Nullable DashScopeVideoApi videoApi;
 
         private DashScopeVideoOptions defaultOptions = DashScopeVideoOptions.builder().build();
 
@@ -192,7 +201,9 @@ public class DashScopeVideoModel implements VideoModel {
         }
 
         public DashScopeVideoModel build() {
-            return new DashScopeVideoModel(this.videoApi, this.defaultOptions, this.retryTemplate);
+            DashScopeVideoApi videoApi = this.videoApi;
+            Assert.notNull(videoApi, "videoApi must not be null");
+            return new DashScopeVideoModel(videoApi, this.defaultOptions, this.retryTemplate);
 		}
 
 	}

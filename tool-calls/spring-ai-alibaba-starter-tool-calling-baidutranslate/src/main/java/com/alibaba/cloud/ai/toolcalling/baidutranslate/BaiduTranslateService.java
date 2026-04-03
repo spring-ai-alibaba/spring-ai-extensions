@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
-public class BaiduTranslateService implements Function<BaiduTranslateService.Request, BaiduTranslateService.Response> {
+public class BaiduTranslateService
+		implements Function<BaiduTranslateService.@Nullable Request, BaiduTranslateService.@Nullable Response> {
 
 	private static final Logger logger = LoggerFactory.getLogger(BaiduTranslateService.class);
 
@@ -59,7 +61,7 @@ public class BaiduTranslateService implements Function<BaiduTranslateService.Req
 	}
 
 	@Override
-	public Response apply(Request request) {
+	public @Nullable Response apply(@Nullable Request request) {
 
 		if (request == null || !StringUtils.hasText(request.q) || !StringUtils.hasText(request.from)
 				|| !StringUtils.hasText(request.to)) {
@@ -90,7 +92,7 @@ public class BaiduTranslateService implements Function<BaiduTranslateService.Req
 		}
 	}
 
-	private Response parseResponse(String responseData) {
+	private @Nullable Response parseResponse(String responseData) {
 		try {
 			Map<String, String> translations = new HashMap<>();
 			TranslationResponse responseList = jsonParseTool.jsonToObject(responseData,

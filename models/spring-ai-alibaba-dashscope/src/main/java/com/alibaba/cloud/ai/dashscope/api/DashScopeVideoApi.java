@@ -22,6 +22,7 @@ import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeVideoApiConstants;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoResponse;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ApiKey;
@@ -45,7 +46,6 @@ import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER
  * @author yuluo
  * @since 1.0.0.3
  */
-
 public class DashScopeVideoApi {
 
 	private static final Logger logger = LoggerFactory.getLogger(DashScopeVideoApi.class);
@@ -109,13 +109,15 @@ public class DashScopeVideoApi {
 	 */
     public ResponseEntity<DashScopeVideoResponse> submitVideoGenTask(DashScopeVideoRequest request) {
         logger.debug("Submitting video generation task with options: {}", request);
-        String uri = DashScopeVideoApiConstants.getPathByModelName(request.getModel());
+        String model = request.getModel();
+        Assert.hasText(model, "Video model cannot be null");
+        String uri = DashScopeVideoApiConstants.getPathByModelName(model);
         if (uri == null) {
             uri = this.videoPath;
         }
         var requestSpec = this.restClient.post().uri(uri).body(request);
 
-        boolean detect = DashScopeVideoApiConstants.isDetect(request.getModel());
+        boolean detect = DashScopeVideoApiConstants.isDetect(model);
         if (!detect) {
             requestSpec.header(HEADER_ASYNC, ENABLED);
         }
@@ -153,7 +155,7 @@ public class DashScopeVideoApi {
 
         private String baseUrl = DashScopeApiConstants.DEFAULT_BASE_URL;
 
-        private ApiKey apiKey;
+        private @Nullable ApiKey apiKey;
 
         private String videoPath = DashScopeVideoApiConstants.VIDEO_GENERATION_SYNTHESIS;
 
@@ -213,10 +215,10 @@ public class DashScopeVideoApi {
         }
 
         public DashScopeVideoApi build() {
-
+            ApiKey apiKey = this.apiKey;
             Assert.notNull(apiKey, "API key cannot be null");
 
-            return new DashScopeVideoApi(this.baseUrl, this.apiKey, this.videoPath, this.queryTaskPath,
+            return new DashScopeVideoApi(this.baseUrl, apiKey, this.videoPath, this.queryTaskPath,
                     this.restClientBuilder, this.responseErrorHandler);
         }
 

@@ -29,6 +29,7 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.model.ModelOptionsUtils;
@@ -48,13 +49,13 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      * ID of the model to use.
      */
     @JsonProperty("model")
-    private String model;
+    private @Nullable String model;
 
     /**
      * Options for streaming response. Included in the API only if streaming-mode completion is requested.
      */
     @JsonIgnore
-    private Boolean stream;
+    private @Nullable Boolean stream;
 
     /**
      * Used to control the degree of randomness and diversity.
@@ -66,7 +67,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      * resulting in more deterministic outputs.
      * Range: [0, 2), system default: 0.85. Setting to 0 is not recommended.
      */
-    private @JsonProperty("temperature") Double temperature;
+    private @Nullable @JsonProperty("temperature") Double temperature;
 
     /**
      * Random seed for generation, controlled by the user to affect reproducibility.
@@ -74,7 +75,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      * will attempt to generate identical or similar results, though exact
      * reproducibility is not guaranteed.
      */
-    private @JsonProperty("seed") Integer seed;
+    private @Nullable @JsonProperty("seed") Integer seed;
 
     /**
      * Nucleus (top-p) sampling threshold during generation. For example, with
@@ -83,7 +84,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      * Higher values increase randomness; lower values increase determinism.
      * Note: do not set >= 1.0.
      */
-    private @JsonProperty("top_p") Double topP;
+    private @Nullable @JsonProperty("top_p") Double topP;
 
     /**
      * Size of the sampling candidate pool (top-k). For example, top_k = 50 means
@@ -92,7 +93,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      * Note: if top_k is null or > 100, top-k is disabled and only top-p applies.
      * Default is null (i.e., disabled).
      */
-    private @JsonProperty("top_k") Integer topK;
+    private @Nullable @JsonProperty("top_k") Integer topK;
 
     /**
      * <ul>
@@ -107,7 +108,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      *
      * <q>Note: In list mode, strings and token_ids cannot be mixed. The element types in list mode must be the same.</q>
      */
-    private @JsonProperty("stop") List<Object> stop;
+    private @Nullable @JsonProperty("stop") List<Object> stop;
 
     /**
      * The model has a built - in internet search service. This parameter controls whether the model refers to
@@ -126,13 +127,13 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      * Models can specify the format of the returned content. Valid values: {"type": "text"} or {"type": "json_object"}
      * {@link DashScopeResponseFormat}
      */
-    private @JsonProperty("response_format") DashScopeResponseFormat responseFormat;
+    private @Nullable @JsonProperty("response_format") DashScopeResponseFormat responseFormat;
 
     /**
      * The maximum number of tokens to generate in the chat completion.
      * The total length of input tokens and generated tokens is limited by the model's context length.
      */
-    private @JsonProperty("max_tokens") Integer maxTokens;
+    private @Nullable @JsonProperty("max_tokens") Integer maxTokens;
 
     /**
      * Controls whether to enable incremental output in streaming output mode, that is,
@@ -147,24 +148,24 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      * Used to control the repetition degree during model generation. Increasing the repetition_penalty
      * can reduce the repetition degree of the model generation. A value of 1.0 means no penalty. The default value is 1.1.
      */
-    private @JsonProperty("repetition_penalty") Double repetitionPenalty;
+    private @Nullable @JsonProperty("repetition_penalty") Double repetitionPenalty;
 
     /**
      * A list of optional tools that the model can call. Currently, only functions are supported.
      * Even if multiple functions are input, the model will only select one of them to generate results.
      * The model can generate function call parameters based on the content of the tools parameter.
      */
-    private @JsonProperty("tools") List<DashScopeApiSpec.FunctionTool> tools;
+    private @Nullable @JsonProperty("tools") List<DashScopeApiSpec.FunctionTool> tools;
 
     /**
      * Strategies for networked search. Takes effect only if the enable_search is true.
      */
-    private @JsonProperty("search_options") DashScopeApiSpec.SearchOptions searchOptions;
+    private @JsonProperty("search_options") DashScopeApiSpec.@Nullable SearchOptions searchOptions;
 
     /**
      * Whether to enable parallel tool calling。
      */
-    private @JsonProperty("parallel_tool_calls") Boolean parallelToolCalls;
+    private @Nullable @JsonProperty("parallel_tool_calls") Boolean parallelToolCalls;
 
     /**
      * Optional HTTP headers to be added to the chat completion request.
@@ -182,13 +183,13 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      * tool_choice={"type": "function", "function": {"name": "user_function"}}.
      */
     @JsonProperty("tool_choice")
-    private Object toolChoice;
+    private @Nullable Object toolChoice;
 
     /**
      * this is to change token limitation to 16384 for vl model, only support for vl models
      * including qwen-vl-max、qwen-vl-max-0809、qwen-vl-plus-0809.
      */
-    private @JsonProperty("vl_high_resolution_images") Boolean vlHighResolutionImages;
+    private @Nullable @JsonProperty("vl_high_resolution_images") Boolean vlHighResolutionImages;
 
     /**
      * Whether to enable the thinking process of the model.
@@ -199,12 +200,12 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      * The maximum length of the thinking process takes effect when enable_thinking is true,
      * and is suitable for Qwen3 full system model.
      */
-    private @JsonProperty("thinking_budget") Integer thinkingBudget;
+    private @Nullable @JsonProperty("thinking_budget") Integer thinkingBudget;
 
     /**
      * Whether to enable the code interpreter function.
      */
-    private @JsonProperty("enable_code_interpreter") Boolean enableCodeInterpreter;
+    private @Nullable @JsonProperty("enable_code_interpreter") Boolean enableCodeInterpreter;
 
     /**
      * Collection of {@link ToolCallback}s to be used for tool calling in the chat completion requests.
@@ -222,12 +223,12 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      * Whether to enable the tool execution lifecycle internally in ChatModel.
      */
     @JsonIgnore
-    private Boolean internalToolExecutionEnabled;
+    private @Nullable Boolean internalToolExecutionEnabled;
 
     /**
      * Whether to use the DashScope multimodal generation endpoint.
      */
-    private @JsonProperty("multi_model") Boolean multiModel;
+    private @Nullable @JsonProperty("multi_model") Boolean multiModel;
 
     /**
      * Whether to enable the vision language model to output image height and width.
@@ -238,22 +239,22 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      * The tone color and format of the output audio are only applicable to the 'Qwen-Omni' model,
      * and the modalities parameters must be ["text","audio"]
      */
-    private @JsonProperty("audio") Object audio = null;
+    private @Nullable @JsonProperty("audio") Object audio;
 
     /**
      * The configuration item for streaming output that takes effect only when `stream` is true.
      */
-    private @JsonProperty("stream_options") Object streamOptions = null;
+    private @Nullable @JsonProperty("stream_options") Object streamOptions;
 
     /**
      * The configuration item for 'Qwen-ASR' model.
      */
-    private @JsonProperty("asr_options") Object asrOptions;
+    private @Nullable @JsonProperty("asr_options") Object asrOptions;
 
     /**
      * The maximum number of tokens to use for the input.
      */
-    private @JsonProperty("max_input_tokens") Integer maxInputTokens;
+    private @Nullable @JsonProperty("max_input_tokens") Integer maxInputTokens;
 
     /**
      * The modalities of the output data, only support for 'Qwen-Omni' model.
@@ -262,30 +263,30 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      *     <li>["text","audio"]: output text and audio</li>
      * </ul>
      */
-    private @JsonProperty("modalities") List<String> modalities;
+    private @Nullable @JsonProperty("modalities") List<String> modalities;
 
     /**
      * The configuration item for 'Qwen-OCR' model.
      */
-    private @JsonProperty("ocr_options") DashScopeApiSpec.OCROption ocrOptions;
+    private @JsonProperty("ocr_options") DashScopeApiSpec.@Nullable OCROption ocrOptions;
 
     /**
      * Specifies the number of candidate Tokens that return the maximum probability of the model at each generation step.
      * Value range: [0,5], Takes effect only if `logprobs` is true.
      */
-    private @JsonProperty("top_logprobs") Integer topLogProbs;
+    private @Nullable @JsonProperty("top_logprobs") Integer topLogProbs;
 
     /**
      * Whether to return the logarithmic probability of the output Token, optional values:
      * true: return, false: not return.
      * The content generated during the thinking phase (reasoning_content) does not return a logarithmic probability.
      */
-    private @JsonProperty("logprobs") Boolean logprobs;
+    private @Nullable @JsonProperty("logprobs") Boolean logprobs;
 
     /**
      * The configuration item for 'Qwen-MT' model.
      */
-    private @JsonProperty("translation_options") DashScopeApiSpec.TranslationOptions translationOptions;
+    private @JsonProperty("translation_options") DashScopeApiSpec.@Nullable TranslationOptions translationOptions;
 
     /**
      * Specify the format and level of detail of the output study report for 'Qwen-Deep-Research' model.
@@ -298,7 +299,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      *     </li>
      * </ul>
      */
-    private @JsonProperty("output_format") String outputFormat;
+    private @Nullable @JsonProperty("output_format") String outputFormat;
 
     /**
      * The configured tool context.
@@ -317,45 +318,45 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      *     .build()
      * }</pre>
      */
-    private @JsonProperty("extra_body") Map<String, Object> extraBody;
+    private @Nullable @JsonProperty("extra_body") Map<String, Object> extraBody;
 
-    public DashScopeApiSpec.TranslationOptions getTranslationOptions() {
+    public DashScopeApiSpec.@Nullable TranslationOptions getTranslationOptions() {
         return translationOptions;
     }
 
-    public void setTranslationOptions(DashScopeApiSpec.TranslationOptions translationOptions) {
+    public void setTranslationOptions(DashScopeApiSpec.@Nullable TranslationOptions translationOptions) {
         this.translationOptions = translationOptions;
     }
 
-    public String getOutputFormat() {
+    public @Nullable String getOutputFormat() {
         return outputFormat;
     }
 
-    public void setOutputFormat(String outputFormat) {
+    public void setOutputFormat(@Nullable String outputFormat) {
         this.outputFormat = outputFormat;
     }
 
-    public Integer getTopLogProbs() {
+    public @Nullable Integer getTopLogProbs() {
         return topLogProbs;
     }
 
-    public void setTopLogProbs(Integer topLogProbs) {
+    public void setTopLogProbs(@Nullable Integer topLogProbs) {
         this.topLogProbs = topLogProbs;
     }
 
-    public Boolean getLogprobs() {
+    public @Nullable Boolean getLogprobs() {
         return logprobs;
     }
 
-    public void setLogprobs(Boolean logprobs) {
+    public void setLogprobs(@Nullable Boolean logprobs) {
         this.logprobs = logprobs;
     }
 
-    public DashScopeApiSpec.OCROption getOcrOptions() {
+    public DashScopeApiSpec.@Nullable OCROption getOcrOptions() {
         return ocrOptions;
     }
 
-    public void setOcrOptions(DashScopeApiSpec.OCROption ocrOptions) {
+    public void setOcrOptions(DashScopeApiSpec.@Nullable OCROption ocrOptions) {
         this.ocrOptions = ocrOptions;
     }
 
@@ -367,109 +368,109 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         this.vlEnableImageHwOutput = vlEnableImageHwOutput;
     }
 
-    public Object getAudio() {
+    public @Nullable Object getAudio() {
         return audio;
     }
 
-    public void setAudio(Object audio) {
+    public void setAudio(@Nullable Object audio) {
         this.audio = audio;
     }
 
-    public Object getStreamOptions() {
+    public @Nullable Object getStreamOptions() {
         return streamOptions;
     }
 
-    public void setStreamOptions(Object streamOptions) {
+    public void setStreamOptions(@Nullable Object streamOptions) {
         this.streamOptions = streamOptions;
     }
 
-    public Object getAsrOptions() {
+    public @Nullable Object getAsrOptions() {
         return asrOptions;
     }
 
-    public void setAsrOptions(Object asrOptions) {
+    public void setAsrOptions(@Nullable Object asrOptions) {
         this.asrOptions = asrOptions;
     }
 
-    public Integer getMaxInputTokens() {
+    public @Nullable Integer getMaxInputTokens() {
         return maxInputTokens;
     }
 
-    public void setMaxInputTokens(Integer maxInputTokens) {
+    public void setMaxInputTokens(@Nullable Integer maxInputTokens) {
         this.maxInputTokens = maxInputTokens;
     }
 
-    public List<String> getModalities() {
+    public @Nullable List<String> getModalities() {
         return modalities;
     }
 
-    public void setModalities(List<String> modalities) {
+    public void setModalities(@Nullable List<String> modalities) {
         this.modalities = modalities;
     }
 
     @Override
-    public String getModel() {
+    public @Nullable String getModel() {
         return model;
     }
 
     @Override
-    public Double getFrequencyPenalty() {
+    public @Nullable Double getFrequencyPenalty() {
         return null;
     }
 
     @Override
-    public Integer getMaxTokens() {
+    public @Nullable Integer getMaxTokens() {
         return maxTokens;
     }
 
-    public void setMaxTokens(Integer maxTokens) {
+    public void setMaxTokens(@Nullable Integer maxTokens) {
         this.maxTokens = maxTokens;
     }
 
     @Override
-    public Double getPresencePenalty() {
+    public @Nullable Double getPresencePenalty() {
         return null;
     }
 
     @Override
-    public List<String> getStopSequences() {
+    public @Nullable List<String> getStopSequences() {
         return null;
     }
 
-    public void setModel(String model) {
+    public void setModel(@Nullable String model) {
         this.model = model;
     }
 
-    public Boolean getStream() {
+    public @Nullable Boolean getStream() {
         return stream;
     }
 
-    public void setStream(Boolean stream) {
+    public void setStream(@Nullable Boolean stream) {
         this.stream = stream;
     }
 
     @Override
-    public Double getTemperature() {
+    public @Nullable Double getTemperature() {
         return this.temperature;
     }
 
-    public void setTemperature(Double temperature) {
+    public void setTemperature(@Nullable Double temperature) {
         this.temperature = temperature;
     }
 
-    public void setSearchOptions(DashScopeApiSpec.SearchOptions searchOptions) {
+    public void setSearchOptions(DashScopeApiSpec.@Nullable SearchOptions searchOptions) {
         this.searchOptions = searchOptions;
     }
 
-    public DashScopeApiSpec.SearchOptions getSearchOptions() {
+    public DashScopeApiSpec.@Nullable SearchOptions getSearchOptions() {
         return searchOptions;
     }
 
-    public Boolean getParallelToolCalls() {
+    public @Nullable Boolean getParallelToolCalls() {
         return parallelToolCalls;
     }
 
-    public void setParallelToolCalls(Boolean parallelToolCalls) {
+    public void setParallelToolCalls(@Nullable Boolean parallelToolCalls) {
         this.parallelToolCalls = parallelToolCalls;
     }
 
@@ -482,7 +483,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
     }
 
     @Override
-    public Double getTopP() {
+    public @Nullable Double getTopP() {
         return this.topP;
     }
 
@@ -491,49 +492,49 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         return DashScopeChatOptions.fromOptions(this);
     }
 
-    public void setTopP(Double topP) {
+    public void setTopP(@Nullable Double topP) {
         this.topP = topP;
     }
 
     @Override
-    public Integer getTopK() {
+    public @Nullable Integer getTopK() {
         return this.topK;
     }
 
-    public void setTopK(Integer topK) {
+    public void setTopK(@Nullable Integer topK) {
         this.topK = topK;
     }
 
-    public List<Object> getStop() {
+    public @Nullable List<Object> getStop() {
         return stop;
     }
 
-    public void setStop(List<Object> stop) {
+    public void setStop(@Nullable List<Object> stop) {
         this.stop = stop;
     }
 
-    public DashScopeResponseFormat getResponseFormat() {
+    public @Nullable DashScopeResponseFormat getResponseFormat() {
 
         return responseFormat;
     }
 
-    public Integer getThinkingBudget() {
+    public @Nullable Integer getThinkingBudget() {
         return thinkingBudget;
     }
 
-    public void setThinkingBudget(Integer thinkingBudget) {
+    public void setThinkingBudget(@Nullable Integer thinkingBudget) {
         this.thinkingBudget = thinkingBudget;
     }
 
-    public Boolean getEnableCodeInterpreter() {
+    public @Nullable Boolean getEnableCodeInterpreter() {
         return this.enableCodeInterpreter;
     }
 
-    public void setEnableCodeInterpreter(Boolean enableCodeInterpreter) {
+    public void setEnableCodeInterpreter(@Nullable Boolean enableCodeInterpreter) {
         this.enableCodeInterpreter = enableCodeInterpreter;
     }
 
-    public void setResponseFormat(DashScopeResponseFormat responseFormat) {
+    public void setResponseFormat(@Nullable DashScopeResponseFormat responseFormat) {
 
         this.responseFormat = responseFormat;
     }
@@ -546,35 +547,35 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         this.enableSearch = enableSearch;
     }
 
-    public Double getRepetitionPenalty() {
+    public @Nullable Double getRepetitionPenalty() {
         return repetitionPenalty;
     }
 
-    public void setRepetitionPenalty(Double repetitionPenalty) {
+    public void setRepetitionPenalty(@Nullable Double repetitionPenalty) {
         this.repetitionPenalty = repetitionPenalty;
     }
 
-    public List<DashScopeApiSpec.FunctionTool> getTools() {
+    public @Nullable List<DashScopeApiSpec.FunctionTool> getTools() {
         return tools;
     }
 
-    public void setTools(List<DashScopeApiSpec.FunctionTool> tools) {
+    public void setTools(@Nullable List<DashScopeApiSpec.FunctionTool> tools) {
         this.tools = tools;
     }
 
-    public Object getToolChoice() {
+    public @Nullable Object getToolChoice() {
         return toolChoice;
     }
 
-    public void setToolChoice(Object toolChoice) {
+    public void setToolChoice(@Nullable Object toolChoice) {
         this.toolChoice = toolChoice;
     }
 
-    public Integer getSeed() {
+    public @Nullable Integer getSeed() {
         return seed;
     }
 
-    public void setSeed(Integer seed) {
+    public void setSeed(@Nullable Integer seed) {
         this.seed = seed;
     }
 
@@ -609,13 +610,13 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
     @Override
     @JsonIgnore
-    public Boolean getInternalToolExecutionEnabled() {
+    public @Nullable Boolean getInternalToolExecutionEnabled() {
         return this.internalToolExecutionEnabled;
     }
 
     @Override
     @JsonIgnore
-    public void setInternalToolExecutionEnabled(Boolean internalToolExecutionEnabled) {
+    public void setInternalToolExecutionEnabled(@Nullable Boolean internalToolExecutionEnabled) {
         this.internalToolExecutionEnabled = internalToolExecutionEnabled;
     }
 
@@ -637,11 +638,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         this.incrementalOutput = incrementalOutput;
     }
 
-    public Boolean getVlHighResolutionImages() {
+    public @Nullable Boolean getVlHighResolutionImages() {
         return vlHighResolutionImages;
     }
 
-    public void setVlHighResolutionImages(Boolean vlHighResolutionImages) {
+    public void setVlHighResolutionImages(@Nullable Boolean vlHighResolutionImages) {
         this.vlHighResolutionImages = vlHighResolutionImages;
     }
 
@@ -653,19 +654,19 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         this.enableThinking = enableThinking;
     }
 
-    public Boolean getMultiModel() {
+    public @Nullable Boolean getMultiModel() {
         return multiModel;
     }
 
-    public void setMultiModel(Boolean multiModel) {
+    public void setMultiModel(@Nullable Boolean multiModel) {
         this.multiModel = multiModel;
     }
 
-    public Map<String, Object> getExtraBody() {
+    public @Nullable Map<String, Object> getExtraBody() {
         return this.extraBody;
     }
 
-    public void setExtraBody(Map<String, Object> extraBody) {
+    public void setExtraBody(@Nullable Map<String, Object> extraBody) {
         this.extraBody = extraBody;
     }
 
@@ -681,17 +682,17 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
             this.options = new DashScopeChatOptions();
         }
 
-        public DashScopeChatOptionsBuilder model(String model) {
+        public DashScopeChatOptionsBuilder model(@Nullable String model) {
             this.options.model = model;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder searchOptions(DashScopeApiSpec.SearchOptions searchOptions) {
+        public DashScopeChatOptionsBuilder searchOptions(DashScopeApiSpec.@Nullable SearchOptions searchOptions) {
             this.options.searchOptions = searchOptions;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder parallelToolCalls(Boolean parallelToolCalls) {
+        public DashScopeChatOptionsBuilder parallelToolCalls(@Nullable Boolean parallelToolCalls) {
             this.options.parallelToolCalls = parallelToolCalls;
             return this;
         }
@@ -701,57 +702,59 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
             return this;
         }
 
-        public DashScopeChatOptionsBuilder maxToken(Integer maxTokens) {
+        public DashScopeChatOptionsBuilder maxToken(@Nullable Integer maxTokens) {
             this.options.maxTokens = maxTokens;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder temperature(Double temperature) {
+        public DashScopeChatOptionsBuilder temperature(@Nullable Double temperature) {
             this.options.temperature = temperature;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder topP(Double topP) {
+        public DashScopeChatOptionsBuilder topP(@Nullable Double topP) {
             this.options.topP = topP;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder topK(Integer topK) {
+        public DashScopeChatOptionsBuilder topK(@Nullable Integer topK) {
             this.options.topK = topK;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder stop(List<Object> stop) {
+        public DashScopeChatOptionsBuilder stop(@Nullable List<Object> stop) {
             this.options.stop = stop;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder responseFormat(DashScopeResponseFormat responseFormat) {
+        public DashScopeChatOptionsBuilder responseFormat(@Nullable DashScopeResponseFormat responseFormat) {
             this.options.responseFormat = responseFormat;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder enableSearch(Boolean enableSearch) {
-            this.options.enableSearch = enableSearch;
+        public DashScopeChatOptionsBuilder enableSearch(@Nullable Boolean enableSearch) {
+            if (enableSearch != null) {
+                this.options.enableSearch = enableSearch;
+            }
             return this;
         }
 
-        public DashScopeChatOptionsBuilder repetitionPenalty(Double repetitionPenalty) {
+        public DashScopeChatOptionsBuilder repetitionPenalty(@Nullable Double repetitionPenalty) {
             this.options.repetitionPenalty = repetitionPenalty;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder tools(List<DashScopeApiSpec.FunctionTool> tools) {
+        public DashScopeChatOptionsBuilder tools(@Nullable List<DashScopeApiSpec.FunctionTool> tools) {
             this.options.tools = tools;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder toolChoice(Object toolChoice) {
+        public DashScopeChatOptionsBuilder toolChoice(@Nullable Object toolChoice) {
             this.options.toolChoice = toolChoice;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder stream(Boolean stream) {
+        public DashScopeChatOptionsBuilder stream(@Nullable Boolean stream) {
             this.options.stream = stream;
             return this;
         }
@@ -778,18 +781,20 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         }
 
         public DashScopeChatOptionsBuilder internalToolExecutionEnabled(
-                Boolean internalToolExecutionEnabled) {
+                @Nullable Boolean internalToolExecutionEnabled) {
             this.options.internalToolExecutionEnabled = internalToolExecutionEnabled;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder seed(Integer seed) {
+        public DashScopeChatOptionsBuilder seed(@Nullable Integer seed) {
             this.options.seed = seed;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder incrementalOutput(Boolean incrementalOutput) {
-            this.options.incrementalOutput = incrementalOutput;
+        public DashScopeChatOptionsBuilder incrementalOutput(@Nullable Boolean incrementalOutput) {
+            if (incrementalOutput != null) {
+                this.options.incrementalOutput = incrementalOutput;
+            }
             return this;
         }
 
@@ -802,47 +807,49 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
             return this;
         }
 
-        public DashScopeChatOptionsBuilder vlHighResolutionImages(Boolean vlHighResolutionImages) {
+        public DashScopeChatOptionsBuilder vlHighResolutionImages(@Nullable Boolean vlHighResolutionImages) {
             this.options.vlHighResolutionImages = vlHighResolutionImages;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder enableThinking(Boolean enableThinking) {
-            this.options.enableThinking = enableThinking;
+        public DashScopeChatOptionsBuilder enableThinking(@Nullable Boolean enableThinking) {
+            if (enableThinking != null) {
+                this.options.enableThinking = enableThinking;
+            }
             return this;
         }
 
-        public DashScopeChatOptionsBuilder multiModel(Boolean multiModel) {
+        public DashScopeChatOptionsBuilder multiModel(@Nullable Boolean multiModel) {
             this.options.multiModel = multiModel;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder thinkingBudget(Integer thinkingBudget) {
+        public DashScopeChatOptionsBuilder thinkingBudget(@Nullable Integer thinkingBudget) {
             this.options.thinkingBudget = thinkingBudget;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder enableCodeInterpreter(Boolean enableCodeInterpreter) {
+        public DashScopeChatOptionsBuilder enableCodeInterpreter(@Nullable Boolean enableCodeInterpreter) {
             this.options.enableCodeInterpreter = enableCodeInterpreter;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder modalities(List<String> modalities) {
+        public DashScopeChatOptionsBuilder modalities(@Nullable List<String> modalities) {
             this.options.modalities = modalities;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder audio(Object audio) {
+        public DashScopeChatOptionsBuilder audio(@Nullable Object audio) {
             this.options.audio = audio;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder streamOptions(Object streamOptions) {
+        public DashScopeChatOptionsBuilder streamOptions(@Nullable Object streamOptions) {
             this.options.streamOptions = streamOptions;
             return this;
         }
 
-        public DashScopeChatOptionsBuilder extraBody(Map<String, Object> extraBody) {
+        public DashScopeChatOptionsBuilder extraBody(@Nullable Map<String, Object> extraBody) {
             this.options.extraBody = extraBody;
             return this;
         }
@@ -923,10 +930,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
     public int hashCode() {
         return Objects.hash(this.model, this.stream, this.temperature, this.seed, this.topP, this.topK, this.stop,
                 this.enableSearch, this.enableCodeInterpreter, this.responseFormat, this.incrementalOutput,
-                this.repetitionPenalty, this.tools, this.toolChoice, this.vlHighResolutionImages, this.enableThinking,
-                this.thinkingBudget, this.toolCallbacks, this.toolNames, this.internalToolExecutionEnabled,
-                this.multiModel, this.searchOptions, this.parallelToolCalls, this.httpHeaders, this.toolContext,
-                this.modalities, this.audio, this.streamOptions, this.extraBody);
+                this.repetitionPenalty, this.tools, this.toolChoice, this.vlHighResolutionImages,
+                this.enableThinking, this.thinkingBudget, this.toolCallbacks, this.toolNames,
+                this.internalToolExecutionEnabled, this.multiModel, this.searchOptions, this.parallelToolCalls,
+                this.httpHeaders, this.toolContext, this.modalities, this.audio, this.streamOptions,
+                this.extraBody);
     }
 
     @Override

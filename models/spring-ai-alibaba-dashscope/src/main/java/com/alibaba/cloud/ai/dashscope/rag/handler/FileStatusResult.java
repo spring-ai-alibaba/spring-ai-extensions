@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.dashscope.rag.handler;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * File status processing result
  *
@@ -39,7 +41,7 @@ public class FileStatusResult {
     /**
      * Error message if processing failed
      */
-    private final String errorMessage;
+    private final @Nullable String errorMessage;
 
     /**
      * Private constructor
@@ -48,7 +50,7 @@ public class FileStatusResult {
      * @param success      whether processing succeeded
      * @param errorMessage error message
      */
-    private FileStatusResult(boolean completed, boolean success, String errorMessage) {
+    private FileStatusResult(boolean completed, boolean success, @Nullable String errorMessage) {
         this.completed = completed;
         this.success = success;
         this.errorMessage = errorMessage;
@@ -69,7 +71,7 @@ public class FileStatusResult {
      * @param errorMessage error message
      * @return failure result
      */
-    public static FileStatusResult failure(String errorMessage) {
+    public static FileStatusResult failure(@Nullable String errorMessage) {
         return new FileStatusResult(true, false, errorMessage);
     }
 
@@ -92,7 +94,7 @@ public class FileStatusResult {
         return success;
     }
 
-    public String getErrorMessage() {
+    public @Nullable String getErrorMessage() {
         return errorMessage;
     }
 

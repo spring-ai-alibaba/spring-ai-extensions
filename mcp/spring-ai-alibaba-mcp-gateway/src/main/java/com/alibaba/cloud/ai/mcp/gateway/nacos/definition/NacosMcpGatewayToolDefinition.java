@@ -22,17 +22,20 @@ import com.alibaba.nacos.api.ai.model.mcp.McpToolMeta;
 import com.alibaba.nacos.common.utils.JacksonUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.tool.support.ToolUtils;
 import org.springframework.util.Assert;
+
+import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NacosMcpGatewayToolDefinition extends McpGatewayToolDefinition {
 
-	private McpServerRemoteServiceConfig remoteServerConfig;
+	private @Nullable McpServerRemoteServiceConfig remoteServerConfig;
 
-	private Object inputSchema;
+	private @Nullable Object inputSchema;
 
-	private McpToolMeta toolMeta;
+	private @Nullable McpToolMeta toolMeta;
 
 	public NacosMcpGatewayToolDefinition() {
 	}
@@ -47,8 +50,8 @@ public class NacosMcpGatewayToolDefinition extends McpGatewayToolDefinition {
 	}
 
 	public NacosMcpGatewayToolDefinition(final String name, final String description, final Object inputSchema,
-			final String version, final String protocol, final McpServerRemoteServiceConfig remoteServerConfig,
-			final McpToolMeta toolMeta, final Boolean enabled) {
+			final @Nullable String version, final String protocol, final McpServerRemoteServiceConfig remoteServerConfig,
+			final @Nullable McpToolMeta toolMeta, final @Nullable Boolean enabled) {
 		Assert.hasText(name, "name cannot be null or empty");
 		Assert.hasText(description, "description cannot be null or empty");
 		Assert.notNull(inputSchema, "inputSchema cannot be null or empty");
@@ -68,100 +71,100 @@ public class NacosMcpGatewayToolDefinition extends McpGatewayToolDefinition {
 
 	@Override
 	public String name() {
-		return this.name;
+		return Objects.requireNonNull(this.name, "Tool name must not be null");
 	}
 
 	@Override
 	public String description() {
-		return this.description;
+		return Objects.requireNonNull(this.description, "Tool description must not be null");
 	}
 
 	@Override
 	public String inputSchema() {
-		return JacksonUtils.toJson(this.inputSchema);
+		return JacksonUtils.toJson(Objects.requireNonNull(this.inputSchema, "Tool inputSchema must not be null"));
 	}
 
-	public String getName() {
+	public @Nullable String getName() {
 		return name;
 	}
 
-	public void setName(final String name) {
+	public void setName(final @Nullable String name) {
 		this.name = name;
 	}
 
-	public String getDescription() {
+	public @Nullable String getDescription() {
 		return description;
 	}
 
-	public void setDescription(final String description) {
+	public void setDescription(final @Nullable String description) {
 		this.description = description;
 	}
 
-	public Object getInputSchema() {
+	public @Nullable Object getInputSchema() {
 		return inputSchema;
 	}
 
-	public void setInputSchema(final Object inputSchema) {
+	public void setInputSchema(final @Nullable Object inputSchema) {
 		this.inputSchema = inputSchema;
 	}
 
-	public String getVersion() {
+	public @Nullable String getVersion() {
 		return version;
 	}
 
-	public void setVersion(final String version) {
+	public void setVersion(final @Nullable String version) {
 		this.version = version;
 	}
 
-	public McpServerRemoteServiceConfig getRemoteServerConfig() {
+	public @Nullable McpServerRemoteServiceConfig getRemoteServerConfig() {
 		return remoteServerConfig;
 	}
 
-	public void setRemoteServerConfig(final McpServerRemoteServiceConfig remoteServerConfig) {
+	public void setRemoteServerConfig(final @Nullable McpServerRemoteServiceConfig remoteServerConfig) {
 		this.remoteServerConfig = remoteServerConfig;
 	}
 
-	public Boolean getEnabled() {
+	public @Nullable Boolean getEnabled() {
 		return enabled;
 	}
 
-	public void setEnabled(final Boolean enabled) {
+	public void setEnabled(final @Nullable Boolean enabled) {
 		this.enabled = enabled;
 	}
 
-	public String getProtocol() {
+	public @Nullable String getProtocol() {
 		return protocol;
 	}
 
-	public void setProtocol(final String protocol) {
+	public void setProtocol(final @Nullable String protocol) {
 		this.protocol = protocol;
 	}
 
-	public McpToolMeta getToolMeta() {
+	public @Nullable McpToolMeta getToolMeta() {
 		return toolMeta;
 	}
 
-	public void setToolMeta(final McpToolMeta toolMeta) {
+	public void setToolMeta(final @Nullable McpToolMeta toolMeta) {
 		this.toolMeta = toolMeta;
 	}
 
 	public static final class Builder {
 
-		private String name;
+		private @Nullable String name;
 
-		private String description;
+		private @Nullable String description;
 
-		private String version;
+		private @Nullable String version;
 
-		private String protocol;
+		private @Nullable String protocol;
 
-		private McpServerRemoteServiceConfig remoteServerConfig;
+		private @Nullable McpServerRemoteServiceConfig remoteServerConfig;
 
-		private Boolean enabled;
+		private @Nullable Boolean enabled;
 
-		private Object inputSchema;
+		private @Nullable Object inputSchema;
 
-		private McpToolMeta toolsMeta;
+		private @Nullable McpToolMeta toolsMeta;
 
 		private Builder() {
 		}
@@ -176,7 +179,7 @@ public class NacosMcpGatewayToolDefinition extends McpGatewayToolDefinition {
 			return this;
 		}
 
-		public NacosMcpGatewayToolDefinition.Builder version(final String version) {
+		public NacosMcpGatewayToolDefinition.Builder version(final @Nullable String version) {
 			this.version = version;
 			return this;
 		}
@@ -187,7 +190,7 @@ public class NacosMcpGatewayToolDefinition extends McpGatewayToolDefinition {
 			return this;
 		}
 
-		public NacosMcpGatewayToolDefinition.Builder enabled(final Boolean enabled) {
+		public NacosMcpGatewayToolDefinition.Builder enabled(final @Nullable Boolean enabled) {
 			this.enabled = enabled;
 			return this;
 		}
@@ -202,18 +205,25 @@ public class NacosMcpGatewayToolDefinition extends McpGatewayToolDefinition {
 			return this;
 		}
 
-		public NacosMcpGatewayToolDefinition.Builder toolsMeta(final McpToolMeta toolsMeta) {
+		public NacosMcpGatewayToolDefinition.Builder toolsMeta(final @Nullable McpToolMeta toolsMeta) {
 			this.toolsMeta = toolsMeta;
 			return this;
 		}
 
 		public NacosMcpGatewayToolDefinition build() {
-			if (!StringUtils.isNoneBlank(this.description)) {
-				this.description = ToolUtils.getToolDescriptionFromName(this.name);
+			String name = Objects.requireNonNull(this.name, "name cannot be null");
+			String description = this.description;
+			if (!StringUtils.isNoneBlank(description)) {
+				description = ToolUtils.getToolDescriptionFromName(name);
 			}
+			String resolvedDescription = Objects.requireNonNull(description, "description cannot be null");
+			Object inputSchema = Objects.requireNonNull(this.inputSchema, "inputSchema cannot be null");
+			String protocol = Objects.requireNonNull(this.protocol, "protocol cannot be null");
+			McpServerRemoteServiceConfig remoteServerConfig = Objects.requireNonNull(this.remoteServerConfig,
+					"remoteServerConfig cannot be null");
 
-			return new NacosMcpGatewayToolDefinition(this.name, this.description, this.inputSchema, this.version,
-					this.protocol, this.remoteServerConfig, this.toolsMeta, this.enabled);
+			return new NacosMcpGatewayToolDefinition(name, resolvedDescription, inputSchema, this.version, protocol,
+					remoteServerConfig, this.toolsMeta, this.enabled);
 		}
 
 	}

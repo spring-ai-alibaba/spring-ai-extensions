@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.reader.mbox;
 
 import com.alibaba.cloud.ai.parser.bshtml.BsHtmlDocumentParser;
+import org.jspecify.annotations.Nullable;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.springframework.ai.document.Document;
@@ -164,7 +165,7 @@ public class MboxDocumentReader implements DocumentReader {
 		return documents;
 	}
 
-	private Document parseMessage(String messageContent) {
+	private @Nullable Document parseMessage(String messageContent) {
 		Map<String, Object> metadata = new HashMap<>();
 		Map<String, String> headers = new HashMap<>();
 		StringBuilder content = new StringBuilder();

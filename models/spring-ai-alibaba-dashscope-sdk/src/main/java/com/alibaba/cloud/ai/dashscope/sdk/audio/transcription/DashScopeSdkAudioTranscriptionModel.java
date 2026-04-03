@@ -24,6 +24,7 @@ import com.alibaba.dashscope.audio.asr.transcription.TranscriptionTaskResult;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.transcription.AudioTranscription;
 import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
@@ -61,17 +62,18 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 
 	private final RetryTemplate retryTemplate;
 
-	private final String apiKey;
+	private final @Nullable String apiKey;
 
-	private final String workspaceId;
+	private final @Nullable String workspaceId;
 
 	private final Map<String, String> connectionHeaders;
 
 	private final HttpClient httpClient;
 
 	public DashScopeSdkAudioTranscriptionModel(DashScopeSdkTranscriptionClient transcriptionClient,
-                                               DashScopeSdkAudioTranscriptionOptions defaultOptions, RetryTemplate retryTemplate, String apiKey,
-                                               String workspaceId, Map<String, String> connectionHeaders) {
+                                               DashScopeSdkAudioTranscriptionOptions defaultOptions, RetryTemplate retryTemplate,
+                                               @Nullable String apiKey, @Nullable String workspaceId,
+                                               Map<String, String> connectionHeaders) {
 		this.transcriptionClient = transcriptionClient;
 		this.defaultOptions = defaultOptions;
 		this.retryTemplate = retryTemplate;
@@ -103,7 +105,8 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 	}
 
 	private DashScopeSdkAudioTranscriptionOptions mergeOptions(AudioTranscriptionOptions runtimeOptions) {
-		DashScopeSdkAudioTranscriptionOptions options = DashScopeSdkAudioTranscriptionOptions.fromOptions(this.defaultOptions);
+		DashScopeSdkAudioTranscriptionOptions options = java.util.Objects.requireNonNull(
+				DashScopeSdkAudioTranscriptionOptions.fromOptions(this.defaultOptions));
 		if (runtimeOptions == null) {
 			return options;
 		}
@@ -141,17 +144,36 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 	}
 
 	private TranscriptionParam createRequest(List<String> fileUrls, DashScopeSdkAudioTranscriptionOptions options) {
+		String model = java.util.Objects.requireNonNull(options.getModel(),
+				"DashScopeSdkAudioTranscriptionOptions model cannot be null");
 		TranscriptionParam.TranscriptionParamBuilder<?, ?> builder = TranscriptionParam.builder()
-			.model(options.getModel())
-			.fileUrls(fileUrls)
-			.phraseId(options.getPhraseId())
-			.channelId(options.getChannelId())
-			.diarizationEnabled(options.getDiarizationEnabled())
-			.speakerCount(options.getSpeakerCount())
-			.disfluencyRemovalEnabled(options.getDisfluencyRemovalEnabled())
-			.timestampAlignmentEnabled(options.getTimestampAlignmentEnabled())
-			.specialWordFilter(options.getSpecialWordFilter())
-			.audioEventDetectionEnabled(options.getAudioEventDetectionEnabled());
+			.model(model)
+			.fileUrls(fileUrls);
+
+		if (options.getPhraseId() != null) {
+			builder.phraseId(options.getPhraseId());
+		}
+		if (options.getChannelId() != null) {
+			builder.channelId(options.getChannelId());
+		}
+		if (options.getDiarizationEnabled() != null) {
+			builder.diarizationEnabled(options.getDiarizationEnabled());
+		}
+		if (options.getSpeakerCount() != null) {
+			builder.speakerCount(options.getSpeakerCount());
+		}
+		if (options.getDisfluencyRemovalEnabled() != null) {
+			builder.disfluencyRemovalEnabled(options.getDisfluencyRemovalEnabled());
+		}
+		if (options.getTimestampAlignmentEnabled() != null) {
+			builder.timestampAlignmentEnabled(options.getTimestampAlignmentEnabled());
+		}
+		if (options.getSpecialWordFilter() != null) {
+			builder.specialWordFilter(options.getSpecialWordFilter());
+		}
+		if (options.getAudioEventDetectionEnabled() != null) {
+			builder.audioEventDetectionEnabled(options.getAudioEventDetectionEnabled());
+		}
 
 		if (StringUtils.hasText(this.apiKey)) {
 			builder.apiKey(this.apiKey);
@@ -310,7 +332,7 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 	}
 
 	public DashScopeSdkAudioTranscriptionOptions getDefaultOptions() {
-		return DashScopeSdkAudioTranscriptionOptions.fromOptions(this.defaultOptions);
+		return java.util.Objects.requireNonNull(DashScopeSdkAudioTranscriptionOptions.fromOptions(this.defaultOptions));
 	}
 
 	public Builder mutate() {
@@ -336,9 +358,9 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 
 		private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
 
-		private String apiKey;
+		private @Nullable String apiKey;
 
-		private String workspaceId;
+		private @Nullable String workspaceId;
 
 		private Map<String, String> connectionHeaders = new HashMap<>();
 
@@ -369,12 +391,12 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 			return this;
 		}
 
-		public Builder apiKey(String apiKey) {
+		public Builder apiKey(@Nullable String apiKey) {
 			this.apiKey = apiKey;
 			return this;
 		}
 
-		public Builder workspaceId(String workspaceId) {
+		public Builder workspaceId(@Nullable String workspaceId) {
 			this.workspaceId = workspaceId;
 			return this;
 		}

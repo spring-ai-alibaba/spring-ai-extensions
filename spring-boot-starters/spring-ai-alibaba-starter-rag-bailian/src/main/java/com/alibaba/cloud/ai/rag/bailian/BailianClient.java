@@ -26,6 +26,7 @@ import com.aliyun.bailian20231229.models.RetrieveResponse;
 import com.aliyun.tea.utils.StringUtils;
 import com.aliyun.teaopenapi.models.Config;
 import com.aliyun.teautil.models.RuntimeOptions;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -137,7 +138,7 @@ public class BailianClient {
 	 * @return a Mono emitting the retrieve response
 	 */
 	public Mono<RetrieveResponse> retrieve(String indexId, String query, Integer limit,
-			List<QueryHistoryEntry> conversationHistory) {
+			@Nullable List<QueryHistoryEntry> conversationHistory) {
 		if (indexId == null || indexId.trim().isEmpty()) {
 			return Mono.error(new IllegalArgumentException("IndexId cannot be null or empty"));
 		}

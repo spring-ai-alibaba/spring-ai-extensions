@@ -19,6 +19,7 @@ package com.alibaba.cloud.ai.dashscope.sdk.audio.tts;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.tts.TextToSpeechOptions;
 
 import java.util.HashMap;
@@ -32,37 +33,37 @@ import java.util.Objects;
 public class DashScopeSdkAudioSpeechOptions implements TextToSpeechOptions {
 
 	@JsonProperty("model")
-	private String model;
+	private @Nullable String model;
 
 	@JsonProperty("voice")
-	private String voice;
+	private @Nullable String voice;
 
 	@JsonProperty("format")
-	private String format;
+	private @Nullable String format;
 
 	@JsonProperty("speed")
-	private Double speed;
+	private @Nullable Double speed;
 
 	@JsonProperty("text_type")
-	private String textType;
+	private @Nullable String textType;
 
 	@JsonProperty("sample_rate")
-	private Integer sampleRate;
+	private @Nullable Integer sampleRate;
 
 	@JsonProperty("volume")
-	private Integer volume;
+	private @Nullable Integer volume;
 
 	@JsonProperty("rate")
-	private Float rate;
+	private @Nullable Float rate;
 
 	@JsonProperty("pitch")
-	private Float pitch;
+	private @Nullable Float pitch;
 
 	@JsonProperty("word_timestamp_enabled")
-	private Boolean wordTimestampEnabled;
+	private @Nullable Boolean wordTimestampEnabled;
 
 	@JsonProperty("phoneme_timestamp_enabled")
-	private Boolean phonemeTimestampEnabled;
+	private @Nullable Boolean phonemeTimestampEnabled;
 
 	@JsonIgnore
 	private Map<String, String> httpHeaders = new HashMap<>();
@@ -71,7 +72,7 @@ public class DashScopeSdkAudioSpeechOptions implements TextToSpeechOptions {
 		return new DashScopeSdkAudioSpeechOptionsBuilder();
 	}
 
-	public static DashScopeSdkAudioSpeechOptions fromOptions(DashScopeSdkAudioSpeechOptions options) {
+	public static @Nullable DashScopeSdkAudioSpeechOptions fromOptions(@Nullable DashScopeSdkAudioSpeechOptions options) {
 		if (options == null) {
 			return null;
 		}
@@ -92,94 +93,94 @@ public class DashScopeSdkAudioSpeechOptions implements TextToSpeechOptions {
 	}
 
 	@Override
-	public String getModel() {
+	public @Nullable String getModel() {
 		return this.model;
 	}
 
-	public void setModel(String model) {
+	public void setModel(@Nullable String model) {
 		this.model = model;
 	}
 
 	@Override
-	public String getVoice() {
+	public @Nullable String getVoice() {
 		return this.voice;
 	}
 
-	public void setVoice(String voice) {
+	public void setVoice(@Nullable String voice) {
 		this.voice = voice;
 	}
 
 	@Override
-	public String getFormat() {
+	public @Nullable String getFormat() {
 		return this.format;
 	}
 
-	public void setFormat(String format) {
+	public void setFormat(@Nullable String format) {
 		this.format = format;
 	}
 
 	@Override
-	public Double getSpeed() {
+	public @Nullable Double getSpeed() {
 		return this.speed;
 	}
 
-	public void setSpeed(Double speed) {
+	public void setSpeed(@Nullable Double speed) {
 		this.speed = speed;
 	}
 
-	public String getTextType() {
+	public @Nullable String getTextType() {
 		return this.textType;
 	}
 
-	public void setTextType(String textType) {
+	public void setTextType(@Nullable String textType) {
 		this.textType = textType;
 	}
 
-	public Integer getSampleRate() {
+	public @Nullable Integer getSampleRate() {
 		return this.sampleRate;
 	}
 
-	public void setSampleRate(Integer sampleRate) {
+	public void setSampleRate(@Nullable Integer sampleRate) {
 		this.sampleRate = sampleRate;
 	}
 
-	public Integer getVolume() {
+	public @Nullable Integer getVolume() {
 		return this.volume;
 	}
 
-	public void setVolume(Integer volume) {
+	public void setVolume(@Nullable Integer volume) {
 		this.volume = volume;
 	}
 
-	public Float getRate() {
+	public @Nullable Float getRate() {
 		return this.rate;
 	}
 
-	public void setRate(Float rate) {
+	public void setRate(@Nullable Float rate) {
 		this.rate = rate;
 	}
 
-	public Float getPitch() {
+	public @Nullable Float getPitch() {
 		return this.pitch;
 	}
 
-	public void setPitch(Float pitch) {
+	public void setPitch(@Nullable Float pitch) {
 		this.pitch = pitch;
 	}
 
-	public Boolean getWordTimestampEnabled() {
+	public @Nullable Boolean getWordTimestampEnabled() {
 		return this.wordTimestampEnabled;
 	}
 
-	public void setWordTimestampEnabled(Boolean wordTimestampEnabled) {
+	public void setWordTimestampEnabled(@Nullable Boolean wordTimestampEnabled) {
 		this.wordTimestampEnabled = wordTimestampEnabled;
 	}
 
-	public Boolean getPhonemeTimestampEnabled() {
+	public @Nullable Boolean getPhonemeTimestampEnabled() {
 		return this.phonemeTimestampEnabled;
 	}
 
-	public void setPhonemeTimestampEnabled(Boolean phonemeTimestampEnabled) {
+	public void setPhonemeTimestampEnabled(@Nullable Boolean phonemeTimestampEnabled) {
 		this.phonemeTimestampEnabled = phonemeTimestampEnabled;
 	}
 
@@ -194,7 +195,7 @@ public class DashScopeSdkAudioSpeechOptions implements TextToSpeechOptions {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T extends TextToSpeechOptions> T copy() {
-		return (T) DashScopeSdkAudioSpeechOptions.fromOptions(this);
+		return (T) Objects.requireNonNull(DashScopeSdkAudioSpeechOptions.fromOptions(this));
 	}
 
 	@Override

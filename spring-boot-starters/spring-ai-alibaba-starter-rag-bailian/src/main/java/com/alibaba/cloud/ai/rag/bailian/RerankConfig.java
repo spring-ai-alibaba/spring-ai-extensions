@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.rag.bailian;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Rerank configuration for Bailian knowledge base retrieval.
  *
@@ -26,9 +28,9 @@ public class RerankConfig {
 
 	private final String modelName;
 
-	private final Float rerankMinScore;
+	private final @Nullable Float rerankMinScore;
 
-	private final Integer rerankTopN;
+	private final @Nullable Integer rerankTopN;
 
 	private RerankConfig(Builder builder) {
 		this.modelName = builder.modelName;
@@ -56,7 +58,7 @@ public class RerankConfig {
 	 * Gets the minimum score threshold for reranking.
 	 * @return the minimum score (0.01-1.00)
 	 */
-	public Float getRerankMinScore() {
+	public @Nullable Float getRerankMinScore() {
 		return rerankMinScore;
 	}
 
@@ -64,7 +66,7 @@ public class RerankConfig {
 	 * Gets the top N results after reranking.
 	 * @return the top N value (1-20)
 	 */
-	public Integer getRerankTopN() {
+	public @Nullable Integer getRerankTopN() {
 		return rerankTopN;
 	}
 
@@ -75,9 +77,9 @@ public class RerankConfig {
 
 		private String modelName = "gte-rerank-hybrid";
 
-		private Float rerankMinScore;
+		private @Nullable Float rerankMinScore;
 
-		private Integer rerankTopN;
+		private @Nullable Integer rerankTopN;
 
 		private Builder() {
 		}
@@ -94,8 +96,8 @@ public class RerankConfig {
 		 * @param modelName the model name
 		 * @return this builder
 		 */
-		public Builder modelName(String modelName) {
-			this.modelName = modelName;
+		public Builder modelName(@Nullable String modelName) {
+			this.modelName = modelName != null ? modelName : "gte-rerank-hybrid";
 			return this;
 		}
 
@@ -108,7 +110,7 @@ public class RerankConfig {
 		 * @param rerankMinScore the minimum score
 		 * @return this builder
 		 */
-		public Builder rerankMinScore(Float rerankMinScore) {
+		public Builder rerankMinScore(@Nullable Float rerankMinScore) {
 			if (rerankMinScore != null && (rerankMinScore < 0.01f || rerankMinScore > 1.00f)) {
 				throw new IllegalArgumentException("rerankMinScore must be between 0.01 and 1.00");
 			}
@@ -124,7 +126,7 @@ public class RerankConfig {
 		 * @param rerankTopN the top N value
 		 * @return this builder
 		 */
-		public Builder rerankTopN(Integer rerankTopN) {
+		public Builder rerankTopN(@Nullable Integer rerankTopN) {
 			if (rerankTopN != null && (rerankTopN < 1 || rerankTopN > 20)) {
 				throw new IllegalArgumentException("rerankTopN must be between 1 and 20");
 			}

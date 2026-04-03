@@ -38,7 +38,7 @@ public abstract class LaajEvaluator implements Evaluator {
 
 	private String evaluationPromptText;
 
-	private ObjectMapper objectMapper;
+	private ObjectMapper objectMapper = new ObjectMapper();
 
 	public LaajEvaluator(ChatClient.Builder chatClientBuilder) {
 		this.chatClientBuilder = chatClientBuilder;

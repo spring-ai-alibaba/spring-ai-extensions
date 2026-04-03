@@ -19,6 +19,7 @@ import com.alibaba.cloud.ai.dashscope.api.tts.DashScopeQwenTTSApi;
 import com.alibaba.cloud.ai.dashscope.api.tts.DashScopeQwenTTSRealtimeApi;
 import com.alibaba.cloud.ai.dashscope.api.tts.DashScopeWebSocketTTSApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.tts.Speech;
 import org.springframework.ai.audio.tts.TextToSpeechResponse;
 import reactor.core.publisher.Flux;
@@ -44,7 +45,7 @@ public class DashScopeTtsStrategyRegistry {
 		this.qwenTTSRealtimeApi = qwenTTSRealtimeApi;
 	}
 
-	public DashScopeTtsStrategy getStrategy(String modelName) {
+	public @Nullable DashScopeTtsStrategy getStrategy(String modelName) {
 		if (DashScopeAudioApiConstants.isQwenTTSModel(modelName)) {
 			return new QwenTTSStrategy(qwenTTSApi);
 		}

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.LinkedMultiValueMap;
@@ -75,6 +76,9 @@ public class WorldBankDataService
 
 			String responseStr = webClientTool.get(endpoint, params).block();
 			log.debug("World Bank API response: {}", responseStr);
+			if (responseStr == null) {
+				return new Response(new ArrayList<>());
+			}
 
 			// Parse the response - World Bank API returns array format [metadata, data]
 			List<Object> rawResponse = jsonParseTool.jsonToObject(responseStr, new TypeReference<List<Object>>() {
@@ -174,9 +178,11 @@ public class WorldBankDataService
 					@SuppressWarnings("unchecked")
 					Map<String, Object> indicator = (Map<String, Object>) indicatorObj;
 					String indicatorName = (String) indicator.get("value");
-					return countryName + " - " + indicatorName;
+					String safeCountryName = countryName != null ? countryName : "";
+					String safeIndicatorName = indicatorName != null ? indicatorName : "";
+					return safeCountryName + " - " + safeIndicatorName;
 				}
-				return countryName;
+				return countryName != null ? countryName : "";
 			}
 		}
 
@@ -221,26 +227,22 @@ public class WorldBankDataService
 	public record Request(@JsonProperty(required = true,
 			value = "query") @JsonPropertyDescription("Search query - can be indicator code (e.g., 'SP.POP.TOTL'), country code (e.g., 'CHN'), or search terms") String query,
 
-			@JsonProperty(
-					value = "country") @JsonPropertyDescription("Country code (e.g., 'CHN' for China, 'USA' for United States, 'all' for all countries)") String country,
+			@JsonProperty(value = "country") @JsonPropertyDescription("Country code (e.g., 'CHN' for China, 'USA' for United States, 'all' for all countries)") @Nullable String country,
 
-			@JsonProperty(
-					value = "indicator") @JsonPropertyDescription("Indicator code (e.g., 'SP.POP.TOTL' for Population, 'NY.GDP.MKTP.CD' for GDP)") String indicator,
+			@JsonProperty(value = "indicator") @JsonPropertyDescription("Indicator code (e.g., 'SP.POP.TOTL' for Population, 'NY.GDP.MKTP.CD' for GDP)") @Nullable String indicator,
 
-			@JsonProperty(
-					value = "dateRange") @JsonPropertyDescription("Date range for data (e.g., '2020', '2018:2022', 'YTD:2023')") String dateRange,
+			@JsonProperty(value = "dateRange") @JsonPropertyDescription("Date range for data (e.g., '2020', '2018:2022', 'YTD:2023')") @Nullable String dateRange,
 
 			@JsonProperty(value = "queryType",
 					defaultValue = "data") @JsonPropertyDescription("Type of query: 'data' for indicator data, 'metadata' for indicator information, 'country' for country info") String queryType,
 
 			@JsonProperty(value = "page",
-					defaultValue = "1") @JsonPropertyDescription("Page number for pagination") Integer page,
+					defaultValue = "1") @JsonPropertyDescription("Page number for pagination") @Nullable Integer page,
 
 			@JsonProperty(value = "perPage",
-					defaultValue = "10") @JsonPropertyDescription("Number of results per page (max 100)") Integer perPage,
+					defaultValue = "10") @JsonPropertyDescription("Number of results per page (max 100)") @Nullable Integer perPage,
 
-			@JsonProperty(
-					value = "mrv") @JsonPropertyDescription("Most recent values count (e.g., 5 for last 5 available data points)") Integer mrv)
+			@JsonProperty(value = "mrv") @JsonPropertyDescription("Most recent values count (e.g., 5 for last 5 available data points)") @Nullable Integer mrv)
 			implements
 				SearchService.Request {
 
@@ -280,7 +282,7 @@ public class WorldBankDataService
 	}
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
-	public record DataResult(String title, String description, String url, Object value) {
+	public record DataResult(String title, String description, String url, @Nullable Object value) {
 	}
 
 }

@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -180,8 +181,9 @@ public class BailianDocumentRetrievalAdvisor implements BaseAdvisor {
 						content = result.getOutput().getText();
 					}
 
-					Map<String, Document> documentMap = (Map<String, Document>) context
-						.get(DashScopeApiConstants.RETRIEVED_DOCUMENTS);
+					Object retrievedDocuments = context.get(DashScopeApiConstants.RETRIEVED_DOCUMENTS);
+					Map<String, Document> documentMap = retrievedDocuments instanceof Map<?, ?> map
+							? (Map<String, Document>) map : Map.of();
 					List<Document> referencedDocuments = new ArrayList<>();
 
 					Matcher refMatcher = RAG_REFERENCE_PATTERN.matcher(content);
@@ -193,8 +195,10 @@ public class BailianDocumentRetrievalAdvisor implements BaseAdvisor {
 							for (int i = 1; i <= numberMatcher.groupCount(); i++) {
 								if (numberMatcher.group(i) != null) {
 									String index = numberMatcher.group(i);
-									Document document = documentMap.get(index);
-									referencedDocuments.add(document);
+									Document document = documentMap.get("[%s]".formatted(index));
+									if (document != null) {
+										referencedDocuments.add(document);
+									}
 								}
 							}
 						}
@@ -204,7 +208,7 @@ public class BailianDocumentRetrievalAdvisor implements BaseAdvisor {
 			}
 		}
 		chatResponseBuilder.metadata(DashScopeApiConstants.RETRIEVED_DOCUMENTS,
-				response.context().get(DashScopeApiConstants.RETRIEVED_DOCUMENTS));
+				Objects.requireNonNullElse(response.context().get(DashScopeApiConstants.RETRIEVED_DOCUMENTS), Map.of()));
 		return ChatClientResponse.builder().chatResponse(chatResponseBuilder.build()).context(context).build();
 	}
 

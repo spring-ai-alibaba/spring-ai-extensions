@@ -23,6 +23,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
@@ -144,12 +145,14 @@ public class ElasticsearchChatMemoryRepository implements ChatMemoryRepository, 
 			SearchResponse<ChatMessage> response = client
 				.search(s -> s.index(INDEX_NAME).size(10000).query(q -> q.matchAll(m -> m)), ChatMessage.class);
 
-			return response.hits()
-				.hits()
-				.stream()
-				.map(hit -> hit.source().getConversationId())
-				.distinct()
-				.collect(Collectors.toList());
+				return response.hits()
+					.hits()
+					.stream()
+					.map(Hit::source)
+					.filter(Objects::nonNull)
+					.map(ChatMessage::getConversationId)
+					.distinct()
+					.collect(Collectors.toList());
 		}
 		catch (IOException e) {
 			throw new RuntimeException("Error finding conversation IDs", e);
@@ -167,12 +170,14 @@ public class ElasticsearchChatMemoryRepository implements ChatMemoryRepository, 
 					.field(f -> f.field("timestamp").order(co.elastic.clients.elasticsearch._types.SortOrder.Asc))),
 					ChatMessage.class);
 
-			List<Message> messages = response.hits()
-				.hits()
-				.stream()
-				.map(hit -> hit.source().toSpringMessage())
-				.filter(Objects::nonNull)
-				.collect(Collectors.toList());
+				List<Message> messages = response.hits()
+					.hits()
+					.stream()
+					.map(Hit::source)
+					.filter(Objects::nonNull)
+					.map(ChatMessage::toSpringMessage)
+					.filter(Objects::nonNull)
+					.collect(Collectors.toList());
 
 			logger.info("Found {} messages for conversation: {}", messages.size(), conversationId);
 			return messages;
@@ -248,7 +253,12 @@ public class ElasticsearchChatMemoryRepository implements ChatMemoryRepository, 
 					.field(f -> f.field("timestamp").order(co.elastic.clients.elasticsearch._types.SortOrder.Asc))),
 					ChatMessage.class);
 
-			List<ChatMessage> messages = response.hits().hits().stream().map(Hit::source).collect(Collectors.toList());
+				List<ChatMessage> messages = response.hits()
+					.hits()
+					.stream()
+					.map(Hit::source)
+					.filter(Objects::nonNull)
+					.collect(Collectors.toList());
 
 			if (messages.size() >= maxLimit) {
 				// Delete all messages
@@ -306,38 +316,42 @@ public class ElasticsearchChatMemoryRepository implements ChatMemoryRepository, 
 			.source(src -> src.fetch(true)), Void.class);
 
 		StringBuilder sb = new StringBuilder();
-		sb.append("=== All documents (").append(allResponse.hits().total().value()).append(") ===\n");
+			sb.append("=== All documents (").append(totalHits(allResponse)).append(") ===\n");
 		sb.append(allResponse.toString()).append("\n\n");
 
 		sb.append("=== Documents for conversation with keyword field ")
 			.append(conversationId)
 			.append(" (")
-			.append(byIdResponseKeyword.hits().total().value())
+				.append(totalHits(byIdResponseKeyword))
 			.append(") ===\n");
 		sb.append(byIdResponseKeyword.toString()).append("\n\n");
 
 		sb.append("=== Documents for conversation without keyword field ")
 			.append(conversationId)
 			.append(" (")
-			.append(byIdResponseNoKeyword.hits().total().value())
-			.append(") ===\n");
-		sb.append(byIdResponseNoKeyword.toString());
+				.append(totalHits(byIdResponseNoKeyword))
+				.append(") ===\n");
+			sb.append(byIdResponseNoKeyword.toString());
 
-		return sb.toString();
+			return sb.toString();
+		}
+
+	private long totalHits(SearchResponse<?> response) {
+		return response.hits().total() != null ? response.hits().total().value() : 0L;
 	}
 
 	private static class ChatMessage {
 
-		private String conversationId;
+		private String conversationId = "";
 
-		private String messageType;
+		private String messageType = "";
 
-		private String messageText;
+		private String messageText = "";
 
 		private long timestamp;
 
 		// For backward compatibility with existing data
-		private Object message;
+		private @Nullable Object message;
 
 		public ChatMessage() {
 		}
@@ -381,15 +395,15 @@ public class ElasticsearchChatMemoryRepository implements ChatMemoryRepository, 
 			this.timestamp = timestamp;
 		}
 
-		public Object getMessage() {
+		public @Nullable Object getMessage() {
 			return message;
 		}
 
-		public void setMessage(Object message) {
+		public void setMessage(@Nullable Object message) {
 			this.message = message;
 		}
 
-		public Message toSpringMessage() {
+		public @Nullable Message toSpringMessage() {
 			try {
 				if (messageType != null && messageText != null) {
 					switch (MessageType.valueOf(messageType)) {

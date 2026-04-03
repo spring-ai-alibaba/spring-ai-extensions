@@ -16,6 +16,7 @@
 
 package com.alibaba.cloud.ai.model.chat.memory.tablestore.autoconfigure;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -26,13 +27,13 @@ public class TablestoreChatMemoryProperties {
 
 	public static final String CONFIG_PREFIX = "spring.ai.chat.memory.repository.tablestore";
 
-	private String endpoint;
+	private @Nullable String endpoint;
 
-	private String instanceName;
+	private @Nullable String instanceName;
 
-	private String accessKeyId;
+	private @Nullable String accessKeyId;
 
-	private String accessKeySecret;
+	private @Nullable String accessKeySecret;
 
 	private String sessionTableName = "session";
 
@@ -42,35 +43,35 @@ public class TablestoreChatMemoryProperties {
 
 	private String messageSecondaryIndexName = "message_secondary_index";
 
-	public String getEndpoint() {
+	public @Nullable String getEndpoint() {
 		return endpoint;
 	}
 
-	public void setEndpoint(String endpoint) {
+	public void setEndpoint(@Nullable String endpoint) {
 		this.endpoint = endpoint;
 	}
 
-	public String getInstanceName() {
+	public @Nullable String getInstanceName() {
 		return instanceName;
 	}
 
-	public void setInstanceName(String instanceName) {
+	public void setInstanceName(@Nullable String instanceName) {
 		this.instanceName = instanceName;
 	}
 
-	public String getAccessKeyId() {
+	public @Nullable String getAccessKeyId() {
 		return accessKeyId;
 	}
 
-	public void setAccessKeyId(String accessKeyId) {
+	public void setAccessKeyId(@Nullable String accessKeyId) {
 		this.accessKeyId = accessKeyId;
 	}
 
-	public String getAccessKeySecret() {
+	public @Nullable String getAccessKeySecret() {
 		return accessKeySecret;
 	}
 
-	public void setAccessKeySecret(String accessKeySecret) {
+	public void setAccessKeySecret(@Nullable String accessKeySecret) {
 		this.accessKeySecret = accessKeySecret;
 	}
 

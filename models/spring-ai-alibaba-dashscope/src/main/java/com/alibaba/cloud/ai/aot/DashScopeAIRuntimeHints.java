@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.aot;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
@@ -31,20 +32,18 @@ import static org.springframework.ai.aot.AiRuntimeHints.findJsonAnnotatedClasses
 
 public class DashScopeAIRuntimeHints implements RuntimeHintsRegistrar {
 
-	private static final List<String> JSON_ANNOTATED_PACKAGES = List.of("com.alibaba.cloud.ai.advisor",
-			"com.alibaba.cloud.ai.agent", "com.alibaba.cloud.ai.dashscope", "com.alibaba.cloud.ai.document",
-			"com.alibaba.cloud.ai.evaluation", "com.alibaba.cloud.ai.model", "com.alibaba.cloud.ai.tool");
+    private static final List<String> JSON_ANNOTATED_PACKAGES = List.of("com.alibaba.cloud.ai.advisor", "com.alibaba.cloud.ai.agent", "com.alibaba.cloud.ai.dashscope", "com.alibaba.cloud.ai.document", "com.alibaba.cloud.ai.evaluation", "com.alibaba.cloud.ai.model", "com.alibaba.cloud.ai.tool");
 
-	@Override
-	public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+    @Override
+    public void registerHints(RuntimeHints hints, @Nullable ClassLoader classLoader) {
 
-		var mcs = MemberCategory.values();
+        var mcs = MemberCategory.values();
 
-		for (var packageName : JSON_ANNOTATED_PACKAGES) {
-			for (var tr : findJsonAnnotatedClassesInPackage(packageName)) {
-				hints.reflection().registerType(tr, mcs);
-			}
-		}
-	}
+        for (var packageName : JSON_ANNOTATED_PACKAGES) {
+            for (var tr : findJsonAnnotatedClassesInPackage(packageName)) {
+                hints.reflection().registerType(tr, mcs);
+            }
+        }
+    }
 
 }

@@ -18,6 +18,8 @@ package com.alibaba.cloud.ai.rag.bailian;
 import java.util.List;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Options for Bailian document retrieval.
  *
@@ -29,37 +31,37 @@ import java.util.Map;
  */
 public class BailianDocumentRetrieverOptions {
 
-	private Integer limit;
+	private @Nullable Integer limit;
 
-	private Double scoreThreshold;
+	private @Nullable Double scoreThreshold;
 
-	private List<Map<String, String>> searchFilters;
+	private @Nullable List<Map<String, String>> searchFilters;
 
 	public static BailianDocumentRetrieverOptions.Builder builder() {
 		return new BailianDocumentRetrieverOptions.Builder();
 	}
 
-	public Integer getLimit() {
+	public @Nullable Integer getLimit() {
 		return limit;
 	}
 
-	public void setLimit(Integer limit) {
+	public void setLimit(@Nullable Integer limit) {
 		this.limit = limit;
 	}
 
-	public Double getScoreThreshold() {
+	public @Nullable Double getScoreThreshold() {
 		return scoreThreshold;
 	}
 
-	public void setScoreThreshold(Double scoreThreshold) {
+	public void setScoreThreshold(@Nullable Double scoreThreshold) {
 		this.scoreThreshold = scoreThreshold;
 	}
 
-	public List<Map<String, String>> getSearchFilters() {
+	public @Nullable List<Map<String, String>> getSearchFilters() {
 		return searchFilters;
 	}
 
-	public void setSearchFilters(List<Map<String, String>> searchFilters) {
+	public void setSearchFilters(@Nullable List<Map<String, String>> searchFilters) {
 		this.searchFilters = searchFilters;
 	}
 
@@ -71,17 +73,18 @@ public class BailianDocumentRetrieverOptions {
 			this.options = new BailianDocumentRetrieverOptions();
 		}
 
-		public BailianDocumentRetrieverOptions.Builder limit(Integer limit) {
+		public BailianDocumentRetrieverOptions.Builder limit(@Nullable Integer limit) {
 			this.options.setLimit(limit);
 			return this;
 		}
 
-		public BailianDocumentRetrieverOptions.Builder scoreThreshold(Double scoreThreshold) {
+		public BailianDocumentRetrieverOptions.Builder scoreThreshold(@Nullable Double scoreThreshold) {
 			this.options.setScoreThreshold(scoreThreshold);
 			return this;
 		}
 
-		public BailianDocumentRetrieverOptions.Builder searchFilters(List<Map<String, String>> searchFilters) {
+		public BailianDocumentRetrieverOptions.Builder searchFilters(
+				@Nullable List<Map<String, String>> searchFilters) {
 			this.options.setSearchFilters(searchFilters);
 			return this;
 		}

@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure.model;
 
 import com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryProperties;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.ssl.SslBundles;
 
 /**
@@ -24,7 +25,8 @@ import org.springframework.boot.ssl.SslBundles;
  * @author benym
  * @since 2025/7/30 21:32
  */
-public record RedisChatMemoryStandalone(String hostName, int port, String username, String password,
-										int timeout, int database, String keyPrefix, RedisChatMemoryProperties.Ssl ssl, SslBundles sslBundles) {
+public record RedisChatMemoryStandalone(String hostName, int port, @Nullable String username, @Nullable String password,
+										int timeout, int database, @Nullable String keyPrefix, RedisChatMemoryProperties.Ssl ssl,
+										@Nullable SslBundles sslBundles) {
 
 }

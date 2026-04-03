@@ -24,12 +24,14 @@ import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -72,17 +74,22 @@ public class Mem0MemoryStore implements InitializingBean, VectorStore {
 	public void add(List<Document> documents) {
 		// TODO 将role相同的message合并
 		List<Mem0ServerRequest.MemoryCreate> messages = documents.stream()
-				.map(doc -> Mem0ServerRequest.MemoryCreate.builder()
-						.messages(
-								List.of(new Mem0ServerRequest.Message(doc.getMetadata().get("role")
-										.toString(), doc.getText())))
-						.metadata(doc.getMetadata())
-						.agentId(doc.getMetadata().containsKey(AGENT_ID) ? doc.getMetadata().get(AGENT_ID)
-								.toString() : null)
-						.runId(doc.getMetadata().containsKey(RUN_ID) ? doc.getMetadata().get(RUN_ID).toString() : null)
-						.userId(doc.getMetadata().containsKey(USER_ID) ? doc.getMetadata().get(USER_ID)
-								.toString() : null)
-						.build())
+				.map(doc -> {
+					Map<String, Object> metadata = doc.getMetadata() != null ? doc.getMetadata() : Map.of();
+					@Nullable String role = asNullableString(metadata.get("role"));
+					@Nullable String text = doc.getText();
+					if (!StringUtils.hasText(role) || !StringUtils.hasText(text)) {
+						return null;
+					}
+					return Mem0ServerRequest.MemoryCreate.builder()
+							.messages(List.of(new Mem0ServerRequest.Message(role, text)))
+							.metadata(metadata)
+							.agentId(asNullableString(metadata.get(AGENT_ID)))
+							.runId(asNullableString(metadata.get(RUN_ID)))
+							.userId(asNullableString(metadata.get(USER_ID)))
+							.build();
+				})
+				.filter(Objects::nonNull)
 				.toList();
 		// TODO 增加异步方式
 		messages.forEach(mem0Client::addMemory);
@@ -158,7 +165,7 @@ public class Mem0MemoryStore implements InitializingBean, VectorStore {
 			String text = relation.getSource() + " --[" + relation.getRelationship() + "]--> "
 					+ (StringUtils.hasText(relation.getTarget()) ? relation.getTarget() : relation.getDestination());
 			return new Document(text, filterNullElement(meta));
-		})).toList();
+		})).filter(Objects::nonNull).toList();
 		return documents;
 
 	}
@@ -168,6 +175,10 @@ public class Mem0MemoryStore implements InitializingBean, VectorStore {
 				.stream()
 				.filter(entry -> entry.getValue() != null && !"".equals(entry.getValue()))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+	}
+
+	private static @Nullable String asNullableString(@Nullable Object value) {
+		return value != null ? value.toString() : null;
 	}
 
 	public static final class Mem0MemoryStoreBuilder {

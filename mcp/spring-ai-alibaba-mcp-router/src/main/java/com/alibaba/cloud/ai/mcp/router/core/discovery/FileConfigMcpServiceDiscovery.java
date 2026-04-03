@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.mcp.router.core.discovery;
 
 import com.alibaba.cloud.ai.mcp.router.config.McpRouterProperties;
 import com.alibaba.cloud.ai.mcp.router.model.McpServerInfo;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -30,7 +31,7 @@ public class FileConfigMcpServiceDiscovery implements McpServiceDiscovery {
 	}
 
 	@Override
-	public McpServerInfo getService(String serviceName) {
+	public @Nullable McpServerInfo getService(String serviceName) {
 		return properties.getServices()
 			.stream()
 			.filter(config -> Objects.equals(serviceName, config.getName()))

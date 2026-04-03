@@ -19,6 +19,7 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
 import com.alibaba.cloud.ai.dashscope.api.tts.DashScopeQwenTTSRealtimeApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.audio.tts.Speech;
@@ -29,6 +30,7 @@ import org.springframework.ai.audio.tts.TextToSpeechResponse;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
+import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -79,27 +81,31 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel, StreamingIn
     @Override
 	public TextToSpeechResponse call(TextToSpeechPrompt prompt) {
         DashScopeAudioSpeechOptions options = this.mergeOptions(prompt);
-        if (DashScopeAudioApiConstants.isQwenTTSModel(options.getModel())) {
+        String model = options.getModel();
+        Assert.notNull(model, "audio speech model must not be null");
+        if (DashScopeAudioApiConstants.isQwenTTSModel(model)) {
             return this.audioSpeechApi.callQwenTTS(prompt.getInstructions().getText(), options);
         }
-        if (DashScopeAudioApiConstants.isWebsocketByTTSModelName(options.getModel())
-                || DashScopeAudioApiConstants.isQwenTTSRealtimeModel(options.getModel())) {
-            throw new IllegalArgumentException("Model " + options.getModel()
+        if (DashScopeAudioApiConstants.isWebsocketByTTSModelName(model)
+                || DashScopeAudioApiConstants.isQwenTTSRealtimeModel(model)) {
+            throw new IllegalArgumentException("Model " + model
                     + " does not support synchronous call; use stream() instead.");
         }
-        throw new IllegalArgumentException("Model " + options.getModel() + " is not supported.");
-    }
+        throw new IllegalArgumentException("Model " + model + " is not supported.");
+	}
 
-    @Override
+	@Override
 	public Flux<TextToSpeechResponse> stream(TextToSpeechPrompt prompt) {
         DashScopeAudioSpeechOptions options = this.mergeOptions(prompt);
-        if (DashScopeAudioApiConstants.isQwenTTSModel(options.getModel())) {
+        String model = options.getModel();
+        Assert.notNull(model, "audio speech model must not be null");
+        if (DashScopeAudioApiConstants.isQwenTTSModel(model)) {
             return this.audioSpeechApi.streamQwenTTS(prompt.getInstructions().getText(), options)
                     .map(response -> (TextToSpeechResponse) response);
         }
 
-        if (DashScopeAudioApiConstants.isWebsocketByTTSModelName(options.getModel())
-                || DashScopeAudioApiConstants.isQwenTTSRealtimeModel(options.getModel())) {
+        if (DashScopeAudioApiConstants.isWebsocketByTTSModelName(model)
+                || DashScopeAudioApiConstants.isQwenTTSRealtimeModel(model)) {
             return this.audioSpeechApi.createWebSocketTask(prompt.getInstructions().getText(), options)
                     .map(byteBuffer -> {
                         byte[] data = new byte[byteBuffer.remaining()];
@@ -108,7 +114,7 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel, StreamingIn
                     });
         }
 
-        throw new IllegalArgumentException("Model " + options.getModel() + " is not supported.");
+        throw new IllegalArgumentException("Model " + model + " is not supported.");
 	}
 
 	// =================== StreamingInputTextToSpeechModel ===================
@@ -116,21 +122,23 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel, StreamingIn
 	@Override
 	public Flux<TextToSpeechResponse> stream(Flux<String> textStream, TextToSpeechOptions options) {
 		DashScopeAudioSpeechOptions dashScopeOptions = mergeOptions(options);
+		String model = dashScopeOptions.getModel();
+		Assert.notNull(model, "audio speech model must not be null");
 
-		if (DashScopeAudioApiConstants.isQwenTTSRealtimeModel(dashScopeOptions.getModel())) {
+		if (DashScopeAudioApiConstants.isQwenTTSRealtimeModel(model)) {
 			DashScopeQwenTTSRealtimeApi realtimeApi = audioSpeechApi.getQwenTTSRealtimeApi();
 			return realtimeApi.stream(textStream, dashScopeOptions)
 					.map(byteBuffer -> toTextToSpeechResponse(byteBuffer));
 		}
 
-		if (DashScopeAudioApiConstants.isCosyVoiceModel(dashScopeOptions.getModel())) {
+		if (DashScopeAudioApiConstants.isCosyVoiceModel(model)) {
 			return audioSpeechApi.createWebSocketStreamingTask(textStream, dashScopeOptions)
 					.map(byteBuffer -> toTextToSpeechResponse(byteBuffer));
 		}
 
 		throw new IllegalArgumentException(
-				"Model " + dashScopeOptions.getModel() + " does not support streaming input. "
-						+ "Only CosyVoice and Qwen TTS Realtime models support streaming text input.");
+					"Model " + model + " does not support streaming input. "
+							+ "Only CosyVoice and Qwen TTS Realtime models support streaming text input.");
 	}
 
 	// ========================= Internal helpers =========================
@@ -177,7 +185,7 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel, StreamingIn
 
     public static class Builder {
 
-        private DashScopeAudioSpeechApi audioSpeechApi;
+	        private @Nullable DashScopeAudioSpeechApi audioSpeechApi;
 
         private DashScopeAudioSpeechOptions defaultOptions = DashScopeAudioSpeechOptions.builder().build();
 
@@ -208,7 +216,9 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel, StreamingIn
         }
 
         public DashScopeAudioSpeechModel build() {
-            return new DashScopeAudioSpeechModel(this.audioSpeechApi, this.defaultOptions, this.retryTemplate);
+            DashScopeAudioSpeechApi audioSpeechApi = this.audioSpeechApi;
+            Assert.notNull(audioSpeechApi, "audioSpeechApi must not be null");
+            return new DashScopeAudioSpeechModel(audioSpeechApi, this.defaultOptions, this.retryTemplate);
         }
     }
 

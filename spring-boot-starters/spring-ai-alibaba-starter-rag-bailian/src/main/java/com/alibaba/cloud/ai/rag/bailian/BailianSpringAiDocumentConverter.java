@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import com.aliyun.bailian20231229.models.RetrieveResponse;
 import com.aliyun.bailian20231229.models.RetrieveResponseBody;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 
 /**
@@ -43,7 +44,7 @@ public class BailianSpringAiDocumentConverter {
 	 * @param response the Bailian retrieve response
 	 * @return a list of Spring AI Document objects
 	 */
-	public static List<Document> fromBailianResponse(RetrieveResponse response) {
+	public static List<Document> fromBailianResponse(@Nullable RetrieveResponse response) {
 		if (response == null || response.getBody() == null) {
 			return List.of();
 		}
@@ -66,7 +67,7 @@ public class BailianSpringAiDocumentConverter {
 	 * @param node the Bailian node from retrieve response
 	 * @return a Spring AI Document object, or null if conversion fails
 	 */
-	public static Document fromBailianNode(RetrieveResponseBody.RetrieveResponseBodyDataNodes node) {
+	public static @Nullable Document fromBailianNode(RetrieveResponseBody.RetrieveResponseBodyDataNodes node) {
 		if (node == null) {
 			return null;
 		}
@@ -139,7 +140,8 @@ public class BailianSpringAiDocumentConverter {
 	 * @param key the key to extract
 	 * @return the string value, or null if not found or not a string
 	 */
-	private static String extractStringFromMetadata(Map<String, Object> metadata, String key) {
+	private static @Nullable String extractStringFromMetadata(@Nullable Map<String, Object> metadata,
+			@Nullable String key) {
 		if (metadata == null || key == null) {
 			return null;
 		}

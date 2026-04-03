@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import org.jspecify.annotations.Nullable;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.AsrOutPut;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.AsrResponse;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.AsrResponse.Output.Result;
@@ -89,7 +90,7 @@ public class DashScopeAudioTranscriptionApi {
 
     private final ApiKey apiKey;
 
-    private final String workSpaceId;
+    private final @Nullable String workSpaceId;
 
     private final HttpHeaders headers;
 
@@ -105,11 +106,18 @@ public class DashScopeAudioTranscriptionApi {
             String baseUrl,
             String  websocketUrl,
             ApiKey apiKey,
-            String workSpaceId,
+            @Nullable String workSpaceId,
             HttpHeaders headers,
             RestClient.Builder restClientBuilder,
             WebClient.Builder webClientBuilder,
             ResponseErrorHandler responseErrorHandler) {
+        Assert.notNull(baseUrl, "baseUrl must not be null");
+        Assert.notNull(websocketUrl, "websocketUrl must not be null");
+        Assert.notNull(apiKey, "apiKey must not be null");
+        Assert.notNull(headers, "headers must not be null");
+        Assert.notNull(restClientBuilder, "restClientBuilder must not be null");
+        Assert.notNull(webClientBuilder, "webClientBuilder must not be null");
+        Assert.notNull(responseErrorHandler, "responseErrorHandler must not be null");
         this.baseUrl = baseUrl;
         this.websocketUrl = websocketUrl;
         this.apiKey = apiKey;
@@ -137,10 +145,10 @@ public class DashScopeAudioTranscriptionApi {
 
 		this.webSocketAsrApi = DashScopeWebSocketAsrApi.builder()
 				.options(com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions.builder()
-						.apiKey(apiKey.getValue())
-						.workSpaceId(workSpaceId)
-						.url(websocketUrl)
-						.build())
+                        .apiKey(apiKey.getValue())
+                        .workSpaceId(workSpaceId)
+                        .url(websocketUrl)
+                        .build())
 				.build();
 
         this.objectMapper = JsonMapper.builder()
@@ -182,7 +190,9 @@ public class DashScopeAudioTranscriptionApi {
                 .retrieve()
                 .toEntity(DashScopeAudioTranscriptionResponse.class);
         if (response.getStatusCode().is2xxSuccessful()) {
-            return response.getBody();
+            DashScopeAudioTranscriptionResponse body = response.getBody();
+            Assert.notNull(body, "response body must not be null");
+            return body;
         }
 
         log.error("Failed to call Live Translate API: " + response.getStatusCode());
@@ -272,7 +282,10 @@ public class DashScopeAudioTranscriptionApi {
                 .toEntity(AsrOutPut.class);
         String taskId;
         if (response.getStatusCode().is2xxSuccessful()) {
-            taskId = response.getBody().output().taskId();
+            AsrOutPut body = response.getBody();
+            Assert.notNull(body, "ASR response body must not be null");
+            Assert.notNull(body.output(), "ASR response output must not be null");
+            taskId = body.output().taskId();
             log.info("ASR transcription taskId: {}", taskId);
         } else {
             throw new RuntimeException("Failed to call ASR transcription: " + response.getStatusCode());
@@ -291,10 +304,13 @@ public class DashScopeAudioTranscriptionApi {
                 throw new RuntimeException("Failed to get ASR transcription: " + asrResponse.getStatusCode());
             }
 
-            String taskStatus = asrResponse.getBody().output().taskStatus();
+            AsrResponse body = asrResponse.getBody();
+            Assert.notNull(body, "ASR polling response body must not be null");
+            Assert.notNull(body.output(), "ASR polling response output must not be null");
+            String taskStatus = body.output().taskStatus();
 
             if ("SUCCEEDED".equals(taskStatus)) {
-                return parseAsrResponse(asrResponse.getBody());
+                return parseAsrResponse(body);
             } else if ("FAILED".equals(taskStatus)) {
                 throw new RuntimeException("ASR transcription task failed");
             } else if ("PENDING".equals(taskStatus) || "RUNNING".equals(taskStatus)) {
@@ -370,7 +386,9 @@ public class DashScopeAudioTranscriptionApi {
                 .retrieve()
                 .toEntity(DashScopeAudioTranscriptionResponse.class);
         if (response.getStatusCode().is2xxSuccessful()) {
-            return response.getBody();
+            DashScopeAudioTranscriptionResponse body = response.getBody();
+            Assert.notNull(body, "response body must not be null");
+            return body;
         }
 
         log.error("Failed to call Qwen ASR API: " + response.getStatusCode());
@@ -426,7 +444,7 @@ public class DashScopeAudioTranscriptionApi {
         return this.apiKey;
     }
 
-    public String getWorkSpaceId() {
+    public @Nullable String getWorkSpaceId() {
         return this.workSpaceId;
     }
 
@@ -444,9 +462,9 @@ public class DashScopeAudioTranscriptionApi {
 
         private String websocketUrl = DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL;
 
-        private ApiKey apiKey;
+        private @Nullable ApiKey apiKey;
 
-        private String workSpaceId;
+        private @Nullable String workSpaceId;
 
         private HttpHeaders headers = new HttpHeaders();
 
@@ -477,12 +495,12 @@ public class DashScopeAudioTranscriptionApi {
             return this;
         }
 
-        public Builder workSpaceId(String workSpaceId) {
+        public Builder workSpaceId(@Nullable String workSpaceId) {
             this.workSpaceId = workSpaceId;
             return this;
         }
 
-        public Builder apiKey(ApiKey apiKey) {
+        public Builder apiKey(@Nullable ApiKey apiKey) {
             this.apiKey = apiKey;
             return this;
         }

@@ -23,6 +23,7 @@ import com.alibaba.dashscope.audio.tts.SpeechSynthesisResult;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisTextType;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.tts.Speech;
 import org.springframework.ai.audio.tts.TextToSpeechModel;
 import org.springframework.ai.audio.tts.TextToSpeechOptions;
@@ -54,15 +55,15 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 
 	private final RetryTemplate retryTemplate;
 
-	private final String apiKey;
+	private final @Nullable String apiKey;
 
-	private final String workspaceId;
+	private final @Nullable String workspaceId;
 
 	private final Map<String, String> connectionHeaders;
 
 	public DashScopeSdkAudioSpeechModel(DashScopeSdkSpeechSynthesisClient speechClient,
-			DashScopeSdkAudioSpeechOptions defaultOptions, RetryTemplate retryTemplate, String apiKey,
-			String workspaceId, Map<String, String> connectionHeaders) {
+			DashScopeSdkAudioSpeechOptions defaultOptions, RetryTemplate retryTemplate, @Nullable String apiKey,
+			@Nullable String workspaceId, Map<String, String> connectionHeaders) {
 		this.speechClient = speechClient;
 		this.defaultOptions = defaultOptions;
 		this.retryTemplate = retryTemplate;
@@ -93,9 +94,11 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 
 	private SpeechSynthesisParam createRequest(TextToSpeechPrompt prompt, boolean stream) {
 		DashScopeSdkAudioSpeechOptions options = mergeOptions(prompt.getOptions());
+		String model = java.util.Objects.requireNonNull(options.getModel(),
+				"DashScopeSdkAudioSpeechOptions model cannot be null");
 
 		SpeechSynthesisParam.SpeechSynthesisParamBuilder<?, ?> builder = SpeechSynthesisParam.builder()
-			.model(options.getModel())
+			.model(model)
 			.text(prompt.getInstructions().getText());
 
 		if (StringUtils.hasText(options.getTextType())) {
@@ -149,7 +152,8 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 	}
 
 	private DashScopeSdkAudioSpeechOptions mergeOptions(TextToSpeechOptions runtimeOptions) {
-		DashScopeSdkAudioSpeechOptions options = DashScopeSdkAudioSpeechOptions.fromOptions(this.defaultOptions);
+		DashScopeSdkAudioSpeechOptions options = java.util.Objects.requireNonNull(
+				DashScopeSdkAudioSpeechOptions.fromOptions(this.defaultOptions));
 		if (runtimeOptions == null) {
 			return options;
 		}
@@ -236,7 +240,7 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 
 	@Override
 	public DashScopeSdkAudioSpeechOptions getDefaultOptions() {
-		return DashScopeSdkAudioSpeechOptions.fromOptions(this.defaultOptions);
+		return java.util.Objects.requireNonNull(DashScopeSdkAudioSpeechOptions.fromOptions(this.defaultOptions));
 	}
 
 	public Builder mutate() {
@@ -262,9 +266,9 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 
 		private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
 
-		private String apiKey;
+		private @Nullable String apiKey;
 
-		private String workspaceId;
+		private @Nullable String workspaceId;
 
 		private Map<String, String> connectionHeaders = new HashMap<>();
 
@@ -295,12 +299,12 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 			return this;
 		}
 
-		public Builder apiKey(String apiKey) {
+		public Builder apiKey(@Nullable String apiKey) {
 			this.apiKey = apiKey;
 			return this;
 		}
 
-		public Builder workspaceId(String workspaceId) {
+		public Builder workspaceId(@Nullable String workspaceId) {
 			this.workspaceId = workspaceId;
 			return this;
 		}

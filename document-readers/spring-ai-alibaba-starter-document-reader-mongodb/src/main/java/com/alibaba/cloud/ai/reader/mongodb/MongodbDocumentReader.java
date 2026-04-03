@@ -22,6 +22,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import org.jspecify.annotations.Nullable;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +59,7 @@ public class MongodbDocumentReader implements DocumentReader, Closeable {
 
 	private final MongodbResource properties;
 
-	private final MongoClient mongoClient;
+	private final @Nullable MongoClient mongoClient;
 
 	private final boolean shouldCloseClient;
 
@@ -81,13 +82,13 @@ public class MongodbDocumentReader implements DocumentReader, Closeable {
 	 */
 	public static class Builder {
 
-		private MongoTemplate mongoTemplate;
+		private @Nullable MongoTemplate mongoTemplate;
 
-		private MongodbResource resource;
+		private @Nullable MongodbResource resource;
 
-		private MongoClient mongoClient;
+		private @Nullable MongoClient mongoClient;
 
-		private DocumentConverter converter;
+		private @Nullable DocumentConverter converter;
 
 		public Builder withMongoTemplate(MongoTemplate mongoTemplate) {
 			this.mongoTemplate = mongoTemplate;
@@ -117,10 +118,11 @@ public class MongodbDocumentReader implements DocumentReader, Closeable {
 		 */
 		private static MongoClient createMongoClient(MongodbResource resource) {
 			Assert.notNull(resource, "MongodbResource must not be null");
-			Assert.hasText(resource.getUri(), "MongoDB URI must not be empty");
+			String uri = Objects.requireNonNull(resource.getUri(), "MongoDB URI must not be empty");
+			Assert.hasText(uri, "MongoDB URI must not be empty");
 
 			MongoClientSettings settings = MongoClientSettings.builder()
-				.applyConnectionString(new ConnectionString(resource.getUri()))
+				.applyConnectionString(new ConnectionString(uri))
 				.applyToConnectionPoolSettings(builder -> builder.maxSize(resource.getPoolSize())
 					.minSize(1)
 					.maxWaitTime(2000, TimeUnit.MILLISECONDS)
@@ -135,14 +137,16 @@ public class MongodbDocumentReader implements DocumentReader, Closeable {
 		}
 
 		public MongodbDocumentReader build() {
-			Assert.notNull(resource, "MongodbResource must not be null");
+			MongodbResource resolvedResource = Objects.requireNonNull(resource, "MongodbResource must not be null");
+			String database = Objects.requireNonNull(resolvedResource.getDatabase(),
+					"MongoDB database must not be empty");
 
 			if (mongoTemplate == null && mongoClient == null) {
-				mongoClient = createMongoClient(resource);
-				mongoTemplate = new MongoTemplate(mongoClient, resource.getDatabase());
+				mongoClient = createMongoClient(resolvedResource);
+				mongoTemplate = new MongoTemplate(Objects.requireNonNull(mongoClient), database);
 			}
 			else if (mongoTemplate == null) {
-				mongoTemplate = new MongoTemplate(mongoClient, resource.getDatabase());
+				mongoTemplate = new MongoTemplate(Objects.requireNonNull(mongoClient), database);
 			}
 			return new MongodbDocumentReader(this);
 		}
@@ -150,10 +154,10 @@ public class MongodbDocumentReader implements DocumentReader, Closeable {
 	}
 
 	private MongodbDocumentReader(Builder builder) {
-		this.properties = builder.resource;
-		this.mongoTemplate = builder.mongoTemplate;
+		this.properties = Objects.requireNonNull(builder.resource, "MongodbResource must not be null");
+		this.mongoTemplate = Objects.requireNonNull(builder.mongoTemplate, "MongoTemplate must not be null");
 		this.mongoClient = builder.mongoClient;
-		this.documentConverter = Objects.isNull(builder.converter) ? new DefaultDocumentConverter() : builder.converter;
+		this.documentConverter = builder.converter != null ? builder.converter : new DefaultDocumentConverter();
 		this.shouldCloseClient = builder.mongoClient == null;
 
 		validateConfiguration();
@@ -164,12 +168,15 @@ public class MongodbDocumentReader implements DocumentReader, Closeable {
 	 */
 	private void validateConfiguration() {
 		validateMongoDbUri(properties.getUri());
+		Assert.hasText(properties.getDatabase(), "MongoDB database must not be empty");
+		Assert.hasText(properties.getCollection(), "MongoDB collection must not be empty");
 		validatePoolSettings(properties);
 	}
 
-	private void validateMongoDbUri(String uri) {
-		Assert.hasText(uri, "MongoDB URI must not be empty");
-		if (!MONGODB_URI_PATTERN.matcher(uri).matches()) {
+	private void validateMongoDbUri(@Nullable String uri) {
+		String resolvedUri = Objects.requireNonNull(uri, "MongoDB URI must not be empty");
+		Assert.hasText(resolvedUri, "MongoDB URI must not be empty");
+		if (!MONGODB_URI_PATTERN.matcher(resolvedUri).matches()) {
 			throw new IllegalArgumentException("Invalid MongoDB URI format");
 		}
 	}
@@ -296,9 +303,10 @@ public class MongodbDocumentReader implements DocumentReader, Closeable {
 	 */
 	private Query buildQuery() {
 		Query query = new Query();
-		if (StringUtils.hasText(properties.getQuery())) {
+		@Nullable String queryString = properties.getQuery();
+		if (StringUtils.hasText(queryString)) {
 			try {
-				Document queryDoc = Document.parse(properties.getQuery());
+				Document queryDoc = Document.parse(queryString);
 				query = new BasicQuery(queryDoc);
 			}
 			catch (Exception e) {
@@ -312,11 +320,13 @@ public class MongodbDocumentReader implements DocumentReader, Closeable {
 	 * Process MongoDB query and convert document format
 	 */
 	private List<org.springframework.ai.document.Document> processDocuments(Query query) {
+		validateConfiguration();
+		String database = Objects.requireNonNull(properties.getDatabase(), "MongoDB database must not be empty");
+		String collection = Objects.requireNonNull(properties.getCollection(), "MongoDB collection must not be empty");
 		return executeWithMetrics("processDocuments",
 				() -> StreamSupport
-					.stream(mongoTemplate.find(query, Document.class, properties.getCollection()).spliterator(), false)
-					.map(doc -> documentConverter.convert(doc, properties.getDatabase(), properties.getCollection(),
-							properties))
+					.stream(mongoTemplate.find(query, Document.class, collection).spliterator(), false)
+					.map(doc -> documentConverter.convert(doc, database, collection, properties))
 					.collect(Collectors.toList()));
 	}
 
@@ -372,7 +382,9 @@ public class MongodbDocumentReader implements DocumentReader, Closeable {
 	 */
 	public List<org.springframework.ai.document.Document> findInDatabaseAndCollectionWithPagination(String collection,
 			Query query, int page, int size) {
-		return findInDatabaseAndCollectionWithPagination(properties.getDatabase(), collection, query, page, size);
+		return findInDatabaseAndCollectionWithPagination(
+				Objects.requireNonNull(properties.getDatabase(), "MongoDB database must not be empty"), collection,
+				query, page, size);
 	}
 
 	/**

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeResponseFormat;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.model.ModelOptionsUtils;
@@ -54,22 +56,22 @@ public class DashScopeApiSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record EmbeddingUsage(@JsonProperty("total_tokens") Long totalTokens) implements Usage {
         @Override
-        public Integer getPromptTokens() {
+        public @Nullable Integer getPromptTokens() {
             return null;
         }
 
         @Override
-        public Integer getCompletionTokens() {
+        public @Nullable Integer getCompletionTokens() {
             return null;
         }
 
         @Override
-        public Object getNativeUsage() {
+        public @Nullable Object getNativeUsage() {
             return null;
         }
 
         @Override
-        public Integer getTotalTokens() {
+        public @Nullable Integer getTotalTokens() {
             return totalTokens != null ? totalTokens.intValue() : null;
         }
     }
@@ -112,6 +114,7 @@ public class DashScopeApiSpec {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record EmbeddingRequestInputParameters(@JsonProperty("text_type") String textType,
+                                                  @JsonProperty("dimension") @Nullable Integer dimension) {
                                                   @JsonProperty("dimension") Integer dimension,
                                                   @JsonProperty("output_type") String outputType) {
 
@@ -121,9 +124,9 @@ public class DashScopeApiSpec {
 
         public static class Builder {
 
-            private String textType;
+            private @Nullable String textType;
 
-            private Integer dimension;
+            private @Nullable Integer dimension;
 
             private String outputType;
 
@@ -131,12 +134,12 @@ public class DashScopeApiSpec {
 
             }
 
-            public Builder textType(String textType) {
+            public Builder textType(@Nullable String textType) {
                 this.textType = textType;
                 return this;
             }
 
-            public Builder dimension(Integer dimension) {
+            public Builder dimension(@Nullable Integer dimension) {
                 this.dimension = dimension;
                 return this;
             }
@@ -173,9 +176,9 @@ public class DashScopeApiSpec {
 
             private String model = DEFAULT_EMBEDDING_MODEL;
 
-            private String textType;
+            private @Nullable String textType;
 
-            private Integer dimension;
+            private @Nullable Integer dimension;
 
             private String outputType;
 
@@ -197,12 +200,12 @@ public class DashScopeApiSpec {
                 return this;
             }
 
-            public Builder textType(String textType) {
+            public Builder textType(@Nullable String textType) {
                 this.textType = textType;
                 return this;
             }
 
-            public Builder dimension(Integer dimension) {
+            public Builder dimension(@Nullable Integer dimension) {
                 this.dimension = dimension;
                 return this;
             }
@@ -279,7 +282,8 @@ public class DashScopeApiSpec {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record DocumentSplitRequest(@JsonProperty("text") String text, @JsonProperty("chunk_size") Integer chunkSize,
+    public record DocumentSplitRequest(@JsonProperty("text") @Nullable String text,
+                                       @JsonProperty("chunk_size") Integer chunkSize,
                                        @JsonProperty("overlap_size") Integer overlapSize, @JsonProperty("file_type") String fileType,
                                        @JsonProperty("language") String language, @JsonProperty("separator") String separator) {
 
@@ -301,7 +305,7 @@ public class DashScopeApiSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record UpsertPipelineRequest(@JsonProperty("name") String name,
                                         @JsonProperty("pipeline_type") String pipelineType,
-                                        @JsonProperty("pipeline_description") String pipelineDescription,
+                                        @JsonProperty("pipeline_description") @Nullable String pipelineDescription,
                                         @JsonProperty("data_type") String dataType, @JsonProperty("config_model") String configModel,
                                         @JsonProperty("configured_transformations") List transformations,
                                         @JsonProperty("data_sources") List<DataSourcesConfig> dataSources,
@@ -310,7 +314,7 @@ public class DashScopeApiSpec {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record DataSinksConfig(@JsonProperty("sink_type") String sinkType,
-                                  @JsonProperty("component") DataSinksComponent component) {
+                                  @JsonProperty("component") @Nullable DataSinksComponent component) {
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record DataSinksComponent() {
@@ -364,7 +368,7 @@ public class DashScopeApiSpec {
                                          @JsonProperty("rerank") List<CommonModelComponent> rerankComponents,
                                          @JsonProperty("rerank_min_score") float rerankMinScore,
                                          @JsonProperty("rerank_top_n") int rerankTopN,
-                                         @JsonProperty("search_filters") List<Map<String, Object>> searchFilters) {
+                                         @JsonProperty("search_filters") @Nullable List<Map<String, Object>> searchFilters) {
 
         }
 
@@ -417,10 +421,10 @@ public class DashScopeApiSpec {
                                           @JsonProperty("enable_reranking") boolean enableReranking,
                                           @JsonProperty("rerank") List<DocumentRetrieveModelConfig> rerank,
                                           @JsonProperty("rerank_min_score") float rerankMinScore, @JsonProperty("rerank_top_n") int rerankTopN,
-                                          @JsonProperty("search_filters") List<Map<String, Object>> searchFilters) {
+                                          @JsonProperty("search_filters") @Nullable List<Map<String, Object>> searchFilters) {
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record DocumentRetrieveModelConfig(@JsonProperty("model_name") String modelName,
-                                                  @JsonProperty("class_name") String className) {
+                                                  @JsonProperty("class_name") @Nullable String className) {
         }
     }
 
@@ -517,9 +521,9 @@ public class DashScopeApiSpec {
     public record ChatCompletionRequest(
             @JsonProperty("model") String model,
             @JsonProperty("input") ChatCompletionRequestInput input,
-            @JsonProperty("parameters") ChatCompletionRequestParameter parameters,
+            @JsonProperty("parameters") @Nullable ChatCompletionRequestParameter parameters,
             @JsonProperty("stream") Boolean stream,
-            @JsonIgnore Boolean multiModel
+            @JsonIgnore @Nullable Boolean multiModel
     ) {
 
         /**
@@ -585,63 +589,63 @@ public class DashScopeApiSpec {
     // @formatter:off
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ChatCompletionRequestParameter(
-            @JsonProperty("result_format") String resultFormat,
-            @JsonProperty("seed") Integer seed,
+            @JsonProperty("result_format") @Nullable String resultFormat,
+            @JsonProperty("seed") @Nullable Integer seed,
 
-            @JsonProperty("top_p") Double topP,
-            @JsonProperty("top_k") Integer topK,
-            @JsonProperty("repetition_penalty") Double repetitionPenalty,
-            @JsonProperty("presence_penalty") Double presencePenalty,
-            @JsonProperty("temperature") Double temperature,
-            @JsonProperty("stop") List<Object> stop,
+            @JsonProperty("top_p") @Nullable Double topP,
+            @JsonProperty("top_k") @Nullable Integer topK,
+            @JsonProperty("repetition_penalty") @Nullable Double repetitionPenalty,
+            @JsonProperty("presence_penalty") @Nullable Double presencePenalty,
+            @JsonProperty("temperature") @Nullable Double temperature,
+            @JsonProperty("stop") @Nullable List<Object> stop,
 
-            @JsonProperty("enable_search") Boolean enableSearch,
-            @JsonProperty("search_options") SearchOptions searchOptions,
+            @JsonProperty("enable_search") @Nullable Boolean enableSearch,
+            @JsonProperty("search_options") @Nullable SearchOptions searchOptions,
 
-            @JsonProperty("response_format") DashScopeResponseFormat responseFormat,
-            @JsonProperty("incremental_output") Boolean incrementalOutput,
+            @JsonProperty("response_format") @Nullable DashScopeResponseFormat responseFormat,
+            @JsonProperty("incremental_output") @Nullable Boolean incrementalOutput,
 
-            @JsonProperty("tools") List<FunctionTool> tools,
-            @JsonProperty("tool_choice") Object toolChoice,
-            @JsonProperty("parallel_tool_calls") Boolean parallelToolCalls,
+            @JsonProperty("tools") @Nullable List<FunctionTool> tools,
+            @JsonProperty("tool_choice") @Nullable Object toolChoice,
+            @JsonProperty("parallel_tool_calls") @Nullable Boolean parallelToolCalls,
 
-            @JsonProperty("enable_thinking") Boolean enableThinking,
-            @JsonProperty("thinking_budget") Integer thinkingBudget,
+            @JsonProperty("enable_thinking") @Nullable Boolean enableThinking,
+            @JsonProperty("thinking_budget") @Nullable Integer thinkingBudget,
 
-            @JsonProperty("enable_code_interpreter") Boolean enableCodeInterpreter,
+            @JsonProperty("enable_code_interpreter") @Nullable Boolean enableCodeInterpreter,
 
-            @JsonProperty("vl_high_resolution_images") Boolean vlHighResolutionImages,
-            @JsonProperty("vl_enable_image_hw_output") Boolean vlEnableImageHwOutput,
-            @JsonProperty("ocr_options")  OCROption ocrOptions,
+            @JsonProperty("vl_high_resolution_images") @Nullable Boolean vlHighResolutionImages,
+            @JsonProperty("vl_enable_image_hw_output") @Nullable Boolean vlEnableImageHwOutput,
+            @JsonProperty("ocr_options") @Nullable OCROption ocrOptions,
 
-            @JsonProperty("logprobs") Boolean logprobs,
-            @JsonProperty("top_logprobs") Integer topLogprobs,
+            @JsonProperty("logprobs") @Nullable Boolean logprobs,
+            @JsonProperty("top_logprobs") @Nullable Integer topLogprobs,
 
-            @JsonProperty("translation_options") TranslationOptions translationOptions,
+            @JsonProperty("translation_options") @Nullable TranslationOptions translationOptions,
 
-            @JsonProperty("stream") Boolean stream,
-            @JsonProperty("stream_options") Object streamOptions,
+            @JsonProperty("stream") @Nullable Boolean stream,
+            @JsonProperty("stream_options") @Nullable Object streamOptions,
 
             // modalities supported input modalities for the model, such as ["text", "audio"] and ["text"]
             // For Qwen-Omni model.
-            @JsonProperty("modalities") List<String> modalities,
+            @JsonProperty("modalities") @Nullable List<String> modalities,
             // When modalities has, audio is required.
-            @JsonProperty("audio") Object audio,
+            @JsonProperty("audio") @Nullable Object audio,
 
-            @JsonProperty("max_tokens") Integer maxTokens,
-            @JsonProperty("max_input_tokens") Integer maxInputTokens,
+            @JsonProperty("max_tokens") @Nullable Integer maxTokens,
+            @JsonProperty("max_input_tokens") @Nullable Integer maxInputTokens,
 
             // This parameter is only available when calling the recording file recognition-Tongyi Qianwen function, and is only effective for the Tongyi Qianwen 3 ASR model.
             // It is used to specify whether certain functions are enabled.
-            @JsonProperty("asr_options") Object asrOptions,
+            @JsonProperty("asr_options") @Nullable Object asrOptions,
 
             // The default value is "model_detailed_report"
             // Only when the Qwen-Deep-Research model for in-depth research is invoked, is the format for specifying the output content determined.
             // Optional values:
             //   "model_detailed_report": Detailed Report, approximately 6,000 words
             //   "model_summary_report": Summary Report, approximately 1500 - 2000 words
-            @JsonProperty("output_format") String outputFormat,
-            @JsonProperty("extra_body") Map<String, Object> extraBody
+            @JsonProperty("output_format") @Nullable String outputFormat,
+            @JsonProperty("extra_body") @Nullable Map<String, Object> extraBody
     ) {
 
         /**
@@ -670,7 +674,7 @@ public class DashScopeApiSpec {
          */
         @JsonAnyGetter
         public Map<String, Object> extraBody() {
-            return this.extraBody;
+            return Objects.requireNonNull(this.extraBody, "extraBody must not be null");
         }
 
         /**
@@ -836,22 +840,22 @@ public class DashScopeApiSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ChatCompletionMessage(
-            @JsonProperty("content") Object rawContent,
+            @JsonProperty("content") @Nullable Object rawContent,
             @JsonProperty("role") Role role,
-            @JsonProperty("name") String name,
-            @JsonProperty("tool_call_id") String toolCallId,
-            @JsonProperty("tool_calls") List<ToolCall> toolCalls,
-            @JsonProperty("reasoning_content") String reasoningContent,
+            @JsonProperty("name") @Nullable String name,
+            @JsonProperty("tool_call_id") @Nullable String toolCallId,
+            @JsonProperty("tool_calls") @Nullable List<ToolCall> toolCalls,
+            @JsonProperty("reasoning_content") @Nullable String reasoningContent,
             // refer: http://help.aliyun.com/zh/model-studio/partial-mode
-            @JsonProperty("partial") Boolean partial,
+            @JsonProperty("partial") @Nullable Boolean partial,
             // Only when the Tongyi Qianwen in-depth research model qwen-deep-research is called,
             // it indicates the stage of the research task.
             // ResearchPlanning WebResearch WebResearch and answer.
-            @JsonProperty("phase") String phase,
+            @JsonProperty("phase") @Nullable String phase,
             // When using recording file recognition-Tongyi Qianwen,
             // output annotation information (such as language)
-            @JsonProperty("annotations") List<ChatCompletionAnnotations> annotations,
-            @JsonProperty("status") String status
+            @JsonProperty("annotations") @Nullable List<ChatCompletionAnnotations> annotations,
+            @JsonProperty("status") @Nullable String status
     ) {
 
         /**
@@ -943,10 +947,11 @@ public class DashScopeApiSpec {
          * When set to {"type": "ephemeral"}, the system will attempt to hit or create a cache.
          */
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        public record MediaContent(@JsonProperty("type") String type, @JsonProperty("text") String text,
-                                   @JsonProperty("image") String image, @JsonProperty("video") List<String> video,
-                                   @JsonProperty("audio") String audio,
-                                   @JsonProperty("cache_control") Map<String, String> cacheControl) {
+        public record MediaContent(@JsonProperty("type") String type, @JsonProperty("text") @Nullable String text,
+                                   @JsonProperty("image") @Nullable String image,
+                                   @JsonProperty("video") @Nullable List<String> video,
+                                   @JsonProperty("audio") @Nullable String audio,
+                                   @JsonProperty("cache_control") @Nullable Map<String, String> cacheControl) {
             /**
              * Shortcut constructor for a text content.
              * @param text The text content of the message.
@@ -960,15 +965,16 @@ public class DashScopeApiSpec {
              * @param text The text content of the message.
              * @param cacheControl The cache control settings.
              */
-            public MediaContent(String text, Map<String, String> cacheControl) {
+            public MediaContent(String text, @Nullable Map<String, String> cacheControl) {
                 this("text", text, null, null, null, cacheControl);
             }
 
-            public MediaContent(String type, String text, String image, List<String> video) {
+            public MediaContent(String type, @Nullable String text, @Nullable String image, @Nullable List<String> video) {
                 this(type, text, image, video, null, null);
             }
 
-            public MediaContent(String type, String text, String image, List<String> video, String audio) {
+            public MediaContent(String type, @Nullable String text, @Nullable String image, @Nullable List<String> video,
+                    @Nullable String audio) {
                 this(type, text, image, video, audio, null);
             }
         }
@@ -987,7 +993,7 @@ public class DashScopeApiSpec {
                 @JsonProperty("id") String id,
                 @JsonProperty("type") String type,
                 @JsonProperty("function") ChatCompletionFunction function,
-                @JsonProperty("index") Integer index
+                @JsonProperty("index") @Nullable Integer index
         ) { }
 
         /**
@@ -1053,9 +1059,9 @@ public class DashScopeApiSpec {
     // format: off
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ChatCompletion(
-            @JsonProperty("request_id") String requestId,
-            @JsonProperty("output") ChatCompletionOutput output,
-            @JsonProperty("usage") TokenUsage usage
+            @JsonProperty("request_id") @Nullable String requestId,
+            @JsonProperty("output") @Nullable ChatCompletionOutput output,
+            @JsonProperty("usage") @Nullable TokenUsage usage
     ) { }
     // format: on
 
@@ -1070,9 +1076,9 @@ public class DashScopeApiSpec {
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ChatCompletionOutput(
-            @JsonProperty("text") String text,
+            @JsonProperty("text") @Nullable String text,
             @JsonProperty("choices") List<Choice> choices,
-            @JsonProperty("search_info") SearchInfo searchInfo
+            @JsonProperty("search_info") @Nullable SearchInfo searchInfo
     ) {
 
         /**
@@ -1082,10 +1088,10 @@ public class DashScopeApiSpec {
          * @param message A chat completion message generated by the model.
          */
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        public record Choice(@JsonProperty("finish_reason") ChatCompletionFinishReason finishReason,
-                             @JsonProperty("message") ChatCompletionMessage message,
-                             @JsonProperty("logprobs") ChatCompletionLogprobs logprobs,
-                             @JsonProperty("index") Integer index) {
+        public record Choice(@JsonProperty("finish_reason") @Nullable ChatCompletionFinishReason finishReason,
+                             @JsonProperty("message") @Nullable ChatCompletionMessage message,
+                             @JsonProperty("logprobs") @Nullable ChatCompletionLogprobs logprobs,
+                             @JsonProperty("index") @Nullable Integer index) {
         }
     }
 
@@ -1194,9 +1200,10 @@ public class DashScopeApiSpec {
      */
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record ChatCompletionChunk(@JsonProperty("request_id") String requestId,
-                                      @JsonProperty("output") ChatCompletionOutput output, @JsonProperty("usage") TokenUsage usage,
-                                      Object o) {
+    public record ChatCompletionChunk(@JsonProperty("request_id") @Nullable String requestId,
+                                      @JsonProperty("output") @Nullable ChatCompletionOutput output,
+                                      @JsonProperty("usage") @Nullable TokenUsage usage,
+                                      @Nullable Object o) {
     }
 
     /**
@@ -1279,13 +1286,13 @@ public class DashScopeApiSpec {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record SearchOptions(@JsonProperty("enable_source") Boolean enableSource,
-                                @JsonProperty("enable_citation") Boolean enableCitation,
-                                @JsonProperty("citation_format") String citationFormat,
-                                @JsonProperty("forced_search") Boolean forcedSearch,
-                                @JsonProperty("search_strategy") String searchStrategy,
-                                @JsonProperty("enable_search_extension") Boolean enableSearchExtension,
-                                @JsonProperty("prepend_search_result") Boolean prependSearchResult) {
+    public record SearchOptions(@JsonProperty("enable_source") @Nullable Boolean enableSource,
+                                @JsonProperty("enable_citation") @Nullable Boolean enableCitation,
+                                @JsonProperty("citation_format") @Nullable String citationFormat,
+                                @JsonProperty("forced_search") @Nullable Boolean forcedSearch,
+                                @JsonProperty("search_strategy") @Nullable String searchStrategy,
+                                @JsonProperty("enable_search_extension") @Nullable Boolean enableSearchExtension,
+                                @JsonProperty("prepend_search_result") @Nullable Boolean prependSearchResult) {
 
         public static Builder builder() {
             return new Builder();
@@ -1293,51 +1300,51 @@ public class DashScopeApiSpec {
 
         public static class Builder {
 
-            private Boolean enableSource;
+            private @Nullable Boolean enableSource;
 
-            private Boolean enableCitation;
+            private @Nullable Boolean enableCitation;
 
-            private String citationFormat;
+            private @Nullable String citationFormat;
 
-            private Boolean forcedSearch;
+            private @Nullable Boolean forcedSearch;
 
-            private String searchStrategy;
+            private @Nullable String searchStrategy;
 
-            private Boolean enableSearchExtension;
+            private @Nullable Boolean enableSearchExtension;
 
-            private Boolean prependSearchResult;
+            private @Nullable Boolean prependSearchResult;
 
-            public Builder enableSource(Boolean enableSource) {
+            public Builder enableSource(@Nullable Boolean enableSource) {
                 this.enableSource = enableSource;
                 return this;
             }
 
-            public Builder enableCitation(Boolean enableCitation) {
+            public Builder enableCitation(@Nullable Boolean enableCitation) {
                 this.enableCitation = enableCitation;
                 return this;
             }
 
-            public Builder citationFormat(String citationFormat) {
+            public Builder citationFormat(@Nullable String citationFormat) {
                 this.citationFormat = citationFormat;
                 return this;
             }
 
-            public Builder forcedSearch(Boolean forcedSearch) {
+            public Builder forcedSearch(@Nullable Boolean forcedSearch) {
                 this.forcedSearch = forcedSearch;
                 return this;
             }
 
-            public Builder searchStrategy(String searchStrategy) {
+            public Builder searchStrategy(@Nullable String searchStrategy) {
                 this.searchStrategy = searchStrategy;
                 return this;
             }
 
-            public Builder enableSearchExtension(Boolean enableSearchExtension) {
+            public Builder enableSearchExtension(@Nullable Boolean enableSearchExtension) {
                 this.enableSearchExtension = enableSearchExtension;
                 return this;
             }
 
-            public Builder prependSearchResult(Boolean prependSearchResult) {
+            public Builder prependSearchResult(@Nullable Boolean prependSearchResult) {
                 this.prependSearchResult = prependSearchResult;
                 return this;
             }
@@ -1370,10 +1377,10 @@ public class DashScopeApiSpec {
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record Parameters(
-			@JsonProperty("output_type") String outputType,
-			@JsonProperty("dimension") Integer dimension,
-			@JsonProperty("fps") Float fps,
-			@JsonProperty("instruct") String instruct
+			@JsonProperty("output_type") @Nullable String outputType,
+			@JsonProperty("dimension") @Nullable Integer dimension,
+			@JsonProperty("fps") @Nullable Float fps,
+			@JsonProperty("instruct") @Nullable String instruct
 	) {
 	}
 

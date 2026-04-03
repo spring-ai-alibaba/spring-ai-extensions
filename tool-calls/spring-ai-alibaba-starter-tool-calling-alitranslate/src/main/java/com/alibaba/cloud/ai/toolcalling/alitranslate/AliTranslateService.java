@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import darabonba.core.client.ClientOverrideConfiguration;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -39,7 +40,8 @@ import java.util.function.Function;
  * @author Allen Hu
  */
 public class AliTranslateService
-		implements Function<AliTranslateService.Request, AliTranslateService.Response>, Closeable {
+		implements Function<AliTranslateService.@Nullable Request, AliTranslateService.@Nullable Response>,
+		Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(AliTranslateService.class);
 
@@ -58,7 +60,7 @@ public class AliTranslateService
 	}
 
 	@Override
-	public Response apply(Request request) {
+	public @Nullable Response apply(@Nullable Request request) {
 		if (request == null || !StringUtils.hasText(request.text) || !StringUtils.hasText(request.sourceLanguage)
 				|| !StringUtils.hasText(request.targetLanguage)) {
 			return null;

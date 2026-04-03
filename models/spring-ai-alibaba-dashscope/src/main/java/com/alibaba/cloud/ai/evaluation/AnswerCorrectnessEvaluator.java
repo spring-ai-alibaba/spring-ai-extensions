@@ -80,12 +80,12 @@ public class AnswerCorrectnessEvaluator extends LaajEvaluator {
 			.call()
 			.content();
 
-		boolean passing = false;
-		float score = 0;
-		if (evaluationResponse.toUpperCase().contains("YES")) {
-			passing = true;
-			score = 1;
-		}
+			boolean passing = false;
+			float score = 0;
+			if (evaluationResponse != null && evaluationResponse.toUpperCase().contains("YES")) {
+				passing = true;
+				score = 1;
+			}
 
 		return new EvaluationResponse(passing, score, "", Collections.emptyMap());
 	}

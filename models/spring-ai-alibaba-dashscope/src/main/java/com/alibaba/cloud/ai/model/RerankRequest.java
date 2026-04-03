@@ -16,6 +16,7 @@
 
 package com.alibaba.cloud.ai.model;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.model.ModelRequest;
 
@@ -35,13 +36,13 @@ public class RerankRequest implements ModelRequest<List<Document>> {
 
 	private final List<Document> documents;
 
-	private final RerankOptions options;
+	private final @Nullable RerankOptions options;
 
 	public RerankRequest(String query, List<Document> documents) {
 		this(query, documents, null);
 	}
 
-	public RerankRequest(String query, List<Document> documents, RerankOptions options) {
+	public RerankRequest(String query, List<Document> documents, @Nullable RerankOptions options) {
 		this.query = query;
 		this.documents = documents;
 		this.options = options;
@@ -53,7 +54,7 @@ public class RerankRequest implements ModelRequest<List<Document>> {
 	}
 
 	@Override
-	public RerankOptions getOptions() {
+	public @Nullable RerankOptions getOptions() {
 		return this.options;
 	}
 

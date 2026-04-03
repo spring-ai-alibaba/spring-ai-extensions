@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.memory.mem0.core;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,23 +27,23 @@ import java.util.Map;
 
 public class Mem0Server {
 
-	private String version;
+	private @Nullable String version;
 
-	private VectorStore vectorStore;
+	private @Nullable VectorStore vectorStore;
 
-	private GraphStore graphStore;
+	private @Nullable GraphStore graphStore;
 
-	private Llm llm;
+	private @Nullable Llm llm;
 
-	private Embedder embedder;
+	private @Nullable Embedder embedder;
 
-	private String historyDbPath;
+	private @Nullable String historyDbPath;
 
-	private Project project;
+	private @Nullable Project project;
 
-	private String customFactExtractionPrompt;
+	private @Nullable String customFactExtractionPrompt;
 
-	private String customUpdateMemoryPrompt;
+	private @Nullable String customUpdateMemoryPrompt;
 
 	// 私有构造函数，防止直接实例化
 	private Mem0Server() {
@@ -63,75 +65,75 @@ public class Mem0Server {
 		return new Builder();
 	}
 
-	public String getVersion() {
+	public @Nullable String getVersion() {
 		return version;
 	}
 
-	public void setVersion(String version) {
+	public void setVersion(@Nullable String version) {
 		this.version = version;
 	}
 
-	public VectorStore getVectorStore() {
+	public @Nullable VectorStore getVectorStore() {
 		return vectorStore;
 	}
 
-	public void setVectorStore(VectorStore vectorStore) {
+	public void setVectorStore(@Nullable VectorStore vectorStore) {
 		this.vectorStore = vectorStore;
 	}
 
-	public GraphStore getGraphStore() {
+	public @Nullable GraphStore getGraphStore() {
 		return graphStore;
 	}
 
-	public void setGraphStore(GraphStore graphStore) {
+	public void setGraphStore(@Nullable GraphStore graphStore) {
 		this.graphStore = graphStore;
 	}
 
-	public Llm getLlm() {
+	public @Nullable Llm getLlm() {
 		return llm;
 	}
 
-	public void setLlm(Llm llm) {
+	public void setLlm(@Nullable Llm llm) {
 		this.llm = llm;
 	}
 
-	public Embedder getEmbedder() {
+	public @Nullable Embedder getEmbedder() {
 		return embedder;
 	}
 
-	public void setEmbedder(Embedder embedder) {
+	public void setEmbedder(@Nullable Embedder embedder) {
 		this.embedder = embedder;
 	}
 
-	public String getHistoryDbPath() {
+	public @Nullable String getHistoryDbPath() {
 		return historyDbPath;
 	}
 
-	public void setHistoryDbPath(String historyDbPath) {
+	public void setHistoryDbPath(@Nullable String historyDbPath) {
 		this.historyDbPath = historyDbPath;
 	}
 
-	public Project getProject() {
+	public @Nullable Project getProject() {
 		return project;
 	}
 
-	public void setProject(Project project) {
+	public void setProject(@Nullable Project project) {
 		this.project = project;
 	}
 
-	public String getCustomFactExtractionPrompt() {
+	public @Nullable String getCustomFactExtractionPrompt() {
 		return customFactExtractionPrompt;
 	}
 
-	public void setCustomFactExtractionPrompt(String customFactExtractionPrompt) {
+	public void setCustomFactExtractionPrompt(@Nullable String customFactExtractionPrompt) {
 		this.customFactExtractionPrompt = customFactExtractionPrompt;
 	}
 
-	public String getCustomUpdateMemoryPrompt() {
+	public @Nullable String getCustomUpdateMemoryPrompt() {
 		return customUpdateMemoryPrompt;
 	}
 
-	public void setCustomUpdateMemoryPrompt(String customUpdateMemoryPrompt) {
+	public void setCustomUpdateMemoryPrompt(@Nullable String customUpdateMemoryPrompt) {
 		this.customUpdateMemoryPrompt = customUpdateMemoryPrompt;
 	}
 
@@ -142,47 +144,47 @@ public class Mem0Server {
 		private Builder() {
 		}
 
-		public Builder version(String version) {
+		public Builder version(@Nullable String version) {
 			server.version = version;
 			return this;
 		}
 
-		public Builder vectorStore(VectorStore vectorStore) {
+		public Builder vectorStore(@Nullable VectorStore vectorStore) {
 			server.vectorStore = vectorStore;
 			return this;
 		}
 
-		public Builder graphStore(GraphStore graphStore) {
+		public Builder graphStore(@Nullable GraphStore graphStore) {
 			server.graphStore = graphStore;
 			return this;
 		}
 
-		public Builder llm(Llm llm) {
+		public Builder llm(@Nullable Llm llm) {
 			server.llm = llm;
 			return this;
 		}
 
-		public Builder embedder(Embedder embedder) {
+		public Builder embedder(@Nullable Embedder embedder) {
 			server.embedder = embedder;
 			return this;
 		}
 
-		public Builder historyDbPath(String historyDbPath) {
+		public Builder historyDbPath(@Nullable String historyDbPath) {
 			server.historyDbPath = historyDbPath;
 			return this;
 		}
 
-		public Builder project(Project project) {
+		public Builder project(@Nullable Project project) {
 			server.project = project;
 			return this;
 		}
 
-		public Builder customFactExtractionPrompt(String customFactExtractionPrompt) {
+		public Builder customFactExtractionPrompt(@Nullable String customFactExtractionPrompt) {
 			server.customFactExtractionPrompt = customFactExtractionPrompt;
 			return this;
 		}
 
-		public Builder customUpdateMemoryPrompt(String customUpdateMemoryPrompt) {
+		public Builder customUpdateMemoryPrompt(@Nullable String customUpdateMemoryPrompt) {
 			server.customUpdateMemoryPrompt = customUpdateMemoryPrompt;
 			return this;
 		}
@@ -195,9 +197,9 @@ public class Mem0Server {
 
 	public static class Project {
 
-		private String customCategories;
+		private @Nullable String customCategories;
 
-		private String customInstructions;
+		private @Nullable String customInstructions;
 
 		// 私有构造函数，防止直接实例化
 		private Project() {
@@ -213,19 +215,19 @@ public class Mem0Server {
 			return new Builder();
 		}
 
-		public String getCustomCategories() {
+		public @Nullable String getCustomCategories() {
 			return customCategories;
 		}
 
-		public void setCustomCategories(String customCategories) {
+		public void setCustomCategories(@Nullable String customCategories) {
 			this.customCategories = customCategories;
 		}
 
-		public String getCustomInstructions() {
+		public @Nullable String getCustomInstructions() {
 			return customInstructions;
 		}
 
-		public void setCustomInstructions(String customInstructions) {
+		public void setCustomInstructions(@Nullable String customInstructions) {
 			this.customInstructions = customInstructions;
 		}
 
@@ -236,12 +238,12 @@ public class Mem0Server {
 			private Builder() {
 			}
 
-			public Builder customCategories(String customCategories) {
+			public Builder customCategories(@Nullable String customCategories) {
 				project.customCategories = customCategories;
 				return this;
 			}
 
-			public Builder customInstructions(String customInstructions) {
+			public Builder customInstructions(@Nullable String customInstructions) {
 				project.customInstructions = customInstructions;
 				return this;
 			}
@@ -256,7 +258,7 @@ public class Mem0Server {
 
 	public static class VectorStore {
 
-		private String provider;
+		private @Nullable String provider;
 
 		/**
 		 * The following vector databases are supported. For specific configurations,
@@ -270,7 +272,7 @@ public class Mem0Server {
 		 * "OpenSearchConfig", "supabase": "SupabaseConfig", "weaviate": "WeaviateConfig",
 		 * "faiss": "FAISSConfig", "langchain": "LangchainConfig",
 		 */
-		private Map<String, String> config;
+		private @Nullable Map<String, String> config;
 
 		// 私有构造函数，防止直接实例化
 		private VectorStore() {
@@ -286,16 +288,19 @@ public class Mem0Server {
 			return new Builder();
 		}
 
-		public String getProvider() {
+		public @Nullable String getProvider() {
 			return provider;
 		}
 
-		public void setProvider(String provider) {
+		public void setProvider(@Nullable String provider) {
 			this.provider = provider;
 		}
 
 		public Map<String, String> getConfig() {
 			Map<String, String> result = new HashMap<>();
+			if (config == null) {
+				return result;
+			}
 			for (Map.Entry<String, String> entry : config.entrySet()) {
 				String key = entry.getKey().replace("-", "_");
 				result.put(key, entry.getValue());
@@ -303,7 +308,7 @@ public class Mem0Server {
 			return result;
 		}
 
-		public void setConfig(Map<String, String> config) {
+		public void setConfig(@Nullable Map<String, String> config) {
 			this.config = config;
 		}
 
@@ -314,12 +319,12 @@ public class Mem0Server {
 			private Builder() {
 			}
 
-			public Builder provider(String provider) {
+			public Builder provider(@Nullable String provider) {
 				vectorStore.provider = provider;
 				return this;
 			}
 
-			public Builder config(Map<String, String> config) {
+			public Builder config(@Nullable Map<String, String> config) {
 				vectorStore.config = config;
 				return this;
 			}
@@ -334,16 +339,16 @@ public class Mem0Server {
 
 	public static class GraphStore {
 
-		private String provider;
+		private @Nullable String provider;
 
-		private GraphStoreConfig config;
+		private @Nullable GraphStoreConfig config;
 
-		private Llm llm;
+		private @Nullable Llm llm;
 
 		/*
 		 * customPrompt: classpath:/prompts/system-message.st
 		 */
-		private String customPrompt;
+		private @Nullable String customPrompt;
 
 		// 私有构造函数，防止直接实例化
 		private GraphStore() {
@@ -361,35 +366,35 @@ public class Mem0Server {
 			return new Builder();
 		}
 
-		public String getProvider() {
+		public @Nullable String getProvider() {
 			return provider;
 		}
 
-		public void setProvider(String provider) {
+		public void setProvider(@Nullable String provider) {
 			this.provider = provider;
 		}
 
-		public GraphStoreConfig getConfig() {
+		public @Nullable GraphStoreConfig getConfig() {
 			return config;
 		}
 
-		public void setConfig(GraphStoreConfig config) {
+		public void setConfig(@Nullable GraphStoreConfig config) {
 			this.config = config;
 		}
 
-		public Llm getLlm() {
+		public @Nullable Llm getLlm() {
 			return llm;
 		}
 
-		public void setLlm(Llm llm) {
+		public void setLlm(@Nullable Llm llm) {
 			this.llm = llm;
 		}
 
-		public String getCustomPrompt() {
+		public @Nullable String getCustomPrompt() {
 			return customPrompt;
 		}
 
-		public void setCustomPrompt(String customPrompt) {
+		public void setCustomPrompt(@Nullable String customPrompt) {
 			this.customPrompt = customPrompt;
 		}
 
@@ -400,22 +405,22 @@ public class Mem0Server {
 			private Builder() {
 			}
 
-			public Builder provider(String provider) {
+			public Builder provider(@Nullable String provider) {
 				graphStore.provider = provider;
 				return this;
 			}
 
-			public Builder config(GraphStoreConfig config) {
+			public Builder config(@Nullable GraphStoreConfig config) {
 				graphStore.config = config;
 				return this;
 			}
 
-			public Builder llm(Llm llm) {
+			public Builder llm(@Nullable Llm llm) {
 				graphStore.llm = llm;
 				return this;
 			}
 
-			public Builder customPrompt(String customPrompt) {
+			public Builder customPrompt(@Nullable String customPrompt) {
 				graphStore.customPrompt = customPrompt;
 				return this;
 			}
@@ -428,16 +433,16 @@ public class Mem0Server {
 
 		public static class GraphStoreConfig {
 
-			private String url;
+			private @Nullable String url;
 
-			private String username;
+			private @Nullable String username;
 
-			private String password;
+			private @Nullable String password;
 
 			// Neo4j supports the following two items:
-			private String database;
+			private @Nullable String database;
 
-			private Boolean baseLabel;
+			private @Nullable Boolean baseLabel;
 
 			// 私有构造函数，防止直接实例化
 			private GraphStoreConfig() {
@@ -456,43 +461,43 @@ public class Mem0Server {
 				return new Builder();
 			}
 
-			public String getUrl() {
+			public @Nullable String getUrl() {
 				return url;
 			}
 
-			public void setUrl(String url) {
+			public void setUrl(@Nullable String url) {
 				this.url = url;
 			}
 
-			public String getUsername() {
+			public @Nullable String getUsername() {
 				return username;
 			}
 
-			public void setUsername(String username) {
+			public void setUsername(@Nullable String username) {
 				this.username = username;
 			}
 
-			public String getPassword() {
+			public @Nullable String getPassword() {
 				return password;
 			}
 
-			public void setPassword(String password) {
+			public void setPassword(@Nullable String password) {
 				this.password = password;
 			}
 
-			public String getDatabase() {
+			public @Nullable String getDatabase() {
 				return database;
 			}
 
-			public void setDatabase(String database) {
+			public void setDatabase(@Nullable String database) {
 				this.database = database;
 			}
 
-			public Boolean getBaseLabel() {
+			public @Nullable Boolean getBaseLabel() {
 				return baseLabel;
 			}
 
-			public void setBaseLabel(Boolean baseLabel) {
+			public void setBaseLabel(@Nullable Boolean baseLabel) {
 				this.baseLabel = baseLabel;
 			}
 
@@ -503,27 +508,27 @@ public class Mem0Server {
 				private Builder() {
 				}
 
-				public Builder url(String url) {
+				public Builder url(@Nullable String url) {
 					config.url = url;
 					return this;
 				}
 
-				public Builder username(String username) {
+				public Builder username(@Nullable String username) {
 					config.username = username;
 					return this;
 				}
 
-				public Builder password(String password) {
+				public Builder password(@Nullable String password) {
 					config.password = password;
 					return this;
 				}
 
-				public Builder database(String database) {
+				public Builder database(@Nullable String database) {
 					config.database = database;
 					return this;
 				}
 
-				public Builder baseLabel(Boolean baseLabel) {
+				public Builder baseLabel(@Nullable Boolean baseLabel) {
 					config.baseLabel = baseLabel;
 					return this;
 				}
@@ -540,9 +545,9 @@ public class Mem0Server {
 
 	public static class Llm {
 
-		private String provider;
+		private @Nullable String provider;
 
-		private LlmConfig config;
+		private @Nullable LlmConfig config;
 
 		// 私有构造函数，防止直接实例化
 		private Llm() {
@@ -558,19 +563,19 @@ public class Mem0Server {
 			return new Builder();
 		}
 
-		public String getProvider() {
+		public @Nullable String getProvider() {
 			return provider;
 		}
 
-		public void setProvider(String provider) {
+		public void setProvider(@Nullable String provider) {
 			this.provider = provider;
 		}
 
-		public LlmConfig getConfig() {
+		public @Nullable LlmConfig getConfig() {
 			return config;
 		}
 
-		public void setConfig(LlmConfig config) {
+		public void setConfig(@Nullable LlmConfig config) {
 			this.config = config;
 		}
 
@@ -581,12 +586,12 @@ public class Mem0Server {
 			private Builder() {
 			}
 
-			public Builder provider(String provider) {
+			public Builder provider(@Nullable String provider) {
 				llm.provider = provider;
 				return this;
 			}
 
-			public Builder config(LlmConfig config) {
+			public Builder config(@Nullable LlmConfig config) {
 				llm.config = config;
 				return this;
 			}
@@ -599,13 +604,13 @@ public class Mem0Server {
 
 		public static class LlmConfig {
 
-			private String apiKey;
+			private @Nullable String apiKey;
 
 			private double temperature;
 
-			private String model;
+			private @Nullable String model;
 
-			private String openaiBaseUrl;
+			private @Nullable String openaiBaseUrl;
 
 			// 私有构造函数，防止直接实例化
 			private LlmConfig() {
@@ -623,11 +628,11 @@ public class Mem0Server {
 				return new Builder();
 			}
 
-			public String getApiKey() {
+			public @Nullable String getApiKey() {
 				return apiKey;
 			}
 
-			public void setApiKey(String apiKey) {
+			public void setApiKey(@Nullable String apiKey) {
 				this.apiKey = apiKey;
 			}
 
@@ -639,19 +644,19 @@ public class Mem0Server {
 				this.temperature = temperature;
 			}
 
-			public String getModel() {
+			public @Nullable String getModel() {
 				return model;
 			}
 
-			public void setModel(String model) {
+			public void setModel(@Nullable String model) {
 				this.model = model;
 			}
 
-			public String getOpenaiBaseUrl() {
+			public @Nullable String getOpenaiBaseUrl() {
 				return openaiBaseUrl;
 			}
 
-			public void setOpenaiBaseUrl(String openaiBaseUrl) {
+			public void setOpenaiBaseUrl(@Nullable String openaiBaseUrl) {
 				this.openaiBaseUrl = openaiBaseUrl;
 			}
 
@@ -662,7 +667,7 @@ public class Mem0Server {
 				private Builder() {
 				}
 
-				public Builder apiKey(String apiKey) {
+				public Builder apiKey(@Nullable String apiKey) {
 					config.apiKey = apiKey;
 					return this;
 				}
@@ -672,12 +677,12 @@ public class Mem0Server {
 					return this;
 				}
 
-				public Builder model(String model) {
+				public Builder model(@Nullable String model) {
 					config.model = model;
 					return this;
 				}
 
-				public Builder openaiBaseUrl(String openaiBaseUrl) {
+				public Builder openaiBaseUrl(@Nullable String openaiBaseUrl) {
 					config.openaiBaseUrl = openaiBaseUrl;
 					return this;
 				}
@@ -694,9 +699,9 @@ public class Mem0Server {
 
 	public static class Embedder {
 
-		private String provider;
+		private @Nullable String provider;
 
-		private EmbedderConfig config;
+		private @Nullable EmbedderConfig config;
 
 		// 私有构造函数，防止直接实例化
 		private Embedder() {
@@ -712,19 +717,19 @@ public class Mem0Server {
 			return new Builder();
 		}
 
-		public String getProvider() {
+		public @Nullable String getProvider() {
 			return provider;
 		}
 
-		public void setProvider(String provider) {
+		public void setProvider(@Nullable String provider) {
 			this.provider = provider;
 		}
 
-		public EmbedderConfig getConfig() {
+		public @Nullable EmbedderConfig getConfig() {
 			return config;
 		}
 
-		public void setConfig(EmbedderConfig config) {
+		public void setConfig(@Nullable EmbedderConfig config) {
 			this.config = config;
 		}
 
@@ -735,12 +740,12 @@ public class Mem0Server {
 			private Builder() {
 			}
 
-			public Builder provider(String provider) {
+			public Builder provider(@Nullable String provider) {
 				embedder.provider = provider;
 				return this;
 			}
 
-			public Builder config(EmbedderConfig config) {
+			public Builder config(@Nullable EmbedderConfig config) {
 				embedder.config = config;
 				return this;
 			}
@@ -753,11 +758,11 @@ public class Mem0Server {
 
 		public static class EmbedderConfig {
 
-			private String apiKey;
+			private @Nullable String apiKey;
 
-			private String model;
+			private @Nullable String model;
 
-			private String openaiBaseUrl;
+			private @Nullable String openaiBaseUrl;
 
 			// 私有构造函数，防止直接实例化
 			private EmbedderConfig() {
@@ -774,27 +779,27 @@ public class Mem0Server {
 				return new Builder();
 			}
 
-			public String getApiKey() {
+			public @Nullable String getApiKey() {
 				return apiKey;
 			}
 
-			public void setApiKey(String apiKey) {
+			public void setApiKey(@Nullable String apiKey) {
 				this.apiKey = apiKey;
 			}
 
-			public String getModel() {
+			public @Nullable String getModel() {
 				return model;
 			}
 
-			public void setModel(String model) {
+			public void setModel(@Nullable String model) {
 				this.model = model;
 			}
 
-			public String getOpenaiBaseUrl() {
+			public @Nullable String getOpenaiBaseUrl() {
 				return openaiBaseUrl;
 			}
 
-			public void setOpenaiBaseUrl(String openaiBaseUrl) {
+			public void setOpenaiBaseUrl(@Nullable String openaiBaseUrl) {
 				this.openaiBaseUrl = openaiBaseUrl;
 			}
 
@@ -805,17 +810,17 @@ public class Mem0Server {
 				private Builder() {
 				}
 
-				public Builder apiKey(String apiKey) {
+				public Builder apiKey(@Nullable String apiKey) {
 					config.apiKey = apiKey;
 					return this;
 				}
 
-				public Builder model(String model) {
+				public Builder model(@Nullable String model) {
 					config.model = model;
 					return this;
 				}
 
-				public Builder openaiBaseUrl(String openaiBaseUrl) {
+				public Builder openaiBaseUrl(@Nullable String openaiBaseUrl) {
 					config.openaiBaseUrl = openaiBaseUrl;
 					return this;
 				}

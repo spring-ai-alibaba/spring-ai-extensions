@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.memory.mem0.model;
 
+import org.jspecify.annotations.Nullable;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,20 +64,20 @@ public class Mem0ServerResp {
 	 */
 	public static class Mem0Relation {
 
-		private String source; // Source node
+		private String source = ""; // Source node
 
-		private String relationship; // Relationship type
+		private String relationship = ""; // Relationship type
 
-		private String target; // Target path
+		private @Nullable String target; // Target path
 
-		private String destination; // Destination
+		private @Nullable String destination; // Destination
 
 		// Default constructor
 		public Mem0Relation() {
 		}
 
 		// Full constructor
-		public Mem0Relation(String source, String relationship, String target, String destination) {
+		public Mem0Relation(String source, String relationship, @Nullable String target, @Nullable String destination) {
 			this.source = source;
 			this.relationship = relationship;
 			this.target = target;
@@ -99,19 +101,19 @@ public class Mem0ServerResp {
 			this.relationship = relationship;
 		}
 
-		public String getTarget() {
+		public @Nullable String getTarget() {
 			return target;
 		}
 
-		public void setTarget(String target) {
+		public void setTarget(@Nullable String target) {
 			this.target = target;
 		}
 
-		public String getDestination() {
+		public @Nullable String getDestination() {
 			return destination;
 		}
 
-		public void setDestination(String destination) {
+		public void setDestination(@Nullable String destination) {
 			this.destination = destination;
 		}
 
@@ -125,41 +127,41 @@ public class Mem0ServerResp {
 
 	public static class Mem0Results {
 
-		private String id;
+		private String id = "";
 
-		private String memory; // Actual memory content
+		private String memory = ""; // Actual memory content
 
-		private String hash;
+		private String hash = "";
 
-		private Map<String, Object> metadata;
+		private Map<String, Object> metadata = Map.of();
 
 		@JsonProperty("user_id")
-		private String userId;
+		private @Nullable String userId;
 
 		@JsonProperty("created_at")
-		private ZonedDateTime createdAt;
+		private @Nullable ZonedDateTime createdAt;
 
 		@JsonProperty("updated_at")
-		private ZonedDateTime updatedAt;
+		private @Nullable ZonedDateTime updatedAt;
 
 		@JsonProperty("agent_id")
-		private String agentId;
+		private @Nullable String agentId;
 
 		@JsonProperty("run_id")
-		private String runId;
+		private @Nullable String runId;
 
 		@JsonProperty("score")
-		private Double score;
+		private @Nullable Double score;
 
 		@JsonProperty("role")
-		private String role;
+		private String role = "";
 
 		public Mem0Results() {
 		}
 
-		public Mem0Results(String id, String memory, String hash, Map<String, Object> metadata, String userId,
-				ZonedDateTime createdAt, ZonedDateTime updatedAt, String agentId, String runId, Double score,
-				String role) {
+		public Mem0Results(String id, String memory, String hash, Map<String, Object> metadata, @Nullable String userId,
+				@Nullable ZonedDateTime createdAt, @Nullable ZonedDateTime updatedAt, @Nullable String agentId,
+				@Nullable String runId, @Nullable Double score, String role) {
 			this.id = id;
 			this.memory = memory;
 			this.hash = hash;
@@ -170,6 +172,7 @@ public class Mem0ServerResp {
 			this.agentId = agentId;
 			this.runId = runId;
 			this.score = score;
+			this.role = role;
 		}
 
 		// Getters and Setters
@@ -205,51 +208,51 @@ public class Mem0ServerResp {
 			this.metadata = metadata;
 		}
 
-		public String getUserId() {
+		public @Nullable String getUserId() {
 			return userId;
 		}
 
-		public void setUserId(String userId) {
+		public void setUserId(@Nullable String userId) {
 			this.userId = userId;
 		}
 
-		public ZonedDateTime getCreatedAt() {
+		public @Nullable ZonedDateTime getCreatedAt() {
 			return createdAt;
 		}
 
-		public void setCreatedAt(ZonedDateTime createdAt) {
+		public void setCreatedAt(@Nullable ZonedDateTime createdAt) {
 			this.createdAt = createdAt;
 		}
 
-		public ZonedDateTime getUpdatedAt() {
+		public @Nullable ZonedDateTime getUpdatedAt() {
 			return updatedAt;
 		}
 
-		public void setUpdatedAt(ZonedDateTime updatedAt) {
+		public void setUpdatedAt(@Nullable ZonedDateTime updatedAt) {
 			this.updatedAt = updatedAt;
 		}
 
-		public String getAgentId() {
+		public @Nullable String getAgentId() {
 			return agentId;
 		}
 
-		public void setAgentId(String agentId) {
+		public void setAgentId(@Nullable String agentId) {
 			this.agentId = agentId;
 		}
 
-		public String getRunId() {
+		public @Nullable String getRunId() {
 			return runId;
 		}
 
-		public void setRunId(String runId) {
+		public void setRunId(@Nullable String runId) {
 			this.runId = runId;
 		}
 
-		public Double getScore() {
+		public @Nullable Double getScore() {
 			return score;
 		}
 
-		public void setScore(Double score) {
+		public void setScore(@Nullable Double score) {
 			this.score = score;
 		}
 

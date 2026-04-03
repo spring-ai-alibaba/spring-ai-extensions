@@ -26,13 +26,13 @@ public class ValuesAppendRespBody {
 	private int revision;
 
 	@SerializedName("spreadsheetToken")
-	private String spreadsheetToken;
+	private String spreadsheetToken = "";
 
 	@SerializedName("tableRange")
-	private String tableRange;
+	private String tableRange = "";
 
 	@SerializedName("updates")
-	private ValuesAppendRespBodyUpdates updates;
+	private ValuesAppendRespBodyUpdates updates = new ValuesAppendRespBodyUpdates();
 
 	public int getRevision() {
 		return revision;

@@ -16,6 +16,7 @@
 
 package com.alibaba.cloud.ai.model.chat.memory.elasticsearch.autoconfigure;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ public class ElasticsearchChatMemoryProperties {
 	/**
 	 * Index name to query
 	 */
-	private String index;
+	private @Nullable String index;
 
 	/**
 	 * Query field to search in
@@ -56,12 +57,12 @@ public class ElasticsearchChatMemoryProperties {
 	/**
 	 * Username for authentication (optional)
 	 */
-	private String username;
+	private @Nullable String username;
 
 	/**
 	 * Password for authentication (optional)
 	 */
-	private String password;
+	private @Nullable String password;
 
 	/**
 	 * Maximum number of documents to retrieve
@@ -97,11 +98,11 @@ public class ElasticsearchChatMemoryProperties {
 		this.nodes = nodes;
 	}
 
-	public String getIndex() {
+	public @Nullable String getIndex() {
 		return index;
 	}
 
-	public void setIndex(final String index) {
+	public void setIndex(final @Nullable String index) {
 		this.index = index;
 	}
 
@@ -113,19 +114,19 @@ public class ElasticsearchChatMemoryProperties {
 		this.queryField = queryField;
 	}
 
-	public String getUsername() {
+	public @Nullable String getUsername() {
 		return username;
 	}
 
-	public void setUsername(final String username) {
+	public void setUsername(final @Nullable String username) {
 		this.username = username;
 	}
 
-	public String getPassword() {
+	public @Nullable String getPassword() {
 		return password;
 	}
 
-	public void setPassword(final String password) {
+	public void setPassword(final @Nullable String password) {
 		this.password = password;
 	}
 

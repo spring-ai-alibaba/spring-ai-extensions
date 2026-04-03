@@ -19,6 +19,7 @@ package com.alibaba.cloud.ai.dashscope.sdk.audio.transcription;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 
 import java.util.ArrayList;
@@ -34,34 +35,34 @@ import java.util.Objects;
 public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscriptionOptions {
 
 	@JsonProperty("model")
-	private String model;
+	private @Nullable String model;
 
 	@JsonProperty("file_urls")
-	private List<String> fileUrls;
+	private @Nullable List<String> fileUrls;
 
 	@JsonProperty("phrase_id")
-	private String phraseId;
+	private @Nullable String phraseId;
 
 	@JsonProperty("channel_id")
-	private List<Integer> channelId;
+	private @Nullable List<Integer> channelId;
 
 	@JsonProperty("diarization_enabled")
-	private Boolean diarizationEnabled;
+	private @Nullable Boolean diarizationEnabled;
 
 	@JsonProperty("speaker_count")
-	private Integer speakerCount;
+	private @Nullable Integer speakerCount;
 
 	@JsonProperty("disfluency_removal_enabled")
-	private Boolean disfluencyRemovalEnabled;
+	private @Nullable Boolean disfluencyRemovalEnabled;
 
 	@JsonProperty("timestamp_alignment_enabled")
-	private Boolean timestampAlignmentEnabled;
+	private @Nullable Boolean timestampAlignmentEnabled;
 
 	@JsonProperty("special_word_filter")
-	private String specialWordFilter;
+	private @Nullable String specialWordFilter;
 
 	@JsonProperty("audio_event_detection_enabled")
-	private Boolean audioEventDetectionEnabled;
+	private @Nullable Boolean audioEventDetectionEnabled;
 
 	@JsonIgnore
 	private Map<String, String> httpHeaders = new HashMap<>();
@@ -70,7 +71,8 @@ public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscription
 		return new DashScopeSdkAudioTranscriptionOptionsBuilder();
 	}
 
-	public static DashScopeSdkAudioTranscriptionOptions fromOptions(DashScopeSdkAudioTranscriptionOptions options) {
+	public static @Nullable DashScopeSdkAudioTranscriptionOptions fromOptions(
+			@Nullable DashScopeSdkAudioTranscriptionOptions options) {
 		if (options == null) {
 			return null;
 		}
@@ -90,83 +92,83 @@ public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscription
 	}
 
 	@Override
-	public String getModel() {
+	public @Nullable String getModel() {
 		return this.model;
 	}
 
-	public void setModel(String model) {
+	public void setModel(@Nullable String model) {
 		this.model = model;
 	}
 
-	public List<String> getFileUrls() {
+	public @Nullable List<String> getFileUrls() {
 		return this.fileUrls;
 	}
 
-	public void setFileUrls(List<String> fileUrls) {
+	public void setFileUrls(@Nullable List<String> fileUrls) {
 		this.fileUrls = fileUrls;
 	}
 
-	public String getPhraseId() {
+	public @Nullable String getPhraseId() {
 		return this.phraseId;
 	}
 
-	public void setPhraseId(String phraseId) {
+	public void setPhraseId(@Nullable String phraseId) {
 		this.phraseId = phraseId;
 	}
 
-	public List<Integer> getChannelId() {
+	public @Nullable List<Integer> getChannelId() {
 		return this.channelId;
 	}
 
-	public void setChannelId(List<Integer> channelId) {
+	public void setChannelId(@Nullable List<Integer> channelId) {
 		this.channelId = channelId;
 	}
 
-	public Boolean getDiarizationEnabled() {
+	public @Nullable Boolean getDiarizationEnabled() {
 		return this.diarizationEnabled;
 	}
 
-	public void setDiarizationEnabled(Boolean diarizationEnabled) {
+	public void setDiarizationEnabled(@Nullable Boolean diarizationEnabled) {
 		this.diarizationEnabled = diarizationEnabled;
 	}
 
-	public Integer getSpeakerCount() {
+	public @Nullable Integer getSpeakerCount() {
 		return this.speakerCount;
 	}
 
-	public void setSpeakerCount(Integer speakerCount) {
+	public void setSpeakerCount(@Nullable Integer speakerCount) {
 		this.speakerCount = speakerCount;
 	}
 
-	public Boolean getDisfluencyRemovalEnabled() {
+	public @Nullable Boolean getDisfluencyRemovalEnabled() {
 		return this.disfluencyRemovalEnabled;
 	}
 
-	public void setDisfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+	public void setDisfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
 		this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
 	}
 
-	public Boolean getTimestampAlignmentEnabled() {
+	public @Nullable Boolean getTimestampAlignmentEnabled() {
 		return this.timestampAlignmentEnabled;
 	}
 
-	public void setTimestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
+	public void setTimestampAlignmentEnabled(@Nullable Boolean timestampAlignmentEnabled) {
 		this.timestampAlignmentEnabled = timestampAlignmentEnabled;
 	}
 
-	public String getSpecialWordFilter() {
+	public @Nullable String getSpecialWordFilter() {
 		return this.specialWordFilter;
 	}
 
-	public void setSpecialWordFilter(String specialWordFilter) {
+	public void setSpecialWordFilter(@Nullable String specialWordFilter) {
 		this.specialWordFilter = specialWordFilter;
 	}
 
-	public Boolean getAudioEventDetectionEnabled() {
+	public @Nullable Boolean getAudioEventDetectionEnabled() {
 		return this.audioEventDetectionEnabled;
 	}
 
-	public void setAudioEventDetectionEnabled(Boolean audioEventDetectionEnabled) {
+	public void setAudioEventDetectionEnabled(@Nullable Boolean audioEventDetectionEnabled) {
 		this.audioEventDetectionEnabled = audioEventDetectionEnabled;
 	}
 
@@ -213,52 +215,55 @@ public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscription
 			this.options = new DashScopeSdkAudioTranscriptionOptions();
 		}
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder model(String model) {
+		public DashScopeSdkAudioTranscriptionOptionsBuilder model(@Nullable String model) {
 			this.options.model = model;
 			return this;
 		}
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder fileUrls(List<String> fileUrls) {
+		public DashScopeSdkAudioTranscriptionOptionsBuilder fileUrls(@Nullable List<String> fileUrls) {
 			this.options.fileUrls = fileUrls;
 			return this;
 		}
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder phraseId(String phraseId) {
+		public DashScopeSdkAudioTranscriptionOptionsBuilder phraseId(@Nullable String phraseId) {
 			this.options.phraseId = phraseId;
 			return this;
 		}
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder channelId(List<Integer> channelId) {
+		public DashScopeSdkAudioTranscriptionOptionsBuilder channelId(@Nullable List<Integer> channelId) {
 			this.options.channelId = channelId;
 			return this;
 		}
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder diarizationEnabled(Boolean diarizationEnabled) {
+		public DashScopeSdkAudioTranscriptionOptionsBuilder diarizationEnabled(
+				@Nullable Boolean diarizationEnabled) {
 			this.options.diarizationEnabled = diarizationEnabled;
 			return this;
 		}
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder speakerCount(Integer speakerCount) {
+		public DashScopeSdkAudioTranscriptionOptionsBuilder speakerCount(@Nullable Integer speakerCount) {
 			this.options.speakerCount = speakerCount;
 			return this;
 		}
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder disfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+		public DashScopeSdkAudioTranscriptionOptionsBuilder disfluencyRemovalEnabled(
+				@Nullable Boolean disfluencyRemovalEnabled) {
 			this.options.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
 			return this;
 		}
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder timestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
+		public DashScopeSdkAudioTranscriptionOptionsBuilder timestampAlignmentEnabled(
+				@Nullable Boolean timestampAlignmentEnabled) {
 			this.options.timestampAlignmentEnabled = timestampAlignmentEnabled;
 			return this;
 		}
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder specialWordFilter(String specialWordFilter) {
+		public DashScopeSdkAudioTranscriptionOptionsBuilder specialWordFilter(@Nullable String specialWordFilter) {
 			this.options.specialWordFilter = specialWordFilter;
 			return this;
 		}
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder audioEventDetectionEnabled(Boolean enabled) {
+		public DashScopeSdkAudioTranscriptionOptionsBuilder audioEventDetectionEnabled(@Nullable Boolean enabled) {
 			this.options.audioEventDetectionEnabled = enabled;
 			return this;
 		}

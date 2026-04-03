@@ -21,9 +21,11 @@ import io.lettuce.core.SocketOptions;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.Message;
@@ -77,21 +79,21 @@ public class LettuceRedisChatMemoryRepository extends BaseRedisChatMemoryReposit
 
   public static class RedisBuilder extends RedisChatMemoryBuilder<RedisBuilder> {
 
-    private GenericObjectPoolConfig poolConfig;
+    private @Nullable GenericObjectPoolConfig poolConfig;
 
-    private Integer maxRedirects;
+    private @Nullable Integer maxRedirects;
 
     @Override
     protected RedisBuilder self() {
       return this;
     }
 
-    public RedisBuilder poolConfig(GenericObjectPoolConfig poolConfig) {
+    public RedisBuilder poolConfig(@Nullable GenericObjectPoolConfig poolConfig) {
       this.poolConfig = poolConfig;
       return this;
     }
 
-    public RedisBuilder maxRedirects(Integer maxRedirects) {
+    public RedisBuilder maxRedirects(@Nullable Integer maxRedirects) {
       this.maxRedirects = maxRedirects;
       return this;
     }
@@ -100,7 +102,9 @@ public class LettuceRedisChatMemoryRepository extends BaseRedisChatMemoryReposit
       CUSTOM_KEY_PREFIX = this.keyPrefix;
       LettuceConnectionFactory lettuceConnectionFactory;
       if (useCluster) {
-        RedisClusterConfiguration clusterConfig = new RedisClusterConfiguration(Set.copyOf(nodes));
+        RedisClusterConfiguration clusterConfig =
+            new RedisClusterConfiguration(
+                Set.copyOf(Objects.requireNonNull(nodes, "nodes cannot be null when useCluster is true")));
         if (StringUtils.hasText(username)) {
           clusterConfig.setUsername(username);
         }
@@ -200,7 +204,7 @@ public class LettuceRedisChatMemoryRepository extends BaseRedisChatMemoryReposit
     if (CollectionUtils.isEmpty(messageStrings)) {
       return Collections.emptyList();
     }
-    return messageStrings.stream().map(this::deserializeMessage).collect(Collectors.toList());
+    return messageStrings.stream().map(this::deserializeMessage).filter(Objects::nonNull).collect(Collectors.toList());
   }
 
   @Override
@@ -210,7 +214,9 @@ public class LettuceRedisChatMemoryRepository extends BaseRedisChatMemoryReposit
     Assert.noNullElements(messages, "messages cannot contain null elements");
     String key = getKeyPrefix() + conversationId;
     List<String> messageJsons = messages.stream().map(this::serializeMessage).toList();
-    try (RedisConnection connection = redisTemplate.getConnectionFactory().getConnection()) {
+    RedisConnectionFactory redisConnectionFactory =
+        Objects.requireNonNull(redisTemplate.getConnectionFactory(), "RedisConnectionFactory cannot be null");
+    try (RedisConnection connection = redisConnectionFactory.getConnection()) {
       connection.keyCommands().del(key.getBytes());
       if (!messageJsons.isEmpty()) {
         byte[][] values = new byte[messageJsons.size()][];

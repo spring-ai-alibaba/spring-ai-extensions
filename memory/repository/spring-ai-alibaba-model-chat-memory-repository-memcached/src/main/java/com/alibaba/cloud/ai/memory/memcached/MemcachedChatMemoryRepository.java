@@ -67,8 +67,12 @@ public class MemcachedChatMemoryRepository implements ChatMemoryRepository, Auto
 
 	@Override
 	public List<String> findConversationIds() {
-		return (List<String>) this.memcachedService.getter()
+		Object result = this.memcachedService.getter()
 			.apply(new MemcachedService.MemcachedServiceGetter.Request(DEFAULT_CONVERSATION));
+		if (result instanceof List<?> conversationIds) {
+			return conversationIds.stream().filter(String.class::isInstance).map(String.class::cast).toList();
+		}
+		return List.of();
 	}
 
 	@Override
@@ -91,7 +95,7 @@ public class MemcachedChatMemoryRepository implements ChatMemoryRepository, Auto
 
 	@Override
 	public void saveAll(String conversationId, List<Message> messages) {
-		List<String> conversationIds = findConversationIds() == null ? new ArrayList<>() : findConversationIds();
+		List<String> conversationIds = new ArrayList<>(findConversationIds());
 		// 保障消息顺序
 		conversationIds.remove(conversationId);
 		conversationIds.add(conversationId);
@@ -112,7 +116,7 @@ public class MemcachedChatMemoryRepository implements ChatMemoryRepository, Auto
 
 	@Override
 	public void deleteByConversationId(String conversationId) {
-		List<String> conversationIds = findConversationIds();
+		List<String> conversationIds = new ArrayList<>(findConversationIds());
 		conversationIds.remove(conversationId);
 		this.memcachedService.setter()
 			.apply(new MemcachedService.MemcachedServiceSetter.Request(DEFAULT_CONVERSATION, conversationIds, 0));

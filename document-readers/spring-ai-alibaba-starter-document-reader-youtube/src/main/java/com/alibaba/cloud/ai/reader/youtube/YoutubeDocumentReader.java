@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.Jsoup;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 import org.springframework.util.Assert;
@@ -30,6 +31,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -95,7 +97,7 @@ public class YoutubeDocumentReader implements DocumentReader {
 	public String getSubtitleInfo(String videoId) throws IOException {
 		// Step 1: Fetch the HTML content of the YouTube video page
 		String url = String.format(WATCH_URL, videoId);
-		String htmlContent = fetchHtmlContent(url).block(); // Blocking for simplicity in
+		String htmlContent = Objects.requireNonNullElse(fetchHtmlContent(url).block(), ""); // Blocking for simplicity in
 															// this example
 
 		// Step 2: Extract the subtitle tracks from the HTML
@@ -135,7 +137,7 @@ public class YoutubeDocumentReader implements DocumentReader {
 		return WEB_CLIENT.get().uri(url).retrieve().bodyToMono(String.class);
 	}
 
-	private String extractCaptionsJson(String htmlContent) {
+	private @Nullable String extractCaptionsJson(String htmlContent) {
 		// Extract the captions JSON from the HTML content
 		String marker = "\"captions\":";
 		int startIndex = htmlContent.indexOf(marker);
@@ -146,7 +148,7 @@ public class YoutubeDocumentReader implements DocumentReader {
 				return captionsJsonString.trim();
 			}
 		}
-		return null;
+			return null;
 	}
 
 	private String fetchSubtitleText(String decodedUrl) throws IOException {

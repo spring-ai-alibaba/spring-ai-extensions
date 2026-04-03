@@ -22,13 +22,13 @@ public class ValuesAppendRespBodyUpdates {
 
 	private int revision;
 
-	private String spreadsheetToken;
+	private String spreadsheetToken = "";
 
 	private int updatedCells;
 
 	private int updatedColumns;
 
-	private String updatedRange;
+	private String updatedRange = "";
 
 	private int updatedRows;
 

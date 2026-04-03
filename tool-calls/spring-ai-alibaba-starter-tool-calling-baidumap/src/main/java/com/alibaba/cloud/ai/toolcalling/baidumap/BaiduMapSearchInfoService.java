@@ -28,7 +28,7 @@ public class BaiduMapSearchInfoService
 
 	@Override
 	public Response apply(Request request) {
-		return new Response(baiduMapTools.getAddressInformation(null, request.address(), true));
+		return new Response(baiduMapTools.getAddressInformation("", request.address(), true));
 	}
 
 	public BaiduMapSearchInfoService(BaiDuMapTools baiduMapTools) {

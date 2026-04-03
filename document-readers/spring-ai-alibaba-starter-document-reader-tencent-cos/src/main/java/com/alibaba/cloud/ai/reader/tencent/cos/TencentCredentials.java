@@ -20,6 +20,7 @@ import com.qcloud.cos.auth.BasicSessionCredentials;
 import com.qcloud.cos.auth.COSCredentials;
 import com.qcloud.cos.auth.COSCredentialsProvider;
 import com.qcloud.cos.auth.COSStaticCredentialsProvider;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -32,13 +33,13 @@ public class TencentCredentials {
 
 	private final String secretKey;
 
-	private final String sessionToken;
+	private final @Nullable String sessionToken;
 
 	public TencentCredentials(String secretId, String secretKey) {
 		this(secretId, secretKey, null);
 	}
 
-	public TencentCredentials(String secretId, String secretKey, String sessionToken) {
+	public TencentCredentials(String secretId, String secretKey, @Nullable String sessionToken) {
 		Assert.notNull(secretId, "accessKeyId must not be null");
 		Assert.notNull(secretKey, "secretAccessKey must not be null");
 		this.secretId = secretId;

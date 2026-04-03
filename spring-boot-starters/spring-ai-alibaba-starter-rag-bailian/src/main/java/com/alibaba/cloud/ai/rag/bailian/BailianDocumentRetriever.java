@@ -18,8 +18,10 @@ package com.alibaba.cloud.ai.rag.bailian;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.document.Document;
@@ -69,7 +71,7 @@ public class BailianDocumentRetriever implements DocumentRetriever {
 		}
 
 		// Convert query history from Spring AI Query to QueryHistoryEntry format
-		List<QueryHistoryEntry> conversationHistory = null;
+		@Nullable List<QueryHistoryEntry> conversationHistory = null;
 		if (!query.history().isEmpty()) {
 			conversationHistory = new ArrayList<>();
 			for (Message message : query.history()) {
@@ -108,7 +110,7 @@ public class BailianDocumentRetriever implements DocumentRetriever {
 				return ((Number) scoreObj).doubleValue();
 			}
 			return 0.0;
-		}, Comparator.reverseOrder())).limit(limit).collect(Collectors.toList());
+		}, Comparator.reverseOrder())).limit(Objects.requireNonNull(limit)).collect(Collectors.toList());
 
 		return documents;
 	}

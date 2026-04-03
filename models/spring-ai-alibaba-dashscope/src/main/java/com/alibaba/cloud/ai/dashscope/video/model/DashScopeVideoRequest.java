@@ -22,6 +22,7 @@ import com.alibaba.cloud.ai.dashscope.video.DashScopeVideoOptions.InputOptions;
 import com.alibaba.cloud.ai.dashscope.video.DashScopeVideoOptions.ParametersOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 /**
  * DashScope Video Generation Request.
@@ -33,41 +34,41 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class DashScopeVideoRequest {
 
     @JsonProperty("model")
-    private String model;
+    private @Nullable String model;
 
     @JsonProperty("input")
-    private VideoInput input;
+    private @Nullable VideoInput input;
 
     @JsonProperty("parameters")
-    private VideoParameters parameters;
+    private @Nullable VideoParameters parameters;
 
-    public DashScopeVideoRequest(String model, VideoInput input, VideoParameters parameters) {
+    public DashScopeVideoRequest(@Nullable String model, @Nullable VideoInput input, @Nullable VideoParameters parameters) {
         this.model = model;
         this.input = input;
         this.parameters = parameters;
     }
 
-    public String getModel() {
+    public @Nullable String getModel() {
         return model;
     }
 
-    public void setModel(String model) {
+    public void setModel(@Nullable String model) {
         this.model = model;
     }
 
-    public VideoInput getInput() {
+    public @Nullable VideoInput getInput() {
         return input;
     }
 
-    public void setInput(VideoInput input) {
+    public void setInput(@Nullable VideoInput input) {
         this.input = input;
     }
 
-    public VideoParameters getParameters() {
+    public @Nullable VideoParameters getParameters() {
         return parameters;
     }
 
-    public void setParameters(VideoParameters parameters) {
+    public void setParameters(@Nullable VideoParameters parameters) {
         this.parameters = parameters;
     }
 
@@ -77,23 +78,23 @@ public class DashScopeVideoRequest {
 
     public static class Builder {
 
-        private String model;
+        private @Nullable String model;
 
-        private VideoInput input;
+        private @Nullable VideoInput input;
 
-        private VideoParameters parameters;
+        private @Nullable VideoParameters parameters;
 
-        public Builder model(String model) {
+        public Builder model(@Nullable String model) {
             this.model = model;
             return this;
         }
 
-        public Builder input(VideoInput input) {
+        public Builder input(@Nullable VideoInput input) {
             this.input = input;
             return this;
         }
 
-        public Builder parameters(VideoParameters parameters) {
+        public Builder parameters(@Nullable VideoParameters parameters) {
             this.parameters = parameters;
             return this;
         }
@@ -111,66 +112,69 @@ public class DashScopeVideoRequest {
     public static class VideoInput {
 
         @JsonProperty("prompt")
-        private String prompt;
+        private @Nullable String prompt;
 
         @JsonProperty("img_url")
-        private String imgUrl;
+        private @Nullable String imgUrl;
 
         @JsonProperty("image_url")
-        private String imageUrl;
+        private @Nullable String imageUrl;
 
         @JsonProperty("audio_url")
-        private String audioUrl;
+        private @Nullable String audioUrl;
 
         @JsonProperty("template")
-        private String template;
+        private @Nullable String template;
 
         @JsonProperty("negative_prompt")
-        private String negativePrompt;
+        private @Nullable String negativePrompt;
 
         @JsonProperty("first_frame_url")
-        private String firstFrameUrl;
+        private @Nullable String firstFrameUrl;
 
         @JsonProperty("last_frame_url")
-        private String lastFrameUrl;
+        private @Nullable String lastFrameUrl;
 
         @JsonProperty("reference_video_urls")
-        private List<String> referenceVideoUrls;
+        private @Nullable List<String> referenceVideoUrls;
 
         @JsonProperty("function")
-        private String function;
+        private @Nullable String function;
 
         @JsonProperty("ref_image_url")
-        private String refImageUrl;
+        private @Nullable String refImageUrl;
 
         @JsonProperty("ref_images_url")
-        private List<String> refImagesUrl;
+        private @Nullable List<String> refImagesUrl;
 
         @JsonProperty("mask_frame_id")
-        private Integer maskFrameId;
+        private @Nullable Integer maskFrameId;
 
         @JsonProperty("first_clip_url")
-        private String firstClipUrl;
+        private @Nullable String firstClipUrl;
 
         @JsonProperty("video_url")
-        private String videoUrl;
+        private @Nullable String videoUrl;
 
         @JsonProperty("template_id")
-        private String templateId;
+        private @Nullable String templateId;
 
         @JsonProperty("face_bbox")
-        private List<Integer> faceBbox;
+        private @Nullable List<Integer> faceBbox;
 
         @JsonProperty("ext_bbox")
-        private List<Integer> extBbox;
+        private @Nullable List<Integer> extBbox;
 
         @JsonProperty("driven_id")
-        private String drivenId;
+        private @Nullable String drivenId;
 
         public VideoInput() {
         }
 
-        public static VideoInput optionsConvertReq(InputOptions options) {
+        public static VideoInput optionsConvertReq(@Nullable InputOptions options) {
+            if (options == null) {
+                return VideoInput.builder().build();
+            }
             return VideoInput.builder()
                     .prompt(options.getPrompt())
                     .imageUrl(options.getImageUrl())
@@ -206,97 +210,97 @@ public class DashScopeVideoRequest {
                 this.videoInput = new VideoInput();
             }
 
-            public Builder prompt(String prompt) {
+            public Builder prompt(@Nullable String prompt) {
                 this.videoInput.prompt = prompt;
                 return this;
             }
 
-            public Builder imgUrl(String imgUrl) {
+            public Builder imgUrl(@Nullable String imgUrl) {
                 this.videoInput.imgUrl = imgUrl;
                 return this;
             }
 
-            public Builder imageUrl(String imageUrl) {
+            public Builder imageUrl(@Nullable String imageUrl) {
                 this.videoInput.imageUrl = imageUrl;
                 return this;
             }
 
-            public Builder audioUrl(String audioUrl) {
+            public Builder audioUrl(@Nullable String audioUrl) {
                 this.videoInput.audioUrl = audioUrl;
                 return this;
             }
 
-            public Builder template(String template) {
+            public Builder template(@Nullable String template) {
                 this.videoInput.template = template;
                 return this;
             }
 
-            public Builder negativePrompt(String negativePrompt) {
+            public Builder negativePrompt(@Nullable String negativePrompt) {
                 this.videoInput.negativePrompt = negativePrompt;
                 return this;
             }
 
-            public Builder firstFrameUrl(String firstFrameUrl) {
+            public Builder firstFrameUrl(@Nullable String firstFrameUrl) {
                 this.videoInput.firstFrameUrl = firstFrameUrl;
                 return this;
             }
 
-            public Builder lastFrameUrl(String lastFrameUrl) {
+            public Builder lastFrameUrl(@Nullable String lastFrameUrl) {
                 this.videoInput.lastFrameUrl = lastFrameUrl;
                 return this;
             }
 
-            public Builder referenceVideoUrls(List<String> referenceVideoUrls) {
+            public Builder referenceVideoUrls(@Nullable List<String> referenceVideoUrls) {
                 this.videoInput.referenceVideoUrls = referenceVideoUrls;
                 return this;
             }
 
-            public Builder function(String function) {
+            public Builder function(@Nullable String function) {
                 this.videoInput.function = function;
                 return this;
             }
 
-            public Builder refImageUrl(String refImageUrl) {
+            public Builder refImageUrl(@Nullable String refImageUrl) {
                 this.videoInput.refImageUrl = refImageUrl;
                 return this;
             }
 
-            public Builder refImagesUrl(List<String> refImagesUrl) {
+            public Builder refImagesUrl(@Nullable List<String> refImagesUrl) {
                 this.videoInput.refImagesUrl = refImagesUrl;
                 return this;
             }
 
-            public Builder maskFrameId(Integer maskFrameId) {
+            public Builder maskFrameId(@Nullable Integer maskFrameId) {
                 this.videoInput.maskFrameId = maskFrameId;
                 return this;
             }
 
-            public Builder firstClipUrl(String firstClipUrl) {
+            public Builder firstClipUrl(@Nullable String firstClipUrl) {
                 this.videoInput.firstClipUrl = firstClipUrl;
                 return this;
             }
 
-            public Builder videoUrl(String videoUrl) {
+            public Builder videoUrl(@Nullable String videoUrl) {
                 this.videoInput.videoUrl = videoUrl;
                 return this;
             }
 
-            public Builder templateId(String templateId) {
+            public Builder templateId(@Nullable String templateId) {
                 this.videoInput.templateId = templateId;
                 return this;
             }
 
-            public Builder faceBbox(List<Integer> faceBbox) {
+            public Builder faceBbox(@Nullable List<Integer> faceBbox) {
                 this.videoInput.faceBbox = faceBbox;
                 return this;
             }
 
-            public Builder extBbox(List<Integer> extBbox) {
+            public Builder extBbox(@Nullable List<Integer> extBbox) {
                 this.videoInput.extBbox = extBbox;
                 return this;
             }
 
-            public Builder drivenId(String drivenId) {
+            public Builder drivenId(@Nullable String drivenId) {
                 this.videoInput.drivenId = drivenId;
                 return this;
             }
@@ -316,87 +320,87 @@ public class DashScopeVideoRequest {
     public static class VideoParameters {
 
         @JsonProperty("resolution")
-        private String resolution;
+        private @Nullable String resolution;
 
         @JsonProperty("size")
-        private String size;
+        private @Nullable String size;
 
         @JsonProperty("prompt_extend")
-        private Boolean promptExtend;
+        private @Nullable Boolean promptExtend;
 
         @JsonProperty("video_extension")
-        private Boolean videoExtension;
+        private @Nullable Boolean videoExtension;
 
         @JsonProperty("duration")
-        private Integer duration;
+        private @Nullable Integer duration;
 
         @JsonProperty("shot_type")
-        private String shotType;
+        private @Nullable String shotType;
 
         @JsonProperty("obj_or_bg")
-        private List<String> objOrBg;
+        private @Nullable List<String> objOrBg;
 
         @JsonProperty("mask_type")
-        private String maskType;
+        private @Nullable String maskType;
 
         @JsonProperty("expand_ratio")
-        private Double expandRatio;
+        private @Nullable Double expandRatio;
 
         @JsonProperty("top_scale")
-        private Double topScale;
+        private @Nullable Double topScale;
 
         @JsonProperty("bottom_scale")
-        private Double bottomScale;
+        private @Nullable Double bottomScale;
 
         @JsonProperty("left_scale")
-        private Double leftScale;
+        private @Nullable Double leftScale;
 
         @JsonProperty("right_scale")
-        private Double rightScale;
+        private @Nullable Double rightScale;
 
         @JsonProperty("mode")
-        private String mode;
+        private @Nullable String mode;
 
         @JsonProperty("use_ref_img_bg")
-        private Boolean useRefImgBg;
+        private @Nullable Boolean useRefImgBg;
 
         @JsonProperty("video_ratio")
-        private String videoRatio;
+        private @Nullable String videoRatio;
 
         @JsonProperty("ratio")
-        private String ratio;
+        private @Nullable String ratio;
 
         @JsonProperty("style_level")
-        private String styleLevel;
+        private @Nullable String styleLevel;
 
         @JsonProperty("template_id")
-        private String templateId;
+        private @Nullable String templateId;
 
         @JsonProperty("eye_move_freq")
-        private Double eyeMoveFreq;
+        private @Nullable Double eyeMoveFreq;
 
         @JsonProperty("video_fps")
-        private Integer videoFps;
+        private @Nullable Integer videoFps;
 
         @JsonProperty("mouth_move_strength")
-        private Integer mouthMoveStrength;
+        private @Nullable Integer mouthMoveStrength;
 
         @JsonProperty("paste_back")
-        private Boolean pasteBack;
+        private @Nullable Boolean pasteBack;
 
         @JsonProperty("head_move_strength")
-        private Double headMoveStrength;
+        private @Nullable Double headMoveStrength;
 
         @JsonProperty("style")
-        private Integer style;
+        private @Nullable Integer style;
 
         @JsonProperty("seed")
-        private Long seed;
+        private @Nullable Long seed;
 
         public VideoParameters() {
         }
 
-        public static VideoParameters optionsConvertReq(ParametersOptions parameters) {
+        public static VideoParameters optionsConvertReq(@Nullable ParametersOptions parameters) {
             if (parameters == null)
                 return VideoParameters.builder().build();
 
@@ -441,132 +445,132 @@ public class DashScopeVideoRequest {
                 this.videoParameters = new VideoParameters();
             }
 
-            public Builder resolution(String resolution) {
+            public Builder resolution(@Nullable String resolution) {
                 this.videoParameters.resolution = resolution;
                 return this;
             }
 
-            public Builder size(String size) {
+            public Builder size(@Nullable String size) {
                 this.videoParameters.size = size;
                 return this;
             }
 
-            public Builder promptExtend(Boolean promptExtend) {
+            public Builder promptExtend(@Nullable Boolean promptExtend) {
                 this.videoParameters.promptExtend = promptExtend;
                 return this;
             }
 
-            public Builder videoExtension(Boolean videoExtension) {
+            public Builder videoExtension(@Nullable Boolean videoExtension) {
                 this.videoParameters.videoExtension = videoExtension;
                 return this;
             }
 
-            public Builder duration(Integer duration) {
+            public Builder duration(@Nullable Integer duration) {
                 this.videoParameters.duration = duration;
                 return this;
             }
 
-            public Builder shotType(String shotType) {
+            public Builder shotType(@Nullable String shotType) {
                 this.videoParameters.shotType = shotType;
                 return this;
             }
 
-            public Builder objOrBg(List<String> objOrBg) {
+            public Builder objOrBg(@Nullable List<String> objOrBg) {
                 this.videoParameters.objOrBg = objOrBg;
                 return this;
             }
 
-            public Builder maskType(String maskType) {
+            public Builder maskType(@Nullable String maskType) {
                 this.videoParameters.maskType = maskType;
                 return this;
             }
 
-            public Builder expandRatio(Double expandRatio) {
+            public Builder expandRatio(@Nullable Double expandRatio) {
                 this.videoParameters.expandRatio = expandRatio;
                 return this;
             }
 
-            public Builder topScale(Double topScale) {
+            public Builder topScale(@Nullable Double topScale) {
                 this.videoParameters.topScale = topScale;
                 return this;
             }
 
-            public Builder bottomScale(Double bottomScale) {
+            public Builder bottomScale(@Nullable Double bottomScale) {
                 this.videoParameters.bottomScale = bottomScale;
                 return this;
             }
 
-            public Builder leftScale(Double leftScale) {
+            public Builder leftScale(@Nullable Double leftScale) {
                 this.videoParameters.leftScale = leftScale;
                 return this;
             }
 
-            public Builder rightScale(Double rightScale) {
+            public Builder rightScale(@Nullable Double rightScale) {
                 this.videoParameters.rightScale = rightScale;
                 return this;
             }
 
-            public Builder mode(String mode) {
+            public Builder mode(@Nullable String mode) {
                 this.videoParameters.mode = mode;
                 return this;
             }
 
-            public Builder useRefImgBg(Boolean useRefImgBg) {
+            public Builder useRefImgBg(@Nullable Boolean useRefImgBg) {
                 this.videoParameters.useRefImgBg = useRefImgBg;
                 return this;
             }
 
-            public Builder videoRatio(String videoRatio) {
+            public Builder videoRatio(@Nullable String videoRatio) {
                 this.videoParameters.videoRatio = videoRatio;
                 return this;
             }
 
-            public Builder ratio(String ratio) {
+            public Builder ratio(@Nullable String ratio) {
                 this.videoParameters.ratio = ratio;
                 return this;
             }
 
-            public Builder styleLevel(String styleLevel) {
+            public Builder styleLevel(@Nullable String styleLevel) {
                 this.videoParameters.styleLevel = styleLevel;
                 return this;
             }
 
-            public Builder templateId(String templateId) {
+            public Builder templateId(@Nullable String templateId) {
                 this.videoParameters.templateId = templateId;
                 return this;
             }
 
-            public Builder eyeMoveFreq(Double eyeMoveFreq) {
+            public Builder eyeMoveFreq(@Nullable Double eyeMoveFreq) {
                 this.videoParameters.eyeMoveFreq = eyeMoveFreq;
                 return this;
             }
 
-            public Builder videoFps(Integer videoFps) {
+            public Builder videoFps(@Nullable Integer videoFps) {
                 this.videoParameters.videoFps = videoFps;
                 return this;
             }
 
-            public Builder mouthMoveStrength(Integer mouthMoveStrength) {
+            public Builder mouthMoveStrength(@Nullable Integer mouthMoveStrength) {
                 this.videoParameters.mouthMoveStrength = mouthMoveStrength;
                 return this;
             }
 
-            public Builder pasteBack(Boolean pasteBack) {
+            public Builder pasteBack(@Nullable Boolean pasteBack) {
                 this.videoParameters.pasteBack = pasteBack;
                 return this;
             }
 
-            public Builder headMoveStrength(Double headMoveStrength) {
+            public Builder headMoveStrength(@Nullable Double headMoveStrength) {
                 this.videoParameters.headMoveStrength = headMoveStrength;
                 return this;
             }
 
-            public Builder style(Integer style) {
+            public Builder style(@Nullable Integer style) {
                 this.videoParameters.style = style;
                 return this;
             }
 
-            public Builder seed(Long seed) {
+            public Builder seed(@Nullable Long seed) {
                 this.videoParameters.seed = seed;
                 return this;
             }

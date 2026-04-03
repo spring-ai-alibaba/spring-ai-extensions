@@ -31,6 +31,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -131,13 +133,19 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 		String query = userMessage != null ? userMessage.getText() : "";
 
 		Map<String, Object> params = request.context();
+		@Nullable String userId = optionalString(params.get(USER_ID));
+		@Nullable String agentId = optionalString(params.get(AGENT_ID));
+		@Nullable String runId = optionalString(params.get(RUN_ID));
+		@Nullable Map<String, Object> filters = params.get(FILTERS) instanceof Map<?, ?> map
+				? map.entrySet().stream().filter(entry -> entry.getKey() instanceof String)
+						.collect(Collectors.toMap(entry -> (String) entry.getKey(), Map.Entry::getValue))
+				: null;
 		SearchRequest searchRequest = Mem0ServerRequest.SearchRequest.mem0Builder()
 				.query(query)
-				.userId(params.containsKey(USER_ID) ? params.get(USER_ID).toString() : null)
-				.agentId(params.containsKey(AGENT_ID) ? params.get(AGENT_ID).toString() : null)
-				.runId(params.containsKey(RUN_ID) ? params.get(RUN_ID).toString() : null)
-				.filters(params.containsKey(FILTERS) && params.get(FILTERS) instanceof Map
-						? (Map<String, Object>) params.get(FILTERS) : null)
+				.userId(userId)
+				.agentId(agentId)
+				.runId(runId)
+				.filters(filters)
 				.build();
 
 		List<Document> documents = this.vectorStore.similaritySearch(searchRequest);
@@ -199,6 +207,10 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 				})
 				.toList();
 		return docs;
+	}
+
+	private static @Nullable String optionalString(@Nullable Object value) {
+		return value != null ? Objects.toString(value, null) : null;
 	}
 
 	private Mem0ServerRequest.SearchRequest getConversationId(Map<String, Object> context) {

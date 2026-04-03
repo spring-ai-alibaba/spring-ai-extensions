@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.toolcalling.common.interfaces;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.List;
 
 /**
@@ -57,7 +59,7 @@ public interface SearchService {
 
 	}
 
-	record SearchContent(String title, String content, String url, String icon) {
+	record SearchContent(@Nullable String title, @Nullable String content, @Nullable String url, @Nullable String icon) {
 
 	}
 

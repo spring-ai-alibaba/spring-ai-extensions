@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.NoopApiKey;
 import org.springframework.ai.util.JacksonUtils;
@@ -30,6 +31,7 @@ import reactor.core.publisher.Flux;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * DashScope Qwen TTS Realtime API. Uses append/commit WebSocket protocol.
@@ -40,10 +42,10 @@ public class DashScopeQwenTTSRealtimeApi {
 
 	private final String baseUrl;
 	private final ApiKey apiKey;
-	private final String workSpaceId;
+	private final @Nullable String workSpaceId;
 	private final ObjectMapper objectMapper;
 
-	public DashScopeQwenTTSRealtimeApi(String baseUrl, ApiKey apiKey, String workSpaceId) {
+	public DashScopeQwenTTSRealtimeApi(String baseUrl, ApiKey apiKey, @Nullable String workSpaceId) {
 		this.baseUrl = baseUrl;
 		this.apiKey = apiKey;
 		this.workSpaceId = workSpaceId;
@@ -78,9 +80,10 @@ public class DashScopeQwenTTSRealtimeApi {
 		return client.stream(textStream).doOnComplete(client::close).doOnError(e -> client.close());
 	}
 
-	private String buildUrl(String model) {
+	private String buildUrl(@Nullable String model) {
 		String base = baseUrl != null ? baseUrl : DashScopeAudioApiConstants.QWEN_TTS_REALTIME_WEBSOCKET_URL;
-		return base + "?model=" + model;
+		String resolvedModel = model != null ? model : DashScopeAudioSpeechOptions.DEFAULT_MODEL;
+		return base + "?model=" + resolvedModel;
 	}
 
 	public static Builder builder() {
@@ -90,8 +93,8 @@ public class DashScopeQwenTTSRealtimeApi {
 	public static class Builder {
 
 		private String baseUrl = DashScopeAudioApiConstants.QWEN_TTS_REALTIME_WEBSOCKET_URL;
-		private ApiKey apiKey;
-		private String workSpaceId;
+		private @Nullable ApiKey apiKey;
+		private @Nullable String workSpaceId;
 
 		public Builder baseUrl(String baseUrl) {
 			this.baseUrl = baseUrl;
@@ -103,13 +106,14 @@ public class DashScopeQwenTTSRealtimeApi {
 			return this;
 		}
 
-		public Builder workSpaceId(String workSpaceId) {
+		public Builder workSpaceId(@Nullable String workSpaceId) {
 			this.workSpaceId = workSpaceId;
 			return this;
 		}
 
 		public DashScopeQwenTTSRealtimeApi build() {
 			Assert.notNull(apiKey, "apiKey must be set");
+			ApiKey apiKey = Objects.requireNonNull(this.apiKey, "apiKey must be set");
 			return new DashScopeQwenTTSRealtimeApi(baseUrl, apiKey, workSpaceId);
 		}
 	}

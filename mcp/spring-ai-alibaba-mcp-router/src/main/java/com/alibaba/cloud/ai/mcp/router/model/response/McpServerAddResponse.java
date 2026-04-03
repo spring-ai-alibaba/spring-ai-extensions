@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.mcp.router.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -41,37 +42,37 @@ public class McpServerAddResponse {
 	 * 错误消息（当 success 为 false 时）
 	 */
 	@JsonProperty("error_message")
-	private String errorMessage;
+	private @Nullable String errorMessage;
 
 	/**
 	 * 服务名称
 	 */
 	@JsonProperty("service_name")
-	private String serviceName;
+	private @Nullable String serviceName;
 
 	/**
 	 * 服务信息
 	 */
 	@JsonProperty("service_info")
-	private McpServerServiceInfo serviceInfo;
+	private @Nullable McpServerServiceInfo serviceInfo;
 
 	/**
 	 * 连接状态
 	 */
 	@JsonProperty("connection_status")
-	private McpConnectionStatus connectionStatus;
+	private @Nullable McpConnectionStatus connectionStatus;
 
 	/**
 	 * 可用工具列表
 	 */
 	@JsonProperty("available_tools")
-	private List<McpToolInfo> availableTools;
+	private @Nullable List<McpToolInfo> availableTools;
 
 	/**
 	 * 使用指南
 	 */
 	@JsonProperty("usage_guide")
-	private McpUsageGuide usageGuide;
+	private @Nullable McpUsageGuide usageGuide;
 
 	public McpServerAddResponse() {
 	}
@@ -79,8 +80,9 @@ public class McpServerAddResponse {
 	/**
 	 * 创建成功响应
 	 */
-	public static McpServerAddResponse success(String serviceName, McpServerServiceInfo serviceInfo,
-			McpConnectionStatus connectionStatus, List<McpToolInfo> tools, McpUsageGuide usageGuide) {
+	public static McpServerAddResponse success(@Nullable String serviceName, @Nullable McpServerServiceInfo serviceInfo,
+			@Nullable McpConnectionStatus connectionStatus, @Nullable List<McpToolInfo> tools,
+			@Nullable McpUsageGuide usageGuide) {
 		McpServerAddResponse response = new McpServerAddResponse();
 		response.success = true;
 		response.serviceName = serviceName;
@@ -94,7 +96,7 @@ public class McpServerAddResponse {
 	/**
 	 * 创建失败响应
 	 */
-	public static McpServerAddResponse error(String serviceName, String errorMessage) {
+	public static McpServerAddResponse error(@Nullable String serviceName, @Nullable String errorMessage) {
 		McpServerAddResponse response = new McpServerAddResponse();
 		response.success = false;
 		response.serviceName = serviceName;
@@ -112,43 +114,43 @@ public class McpServerAddResponse {
 		 * 服务名称
 		 */
 		@JsonProperty("name")
-		private String name;
+		private @Nullable String name;
 
 		/**
 		 * 服务描述
 		 */
 		@JsonProperty("description")
-		private String description;
+		private @Nullable String description;
 
 		/**
 		 * 协议类型（如 mcp-sse, http, https）
 		 */
 		@JsonProperty("protocol")
-		private String protocol;
+		private @Nullable String protocol;
 
 		/**
 		 * 服务版本
 		 */
 		@JsonProperty("version")
-		private String version;
+		private @Nullable String version;
 
 		/**
 		 * 服务端点
 		 */
 		@JsonProperty("endpoint")
-		private String endpoint;
+		private @Nullable String endpoint;
 
 		/**
 		 * 服务标签
 		 */
 		@JsonProperty("tags")
-		private List<String> tags;
+		private @Nullable List<String> tags;
 
 		public McpServerServiceInfo() {
 		}
 
-		public McpServerServiceInfo(String name, String description, String protocol, String version, String endpoint,
-				List<String> tags) {
+		public McpServerServiceInfo(@Nullable String name, @Nullable String description, @Nullable String protocol,
+				@Nullable String version, @Nullable String endpoint, @Nullable List<String> tags) {
 			this.name = name;
 			this.description = description;
 			this.protocol = protocol;
@@ -158,51 +160,51 @@ public class McpServerAddResponse {
 		}
 
 		// Getters and Setters
-		public String getName() {
+		public @Nullable String getName() {
 			return name;
 		}
 
-		public void setName(String name) {
+		public void setName(@Nullable String name) {
 			this.name = name;
 		}
 
-		public String getDescription() {
+		public @Nullable String getDescription() {
 			return description;
 		}
 
-		public void setDescription(String description) {
+		public void setDescription(@Nullable String description) {
 			this.description = description;
 		}
 
-		public String getProtocol() {
+		public @Nullable String getProtocol() {
 			return protocol;
 		}
 
-		public void setProtocol(String protocol) {
+		public void setProtocol(@Nullable String protocol) {
 			this.protocol = protocol;
 		}
 
-		public String getVersion() {
+		public @Nullable String getVersion() {
 			return version;
 		}
 
-		public void setVersion(String version) {
+		public void setVersion(@Nullable String version) {
 			this.version = version;
 		}
 
-		public String getEndpoint() {
+		public @Nullable String getEndpoint() {
 			return endpoint;
 		}
 
-		public void setEndpoint(String endpoint) {
+		public void setEndpoint(@Nullable String endpoint) {
 			this.endpoint = endpoint;
 		}
 
-		public List<String> getTags() {
+		public @Nullable List<String> getTags() {
 			return tags;
 		}
 
-		public void setTags(List<String> tags) {
+		public void setTags(@Nullable List<String> tags) {
 			this.tags = tags;
 		}
 
@@ -224,24 +226,24 @@ public class McpServerAddResponse {
 		 * 连接URL
 		 */
 		@JsonProperty("connection_url")
-		private String connectionUrl;
+		private @Nullable String connectionUrl;
 
 		/**
 		 * 连接时间戳
 		 */
 		@JsonProperty("connected_at")
-		private Long connectedAt;
+		private @Nullable Long connectedAt;
 
 		/**
 		 * 连接消息或错误信息
 		 */
 		@JsonProperty("message")
-		private String message;
+		private @Nullable String message;
 
 		public McpConnectionStatus() {
 		}
 
-		public McpConnectionStatus(boolean connected, String connectionUrl, String message) {
+		public McpConnectionStatus(boolean connected, @Nullable String connectionUrl, @Nullable String message) {
 			this.connected = connected;
 			this.connectionUrl = connectionUrl;
 			this.message = message;
@@ -257,27 +259,27 @@ public class McpServerAddResponse {
 			this.connected = connected;
 		}
 
-		public String getConnectionUrl() {
+		public @Nullable String getConnectionUrl() {
 			return connectionUrl;
 		}
 
-		public void setConnectionUrl(String connectionUrl) {
+		public void setConnectionUrl(@Nullable String connectionUrl) {
 			this.connectionUrl = connectionUrl;
 		}
 
-		public Long getConnectedAt() {
+		public @Nullable Long getConnectedAt() {
 			return connectedAt;
 		}
 
-		public void setConnectedAt(Long connectedAt) {
+		public void setConnectedAt(@Nullable Long connectedAt) {
 			this.connectedAt = connectedAt;
 		}
 
-		public String getMessage() {
+		public @Nullable String getMessage() {
 			return message;
 		}
 
-		public void setMessage(String message) {
+		public void setMessage(@Nullable String message) {
 			this.message = message;
 		}
 
@@ -293,19 +295,19 @@ public class McpServerAddResponse {
 		 * 工具名称
 		 */
 		@JsonProperty("name")
-		private String name;
+		private @Nullable String name;
 
 		/**
 		 * 工具描述
 		 */
 		@JsonProperty("description")
-		private String description;
+		private @Nullable String description;
 
 		/**
 		 * 工具参数定义
 		 */
 		@JsonProperty("parameters")
-		private Map<String, McpToolParameter> parameters;
+		private @Nullable Map<String, McpToolParameter> parameters;
 
 		/**
 		 * 是否启用
@@ -316,7 +318,8 @@ public class McpServerAddResponse {
 		public McpToolInfo() {
 		}
 
-		public McpToolInfo(String name, String description, Map<String, McpToolParameter> parameters, boolean enabled) {
+		public McpToolInfo(@Nullable String name, @Nullable String description,
+				@Nullable Map<String, McpToolParameter> parameters, boolean enabled) {
 			this.name = name;
 			this.description = description;
 			this.parameters = parameters;
@@ -324,27 +327,27 @@ public class McpServerAddResponse {
 		}
 
 		// Getters and Setters
-		public String getName() {
+		public @Nullable String getName() {
 			return name;
 		}
 
-		public void setName(String name) {
+		public void setName(@Nullable String name) {
 			this.name = name;
 		}
 
-		public String getDescription() {
+		public @Nullable String getDescription() {
 			return description;
 		}
 
-		public void setDescription(String description) {
+		public void setDescription(@Nullable String description) {
 			this.description = description;
 		}
 
-		public Map<String, McpToolParameter> getParameters() {
+		public @Nullable Map<String, McpToolParameter> getParameters() {
 			return parameters;
 		}
 
-		public void setParameters(Map<String, McpToolParameter> parameters) {
+		public void setParameters(@Nullable Map<String, McpToolParameter> parameters) {
 			this.parameters = parameters;
 		}
 
@@ -368,13 +371,13 @@ public class McpServerAddResponse {
 		 * 参数类型
 		 */
 		@JsonProperty("type")
-		private String type;
+		private @Nullable String type;
 
 		/**
 		 * 参数描述
 		 */
 		@JsonProperty("description")
-		private String description;
+		private @Nullable String description;
 
 		/**
 		 * 是否必需
@@ -386,12 +389,13 @@ public class McpServerAddResponse {
 		 * 默认值
 		 */
 		@JsonProperty("default_value")
-		private Object defaultValue;
+		private @Nullable Object defaultValue;
 
 		public McpToolParameter() {
 		}
 
-		public McpToolParameter(String type, String description, boolean required, Object defaultValue) {
+		public McpToolParameter(@Nullable String type, @Nullable String description, boolean required,
+				@Nullable Object defaultValue) {
 			this.type = type;
 			this.description = description;
 			this.required = required;
@@ -399,19 +403,19 @@ public class McpServerAddResponse {
 		}
 
 		// Getters and Setters
-		public String getType() {
+		public @Nullable String getType() {
 			return type;
 		}
 
-		public void setType(String type) {
+		public void setType(@Nullable String type) {
 			this.type = type;
 		}
 
-		public String getDescription() {
+		public @Nullable String getDescription() {
 			return description;
 		}
 
-		public void setDescription(String description) {
+		public void setDescription(@Nullable String description) {
 			this.description = description;
 		}
 
@@ -423,11 +427,11 @@ public class McpServerAddResponse {
 			this.required = required;
 		}
 
-		public Object getDefaultValue() {
+		public @Nullable Object getDefaultValue() {
 			return defaultValue;
 		}
 
-		public void setDefaultValue(Object defaultValue) {
+		public void setDefaultValue(@Nullable Object defaultValue) {
 			this.defaultValue = defaultValue;
 		}
 
@@ -443,51 +447,52 @@ public class McpServerAddResponse {
 		 * 如何调用工具的说明
 		 */
 		@JsonProperty("how_to_use_tools")
-		private String howToUseTools;
+		private @Nullable String howToUseTools;
 
 		/**
 		 * 示例调用
 		 */
 		@JsonProperty("example_call")
-		private String exampleCall;
+		private @Nullable String exampleCall;
 
 		/**
 		 * 可用操作列表
 		 */
 		@JsonProperty("available_operations")
-		private List<String> availableOperations;
+		private @Nullable List<String> availableOperations;
 
 		public McpUsageGuide() {
 		}
 
-		public McpUsageGuide(String howToUseTools, String exampleCall, List<String> availableOperations) {
+		public McpUsageGuide(@Nullable String howToUseTools, @Nullable String exampleCall,
+				@Nullable List<String> availableOperations) {
 			this.howToUseTools = howToUseTools;
 			this.exampleCall = exampleCall;
 			this.availableOperations = availableOperations;
 		}
 
 		// Getters and Setters
-		public String getHowToUseTools() {
+		public @Nullable String getHowToUseTools() {
 			return howToUseTools;
 		}
 
-		public void setHowToUseTools(String howToUseTools) {
+		public void setHowToUseTools(@Nullable String howToUseTools) {
 			this.howToUseTools = howToUseTools;
 		}
 
-		public String getExampleCall() {
+		public @Nullable String getExampleCall() {
 			return exampleCall;
 		}
 
-		public void setExampleCall(String exampleCall) {
+		public void setExampleCall(@Nullable String exampleCall) {
 			this.exampleCall = exampleCall;
 		}
 
-		public List<String> getAvailableOperations() {
+		public @Nullable List<String> getAvailableOperations() {
 			return availableOperations;
 		}
 
-		public void setAvailableOperations(List<String> availableOperations) {
+		public void setAvailableOperations(@Nullable List<String> availableOperations) {
 			this.availableOperations = availableOperations;
 		}
 
@@ -502,51 +507,51 @@ public class McpServerAddResponse {
 		this.success = success;
 	}
 
-	public String getErrorMessage() {
+	public @Nullable String getErrorMessage() {
 		return errorMessage;
 	}
 
-	public void setErrorMessage(String errorMessage) {
+	public void setErrorMessage(@Nullable String errorMessage) {
 		this.errorMessage = errorMessage;
 	}
 
-	public String getServiceName() {
+	public @Nullable String getServiceName() {
 		return serviceName;
 	}
 
-	public void setServiceName(String serviceName) {
+	public void setServiceName(@Nullable String serviceName) {
 		this.serviceName = serviceName;
 	}
 
-	public McpServerServiceInfo getServiceInfo() {
+	public @Nullable McpServerServiceInfo getServiceInfo() {
 		return serviceInfo;
 	}
 
-	public void setServiceInfo(McpServerServiceInfo serviceInfo) {
+	public void setServiceInfo(@Nullable McpServerServiceInfo serviceInfo) {
 		this.serviceInfo = serviceInfo;
 	}
 
-	public McpConnectionStatus getConnectionStatus() {
+	public @Nullable McpConnectionStatus getConnectionStatus() {
 		return connectionStatus;
 	}
 
-	public void setConnectionStatus(McpConnectionStatus connectionStatus) {
+	public void setConnectionStatus(@Nullable McpConnectionStatus connectionStatus) {
 		this.connectionStatus = connectionStatus;
 	}
 
-	public List<McpToolInfo> getAvailableTools() {
+	public @Nullable List<McpToolInfo> getAvailableTools() {
 		return availableTools;
 	}
 
-	public void setAvailableTools(List<McpToolInfo> availableTools) {
+	public void setAvailableTools(@Nullable List<McpToolInfo> availableTools) {
 		this.availableTools = availableTools;
 	}
 
-	public McpUsageGuide getUsageGuide() {
+	public @Nullable McpUsageGuide getUsageGuide() {
 		return usageGuide;
 	}
 
-	public void setUsageGuide(McpUsageGuide usageGuide) {
+	public void setUsageGuide(@Nullable McpUsageGuide usageGuide) {
 		this.usageGuide = usageGuide;
 	}
 

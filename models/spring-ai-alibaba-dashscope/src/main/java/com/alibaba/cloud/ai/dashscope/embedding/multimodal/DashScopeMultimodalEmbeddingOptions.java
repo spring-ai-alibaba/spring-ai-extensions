@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.embedding.multimodal;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.embedding.EmbeddingOptions;
 
 /**
@@ -27,20 +28,20 @@ import org.springframework.ai.embedding.EmbeddingOptions;
 public class DashScopeMultimodalEmbeddingOptions implements EmbeddingOptions {
 
 	// ID of the model to use.
-	private @JsonProperty("model") String model;
+	private @Nullable @JsonProperty("model") String model;
 
 	// The number of dimensions the resulting output embeddings should have.
-	private @JsonProperty("dimension") Integer dimensions;
+	private @Nullable @JsonProperty("dimension") Integer dimensions;
 
 	// User-specified output vector format, currently only 'dense' is supported.
-	private @JsonProperty("output_type") String outputType;
+	private @Nullable @JsonProperty("output_type") String outputType;
 
 	// Controls the frame rate of the video. The smaller the ratio, the fewer frames are actually extracted.
 	// Range [0,1]. Default is 1.0.
-	private @JsonProperty("fps") Float fps;
+	private @Nullable @JsonProperty("fps") Float fps;
 
 	// Add custom task instructions to guide the model's intent. Recommended in English.
-	private @JsonProperty("instruct") String instruct;
+	private @Nullable @JsonProperty("instruct") String instruct;
 
 	public static Builder builder() {
 		return new Builder();
@@ -50,27 +51,27 @@ public class DashScopeMultimodalEmbeddingOptions implements EmbeddingOptions {
 
 		private final DashScopeMultimodalEmbeddingOptions options = new DashScopeMultimodalEmbeddingOptions();
 
-		public Builder model(String model) {
+		public Builder model(@Nullable String model) {
 			this.options.setModel(model);
 			return this;
 		}
 
-		public Builder dimensions(Integer dimensions) {
+		public Builder dimensions(@Nullable Integer dimensions) {
 			this.options.setDimensions(dimensions);
 			return this;
 		}
 
-		public Builder outputType(String outputType) {
+		public Builder outputType(@Nullable String outputType) {
 			this.options.setOutputType(outputType);
 			return this;
 		}
 
-		public Builder fps(Float fps) {
+		public Builder fps(@Nullable Float fps) {
 			this.options.setFps(fps);
 			return this;
 		}
 
-		public Builder instruct(String instruct) {
+		public Builder instruct(@Nullable String instruct) {
 			this.options.setInstruct(instruct);
 			return this;
 		}
@@ -82,44 +83,44 @@ public class DashScopeMultimodalEmbeddingOptions implements EmbeddingOptions {
 	}
 
 	@Override
-	public String getModel() {
+	public @Nullable String getModel() {
 		return this.model;
 	}
 
-	public void setModel(String model) {
+	public void setModel(@Nullable String model) {
 		this.model = model;
 	}
 
 	@Override
-	public Integer getDimensions() {
+	public @Nullable Integer getDimensions() {
 		return this.dimensions;
 	}
 
-	public void setDimensions(Integer dimensions) {
+	public void setDimensions(@Nullable Integer dimensions) {
 		this.dimensions = dimensions;
 	}
 
-	public String getOutputType() {
+	public @Nullable String getOutputType() {
 		return outputType;
 	}
 
-	public void setOutputType(String outputType) {
+	public void setOutputType(@Nullable String outputType) {
 		this.outputType = outputType;
 	}
 
-	public Float getFps() {
+	public @Nullable Float getFps() {
 		return fps;
 	}
 
-	public void setFps(Float fps) {
+	public void setFps(@Nullable Float fps) {
 		this.fps = fps;
 	}
 
-	public String getInstruct() {
+	public @Nullable String getInstruct() {
 		return instruct;
 	}
 
-	public void setInstruct(String instruct) {
+	public void setInstruct(@Nullable String instruct) {
 		this.instruct = instruct;
 	}
 

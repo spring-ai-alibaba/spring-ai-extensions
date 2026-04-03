@@ -25,6 +25,7 @@ import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscri
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
 
 /**
@@ -38,7 +39,7 @@ public class DashScopeWebSocketAsrApi {
 	private final DashScopeWebSocketClientOptions clientOptions;
 	private final ObjectMapper objectMapper;
 
-	public DashScopeWebSocketAsrApi(DashScopeWebSocketClientOptions options) {
+	public DashScopeWebSocketAsrApi(@Nullable DashScopeWebSocketClientOptions options) {
 		this.clientOptions = options != null ? options : DashScopeWebSocketClientOptions.builder().build();
 		this.objectMapper = new com.fasterxml.jackson.databind.json.JsonMapper();
 	}
@@ -143,9 +144,9 @@ public class DashScopeWebSocketAsrApi {
 
 	public static class Builder {
 
-		private DashScopeWebSocketClientOptions options;
+		private @Nullable DashScopeWebSocketClientOptions options;
 
-		public Builder options(DashScopeWebSocketClientOptions options) {
+		public Builder options(@Nullable DashScopeWebSocketClientOptions options) {
 			this.options = options;
 			return this;
 		}

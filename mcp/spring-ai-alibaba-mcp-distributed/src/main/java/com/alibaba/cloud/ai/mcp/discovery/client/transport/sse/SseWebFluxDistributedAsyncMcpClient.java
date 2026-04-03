@@ -33,6 +33,7 @@ import io.modelcontextprotocol.client.transport.WebFluxSseClientTransport;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.mcp.client.common.autoconfigure.NamedClientMcpTransport;
@@ -77,14 +78,14 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
 
     private final boolean lazyInit;
 
-    private final AtomicInteger index = new AtomicInteger(0);
+	private final AtomicInteger index = new AtomicInteger(0);
 
-    private Map<String, McpAsyncClient> keyToClientMap;
+	private Map<String, McpAsyncClient> keyToClientMap = new ConcurrentHashMap<>();
 
-    private NacosMcpServerEndpoint serverEndpoint;
+	private @Nullable NacosMcpServerEndpoint serverEndpoint;
 
     // Link Tracking Filters
-    private final ExchangeFilterFunction traceFilter;
+	private final @Nullable ExchangeFilterFunction traceFilter;
 
     public SseWebFluxDistributedAsyncMcpClient(String serverName, String version,
                                                NacosMcpOperationService nacosMcpOperationService,
@@ -104,7 +105,7 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
         webClientBuilderTemplate = applicationContext.getBean(WebClient.Builder.class);
         mcpJsonMapper = new JacksonMcpJsonMapper(applicationContext.getBean(ObjectMapper.class));
         // Try to get the link tracking filter
-        ExchangeFilterFunction tempTraceFilter = null;
+		@Nullable ExchangeFilterFunction tempTraceFilter = null;
         try {
             tempTraceFilter = applicationContext.getBean("mcpTraceExchangeFilterFunction",
                     ExchangeFilterFunction.class);
@@ -116,21 +117,23 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
         this.traceFilter = tempTraceFilter;
     }
 
-    public Map<String, McpAsyncClient> init() {
-        keyToClientMap = new ConcurrentHashMap<>();
-        boolean initialized = initServerEndpoint(serverName, version);
-        if (!initialized) {
-            logger.info("[Nacos Mcp Async Client] No MCP server endpoint found during init. serverName: {}, version: {}",
-                serverName, version);
-            return keyToClientMap;
-        }
-        for (McpEndpointInfo mcpEndpointInfo : serverEndpoint.getMcpEndpointInfoList()) {
-            updateByAddEndpoint(mcpEndpointInfo, serverEndpoint.getExportPath());
-        }
-        logger.info("[Nacos Mcp Async Client] McpAsyncClient init, serverName: {}, version: {}, endpoint: {}", serverName,
-                version, serverEndpoint);
-        return keyToClientMap;
-    }
+	public Map<String, McpAsyncClient> init() {
+		keyToClientMap = new ConcurrentHashMap<>();
+		boolean initialized = initServerEndpoint(serverName, version);
+		if (!initialized) {
+			logger.info("[Nacos Mcp Async Client] No MCP server endpoint found during init. serverName: {}, version: {}",
+				serverName, version);
+			return keyToClientMap;
+		}
+		NacosMcpServerEndpoint currentServerEndpoint = this.serverEndpoint;
+		Assert.notNull(currentServerEndpoint, "serverEndpoint must not be null after successful init");
+		for (McpEndpointInfo mcpEndpointInfo : currentServerEndpoint.getMcpEndpointInfoList()) {
+			updateByAddEndpoint(mcpEndpointInfo, currentServerEndpoint.getExportPath());
+		}
+		logger.info("[Nacos Mcp Async Client] McpAsyncClient init, serverName: {}, version: {}, endpoint: {}", serverName,
+				version, currentServerEndpoint);
+		return keyToClientMap;
+	}
 
     public void subscribe() {
         String serverNameAndVersion = this.serverName + "::" + this.version;
@@ -169,9 +172,9 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
         return serverName;
     }
 
-    public NacosMcpServerEndpoint getNacosMcpServerEndpoint() {
-        return this.serverEndpoint;
-    }
+	public @Nullable NacosMcpServerEndpoint getNacosMcpServerEndpoint() {
+		return this.serverEndpoint;
+	}
 
     private void updateByAddEndpoint(McpEndpointInfo mcpEndpointInfo, String exportPath) {
         McpAsyncClient mcpAsyncClient = clientByEndpoint(mcpEndpointInfo, exportPath);
@@ -259,17 +262,18 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
         this.serverEndpoint = newServerEndpoint;
     }
 
-    private boolean initServerEndpoint(String serverName, String version) {
-        try {
-            this.serverEndpoint = this.nacosMcpOperationService.getServerEndpoint(serverName, version);
-            if (this.serverEndpoint == null) {
-                throw new NacosException(NacosException.NOT_FOUND,
-                    String.format("[Nacos Mcp Async Client] Can not find mcp server from nacos: %s, version:%s",
-                        serverName, version));
-            }
-            if (!StringUtils.equals(serverEndpoint.getProtocol(), AiConstants.Mcp.MCP_PROTOCOL_SSE)) {
-                throw new RuntimeException(
-                    String.format("[Nacos Mcp Async Client] Protocol of mcp server:%s, version :%s must be sse",
+	private boolean initServerEndpoint(String serverName, String version) {
+		try {
+			NacosMcpServerEndpoint endpoint = this.nacosMcpOperationService.getServerEndpoint(serverName, version);
+			if (endpoint == null) {
+				throw new NacosException(NacosException.NOT_FOUND,
+					String.format("[Nacos Mcp Async Client] Can not find mcp server from nacos: %s, version:%s",
+						serverName, version));
+			}
+			this.serverEndpoint = endpoint;
+			if (!StringUtils.equals(serverEndpoint.getProtocol(), AiConstants.Mcp.MCP_PROTOCOL_SSE)) {
+				throw new RuntimeException(
+					String.format("[Nacos Mcp Async Client] Protocol of mcp server:%s, version :%s must be sse",
                         serverName, version));
             }
             return true;
@@ -388,17 +392,17 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
         return getMcpAsyncClient().callTool(callToolRequest);
     }
 
-    public Mono<McpSchema.ListToolsResult> listTools() {
-        return listToolsInternal(null);
-    }
+	public Mono<McpSchema.ListToolsResult> listTools() {
+		return getMcpAsyncClient().listTools();
+	}
 
     public Mono<McpSchema.ListToolsResult> listTools(String cursor) {
         return listToolsInternal(cursor);
     }
 
-    private Mono<McpSchema.ListToolsResult> listToolsInternal(String cursor) {
-        return getMcpAsyncClient().listTools(cursor);
-    }
+	private Mono<McpSchema.ListToolsResult> listToolsInternal(@Nullable String cursor) {
+		return cursor == null ? getMcpAsyncClient().listTools() : getMcpAsyncClient().listTools(cursor);
+	}
 
     public Mono<McpSchema.ListResourcesResult> listResources() {
         return getMcpAsyncClient().listResources();
@@ -462,15 +466,15 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
         return new Builder();
     }
 
-    public static class Builder {
+	public static class Builder {
 
-        private String serverName;
+		private @Nullable String serverName;
 
-        private String version;
+		private @Nullable String version;
 
-        private NacosMcpOperationService nacosMcpOperationService;
+		private @Nullable NacosMcpOperationService nacosMcpOperationService;
 
-        private ApplicationContext applicationContext;
+		private @Nullable ApplicationContext applicationContext;
 
         private boolean lazyInit;
 
@@ -499,10 +503,14 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
             return this;
         }
 
-        public SseWebFluxDistributedAsyncMcpClient build() {
-            return new SseWebFluxDistributedAsyncMcpClient(this.serverName, this.version,
-                this.nacosMcpOperationService, this.applicationContext, this.lazyInit);
-        }
+		public SseWebFluxDistributedAsyncMcpClient build() {
+			Assert.notNull(this.serverName, "serverName cannot be null");
+			Assert.notNull(this.version, "version cannot be null");
+			Assert.notNull(this.nacosMcpOperationService, "nacosMcpOperationService cannot be null");
+			Assert.notNull(this.applicationContext, "applicationContext cannot be null");
+			return new SseWebFluxDistributedAsyncMcpClient(this.serverName, this.version,
+				this.nacosMcpOperationService, this.applicationContext, this.lazyInit);
+		}
 
     }
 

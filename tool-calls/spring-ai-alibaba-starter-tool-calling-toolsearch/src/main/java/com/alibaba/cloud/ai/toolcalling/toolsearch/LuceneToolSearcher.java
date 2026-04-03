@@ -33,6 +33,7 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.ToolCallback;
@@ -62,9 +63,9 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 
 	private final Object indexLock = new Object();
 
-	private volatile IndexSearcher indexSearcher;
+	private volatile @Nullable IndexSearcher indexSearcher;
 
-	private volatile DirectoryReader indexReader;
+	private volatile @Nullable DirectoryReader indexReader;
 
 	private final Map<String, ToolCallback> toolCallbackMap = new ConcurrentHashMap<>();
 
@@ -157,7 +158,7 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 	/**
 	 * Get the value of the specified field from ToolDefinition.
 	 */
-	private String getFieldValue(ToolDefinition definition, String fieldName) {
+	private @Nullable String getFieldValue(ToolDefinition definition, String fieldName) {
 		switch (fieldName) {
 			case "name":
 				return definition.name();
@@ -172,7 +173,8 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 
 	@Override
 	public List<ToolCallback> search(String query, int maxResults) {
-		if (indexSearcher == null) {
+		IndexSearcher searcher = this.indexSearcher;
+		if (searcher == null) {
 			throw new IllegalStateException("Tools not indexed yet. Call indexTools() first.");
 		}
 
@@ -186,13 +188,16 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 			Query luceneQuery = parser.parse(escapedQuery);
 
 			// Execute search
-			TopDocs topDocs = indexSearcher.search(luceneQuery, maxResults);
+			TopDocs topDocs = searcher.search(luceneQuery, maxResults);
 
 			// Convert to ToolCallback
 			List<ToolCallback> results = new ArrayList<>();
 			for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
-				Document doc = indexSearcher.doc(scoreDoc.doc);
+				Document doc = searcher.doc(scoreDoc.doc);
 				String toolName = doc.get("name");
+				if (toolName == null) {
+					continue;
+				}
 
 				// Get ToolCallback from cache
 				ToolCallback tool = toolCallbackMap.get(toolName);
@@ -271,9 +276,9 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 
 	public static class Builder {
 
-		private Directory indexDirectory;
+		private @Nullable Directory indexDirectory;
 
-		private Analyzer analyzer;
+		private @Nullable Analyzer analyzer;
 
 		private final Map<String, Float> fieldBoosts = new HashMap<>();
 

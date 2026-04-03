@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.metadata.DefaultUsage;
@@ -210,9 +211,13 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 	}
 
 	private DashScopeApiSpec.EmbeddingRequest createRequest(EmbeddingRequest request) {
-		com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions requestOptions = (com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions) request.getOptions();
+		com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions requestOptions = request.getOptions() != null
+				? (com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions) request.getOptions()
+				: this.defaultOptions;
+		String model = requestOptions.getModel();
+		Assert.notNull(model, "Embedding model must not be null");
 		return DashScopeApiSpec.EmbeddingRequest.builder()
-			.model(requestOptions.getModel())
+			.model(model)
 			.texts(request.getInstructions())
 			.textType(requestOptions.getTextType())
 			.dimension(requestOptions.getDimensions())
@@ -298,7 +303,7 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 
     public static final class Builder {
 
-        private DashScopeApi dashScopeApi;
+	        private @Nullable DashScopeApi dashScopeApi;
 
         private MetadataMode metadataMode = MetadataMode.EMBED;
 
@@ -347,10 +352,12 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
             return this;
         }
 
-        public DashScopeEmbeddingModel build() {
-            return new DashScopeEmbeddingModel(this.dashScopeApi, this.metadataMode, this.defaultOptions,
-                    this.retryTemplate, this.observationRegistry);
-        }
+	        public DashScopeEmbeddingModel build() {
+	            DashScopeApi dashScopeApi = this.dashScopeApi;
+	            Assert.notNull(dashScopeApi, "dashScopeApi must not be null");
+	            return new DashScopeEmbeddingModel(dashScopeApi, this.metadataMode, this.defaultOptions,
+	                    this.retryTemplate, this.observationRegistry);
+	        }
     }
 
 }

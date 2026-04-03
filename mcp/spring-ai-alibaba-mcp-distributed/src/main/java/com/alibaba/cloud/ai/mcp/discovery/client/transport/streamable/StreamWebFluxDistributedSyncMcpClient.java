@@ -33,6 +33,7 @@ import io.modelcontextprotocol.client.transport.WebClientStreamableHttpTransport
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.mcp.client.common.autoconfigure.NamedClientMcpTransport;
@@ -79,10 +80,10 @@ public class StreamWebFluxDistributedSyncMcpClient implements DistributedSyncMcp
 
     private Map<String, McpSyncClient> keyToClientMap = new ConcurrentHashMap<>();
 
-    private NacosMcpServerEndpoint serverEndpoint;
+	private @Nullable NacosMcpServerEndpoint serverEndpoint;
 
     // Link Tracking Filters
-    private final ExchangeFilterFunction traceFilter;
+	private final @Nullable ExchangeFilterFunction traceFilter;
 
     public StreamWebFluxDistributedSyncMcpClient(String serverName, String version,
                                                  NacosMcpOperationService nacosMcpOperationService,
@@ -102,7 +103,7 @@ public class StreamWebFluxDistributedSyncMcpClient implements DistributedSyncMcp
         webClientBuilderTemplate = applicationContext.getBean(WebClient.Builder.class);
         mcpJsonMapper = new JacksonMcpJsonMapper(applicationContext.getBean(ObjectMapper.class));
         // Try to get the link tracking filter
-        ExchangeFilterFunction tempTraceFilter = null;
+		@Nullable ExchangeFilterFunction tempTraceFilter = null;
         try {
             tempTraceFilter = applicationContext.getBean("mcpTraceExchangeFilterFunction",
                     ExchangeFilterFunction.class);
@@ -114,21 +115,23 @@ public class StreamWebFluxDistributedSyncMcpClient implements DistributedSyncMcp
         this.traceFilter = tempTraceFilter;
     }
 
-    public Map<String, McpSyncClient> init() {
-        keyToClientMap = new ConcurrentHashMap<>();
-        boolean initialized = initServerEndpoint(serverName, version);
-        if (!initialized) {
-            logger.info("[Nacos Mcp Sync Client] No MCP server endpoint found during init. serverName: {}, version: {}",
-                    serverName, version);
-            return keyToClientMap;
-        }
-        for (McpEndpointInfo mcpEndpointInfo : serverEndpoint.getMcpEndpointInfoList()) {
-            updateByAddEndpoint(mcpEndpointInfo, serverEndpoint.getExportPath());
-        }
-        logger.info("[Nacos Mcp Sync Client] McpSyncClient init, serverName: {}, version: {}, endpoint: {}", serverName,
-                version, serverEndpoint);
-        return keyToClientMap;
-    }
+	public Map<String, McpSyncClient> init() {
+		keyToClientMap = new ConcurrentHashMap<>();
+		boolean initialized = initServerEndpoint(serverName, version);
+		if (!initialized) {
+			logger.info("[Nacos Mcp Sync Client] No MCP server endpoint found during init. serverName: {}, version: {}",
+					serverName, version);
+			return keyToClientMap;
+		}
+		NacosMcpServerEndpoint currentServerEndpoint = this.serverEndpoint;
+		Assert.notNull(currentServerEndpoint, "serverEndpoint must not be null after successful init");
+		for (McpEndpointInfo mcpEndpointInfo : currentServerEndpoint.getMcpEndpointInfoList()) {
+			updateByAddEndpoint(mcpEndpointInfo, currentServerEndpoint.getExportPath());
+		}
+		logger.info("[Nacos Mcp Sync Client] McpSyncClient init, serverName: {}, version: {}, endpoint: {}", serverName,
+				version, currentServerEndpoint);
+		return keyToClientMap;
+	}
 
     public void subscribe() {
         String serverNameAndVersion = this.serverName + "::" + this.version;
@@ -164,9 +167,9 @@ public class StreamWebFluxDistributedSyncMcpClient implements DistributedSyncMcp
         return serverName;
     }
 
-    public NacosMcpServerEndpoint getNacosMcpServerEndpoint() {
-        return this.serverEndpoint;
-    }
+	public @Nullable NacosMcpServerEndpoint getNacosMcpServerEndpoint() {
+		return this.serverEndpoint;
+	}
 
     private void updateByAddEndpoint(McpEndpointInfo mcpEndpointInfo, String exportPath) {
         McpSyncClient mcpSyncClient = clientByEndpoint(mcpEndpointInfo, exportPath);
@@ -255,17 +258,18 @@ public class StreamWebFluxDistributedSyncMcpClient implements DistributedSyncMcp
         this.serverEndpoint = newServerEndpoint;
     }
 
-    protected boolean initServerEndpoint(String serverName, String version) {
-        try {
-            this.serverEndpoint = this.nacosMcpOperationService.getServerEndpoint(serverName, version);
-            if (this.serverEndpoint == null) {
-                throw new NacosException(NacosException.NOT_FOUND,
-                        String.format("[Nacos Mcp Sync Client] Can not find mcp server from nacos: %s, version:%s",
-                                serverName, version));
-            }
-            if (!StringUtils.equals(serverEndpoint.getProtocol(), AiConstants.Mcp.MCP_PROTOCOL_STREAMABLE)) {
-                throw new RuntimeException(
-                        String.format("[Nacos Mcp Sync Client] Protocol of mcp server:%s, version :%s must be streamable",
+	protected boolean initServerEndpoint(String serverName, String version) {
+		try {
+			NacosMcpServerEndpoint endpoint = this.nacosMcpOperationService.getServerEndpoint(serverName, version);
+			if (endpoint == null) {
+				throw new NacosException(NacosException.NOT_FOUND,
+						String.format("[Nacos Mcp Sync Client] Can not find mcp server from nacos: %s, version:%s",
+								serverName, version));
+			}
+			this.serverEndpoint = endpoint;
+			if (!StringUtils.equals(serverEndpoint.getProtocol(), AiConstants.Mcp.MCP_PROTOCOL_STREAMABLE)) {
+				throw new RuntimeException(
+						String.format("[Nacos Mcp Sync Client] Protocol of mcp server:%s, version :%s must be streamable",
                                 serverName, version));
             }
             return true;
@@ -455,15 +459,15 @@ public class StreamWebFluxDistributedSyncMcpClient implements DistributedSyncMcp
         return new Builder();
     }
 
-    public static class Builder {
+	public static class Builder {
 
-        private String serverName;
+		private @Nullable String serverName;
 
-        private String version;
+		private @Nullable String version;
 
-        private NacosMcpOperationService nacosMcpOperationService;
+		private @Nullable NacosMcpOperationService nacosMcpOperationService;
 
-        private ApplicationContext applicationContext;
+		private @Nullable ApplicationContext applicationContext;
 
         private boolean lazyInit;
 
@@ -492,10 +496,14 @@ public class StreamWebFluxDistributedSyncMcpClient implements DistributedSyncMcp
             return this;
         }
 
-        public StreamWebFluxDistributedSyncMcpClient build() {
-            return new StreamWebFluxDistributedSyncMcpClient(this.serverName, this.version,
-                this.nacosMcpOperationService, this.applicationContext, this.lazyInit);
-        }
+		public StreamWebFluxDistributedSyncMcpClient build() {
+			Assert.notNull(this.serverName, "serverName cannot be null");
+			Assert.notNull(this.version, "version cannot be null");
+			Assert.notNull(this.nacosMcpOperationService, "nacosMcpOperationService cannot be null");
+			Assert.notNull(this.applicationContext, "applicationContext cannot be null");
+			return new StreamWebFluxDistributedSyncMcpClient(this.serverName, this.version,
+				this.nacosMcpOperationService, this.applicationContext, this.lazyInit);
+		}
 
     }
 }

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -54,7 +55,8 @@ public class TushareStockQuotesService
 			params.put("end_date", endDate);
 			Map<String, Object> valueMap = Map.of("api_name", "daily", "token", tushareProperties.getToken(), "params",
 					params, "fields", "ts_code,trade_date,open,high,low,close,pre_close,change,pct_chg,vol,amount");
-			return webClientTool.post("", valueMap).block();
+			return Objects.requireNonNull(webClientTool.post("", valueMap).block(),
+					"Tushare stock quotes API returned empty response");
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to get stock quotes", e);

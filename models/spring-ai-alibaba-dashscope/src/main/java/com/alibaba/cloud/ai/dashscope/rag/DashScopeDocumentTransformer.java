@@ -60,9 +60,7 @@ public class DashScopeDocumentTransformer implements DocumentTransformer {
 
 		ResponseEntity<DashScopeApiSpec.DocumentSplitResponse> splitResponseEntity = dashScopeApi.documentSplit(document,
 				options);
-		validateSplitResponse(splitResponseEntity);
-
-        DashScopeApiSpec.DocumentSplitResponse splitResponse = splitResponseEntity.getBody();
+		DashScopeApiSpec.DocumentSplitResponse splitResponse = validateSplitResponse(splitResponseEntity);
 		validateChunkResult(splitResponse);
 
 		List<DashScopeApiSpec.DocumentChunk> chunkList = splitResponse.chunkService().chunkResult();
@@ -85,10 +83,12 @@ public class DashScopeDocumentTransformer implements DocumentTransformer {
 		}
 	}
 
-	private void validateSplitResponse(ResponseEntity<DashScopeApiSpec.DocumentSplitResponse> splitResponseEntity) {
-		if (splitResponseEntity == null) {
+	private DashScopeApiSpec.DocumentSplitResponse validateSplitResponse(
+			ResponseEntity<DashScopeApiSpec.DocumentSplitResponse> splitResponseEntity) {
+		if (splitResponseEntity == null || splitResponseEntity.getBody() == null) {
 			throw new DashScopeException(ErrorCodeEnum.SPLIT_DOCUMENT_ERROR);
 		}
+		return splitResponseEntity.getBody();
 	}
 
 	private void validateChunkResult(DashScopeApiSpec.DocumentSplitResponse splitResponse) {

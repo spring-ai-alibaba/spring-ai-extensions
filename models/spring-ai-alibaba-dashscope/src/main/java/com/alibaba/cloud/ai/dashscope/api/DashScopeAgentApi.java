@@ -20,6 +20,7 @@ import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.retry.RetryUtils;
@@ -49,7 +50,7 @@ public class DashScopeAgentApi {
 
     private final ApiKey apiKey;
 
-    private final String workSpaceId;
+    private final @Nullable String workSpaceId;
 
     private final String agentPath;
 
@@ -62,7 +63,7 @@ public class DashScopeAgentApi {
     public DashScopeAgentApi(
             String baseUrl,
             ApiKey apiKey,
-            String workSpaceId,
+            @Nullable String workSpaceId,
             String agentPath,
             RestClient.Builder restClientBuilder,
             WebClient.Builder webClientBuilder,
@@ -121,13 +122,13 @@ public class DashScopeAgentApi {
 			@JsonProperty("parameters") DashScopeAgentRequestParameters parameters) {
 		@JsonInclude(JsonInclude.Include.NON_NULL)
 		public record DashScopeAgentRequestInput(
-				@JsonProperty("prompt") String prompt,
+				@JsonProperty("prompt") @Nullable String prompt,
 				@JsonProperty("messages") List<DashScopeAgentRequestMessage> messages,
-				@JsonProperty("session_id") String sessionId,
-				@JsonProperty("memory_id") String memoryId,
-				@JsonProperty("image_list") List<String> images,
-				@JsonProperty("file_list") List<String> files,
-				@JsonProperty("biz_params") JsonNode bizParams) {
+				@JsonProperty("session_id") @Nullable String sessionId,
+				@JsonProperty("memory_id") @Nullable String memoryId,
+				@JsonProperty("image_list") @Nullable List<String> images,
+				@JsonProperty("file_list") @Nullable List<String> files,
+				@JsonProperty("biz_params") @Nullable JsonNode bizParams) {
 			@JsonInclude(JsonInclude.Include.NON_NULL)
 			public record DashScopeAgentRequestMessage(
 					@JsonProperty("role") String role,
@@ -137,21 +138,21 @@ public class DashScopeAgentApi {
 
 		@JsonInclude(JsonInclude.Include.NON_NULL)
 		public record DashScopeAgentRequestParameters(
-				@JsonProperty("flow_stream_mode") DashScopeAgentFlowStreamMode flowStreamMode,
-				@JsonProperty("has_thoughts") Boolean hasThoughts,
-				@JsonProperty("enable_thinking") Boolean enableThinking,
-				@JsonProperty("incremental_output") Boolean incrementalOutput,
-                @JsonProperty("model_id") String modelId,
-				@JsonProperty("rag_options") DashScopeAgentRequestRagOptions ragOptions
+				@JsonProperty("flow_stream_mode") @Nullable DashScopeAgentFlowStreamMode flowStreamMode,
+				@JsonProperty("has_thoughts") @Nullable Boolean hasThoughts,
+				@JsonProperty("enable_thinking") @Nullable Boolean enableThinking,
+				@JsonProperty("incremental_output") @Nullable Boolean incrementalOutput,
+                @JsonProperty("model_id") @Nullable String modelId,
+				@JsonProperty("rag_options") @Nullable DashScopeAgentRequestRagOptions ragOptions
 		) {
 			@JsonInclude(JsonInclude.Include.NON_NULL)
 			public record DashScopeAgentRequestRagOptions(
-					@JsonProperty("pipeline_ids") List<String> pipelineIds,
-					@JsonProperty("file_ids") List<String> fileIds,
-					@JsonProperty("metadata_filter") JsonNode metadataFilter,
-					@JsonProperty("tags") List<String> tags,
-					@JsonProperty("structured_filter") JsonNode structuredFilter,
-					@JsonProperty("session_file_ids") List<String> sessionFileIds) {
+					@JsonProperty("pipeline_ids") @Nullable List<String> pipelineIds,
+					@JsonProperty("file_ids") @Nullable List<String> fileIds,
+					@JsonProperty("metadata_filter") @Nullable JsonNode metadataFilter,
+					@JsonProperty("tags") @Nullable List<String> tags,
+					@JsonProperty("structured_filter") @Nullable JsonNode structuredFilter,
+					@JsonProperty("session_file_ids") @Nullable List<String> sessionFileIds) {
 			}
 		}
 	}
@@ -225,9 +226,9 @@ public class DashScopeAgentApi {
 
         private String baseUrl = DEFAULT_BASE_URL;
 
-        private ApiKey apiKey;
+        private @Nullable ApiKey apiKey;
 
-        private String workSpaceId;
+        private @Nullable String workSpaceId;
 
         private String agentPath = APPS_COMPLETION_RESTFUL_URL;
 
@@ -262,7 +263,7 @@ public class DashScopeAgentApi {
             return this;
         }
 
-        public Builder workSpaceId(String workSpaceId) {
+        public Builder workSpaceId(@Nullable String workSpaceId) {
             this.workSpaceId = workSpaceId;
             return this;
         }
@@ -292,7 +293,8 @@ public class DashScopeAgentApi {
         }
 
         public DashScopeAgentApi build() {
-            return new DashScopeAgentApi(this.baseUrl, this.apiKey, this.workSpaceId, this.agentPath,
+            ApiKey apiKey = Objects.requireNonNull(this.apiKey, "API key cannot be null");
+            return new DashScopeAgentApi(this.baseUrl, apiKey, this.workSpaceId, this.agentPath,
                     this.restClientBuilder, this.webClientBuilder, this.responseErrorHandler);
         }
     }

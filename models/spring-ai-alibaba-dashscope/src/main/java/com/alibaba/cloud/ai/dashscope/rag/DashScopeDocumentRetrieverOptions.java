@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.dashscope.rag;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,7 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashScopeDocumentRetrieverOptions {
 
-    private @JsonProperty("index_name") String indexName;
+    private @JsonProperty("index_name") @Nullable String indexName;
 
     private @JsonProperty("dense_similarity_top_k") int denseSimilarityTopK = 100;
 
@@ -46,17 +47,17 @@ public class DashScopeDocumentRetrieverOptions {
 
     private @JsonProperty("rerank_top_n") int rerankTopN = 5;
 
-    private @JsonProperty("search_filters") List<Map<String, Object>> searchFilters;
+    private @JsonProperty("search_filters") @Nullable List<Map<String, Object>> searchFilters;
 
     public static DashScopeDocumentRetrieverOptions.Builder builder() {
         return new DashScopeDocumentRetrieverOptions.Builder();
     }
 
-    public String getIndexName() {
+    public @Nullable String getIndexName() {
         return indexName;
     }
 
-    public void setIndexName(String indexName) {
+    public void setIndexName(@Nullable String indexName) {
         this.indexName = indexName;
     }
 
@@ -124,11 +125,11 @@ public class DashScopeDocumentRetrieverOptions {
         this.rerankTopN = rerankTopN;
     }
 
-    public void setSearchFilters(List<Map<String, Object>> searchFilters) {
+    public void setSearchFilters(@Nullable List<Map<String, Object>> searchFilters) {
         this.searchFilters = searchFilters;
     }
 
-    public List<Map<String, Object>> getSearchFilters() {
+    public @Nullable List<Map<String, Object>> getSearchFilters() {
         return searchFilters;
     }
 
@@ -140,7 +141,7 @@ public class DashScopeDocumentRetrieverOptions {
             this.options = new DashScopeDocumentRetrieverOptions();
         }
 
-        public Builder indexName(String indexName) {
+        public Builder indexName(@Nullable String indexName) {
             this.options.setIndexName(indexName);
             return this;
         }
@@ -185,7 +186,7 @@ public class DashScopeDocumentRetrieverOptions {
             return this;
         }
 
-        public Builder searchFilters(List<Map<String, Object>> searchFilters) {
+        public Builder searchFilters(@Nullable List<Map<String, Object>> searchFilters) {
             this.options.setSearchFilters(searchFilters);
             return this;
         }

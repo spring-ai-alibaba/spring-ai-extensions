@@ -15,8 +15,9 @@
  */
 package com.alibaba.cloud.ai.tool.validator;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionFinishReason;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ToolCall;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -39,6 +40,7 @@ public interface ToolCallValidator {
 	 * @param finishReason the finish reason from the LLM response
 	 * @return a list of valid tool calls
 	 */
-	List<ToolCall> validate(List<ToolCall> toolCalls, ChatCompletionFinishReason finishReason);
+	List<ToolCall> validate(@Nullable List<ToolCall> toolCalls,
+			DashScopeApiSpec.@Nullable ChatCompletionFinishReason finishReason);
 
 }

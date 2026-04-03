@@ -15,21 +15,21 @@
  */
 package com.alibaba.cloud.ai.toolcalling.githubtoolkit;
 
-import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
-import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
-import com.fasterxml.jackson.annotation.JsonClassDescription;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
+import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CreatePullRequestService implements Function<CreatePullRequestService.Request, Response> {
 
@@ -47,7 +47,9 @@ public class CreatePullRequestService implements Function<CreatePullRequestServi
 
 	public CreatePullRequestService(GithubToolKitProperties properties, WebClientTool webClientTool,
 			JsonParseTool jsonParseTool) {
-		assert properties.getToken() != null && properties.getToken().length() == 40;
+		GithubToolKitValueUtils.requireConfiguredText(properties.getToken(), "GitHub token");
+		GithubToolKitValueUtils.requireConfiguredText(properties.getOwner(), "GitHub owner");
+		GithubToolKitValueUtils.requireConfiguredText(properties.getRepository(), "GitHub repository");
 		this.properties = properties;
 		this.webClientTool = webClientTool;
 		this.jsonParseTool = jsonParseTool;
@@ -66,9 +68,8 @@ public class CreatePullRequestService implements Function<CreatePullRequestServi
 			addIfNotNull(body, "issue", request.issue());
 			addIfNotNull(body, "draft", request.draft());
 
-			String responseData = webClientTool
-				.post(endpoint, Map.of("owner", properties.getOwner(), "repo", properties.getRepository()), body)
-				.block();
+			String responseData = GithubToolKitValueUtils.requireResponseBody(
+					webClientTool.post(endpoint, repositoryVariables(), body).block(), "Create pull request");
 			logger.info("Pull request created successfully.");
 			return new Response<>(parsePullRequest(responseData));
 		}
@@ -82,7 +83,7 @@ public class CreatePullRequestService implements Function<CreatePullRequestServi
 		}
 	}
 
-	private void addIfNotNull(Map<String, Object> map, String key, Object value) {
+	private void addIfNotNull(Map<String, Object> map, String key, @Nullable Object value) {
 		if (value != null) {
 			map.put(key, value);
 		}
@@ -90,23 +91,32 @@ public class CreatePullRequestService implements Function<CreatePullRequestServi
 
 	public PullRequest parsePullRequest(String json) throws JsonProcessingException {
 		Map<String, Object> prMap = jsonParseTool.jsonToMap(json, Object.class);
+		Map<String, Object> userMap = GithubToolKitValueUtils.requireObject(prMap, "user");
+		Map<String, Object> headMap = GithubToolKitValueUtils.requireObject(prMap, "head");
+		Map<String, Object> baseMap = GithubToolKitValueUtils.requireObject(prMap, "base");
 
-		long id = ((Number) prMap.get("id")).longValue();
-		String title = (String) prMap.get("title");
-		String state = (String) prMap.get("state");
-		int prNumber = ((Number) prMap.get("number")).intValue();
-		String body = (String) prMap.get("body");
-		String htmlUrl = (String) prMap.get("html_url");
+		long id = GithubToolKitValueUtils.requireLong(prMap, "id");
+		String title = GithubToolKitValueUtils.requireString(prMap, "title");
+		String state = GithubToolKitValueUtils.requireString(prMap, "state");
+		int prNumber = GithubToolKitValueUtils.requireInt(prMap, "number");
+		@Nullable String body = GithubToolKitValueUtils.nullableString(prMap, "body");
+		String htmlUrl = GithubToolKitValueUtils.requireString(prMap, "html_url");
 
-		String userLogin = jsonParseTool.getDepthFieldValueAsString(json, "user", "login").replaceAll("\"", "");
-		String headRef = jsonParseTool.getDepthFieldValueAsString(json, "head", "ref").replaceAll("\"", "");
-		String baseRef = jsonParseTool.getDepthFieldValueAsString(json, "base", "ref").replaceAll("\"", "");
+		String userLogin = GithubToolKitValueUtils.requireString(userMap, "login");
+		String headRef = GithubToolKitValueUtils.requireString(headMap, "ref");
+		String baseRef = GithubToolKitValueUtils.requireString(baseMap, "ref");
 
 		return new PullRequest(id, title, state, prNumber, userLogin, body, htmlUrl, headRef, baseRef);
 	}
 
-	public record PullRequest(long id, String title, String state, Integer prNumber, String userLogin, String body,
-			String htmlUrl, String headRef, String baseRef) {
+	private Map<String, Object> repositoryVariables() {
+		return Map.of("owner", GithubToolKitValueUtils.requireConfiguredText(properties.getOwner(), "GitHub owner"),
+				"repo",
+				GithubToolKitValueUtils.requireConfiguredText(properties.getRepository(), "GitHub repository"));
+	}
+
+	public record PullRequest(long id, String title, String state, Integer prNumber, String userLogin,
+			@Nullable String body, String htmlUrl, String headRef, String baseRef) {
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
@@ -124,10 +134,10 @@ public class CreatePullRequestService implements Function<CreatePullRequestServi
 					value = "pullRequestBase") @JsonPropertyDescription("The name of the branch you want the changes pulled into.") String pullRequestBase,
 
 			@JsonProperty(
-					value = "headRepo") @JsonPropertyDescription("The name of the repository where the changes in the pull request were made. This field is required for cross-repository pull requests if both repositories are owned by the same organization.") String headRepo,
+					value = "headRepo") @JsonPropertyDescription("The name of the repository where the changes in the pull request were made. This field is required for cross-repository pull requests if both repositories are owned by the same organization.") @Nullable String headRepo,
 
 			@JsonProperty(
-					value = "issue") @JsonPropertyDescription("An issue in the repository to convert to a pull request. The issue title, body, and comments will become the title, body, and comments on the new pull request. Required unless title is specified.") String issue,
+					value = "issue") @JsonPropertyDescription("An issue in the repository to convert to a pull request. The issue title, body, and comments will become the title, body, and comments on the new pull request. Required unless title is specified.") @Nullable String issue,
 
 			@JsonProperty(
 					value = "draft") @JsonPropertyDescription("Indicates whether the pull request is a draft.") boolean draft) {

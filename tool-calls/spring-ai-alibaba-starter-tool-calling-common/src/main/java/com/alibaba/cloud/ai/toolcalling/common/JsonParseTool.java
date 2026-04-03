@@ -24,9 +24,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author vlsmb
@@ -48,12 +50,12 @@ public class JsonParseTool {
 		return objectMapper.writeValueAsString(obj);
 	}
 
-	public <T> T jsonToObject(String json, Class<T> clazz) throws JsonProcessingException {
-		return objectMapper.readValue(json, clazz);
+	public <T> T jsonToObject(@Nullable String json, Class<T> clazz) throws JsonProcessingException {
+		return objectMapper.readValue(Objects.requireNonNull(json, "JSON content must not be null"), clazz);
 	}
 
-	public <T> T jsonToObject(String json, TypeReference<T> typeRef) throws JsonProcessingException {
-		return objectMapper.readValue(json, typeRef);
+	public <T> T jsonToObject(@Nullable String json, TypeReference<T> typeRef) throws JsonProcessingException {
+		return objectMapper.readValue(Objects.requireNonNull(json, "JSON content must not be null"), typeRef);
 	}
 
 	/**
@@ -256,7 +258,7 @@ public class JsonParseTool {
 	 * @param arrayJson array json string
 	 * @return element json string
 	 */
-	public String getFirstElementFromJsonArrayString(String arrayJson) throws JsonProcessingException {
+	public @Nullable String getFirstElementFromJsonArrayString(String arrayJson) throws JsonProcessingException {
 		JsonNode jsonNode = objectMapper.readTree(arrayJson);
 		if (jsonNode.isArray() && !jsonNode.isEmpty()) {
 			JsonNode firstElement = jsonNode.get(0);

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -177,7 +178,7 @@ public class MetasoService implements SearchService, Function<MetasoService.Requ
 				this.type = type;
 			}
 
-			public static ResultType getByType(String type) {
+			public static @Nullable ResultType getByType(String type) {
 				for (ResultType resultType : values()) {
 					if (resultType.type.equals(type)) {
 						return resultType;

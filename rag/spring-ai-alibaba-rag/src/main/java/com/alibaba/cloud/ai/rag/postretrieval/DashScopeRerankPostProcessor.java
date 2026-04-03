@@ -21,12 +21,12 @@ import com.alibaba.cloud.ai.model.RerankModel;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.rag.Query;
 import org.springframework.ai.rag.postretrieval.document.DocumentPostProcessor;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -86,25 +86,24 @@ public class DashScopeRerankPostProcessor implements DocumentPostProcessor {
 
     public static final class Builder {
 
-        private RerankModel rerankModel;
+        private @Nullable RerankModel rerankModel;
 
-        private DashScopeRerankOptions rerankOptions;
+        private @Nullable DashScopeRerankOptions rerankOptions;
 
-        public Builder rerankModel(RerankModel rerankModel) {
+        public Builder rerankModel(@Nullable RerankModel rerankModel) {
             this.rerankModel = rerankModel;
             return this;
         }
 
-        public Builder rerankOptions(DashScopeRerankOptions rerankOptions) {
+        public Builder rerankOptions(@Nullable DashScopeRerankOptions rerankOptions) {
             this.rerankOptions = rerankOptions;
             return this;
         }
 
         @NonNull
         public DashScopeRerankPostProcessor build() {
-            Assert.notNull(rerankModel, "rerankModel is required");
-            Assert.notNull(rerankOptions, "rerankOptions is required");
-            return new DashScopeRerankPostProcessor(rerankModel, rerankOptions);
+            return new DashScopeRerankPostProcessor(Objects.requireNonNull(rerankModel, "rerankModel is required"),
+                    Objects.requireNonNull(rerankOptions, "rerankOptions is required"));
         }
     }
 }

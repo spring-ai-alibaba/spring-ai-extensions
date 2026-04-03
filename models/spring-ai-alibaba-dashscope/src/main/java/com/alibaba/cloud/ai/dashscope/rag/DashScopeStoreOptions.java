@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.rag;
 import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author nuocheng.lxm
@@ -31,17 +32,17 @@ public class DashScopeStoreOptions {
 	/**
 	 * 文档索引切分相关配置
 	 */
-	private @JsonProperty("transformer_options") DashScopeDocumentTransformerOptions transformerOptions;
+	private @JsonProperty("transformer_options") @Nullable DashScopeDocumentTransformerOptions transformerOptions;
 
 	/**
 	 * 文档索引向量化相关配置
 	 */
-	private @JsonProperty("embedding_options") DashScopeEmbeddingOptions embeddingOptions;
+	private @JsonProperty("embedding_options") @Nullable DashScopeEmbeddingOptions embeddingOptions;
 
 	/**
 	 * 文档检索相关配置
 	 */
-	private @JsonProperty("retriever_options") DashScopeDocumentRetrieverOptions retrieverOptions;
+	private @JsonProperty("retriever_options") @Nullable DashScopeDocumentRetrieverOptions retrieverOptions;
 
 	public DashScopeStoreOptions(String indexName) {
 		this.indexName = indexName;
@@ -55,27 +56,27 @@ public class DashScopeStoreOptions {
 		this.indexName = indexName;
 	}
 
-	public DashScopeDocumentTransformerOptions getTransformerOptions() {
+	public @Nullable DashScopeDocumentTransformerOptions getTransformerOptions() {
 		return transformerOptions;
 	}
 
-	public void setTransformerOptions(DashScopeDocumentTransformerOptions transformerOptions) {
+	public void setTransformerOptions(@Nullable DashScopeDocumentTransformerOptions transformerOptions) {
 		this.transformerOptions = transformerOptions;
 	}
 
-	public DashScopeEmbeddingOptions getEmbeddingOptions() {
+	public @Nullable DashScopeEmbeddingOptions getEmbeddingOptions() {
 		return embeddingOptions;
 	}
 
-	public void setEmbeddingOptions(DashScopeEmbeddingOptions embeddingOptions) {
+	public void setEmbeddingOptions(@Nullable DashScopeEmbeddingOptions embeddingOptions) {
 		this.embeddingOptions = embeddingOptions;
 	}
 
-	public DashScopeDocumentRetrieverOptions getRetrieverOptions() {
+	public @Nullable DashScopeDocumentRetrieverOptions getRetrieverOptions() {
 		return retrieverOptions;
 	}
 
-	public void setRetrieverOptions(DashScopeDocumentRetrieverOptions retrieverOptions) {
+	public void setRetrieverOptions(@Nullable DashScopeDocumentRetrieverOptions retrieverOptions) {
 		this.retrieverOptions = retrieverOptions;
 	}
 

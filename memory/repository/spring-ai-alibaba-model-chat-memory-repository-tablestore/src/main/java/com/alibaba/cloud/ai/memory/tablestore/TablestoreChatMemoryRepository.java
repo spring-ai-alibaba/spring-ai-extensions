@@ -21,6 +21,7 @@ import com.aliyun.openservices.tablestore.agent.memory.MemoryStoreImpl;
 import com.aliyun.openservices.tablestore.agent.model.MetaType;
 import com.aliyun.openservices.tablestore.agent.model.Session;
 import com.aliyun.openservices.tablestore.agent.util.Pair;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.Message;
 
@@ -28,13 +29,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Tablestore implementation of ChatMemoryRepository
  */
 public class TablestoreChatMemoryRepository implements ChatMemoryRepository {
 
-	private SyncClient client;
+	private @Nullable SyncClient client;
 
 	private String sessionTableName = "session";
 
@@ -46,7 +48,7 @@ public class TablestoreChatMemoryRepository implements ChatMemoryRepository {
 
 	private String messageSecondaryIndexName = "message_secondary_index";
 
-	private MemoryStoreImpl store;
+	private @Nullable MemoryStoreImpl store;
 
 	public TablestoreChatMemoryRepository(MemoryStoreImpl store) {
 		this.store = store;
@@ -70,12 +72,12 @@ public class TablestoreChatMemoryRepository implements ChatMemoryRepository {
 	public MemoryStoreImpl getStore() {
 		if (store == null) {
 			synchronized (TablestoreChatMemoryRepository.class) {
-				if (store == null) {
-					store = MemoryStoreImpl.builder()
-						.client(client)
-						.sessionTableName(sessionTableName)
-						.sessionSecondaryIndexName(sessionSecondaryIndexName)
-						.sessionSecondaryIndexMeta(sessionSecondaryIndexMeta)
+					if (store == null) {
+						store = MemoryStoreImpl.builder()
+							.client(Objects.requireNonNull(client, "client must not be null"))
+							.sessionTableName(sessionTableName)
+							.sessionSecondaryIndexName(sessionSecondaryIndexName)
+							.sessionSecondaryIndexMeta(sessionSecondaryIndexMeta)
 						.messageTableName(messageTableName)
 						.messageSecondaryIndexName(messageSecondaryIndexName)
 						.build();
@@ -132,7 +134,7 @@ public class TablestoreChatMemoryRepository implements ChatMemoryRepository {
 		getStore().deleteSessionAndMessages(md5UserId, conversationId);
 	}
 
-	public SyncClient getClient() {
+	public @Nullable SyncClient getClient() {
 		return client;
 	}
 

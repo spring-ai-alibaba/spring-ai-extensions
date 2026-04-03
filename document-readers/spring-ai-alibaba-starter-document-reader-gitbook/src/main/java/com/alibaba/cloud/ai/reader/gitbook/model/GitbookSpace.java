@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.reader.gitbook.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,11 +29,11 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GitbookSpace {
 
-	private String id;
+	private String id = "";
 
-	private String title;
+	private String title = "";
 
-	private List<GitbookPage> pages;
+	private List<GitbookPage> pages = new ArrayList<>();
 
 	public String getId() {
 		return id;

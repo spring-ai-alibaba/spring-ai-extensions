@@ -27,6 +27,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class GoogleTrendsService implements Function<GoogleTrendsService.Request, GoogleTrendsService.Response> {
@@ -55,11 +56,11 @@ public class GoogleTrendsService implements Function<GoogleTrendsService.Request
 			throw new IllegalArgumentException("request is empty");
 		}
 		try {
-			String response = webClientTool
+			String response = Objects.requireNonNull(webClientTool
 				.get("/",
 						MultiValueMap.fromSingleValue(Map.of("engine", "google_trends", "api_key",
 								properties.getApiKey(), "q", request.query())))
-				.block();
+				.block(), "Google Trends response must not be null");
 			return new Response(jsonParseTool.jsonToMap(response, Object.class));
 		}
 		catch (Exception e) {

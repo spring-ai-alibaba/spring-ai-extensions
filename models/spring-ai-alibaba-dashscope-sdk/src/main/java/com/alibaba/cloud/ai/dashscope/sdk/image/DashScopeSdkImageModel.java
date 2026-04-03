@@ -21,6 +21,7 @@ import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisParam;
 import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisResult;
 import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisUsage;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.image.Image;
 import org.springframework.ai.image.ImageGeneration;
 import org.springframework.ai.image.ImageModel;
@@ -64,16 +65,17 @@ public class DashScopeSdkImageModel implements ImageModel {
 
 	private final ObservationRegistry observationRegistry;
 
-	private final String apiKey;
+	private final @Nullable String apiKey;
 
-	private final String workspaceId;
+	private final @Nullable String workspaceId;
 
 	private final Map<String, String> connectionHeaders;
 
 	private ImageModelObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
 
 	public DashScopeSdkImageModel(DashScopeSdkImageSynthesisClient imageClient, DashScopeSdkImageOptions defaultOptions,
-                                  RetryTemplate retryTemplate, ObservationRegistry observationRegistry, String apiKey, String workspaceId,
+                                  RetryTemplate retryTemplate, ObservationRegistry observationRegistry, @Nullable String apiKey,
+                                  @Nullable String workspaceId,
                                   Map<String, String> connectionHeaders) {
 
 		Assert.notNull(imageClient, "imageClient cannot be null");
@@ -117,7 +119,8 @@ public class DashScopeSdkImageModel implements ImageModel {
 	}
 
 	private DashScopeSdkImageOptions toImageOptions(ImageOptions runtimeOptions) {
-		DashScopeSdkImageOptions options = DashScopeSdkImageOptions.fromOptions(this.defaultOptions);
+		DashScopeSdkImageOptions options = java.util.Objects.requireNonNull(
+				DashScopeSdkImageOptions.fromOptions(this.defaultOptions));
 		if (runtimeOptions == null) {
 			return options;
 		}
@@ -142,15 +145,30 @@ public class DashScopeSdkImageModel implements ImageModel {
 	}
 
 	private ImageSynthesisParam createRequest(ImagePrompt request, DashScopeSdkImageOptions options) {
+		String model = java.util.Objects.requireNonNull(options.getModel(),
+				"DashScopeSdkImageOptions model cannot be null");
 		ImageSynthesisParam.ImageSynthesisParamBuilder<?, ?> builder = ImageSynthesisParam.builder()
-			.model(options.getModel())
-			.prompt(request.getInstructions().get(0).getText())
-			.n(options.getN())
-			.size(options.getSize())
-			.style(options.getStyle())
-			.seed(options.getSeed())
-			.negativePrompt(options.getNegativePrompt())
-			.refImage(options.getRefImage());
+			.model(model)
+			.prompt(request.getInstructions().get(0).getText());
+
+		if (options.getN() != null) {
+			builder.n(options.getN());
+		}
+		if (options.getSize() != null) {
+			builder.size(options.getSize());
+		}
+		if (options.getStyle() != null) {
+			builder.style(options.getStyle());
+		}
+		if (options.getSeed() != null) {
+			builder.seed(options.getSeed());
+		}
+		if (options.getNegativePrompt() != null) {
+			builder.negativePrompt(options.getNegativePrompt());
+		}
+		if (options.getRefImage() != null) {
+			builder.refImage(options.getRefImage());
+		}
 
 		if (StringUtils.hasText(this.apiKey)) {
 			builder.apiKey(this.apiKey);
@@ -257,7 +275,7 @@ public class DashScopeSdkImageModel implements ImageModel {
 	}
 
 	public DashScopeSdkImageOptions getDefaultOptions() {
-		return DashScopeSdkImageOptions.fromOptions(this.defaultOptions);
+		return java.util.Objects.requireNonNull(DashScopeSdkImageOptions.fromOptions(this.defaultOptions));
 	}
 
 	public void setObservationConvention(ImageModelObservationConvention observationConvention) {
@@ -291,9 +309,9 @@ public class DashScopeSdkImageModel implements ImageModel {
 
 		private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
-		private String apiKey;
+		private @Nullable String apiKey;
 
-		private String workspaceId;
+		private @Nullable String workspaceId;
 
 		private Map<String, String> connectionHeaders = new HashMap<>();
 
@@ -330,12 +348,12 @@ public class DashScopeSdkImageModel implements ImageModel {
 			return this;
 		}
 
-		public Builder apiKey(String apiKey) {
+		public Builder apiKey(@Nullable String apiKey) {
 			this.apiKey = apiKey;
 			return this;
 		}
 
-		public Builder workspaceId(String workspaceId) {
+		public Builder workspaceId(@Nullable String workspaceId) {
 			this.workspaceId = workspaceId;
 			return this;
 		}

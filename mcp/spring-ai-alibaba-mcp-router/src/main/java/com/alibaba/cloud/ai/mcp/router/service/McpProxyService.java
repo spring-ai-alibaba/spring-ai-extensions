@@ -31,6 +31,7 @@ import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.InitializeResult;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
+import java.util.Objects;
 
 /**
  * MCP 代理服务 参考 spring-ai-alibaba-mcp-gateway-nacos 的实现，提供完整的 MCP 服务代理功能
@@ -190,12 +192,13 @@ public class McpProxyService {
 			logger.error("MCP stream call failed:", e);
 
 			// 提供详细的错误诊断
+			String errorMessage = Objects.requireNonNullElse(e.getMessage(), e.getClass().getSimpleName());
 			StringBuilder errorInfo = new StringBuilder();
-			errorInfo.append("Error: MCP stream call failed - ").append(e.getMessage()).append("\n\n");
+			errorInfo.append("Error: MCP stream call failed - ").append(errorMessage).append("\n\n");
 
 			// 如果是连接相关错误，提供诊断信息
-			if (e.getMessage().contains("Failed to wait for the message endpoint") || e.getMessage().contains("502")
-					|| e.getMessage().contains("connection")) {
+			if (errorMessage.contains("Failed to wait for the message endpoint") || errorMessage.contains("502")
+					|| errorMessage.contains("connection")) {
 				errorInfo.append("=== Connection Diagnosis ===\n");
 				errorInfo.append("Target URL: ").append(baseUrl).append(sseEndpoint).append("\n");
 				errorInfo.append("Protocol: ").append(protocol).append("\n");
@@ -253,7 +256,7 @@ public class McpProxyService {
 	/**
 	 * 从参数中提取工具名称
 	 */
-	public String extractToolNameFromArgs(Map<String, Object> args) {
+	public @Nullable String extractToolNameFromArgs(Map<String, Object> args) {
 		// 尝试从参数中获取工具名称
 		if (args.containsKey("toolName")) {
 			return args.get("toolName").toString();
@@ -409,7 +412,7 @@ public class McpProxyService {
 	/**
 	 * 创建 MCP 客户端
 	 */
-	private McpSyncClient createClient(String protocol, McpEndpointInfo endpointInfo,
+	private @Nullable McpSyncClient createClient(String protocol, McpEndpointInfo endpointInfo,
 			McpServerRemoteServiceConfig remoteConfig) {
 		try {
 			String baseUrl = "http://" + endpointInfo.getAddress() + ":" + endpointInfo.getPort();
@@ -568,7 +571,7 @@ public class McpProxyService {
 	 * @param serviceName 服务名称
 	 * @return MCP客户端
 	 */
-	public McpSyncClient getClient(String serviceName) {
+	public @Nullable McpSyncClient getClient(String serviceName) {
 		return clientConnections.get(serviceName);
 	}
 

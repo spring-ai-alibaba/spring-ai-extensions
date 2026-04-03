@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.memory.redis.builder;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.ssl.SslBundles;
 
 import java.util.List;
@@ -32,27 +33,27 @@ public abstract class RedisChatMemoryBuilder<T extends RedisChatMemoryBuilder<T>
 	/**
 	 * example 127.0.0.1:6379,127.0.0.1:6380,127.0.0.1:6381
 	 */
-	protected List<String> nodes;
+	protected @Nullable List<String> nodes;
 
 	protected int port = 6379;
 
-	protected String username;
+	protected @Nullable String username;
 
-	protected String password;
+	protected @Nullable String password;
 
 	protected int timeout = 2000;
 
     protected int database = 0;
 
-    protected String keyPrefix;
+	protected @Nullable String keyPrefix;
 
 	protected boolean useCluster = false;
 
 	protected boolean useSsl = false;
 
-	protected String bundle;
+	protected @Nullable String bundle;
 
-	protected SslBundles sslBundles;
+	protected @Nullable SslBundles sslBundles;
 
 	protected abstract T self();
 
@@ -61,7 +62,7 @@ public abstract class RedisChatMemoryBuilder<T extends RedisChatMemoryBuilder<T>
 		return self();
 	}
 
-	public T nodes(List<String> nodes) {
+	public T nodes(@Nullable List<String> nodes) {
 		this.nodes = nodes;
 		this.useCluster = true;
 		return self();
@@ -72,12 +73,12 @@ public abstract class RedisChatMemoryBuilder<T extends RedisChatMemoryBuilder<T>
 		return self();
 	}
 
-	public T username(String username) {
+	public T username(@Nullable String username) {
 		this.username = username;
 		return self();
 	}
 
-	public T password(String password) {
+	public T password(@Nullable String password) {
 		this.password = password;
 		return self();
 	}
@@ -92,22 +93,22 @@ public abstract class RedisChatMemoryBuilder<T extends RedisChatMemoryBuilder<T>
         return self();
     }
 
-    public T keyPrefix(String keyPrefix) {
-        this.keyPrefix = keyPrefix;
-        return self();
-    }
+	public T keyPrefix(@Nullable String keyPrefix) {
+		this.keyPrefix = keyPrefix;
+		return self();
+	}
 
 	public T useSsl(boolean useSsl) {
 		this.useSsl = useSsl;
 		return self();
 	}
 
-	public T bundle(String bundle) {
+	public T bundle(@Nullable String bundle) {
 		this.bundle = bundle;
 		return self();
 	}
 
-	public T sslBundles(SslBundles sslBundles) {
+	public T sslBundles(@Nullable SslBundles sslBundles) {
 		this.sslBundles = sslBundles;
 		return self();
 	}

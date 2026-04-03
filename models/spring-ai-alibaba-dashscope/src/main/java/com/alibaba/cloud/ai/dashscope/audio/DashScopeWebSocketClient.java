@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -42,6 +43,7 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okio.ByteString;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.util.JacksonUtils;
@@ -76,33 +78,35 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	private final ObjectMapper objectMapper;
 
-	private WebSocket webSocketClient;
+	private @Nullable WebSocket webSocketClient;
 
+	@Nullable
 	FluxSink<ByteBuffer> binaryEmitter;
 
+	@Nullable
 	FluxSink<String> textEmitter;
 
 	// For single continue-task mode (legacy CosyVoice)
-    private String continueTaskMessage;
+    private @Nullable String continueTaskMessage;
 
 	// Template for building continue-task messages dynamically (streaming input)
-	private String continueTaskTemplate;
+	private @Nullable String continueTaskTemplate;
 
-    private String finishTaskMessage;
+    private @Nullable String finishTaskMessage;
 
-    private ByteBuffer binaryData;
+    private @Nullable ByteBuffer binaryData;
 
 	// Streaming binary input for ASR duplex
-	private Flux<ByteBuffer> binaryStream;
+	private @Nullable Flux<ByteBuffer> binaryStream;
 
 	// Streaming text input for CosyVoice duplex
-	private Flux<String> textStream;
+	private @Nullable Flux<String> textStream;
 
 	// Indicates whether task-started has been received
 	private volatile boolean taskStarted = false;
 
 	public DashScopeWebSocketClient(DashScopeWebSocketClientOptions options) {
-		this.options = options;
+		this.options = Objects.requireNonNull(options, "options must not be null");
 		this.isOpen = new AtomicBoolean(false);
 		this.objectMapper = JsonMapper.builder()
 			// Deserialization configuration
@@ -238,6 +242,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
             }
         }
         logger.info("send text: {}", text);
+		WebSocket webSocketClient = Objects.requireNonNull(this.webSocketClient, "WebSocket client is not initialized");
 		boolean success = webSocketClient.send(text);
 
 		if (!success) {
@@ -255,6 +260,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 			return;
 		}
 
+		WebSocket webSocketClient = Objects.requireNonNull(this.webSocketClient, "WebSocket client is not initialized");
 		boolean success = webSocketClient.send(ByteString.of(binary));
 
 		if (!success) {
@@ -289,13 +295,14 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	}
 
 	private Request buildConnectionRequest() {
+		String apiKey = Objects.requireNonNull(options.getApiKey(), "apiKey must not be null");
 		Builder bd = new Request.Builder();
-		bd.headers(Headers.of(ApiUtils.getMapContentHeaders(options.getApiKey(), false,
+		bd.headers(Headers.of(ApiUtils.getMapContentHeaders(apiKey, false,
 			options.getWorkSpaceId(), null)));
 		return bd.url(options.getUrl()).build();
 	}
 
-	private String getRequestBody(Response response) {
+	private String getRequestBody(@Nullable Response response) {
 		String responseBody = "";
 		if (response != null && response.body() != null) {
 			try {
@@ -329,7 +336,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	}
 
 	@Override
-	public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+	public void onFailure(WebSocket webSocket, Throwable t, @Nullable Response response) {
 		String failureMessage = String.format("msg=%s, cause=%s, body=%s", t.getMessage(), t.getCause(),
 				getRequestBody(response));
 		logger.error("receive ws event onFailure: handle={}, {}", webSocket, failureMessage);
@@ -351,7 +358,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 					// Mode 1: CosyVoice single text - send the pre-built continue-task then finish-task
                     if (!ObjectUtils.isEmpty(this.continueTaskMessage)) {
                         sendText(this.continueTaskMessage);
-						sendText(this.finishTaskMessage);
+						sendText(Objects.requireNonNull(this.finishTaskMessage, "finishTaskMessage is not initialized"));
                     }
 
 					// Mode 2: CosyVoice streaming input - subscribe to textStream
@@ -362,7 +369,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 					// Mode 3: Binary input (e.g., ASR) - send binary data then finish-task
                     if (!ObjectUtils.isEmpty(this.binaryData)) {
                         sendBinary(this.binaryData);
-                        sendText(this.finishTaskMessage);
+                        sendText(Objects.requireNonNull(this.finishTaskMessage, "finishTaskMessage is not initialized"));
                     }
 
 					// Mode 4: ASR streaming binary - subscribe to binaryStream, send each chunk then finish-task
@@ -405,7 +412,9 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	 * When the stream completes, send finish-task.
 	 */
 	private void subscribeTextStream() {
-		this.textStream
+		Flux<String> textStream = Objects.requireNonNull(this.textStream, "textStream is not initialized");
+		String finishTaskMessage = Objects.requireNonNull(this.finishTaskMessage, "finishTaskMessage is not initialized");
+		textStream
 			.doOnNext(textChunk -> {
 				String continueMsg = buildContinueTaskMessage(textChunk);
 				logger.debug("CosyVoice streaming: sending continue-task for text chunk, length={}", textChunk.length());
@@ -417,7 +426,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 			})
 			.doOnComplete(() -> {
 				logger.info("CosyVoice streaming: text stream completed, sending finish-task");
-				sendText(this.finishTaskMessage);
+				sendText(finishTaskMessage);
 			})
 			.subscribe();
 	}
@@ -428,7 +437,8 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	 */
 	private String buildContinueTaskMessage(String textChunk) {
 		try {
-			var node = this.objectMapper.readTree(this.continueTaskTemplate);
+			var node = this.objectMapper.readTree(
+					Objects.requireNonNull(this.continueTaskTemplate, "continueTaskTemplate is not initialized"));
 			if (node.has("payload") && node.get("payload").has("input")) {
 				((com.fasterxml.jackson.databind.node.ObjectNode) node.get("payload").get("input"))
 					.put("text", textChunk);
@@ -446,7 +456,9 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	 * When the stream completes, send finish-task.
 	 */
 	private void subscribeBinaryStream() {
-		this.binaryStream
+		Flux<ByteBuffer> binaryStream = Objects.requireNonNull(this.binaryStream, "binaryStream is not initialized");
+		String finishTaskMessage = Objects.requireNonNull(this.finishTaskMessage, "finishTaskMessage is not initialized");
+		binaryStream
 			.filter(chunk -> chunk != null && chunk.hasRemaining())
 			.doOnNext(chunk -> {
 				logger.debug("ASR streaming: sending binary chunk, size={}", chunk.remaining());
@@ -458,7 +470,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 			})
 			.doOnComplete(() -> {
 				logger.info("ASR streaming: binary stream completed, sending finish-task");
-				sendText(this.finishTaskMessage);
+				sendText(finishTaskMessage);
 			})
 			.subscribe();
 	}
@@ -467,7 +479,9 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	public void onMessage(WebSocket webSocket, ByteString bytes) {
 		logger.debug("receive ws event onMessage(bytes): handle={}, size={}", webSocket, bytes.size());
 		ByteBuffer audioData = bytes.asByteBuffer();
-        this.binaryEmitter.next(audioData);
+        if (this.binaryEmitter != null) {
+            this.binaryEmitter.next(audioData);
+        }
 
 	}
 

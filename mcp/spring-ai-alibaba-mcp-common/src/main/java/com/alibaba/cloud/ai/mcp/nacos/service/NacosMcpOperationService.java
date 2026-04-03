@@ -31,6 +31,7 @@ import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.alibaba.nacos.maintainer.client.ai.AiMaintainerFactory;
 import com.alibaba.nacos.maintainer.client.ai.AiMaintainerService;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -100,7 +101,7 @@ public class NacosMcpOperationService {
 		}
 	}
 
-	public NacosMcpServerEndpoint getServerEndpoint(String mcpNameAndVersion) throws NacosException {
+	public @Nullable NacosMcpServerEndpoint getServerEndpoint(String mcpNameAndVersion) throws NacosException {
 		if (mcpNameAndVersion == null) {
 			throw new IllegalArgumentException("mcpNameAndVersion must not be null");
 		}
@@ -116,7 +117,7 @@ public class NacosMcpOperationService {
 		return new NacosMcpServerEndpoint(mcpEndpointInfoList, exportPath, protocol, realVersion);
 	}
 
-	public NacosMcpServerEndpoint getServerEndpoint(String mcpName, String version) throws NacosException {
+	public @Nullable NacosMcpServerEndpoint getServerEndpoint(String mcpName, String version) throws NacosException {
 		Assert.notNull(mcpName, "serviceName cannot be null");
 		Assert.notNull(version, "version cannot be null");
 		McpServerDetailInfo mcpServerDetailInfo = this.getServerDetail(mcpName, version);
@@ -131,7 +132,7 @@ public class NacosMcpOperationService {
 		return new NacosMcpServerEndpoint(mcpEndpointInfoList, exportPath, protocol, realVersion);
 	}
 
-	public McpServerDetailInfo getServerDetail(String mcpNameAndVersion) throws NacosException {
+	public @Nullable McpServerDetailInfo getServerDetail(String mcpNameAndVersion) throws NacosException {
 		if (mcpNameAndVersion == null) {
 			throw new IllegalArgumentException("mcpNameAndVersion must not be null");
 		}
@@ -148,7 +149,7 @@ public class NacosMcpOperationService {
 		return aiMaintainerService.getMcpServerDetail(this.namespace, mcpName, version);
 	}
 
-	public McpServerDetailInfo getServerDetail(String mcpName, String version) throws NacosException {
+	public @Nullable McpServerDetailInfo getServerDetail(String mcpName, String version) throws NacosException {
 		if (mcpName == null || version == null) {
 			throw new IllegalArgumentException("mcpName must not be null");
 		}

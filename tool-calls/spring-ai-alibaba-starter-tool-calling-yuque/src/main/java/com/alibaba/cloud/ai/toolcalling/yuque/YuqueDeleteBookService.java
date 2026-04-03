@@ -21,7 +21,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.function.Function;
+import org.springframework.util.StringUtils;
 
 /**
  * @author 北极星
@@ -42,17 +44,18 @@ public class YuqueDeleteBookService
 
 	@Override
 	public YuqueDeleteBookService.DeleteBookResponse apply(YuqueDeleteBookService.DeleteBookRequest request) {
-		if (request == null || request.bookId == null) {
-			return null;
+		if (request == null || !StringUtils.hasText(request.bookId)) {
+			throw new IllegalArgumentException("Yuque delete book request bookId must not be empty");
 		}
 		String uri = "/repos/" + request.bookId;
 		try {
-			String json = webClientTool.delete(uri).block();
+			String json = Objects.requireNonNull(webClientTool.delete(uri).block(),
+					"Yuque delete book API returned empty response");
 			return jsonParseTool.jsonToObject(json, DeleteBookResponse.class);
 		}
 		catch (Exception e) {
 			logger.error("Failed to delete the Yuque book.", e);
-			return null;
+			throw new RuntimeException("Failed to delete the Yuque book", e);
 		}
 	}
 

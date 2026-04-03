@@ -19,6 +19,7 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.model.ModelOptionsUtils;
 
 /**
@@ -46,7 +47,7 @@ public class DashScopeResponseFormat {
      * This field is required if {@link #type} is 'json_schema'; otherwise, it should be null.
      */
     @JsonProperty("json_schema")
-    private JsonSchemaConfig jsonScheme;
+    private @Nullable JsonSchemaConfig jsonScheme;
 
 	public Type getType() {
 
@@ -58,12 +59,12 @@ public class DashScopeResponseFormat {
 		this.type = type;
 	}
 
-    public JsonSchemaConfig getJsonScheme() {
+    public @Nullable JsonSchemaConfig getJsonScheme() {
 
         return this.jsonScheme;
     }
 
-    public void setJsonScheme(JsonSchemaConfig jsonScheme) {
+    public void setJsonScheme(@Nullable JsonSchemaConfig jsonScheme) {
 
         this.jsonScheme = jsonScheme;
     }
@@ -83,7 +84,7 @@ public class DashScopeResponseFormat {
 
 		private Type type = Type.TEXT;
 
-        private JsonSchemaConfig jsonScheme;
+        private @Nullable JsonSchemaConfig jsonScheme;
 
 		public Builder type(Type type) {
 
@@ -91,7 +92,7 @@ public class DashScopeResponseFormat {
 			return this;
 		}
 
-		public Builder jsonScheme(JsonSchemaConfig jsonScheme) {
+		public Builder jsonScheme(@Nullable JsonSchemaConfig jsonScheme) {
 
 			this.jsonScheme = jsonScheme;
 			return this;
@@ -164,19 +165,19 @@ public class DashScopeResponseFormat {
          * The schema name.
          */
         @JsonProperty("name")
-        private String name;
+        private @Nullable String name;
 
         /**
          * The schema description.
          */
         @JsonProperty("description")
-        private String description;
+        private @Nullable String description;
 
         /**
          * The JSON Schema object defining the output structure.
          */
         @JsonProperty("schema")
-        private Object schema;
+        private @Nullable Object schema;
 
         /**
          * The strict mode to the JSON Schema. Default value is false.
@@ -193,7 +194,7 @@ public class DashScopeResponseFormat {
          *
          * @return the schema name
          */
-        public String getName() {
+        public @Nullable String getName() {
             return this.name;
         }
 
@@ -202,7 +203,7 @@ public class DashScopeResponseFormat {
          *
          * @param name the schema name
          */
-        public void setName(String name) {
+        public void setName(@Nullable String name) {
             this.name = name;
         }
 
@@ -211,7 +212,7 @@ public class DashScopeResponseFormat {
          *
          * @return the schema description
          */
-        public String getDescription() {
+        public @Nullable String getDescription() {
             return this.description;
         }
 
@@ -220,7 +221,7 @@ public class DashScopeResponseFormat {
          *
          * @param description the schema description
          */
-        public void setDescription(String description) {
+        public void setDescription(@Nullable String description) {
             this.description = description;
         }
 
@@ -229,7 +230,7 @@ public class DashScopeResponseFormat {
          *
          * @return the schema object
          */
-        public Object getSchema() {
+        public @Nullable Object getSchema() {
             return this.schema;
         }
 
@@ -238,7 +239,7 @@ public class DashScopeResponseFormat {
          *
          * @param schema the JSON Schema object
          */
-        public void setSchema(Object schema) {
+        public void setSchema(@Nullable Object schema) {
             this.schema = schema;
         }
 
@@ -290,11 +291,11 @@ public class DashScopeResponseFormat {
          */
         public static class Builder {
 
-            private String name;
+            private @Nullable String name;
 
-            private String description;
+            private @Nullable String description;
 
-            private Object schema;
+            private @Nullable Object schema;
 
             private Boolean strict = false;
 
@@ -304,7 +305,7 @@ public class DashScopeResponseFormat {
              * @param name the schema name
              * @return this builder instance
              */
-            public Builder name(String name) {
+            public Builder name(@Nullable String name) {
                 this.name = name;
                 return this;
             }
@@ -315,7 +316,7 @@ public class DashScopeResponseFormat {
              * @param description the schema description
              * @return this builder instance
              */
-            public Builder description(String description) {
+            public Builder description(@Nullable String description) {
                 this.description = description;
                 return this;
             }
@@ -326,7 +327,7 @@ public class DashScopeResponseFormat {
              * @param schema the JSON Schema object
              * @return this builder instance
              */
-            public Builder schema(Object schema) {
+            public Builder schema(@Nullable Object schema) {
                 this.schema = schema;
                 return this;
             }

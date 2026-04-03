@@ -177,8 +177,9 @@ public class DashScopeDocumentRetrievalAdvisor implements BaseAdvisor {
 						content = result.getOutput().getText();
 					}
 
-					Map<String, Document> documentMap = (Map<String, Document>) context
-						.get(DashScopeApiConstants.RETRIEVED_DOCUMENTS);
+					Object retrievedDocuments = context.get(DashScopeApiConstants.RETRIEVED_DOCUMENTS);
+					Map<String, Document> documentMap = retrievedDocuments instanceof Map<?, ?> rawDocumentMap
+							? (Map<String, Document>) rawDocumentMap : Map.of();
 					List<Document> referencedDocuments = new ArrayList<>();
 
 					Matcher refMatcher = RAG_REFERENCE_PATTERN.matcher(content);
@@ -191,7 +192,9 @@ public class DashScopeDocumentRetrievalAdvisor implements BaseAdvisor {
 								if (numberMatcher.group(i) != null) {
 									String index = numberMatcher.group(i);
 									Document document = documentMap.get(index);
-									referencedDocuments.add(document);
+									if (document != null) {
+										referencedDocuments.add(document);
+									}
 								}
 							}
 						}

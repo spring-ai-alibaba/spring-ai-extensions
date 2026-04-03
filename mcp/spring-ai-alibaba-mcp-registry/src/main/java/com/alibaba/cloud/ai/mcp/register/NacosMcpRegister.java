@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
@@ -95,6 +96,7 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 
 	private boolean success = false;
 
+	@SuppressWarnings("NullAway.Init")
 	public NacosMcpRegister(NacosMcpOperationService nacosMcpOperationService, McpAsyncServer mcpAsyncServer,
 							NacosMcpProperties nacosMcpProperties, NacosMcpRegisterProperties nacosMcpRegistryProperties,
 							McpServerProperties mcpServerProperties, McpServerSseProperties mcpServerSseProperties,
@@ -277,12 +279,14 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 		String localInputSchemaString = JacksonUtils.toJson(localToolRegistration.tool().inputSchema());
 		Map<String, Object> localInputSchemaMap = JacksonUtils.toObj(localInputSchemaString, new TypeReference<>() {
 		});
-		Map<String, Object> localProperties = (Map<String, Object>) localInputSchemaMap.get("properties");
+		Map<String, Object> localProperties = Objects.requireNonNull(
+				(Map<String, Object>) localInputSchemaMap.get("properties"));
 
 		String nacosInputSchemaString = JacksonUtils.toJson(toolInNacos.inputSchema());
 		Map<Object, Object> nacosInputSchemaMap = JacksonUtils.toObj(nacosInputSchemaString, new TypeReference<>() {
 		});
-		Map<String, Object> nacosProperties = (Map<String, Object>) nacosInputSchemaMap.get("properties");
+		Map<String, Object> nacosProperties = Objects.requireNonNull(
+				(Map<String, Object>) nacosInputSchemaMap.get("properties"));
 
 		for (String key : localProperties.keySet()) {
 			if (nacosProperties.containsKey(key)) {
@@ -392,14 +396,19 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 			instance.setIp(host);
 			instance.setPort(port);
 			instance.setEphemeral(this.nacosMcpRegistryProperties.isServiceEphemeral());
-			String groupName = StringUtils.isBlank(this.nacosMcpRegistryProperties.getServiceGroup()) ? "DEFAULT_GROUP"
-					: this.nacosMcpRegistryProperties.getServiceGroup();
-			String serviceName = this.getRegisterServiceName();
-			if (this.serverDetailInfo != null) {
-				serviceName = this.serverDetailInfo.getRemoteServerConfig().getServiceRef().getServiceName();
-				groupName = this.serverDetailInfo.getRemoteServerConfig().getServiceRef().getGroupName();
-			}
-			nacosMcpOperationService.registerService(serviceName, groupName, instance);
+				String groupName = "DEFAULT_GROUP";
+				String configuredGroupName = this.nacosMcpRegistryProperties.getServiceGroup();
+				if (!StringUtils.isBlank(configuredGroupName)) {
+					groupName = configuredGroupName;
+				}
+				String serviceName = this.getRegisterServiceName();
+				if (this.serverDetailInfo != null) {
+					serviceName = this.serverDetailInfo.getRemoteServerConfig().getServiceRef().getServiceName();
+					String serviceGroup = this.serverDetailInfo.getRemoteServerConfig().getServiceRef().getGroupName();
+					groupName = StringUtils.isBlank(serviceGroup) ? "DEFAULT_GROUP"
+							: Objects.requireNonNull(serviceGroup);
+				}
+				nacosMcpOperationService.registerService(serviceName, Objects.requireNonNull(groupName), instance);
 			log.info("[Nacos MCP Register] Register mcp server endpoint to nacos successfully");
 		}
 		catch (NacosException e) {
@@ -425,7 +434,8 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 		}
 		for (String toolName : toolsInNacos.keySet()) {
 			String jsonSchemaStringInNacos = JacksonUtils.toJson(toolsInNacos.get(toolName).getInputSchema());
-			String jsonSchemaStringInLocal = JacksonUtils.toJson(toolsInLocal.get(toolName).inputSchema());
+			McpSchema.Tool localTool = Objects.requireNonNull(toolsInLocal.get(toolName));
+			String jsonSchemaStringInLocal = JacksonUtils.toJson(localTool.inputSchema());
 			if (!JsonSchemaUtil.compare(jsonSchemaStringInNacos, jsonSchemaStringInLocal)) {
 				String message = String.format("Input Schema of local tool %s is not compatible with tool in Nacos",
 						toolName);
@@ -469,9 +479,11 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 	}
 
 	private String getRegisterServiceName() {
-		return StringUtils.isBlank(this.nacosMcpRegistryProperties.getServiceName())
-				? this.serverInfo.name() + "::" + this.serverInfo.version()
-				: this.nacosMcpRegistryProperties.getServiceName();
+		String serviceName = this.nacosMcpRegistryProperties.getServiceName();
+		if (StringUtils.isBlank(serviceName)) {
+			return this.serverInfo.name() + "::" + this.serverInfo.version();
+		}
+		return Objects.requireNonNull(serviceName);
 	}
 
 	private boolean compareToolsMeta(Map<String, McpToolMeta> toolsMeta) {
@@ -486,7 +498,9 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 			return true;
 		}
 		for (String toolName : toolsMeta.keySet()) {
-			if (this.toolsMeta.get(toolName).isEnabled() != toolsMeta.get(toolName).isEnabled()) {
+			McpToolMeta localToolMeta = Objects.requireNonNull(this.toolsMeta.get(toolName));
+			McpToolMeta updatedToolMeta = Objects.requireNonNull(toolsMeta.get(toolName));
+			if (localToolMeta.isEnabled() != updatedToolMeta.isEnabled()) {
 				changed = true;
 				break;
 			}

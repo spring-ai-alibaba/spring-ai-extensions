@@ -16,6 +16,7 @@
 
 package com.alibaba.cloud.ai.mcp.router.config;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = DbMcpProperties.CONFIG_PREFIX)
@@ -25,17 +26,17 @@ public class DbMcpProperties {
 
 	private boolean enabled = false;
 
-	private String url;
+	private @Nullable String url;
 
-	private String username;
+	private @Nullable String username;
 
-	private String password;
+	private @Nullable String password;
 
 	private String driverClassName = "com.mysql.cj.jdbc.Driver";
 
 	private String tableName = "mcp_server_info";
 
-	private String querySql;
+	private @Nullable String querySql;
 
 	private int maxPoolSize = 10;
 
@@ -43,27 +44,27 @@ public class DbMcpProperties {
 
 	private long connectionTimeout = 30000;
 
-	public String getUrl() {
+	public @Nullable String getUrl() {
 		return url;
 	}
 
-	public void setUrl(String url) {
+	public void setUrl(@Nullable String url) {
 		this.url = url;
 	}
 
-	public String getUsername() {
+	public @Nullable String getUsername() {
 		return username;
 	}
 
-	public void setUsername(String username) {
+	public void setUsername(@Nullable String username) {
 		this.username = username;
 	}
 
-	public String getPassword() {
+	public @Nullable String getPassword() {
 		return password;
 	}
 
-	public void setPassword(String password) {
+	public void setPassword(@Nullable String password) {
 		this.password = password;
 	}
 
@@ -83,11 +84,11 @@ public class DbMcpProperties {
 		this.tableName = tableName;
 	}
 
-	public String getQuerySql() {
+	public @Nullable String getQuerySql() {
 		return querySql;
 	}
 
-	public void setQuerySql(String querySql) {
+	public void setQuerySql(@Nullable String querySql) {
 		this.querySql = querySql;
 	}
 

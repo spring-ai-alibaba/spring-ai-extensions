@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.reader.tencent.cos;
 
 import com.alibaba.cloud.ai.document.DocumentParser;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
@@ -36,9 +37,9 @@ public class TencentCosDocumentReader implements DocumentReader {
 
 	private final DocumentParser parser;
 
-	private TencentCosResource tencentCosResource;
+	private @Nullable TencentCosResource tencentCosResource;
 
-	private List<TencentCosResource> tencentCosResourceList;
+	private @Nullable List<TencentCosResource> tencentCosResourceList;
 
 	public TencentCosDocumentReader(TencentCosResource tencentCosResource, DocumentParser parser) {
 		this.tencentCosResource = tencentCosResource;
@@ -54,7 +55,7 @@ public class TencentCosDocumentReader implements DocumentReader {
 	public List<Document> get() {
 		List<Document> documents = new ArrayList<>();
 		if (!Objects.isNull(tencentCosResourceList) && !tencentCosResourceList.isEmpty()) {
-			processResourceList(documents);
+			processResourceList(documents, Objects.requireNonNull(tencentCosResourceList));
 		}
 		else if (tencentCosResource != null) {
 			loadDocuments(documents, tencentCosResource);
@@ -63,8 +64,8 @@ public class TencentCosDocumentReader implements DocumentReader {
 		return documents;
 	}
 
-	private void processResourceList(List<Document> documents) {
-		for (TencentCosResource resource : tencentCosResourceList) {
+	private void processResourceList(List<Document> documents, List<TencentCosResource> resources) {
+		for (TencentCosResource resource : resources) {
 			loadDocuments(documents, resource);
 		}
 	}

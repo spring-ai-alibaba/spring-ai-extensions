@@ -93,7 +93,7 @@
 
         <!-- auto-configurations modules -->
         <module>auto-configurations/models/spring-ai-alibaba-autoconfigure-dashscope</module>
-      <module>auto-configurations/models/spring-ai-alibaba-autoconfigure-dashscope-sdk</module>
+        <module>auto-configurations/models/spring-ai-alibaba-autoconfigure-dashscope-sdk</module>
         <module>auto-configurations/models/chat/memory/spring-ai-alibaba-autoconfigure-model-chat-memory</module>
         <module>auto-configurations/models/chat/memory/spring-ai-alibaba-autoconfigure-model-chat-memory-mem0</module>
         <module>auto-configurations/models/chat/memory/repository/spring-ai-alibaba-autoconfigure-model-chat-memory-repository-elasticsearch</module>
@@ -119,7 +119,7 @@
 
         <!-- spring-boot-starters modules -->
         <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope</module>
-      <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope-sdk</module>
+        <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope-sdk</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-model-chat-memory</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-model-chat-memory-mem0</module>
         <module>spring-boot-starters/spring-ai-alibaba-starter-model-chat-memory-repository-elasticsearch</module>
@@ -293,6 +293,10 @@
         <surefireArgLine>-Xms512m -Xmx1024m</surefireArgLine>
 
         <!-- plugin versions -->
+        <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
+        <!-- The version (range) of the JDK we want to use to compile.
+          This is different from ${java.version} which we use as -release target. -->
+        <compiler.jdk.version>[21.0.8,)</compiler.jdk.version>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <maven-site-plugin.version>4.0.0-M13</maven-site-plugin.version>
         <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
@@ -303,7 +307,7 @@
         <maven-assembly-plugin.version>3.7.0</maven-assembly-plugin.version>
         <maven-failsafe-plugin.version>3.1.2</maven-failsafe-plugin.version>
         <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
-        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+        <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.5.0</maven-dependency-plugin.version>
         <asciidoctor-maven-plugin.version>2.2.3</asciidoctor-maven-plugin.version>
         <springdoc-openapi-maven-plugin.version>1.4</springdoc-openapi-maven-plugin.version>
@@ -319,6 +323,10 @@
         <maven-checkstyle-plugin.failOnViolation>true</maven-checkstyle-plugin.failOnViolation>
         <puppycrawl-tools-checkstyle.version>9.3</puppycrawl-tools-checkstyle.version>
         <spotless.version>2.44.5</spotless.version>
+
+        <!-- NullAway -->
+        <error-prone.version>2.46.0</error-prone.version>
+        <nullaway.version>0.13.0</nullaway.version>
 
         <central.publishing.maven.version>0.7.0</central.publishing.maven.version>
     </properties>
@@ -531,14 +539,54 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>maven-enforcer</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <!-- Make sure we run with a JDK that supports the
+                    error_prone + nullaway tools correctly. An alternative
+                    would have been to use fork=true at the compiler plugin
+                    level, but this is more efficient in this big project.
+                    See also .mvn/jvm.config -->
+                                <requireJavaVersion>
+                                    <version>${compiler.jdk.version}</version>
+                                </requireJavaVersion>
+                                <banDuplicatePomDependencyVersions></banDuplicatePomDependencyVersions>
+                                <!-- TODO <dependencyConvergence /> -->
+                                <requireMavenVersion>
+                                    <version>[3.9.1,)</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <release>${java.version}</release>
                     <compilerArgs>
-                        <compilerArg>-parameters</compilerArg>
+                        <arg>-parameters</arg>
                     </compilerArgs>
                     <annotationProcessorPaths>
+                        <path>
+                            <groupId>com.google.errorprone</groupId>
+                            <artifactId>error_prone_core</artifactId>
+                            <version>${error-prone.version}</version>
+                        </path>
+                        <path>
+                            <groupId>com.uber.nullaway</groupId>
+                            <artifactId>nullaway</artifactId>
+                            <version>${nullaway.version}</version>
+                        </path>
                         <path>
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-configuration-processor</artifactId>
@@ -563,6 +611,15 @@
                             <goal>compile</goal>
                         </goals>
                         <phase>compile</phase>
+                        <configuration>
+                            <compilerArgs>
+                                <arg>-XDcompilePolicy=simple</arg>
+                                <!-- The following arg won't be necessary with JDK25+ -->
+                                <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
+                                <arg>--should-stop=ifError=FLOW</arg>
+                                <arg>-Xplugin:ErrorProne -XepDisableAllChecks -Xep:NullAway:ERROR -XepOpt:NullAway:OnlyNullMarked -XepOpt:NullAway:JSpecifyMode=true</arg>
+                            </compilerArgs>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>java-test-compile</id>

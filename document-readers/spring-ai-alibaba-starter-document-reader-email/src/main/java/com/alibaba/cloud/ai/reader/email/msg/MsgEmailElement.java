@@ -26,21 +26,21 @@ import java.util.List;
  */
 public class MsgEmailElement {
 
-	private String subject;
+	private String subject = "";
 
-	private String from;
+	private String from = "";
 
-	private String fromName;
+	private String fromName = "";
 
-	private String to;
+	private String to = "";
 
-	private String toName;
+	private String toName = "";
 
-	private String date;
+	private String date = "";
 
-	private String contentType;
+	private String contentType = "";
 
-	private String content;
+	private String content = "";
 
 	private List<MsgEmailElement> attachments;
 

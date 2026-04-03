@@ -15,7 +15,10 @@
  */
 package com.alibaba.cloud.ai.memory.jdbc;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.util.Objects;
 
 /**
  * MySQL implementation of chat memory repository
@@ -37,15 +40,15 @@ public class MysqlChatMemoryRepository extends JdbcChatMemoryRepository {
 
 	public static class MysqlBuilder {
 
-		private JdbcTemplate jdbcTemplate;
+		private @Nullable JdbcTemplate jdbcTemplate;
 
-		public MysqlBuilder jdbcTemplate(JdbcTemplate jdbcTemplate) {
+		public MysqlBuilder jdbcTemplate(@Nullable JdbcTemplate jdbcTemplate) {
 			this.jdbcTemplate = jdbcTemplate;
 			return this;
 		}
 
 		public MysqlChatMemoryRepository build() {
-			return new MysqlChatMemoryRepository(this.jdbcTemplate);
+			return new MysqlChatMemoryRepository(Objects.requireNonNull(this.jdbcTemplate, "jdbcTemplate must not be null"));
 		}
 
 	}

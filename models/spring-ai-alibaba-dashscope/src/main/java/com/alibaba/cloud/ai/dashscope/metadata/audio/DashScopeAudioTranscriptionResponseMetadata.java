@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.metadata.audio;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Translation.Word;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponseMetadata;
 import org.springframework.ai.chat.metadata.RateLimit;
 
@@ -31,11 +32,11 @@ import java.util.List;
  */
 public class DashScopeAudioTranscriptionResponseMetadata extends AudioTranscriptionResponseMetadata {
 
-    private final List<Translation> translations;
+    private final @Nullable List<Translation> translations;
 
-    private final Sentence sentence;
+    private final @Nullable Sentence sentence;
 
-    private final Usage usage;
+    private final @Nullable Usage usage;
 
 	public static final DashScopeAudioTranscriptionResponseMetadata NULL = new DashScopeAudioTranscriptionResponseMetadata() {
 
@@ -59,15 +60,15 @@ public class DashScopeAudioTranscriptionResponseMetadata extends AudioTranscript
         this.usage = usage;
     }
 
-    public List<Translation> getTranslations() {
+    public @Nullable List<Translation> getTranslations() {
         return translations;
     }
 
-    public Sentence getSentence() {
+    public @Nullable Sentence getSentence() {
         return sentence;
     }
 
-    public Usage getUsage() {
+    public @Nullable Usage getUsage() {
         return usage;
     }
 

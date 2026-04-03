@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.agent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.alibaba.cloud.ai.agent.Agent;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi;
@@ -29,6 +30,7 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentReques
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentResponse;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -86,7 +88,7 @@ public final class DashScopeAgent extends Agent {
         return response.map(this::toChatResponse);
     }
 
-    private DashScopeAgentRequest toRequest(Prompt prompt, Boolean stream) {
+    private DashScopeAgentRequest toRequest(Prompt prompt, boolean stream) {
         if (prompt == null) {
             throw new IllegalArgumentException("option is null");
         }
@@ -98,7 +100,7 @@ public final class DashScopeAgent extends Agent {
             throw new IllegalArgumentException("appId must be set");
         }
 
-        String requestPrompt = null;
+        @Nullable String requestPrompt = null;
         List<DashScopeAgentRequestMessage> requestMessages = List.of();
 
         List<Message> messages = prompt.getInstructions();
@@ -118,8 +120,8 @@ public final class DashScopeAgent extends Agent {
                 runtimeOptions.getFiles(), runtimeOptions.getBizParams());
         DashScopeAgentRequestParameters parameters = new DashScopeAgentRequestParameters(
                 runtimeOptions.getFlowStreamMode(), runtimeOptions.getHasThoughts(),
-                Boolean.TRUE.equals(runtimeOptions.getHasThoughts()) && runtimeOptions.getEnableThinking(),
-                stream && runtimeOptions.getIncrementalOutput(), runtimeOptions.getModelId(),
+                Boolean.TRUE.equals(runtimeOptions.getHasThoughts()) && Boolean.TRUE.equals(runtimeOptions.getEnableThinking()),
+                stream && Boolean.TRUE.equals(runtimeOptions.getIncrementalOutput()), runtimeOptions.getModelId(),
                 ragOptions == null ? null : new DashScopeAgentRequestRagOptions(
                         ragOptions.getPipelineIds(), ragOptions.getFileIds(), ragOptions.getMetadataFilter(),
                         ragOptions.getTags(), ragOptions.getStructuredFilter(), ragOptions.getSessionFileIds()));
@@ -160,8 +162,9 @@ public final class DashScopeAgent extends Agent {
         return new ChatResponse(List.of(generation));
     }
 
-    private DashScopeAgentOptions mergeOptions(ChatOptions chatOptions) {
-        DashScopeAgentOptions agentOptions = ModelOptionsUtils.copyToTarget(chatOptions, ChatOptions.class, DashScopeAgentOptions.class);
+    private DashScopeAgentOptions mergeOptions(@Nullable ChatOptions chatOptions) {
+        DashScopeAgentOptions agentOptions = chatOptions == null ? null
+                : ModelOptionsUtils.copyToTarget(chatOptions, ChatOptions.class, DashScopeAgentOptions.class);
         return ModelOptionsUtils.merge(agentOptions, this.defaultOptions, DashScopeAgentOptions.class);
     }
 
@@ -180,7 +183,7 @@ public final class DashScopeAgent extends Agent {
 
     public static class Builder {
 
-        private DashScopeAgentApi dashScopeAgentApi;
+        private @Nullable DashScopeAgentApi dashScopeAgentApi;
 
         private DashScopeAgentOptions defaultOptions = DashScopeAgentOptions.builder().build();
 
@@ -192,17 +195,21 @@ public final class DashScopeAgent extends Agent {
             this.defaultOptions = agent.defaultOptions;
         }
 
-        public Builder dashScopeAgentApi(DashScopeAgentApi dashScopeAgentApi) {
+        public Builder dashScopeAgentApi(@Nullable DashScopeAgentApi dashScopeAgentApi) {
             this.dashScopeAgentApi = dashScopeAgentApi;
             return this;
         }
 
-        public Builder defaultOptions(DashScopeAgentOptions defaultOptions) {
-            this.defaultOptions = defaultOptions;
+        public Builder defaultOptions(@Nullable DashScopeAgentOptions defaultOptions) {
+            this.defaultOptions = defaultOptions != null ? defaultOptions : DashScopeAgentOptions.builder().build();
             return this;
         }
 
         public DashScopeAgent build() {
+            DashScopeAgentApi dashScopeAgentApi = Objects.requireNonNull(this.dashScopeAgentApi,
+                    "dashScopeAgentApi cannot be null");
+            DashScopeAgentOptions defaultOptions = this.defaultOptions != null ? this.defaultOptions
+                    : DashScopeAgentOptions.builder().build();
             return new DashScopeAgent(dashScopeAgentApi, defaultOptions);
         }
 

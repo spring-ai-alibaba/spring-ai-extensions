@@ -20,6 +20,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Rich result type for Gummy translation-recognition models (long-speech and chat) via WebSocket.
@@ -58,14 +59,14 @@ public record TranslationRecognitionResult(
 	/**
 	 * Convenience: get the source-language transcription text.
 	 */
-	public String getTranscriptionText() {
+	public @Nullable String getTranscriptionText() {
 		return transcription != null ? transcription.text() : null;
 	}
 
 	/**
 	 * Convenience: get translation text for a specific target language.
 	 */
-	public String getTranslationText(String language) {
+	public @Nullable String getTranslationText(String language) {
 		if (translations == null) {
 			return null;
 		}

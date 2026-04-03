@@ -20,6 +20,7 @@ import com.alibaba.cloud.ai.parser.apache.pdfbox.PagePdfDocumentParser;
 import com.alibaba.cloud.ai.reader.arxiv.client.ArxivClient;
 import com.alibaba.cloud.ai.reader.arxiv.client.ArxivResult;
 import com.alibaba.cloud.ai.reader.arxiv.client.ArxivSearch;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
@@ -108,7 +109,7 @@ public class ArxivDocumentReader implements DocumentReader {
 	/**
 	 * Add non-null value to metadata map
 	 */
-	private void addIfNotNull(Map<String, Object> metadata, String key, Object value) {
+	private void addIfNotNull(Map<String, Object> metadata, String key, @Nullable Object value) {
 		if (value != null) {
 			metadata.put(key, value);
 		}
@@ -117,7 +118,7 @@ public class ArxivDocumentReader implements DocumentReader {
 	/**
 	 * Add non-empty collection to metadata map
 	 */
-	private void addIfNotEmpty(Map<String, Object> metadata, String key, List<?> value) {
+	private void addIfNotEmpty(Map<String, Object> metadata, String key, @Nullable List<?> value) {
 		if (value != null && !value.isEmpty()) {
 			metadata.put(key, value);
 		}

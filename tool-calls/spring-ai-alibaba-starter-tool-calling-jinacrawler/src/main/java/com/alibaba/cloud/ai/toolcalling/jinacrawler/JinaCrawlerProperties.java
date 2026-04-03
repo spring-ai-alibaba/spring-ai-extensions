@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.toolcalling.jinacrawler;
 
 import com.alibaba.cloud.ai.toolcalling.common.CommonToolCallProperties;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.http.MediaType;
 
@@ -29,31 +30,31 @@ public class JinaCrawlerProperties extends CommonToolCallProperties {
 
 	private MediaType accept = MediaType.asMediaType(MediaType.APPLICATION_JSON);
 
-	private String targetSelector;
+	private @Nullable String targetSelector;
 
-	private String waitForSelector;
+	private @Nullable String waitForSelector;
 
-	private String removeSelector;
+	private @Nullable String removeSelector;
 
-	private String retainImages;
+	private @Nullable String retainImages;
 
-	private Boolean withLinksSummary;
+	private @Nullable Boolean withLinksSummary;
 
-	private Boolean withImagesSummary;
+	private @Nullable Boolean withImagesSummary;
 
-	private String setCookie;
+	private @Nullable String setCookie;
 
-	private Boolean withGeneratedAlt;
+	private @Nullable Boolean withGeneratedAlt;
 
-	private String proxyUrl;
+	private @Nullable String proxyUrl;
 
-	private Boolean noCache;
+	private @Nullable Boolean noCache;
 
-	private String locale;
+	private @Nullable String locale;
 
-	private Boolean withIframe;
+	private @Nullable Boolean withIframe;
 
-	private Boolean withShadowDom;
+	private @Nullable Boolean withShadowDom;
 
 	public MediaType getAccept() {
 		return accept;
@@ -63,107 +64,107 @@ public class JinaCrawlerProperties extends CommonToolCallProperties {
 		this.accept = accept;
 	}
 
-	public String getTargetSelector() {
+	public @Nullable String getTargetSelector() {
 		return targetSelector;
 	}
 
-	public void setTargetSelector(String targetSelector) {
+	public void setTargetSelector(@Nullable String targetSelector) {
 		this.targetSelector = targetSelector;
 	}
 
-	public String getWaitForSelector() {
+	public @Nullable String getWaitForSelector() {
 		return waitForSelector;
 	}
 
-	public void setWaitForSelector(String waitForSelector) {
+	public void setWaitForSelector(@Nullable String waitForSelector) {
 		this.waitForSelector = waitForSelector;
 	}
 
-	public String getRemoveSelector() {
+	public @Nullable String getRemoveSelector() {
 		return removeSelector;
 	}
 
-	public void setRemoveSelector(String removeSelector) {
+	public void setRemoveSelector(@Nullable String removeSelector) {
 		this.removeSelector = removeSelector;
 	}
 
-	public String getRetainImages() {
+	public @Nullable String getRetainImages() {
 		return retainImages;
 	}
 
-	public void setRetainImages(String retainImages) {
+	public void setRetainImages(@Nullable String retainImages) {
 		this.retainImages = retainImages;
 	}
 
-	public Boolean getWithLinksSummary() {
+	public @Nullable Boolean getWithLinksSummary() {
 		return withLinksSummary;
 	}
 
-	public void setWithLinksSummary(Boolean withLinksSummary) {
+	public void setWithLinksSummary(@Nullable Boolean withLinksSummary) {
 		this.withLinksSummary = withLinksSummary;
 	}
 
-	public Boolean getWithImagesSummary() {
+	public @Nullable Boolean getWithImagesSummary() {
 		return withImagesSummary;
 	}
 
-	public void setWithImagesSummary(Boolean withImagesSummary) {
+	public void setWithImagesSummary(@Nullable Boolean withImagesSummary) {
 		this.withImagesSummary = withImagesSummary;
 	}
 
-	public String getSetCookie() {
+	public @Nullable String getSetCookie() {
 		return setCookie;
 	}
 
-	public void setSetCookie(String setCookie) {
+	public void setSetCookie(@Nullable String setCookie) {
 		this.setCookie = setCookie;
 	}
 
-	public Boolean getWithGeneratedAlt() {
+	public @Nullable Boolean getWithGeneratedAlt() {
 		return withGeneratedAlt;
 	}
 
-	public void setWithGeneratedAlt(Boolean withGeneratedAlt) {
+	public void setWithGeneratedAlt(@Nullable Boolean withGeneratedAlt) {
 		this.withGeneratedAlt = withGeneratedAlt;
 	}
 
-	public String getProxyUrl() {
+	public @Nullable String getProxyUrl() {
 		return proxyUrl;
 	}
 
-	public void setProxyUrl(String proxyUrl) {
+	public void setProxyUrl(@Nullable String proxyUrl) {
 		this.proxyUrl = proxyUrl;
 	}
 
-	public Boolean getNoCache() {
+	public @Nullable Boolean getNoCache() {
 		return noCache;
 	}
 
-	public void setNoCache(Boolean noCache) {
+	public void setNoCache(@Nullable Boolean noCache) {
 		this.noCache = noCache;
 	}
 
-	public String getLocale() {
+	public @Nullable String getLocale() {
 		return locale;
 	}
 
-	public void setLocale(String locale) {
+	public void setLocale(@Nullable String locale) {
 		this.locale = locale;
 	}
 
-	public Boolean getWithIframe() {
+	public @Nullable Boolean getWithIframe() {
 		return withIframe;
 	}
 
-	public void setWithIframe(Boolean withIframe) {
+	public void setWithIframe(@Nullable Boolean withIframe) {
 		this.withIframe = withIframe;
 	}
 
-	public Boolean getWithShadowDom() {
+	public @Nullable Boolean getWithShadowDom() {
 		return withShadowDom;
 	}
 
-	public void setWithShadowDom(Boolean withShadowDom) {
+	public void setWithShadowDom(@Nullable Boolean withShadowDom) {
 		this.withShadowDom = withShadowDom;
 	}
 

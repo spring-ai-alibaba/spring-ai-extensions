@@ -26,6 +26,8 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import org.jspecify.annotations.Nullable;
+
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -118,7 +120,7 @@ public class Mem0ServiceClient {
 				mem0server.getProject()
 						.setCustomCategories(this.loadPrompt(mem0server.getProject().getCustomCategories()));
 			}
-			if (Objects.nonNull(mem0server.getVectorStore())) {
+			if (Objects.nonNull(mem0server.getGraphStore())) {
 				mem0server.getGraphStore()
 						.setCustomPrompt(this.loadPrompt(mem0server.getGraphStore().getCustomPrompt()));
 			}
@@ -215,7 +217,7 @@ public class Mem0ServiceClient {
 	/**
 	 * Get all memory
 	 */
-	public Mem0ServerResp getAllMemories(String userId, String runId, String agentId) {
+	public Mem0ServerResp getAllMemories(@Nullable String userId, @Nullable String runId, @Nullable String agentId) {
 		try {
 			String response = webClient.get().uri(uriBuilder -> {
 						uriBuilder.path(MEMORIES_ENDPOINT);
@@ -250,7 +252,7 @@ public class Mem0ServiceClient {
 	/**
 	 * Get single memory
 	 */
-	public Mem0ServerResp getMemory(String memoryId) {
+	public @Nullable Mem0ServerResp getMemory(String memoryId) {
 		try {
 			String response = webClient.get()
 					.uri(MEMORIES_ENDPOINT + "/{memoryId}", memoryId)
@@ -450,7 +452,7 @@ public class Mem0ServiceClient {
 	/**
 	 * Delete all memory
 	 */
-	public void deleteAllMemories(String userId, String runId, String agentId) {
+	public void deleteAllMemories(@Nullable String userId, @Nullable String runId, @Nullable String agentId) {
 		try {
 			webClient.delete().uri(uriBuilder -> {
 						uriBuilder.path(MEMORIES_ENDPOINT);
@@ -495,7 +497,7 @@ public class Mem0ServiceClient {
 		}
 	}
 
-	public String loadPrompt(String classPath) throws Exception {
+	public @Nullable String loadPrompt(@Nullable String classPath) throws Exception {
 		if (StringUtils.hasText(classPath)) {
 			Resource resource = resourceLoader.getResource(classPath);
 			if (!resource.exists()) {

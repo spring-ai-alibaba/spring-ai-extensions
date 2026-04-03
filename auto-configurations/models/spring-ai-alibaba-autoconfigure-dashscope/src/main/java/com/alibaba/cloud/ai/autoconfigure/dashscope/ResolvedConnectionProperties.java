@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 
 /**
@@ -26,7 +27,7 @@ import org.springframework.http.HttpHeaders;
 public record ResolvedConnectionProperties(
 		String baseUrl,
 		String apiKey,
-		String workspaceId,
+		@Nullable String workspaceId,
 		HttpHeaders headers
 ) { }
 // @formatter:on

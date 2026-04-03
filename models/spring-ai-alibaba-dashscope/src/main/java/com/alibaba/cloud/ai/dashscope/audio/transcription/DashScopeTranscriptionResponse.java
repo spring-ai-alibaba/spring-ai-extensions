@@ -26,10 +26,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.transcription.AudioTranscription;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yingzi
@@ -38,7 +40,7 @@ import java.util.List;
 
 public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
 
-    private final DashScopeAudioTranscription transcription;
+    private final @Nullable DashScopeAudioTranscription transcription;
 
     private final DashScopeAudioTranscriptionResponseMetadata metadata;
 
@@ -56,8 +58,7 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
 
     @NonNull
     public DashScopeAudioTranscription getResult() {
-        assert this.transcription != null;
-        return this.transcription;
+        return Objects.requireNonNull(this.transcription, "transcription must not be null");
     }
 
     public DashScopeAudioTranscriptionResponseMetadata getMetadata() {
@@ -71,7 +72,7 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
         private String text;
 
         @JsonProperty("metadata")
-        private DashScopeAudioTranscriptionMetadata metadata;
+        private @Nullable DashScopeAudioTranscriptionMetadata metadata;
 
         @JsonCreator
         public DashScopeAudioTranscription(@JsonProperty("text") @JsonAlias("transcript") String text) {
@@ -79,11 +80,12 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
             this.text = text;
         }
 
-        public void setMetadata(DashScopeAudioTranscriptionMetadata metadata) {
+        public void setMetadata(@Nullable DashScopeAudioTranscriptionMetadata metadata) {
             this.metadata = metadata;
         }
 
-        public DashScopeAudioTranscriptionMetadata withTranscriptionMetadata(DashScopeAudioTranscriptionMetadata metadata) {
+        public @Nullable DashScopeAudioTranscriptionMetadata withTranscriptionMetadata(
+                @Nullable DashScopeAudioTranscriptionMetadata metadata) {
             return this.metadata = metadata;
         }
 
@@ -91,11 +93,10 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
             return text;
         }
 
-        public DashScopeAudioTranscriptionMetadata getMetadata() {
+        public @Nullable DashScopeAudioTranscriptionMetadata getMetadata() {
             return metadata;
         }
 
     }
 
 }
-

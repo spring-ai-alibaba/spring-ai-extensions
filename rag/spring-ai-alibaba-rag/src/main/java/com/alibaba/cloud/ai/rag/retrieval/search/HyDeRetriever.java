@@ -29,6 +29,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -55,7 +56,7 @@ public class HyDeRetriever implements DocumentRetriever {
     private final HyDeTransformer hyDeTransformer;
 
     public HyDeRetriever(@Nullable HyDeTransformer hyDeTransformer, @Nullable VectorStore vectorStore, @Nullable Double similarityThreshold,
-                         @Nullable Integer topK, Supplier<Filter.Expression> filterExpression) {
+                         @Nullable Integer topK, @Nullable Supplier<Filter.Expression> filterExpression) {
         Assert.notNull(hyDeTransformer, "hyDeTransformer must not be null");
         Assert.notNull(vectorStore, "vectorStore cannot be null");
         this.hyDeTransformer = hyDeTransformer;
@@ -112,15 +113,15 @@ public class HyDeRetriever implements DocumentRetriever {
 
     public static final class Builder {
 
-        private VectorStore vectorStore;
+        private @Nullable VectorStore vectorStore;
 
         private Double similarityThreshold = SearchRequest.SIMILARITY_THRESHOLD_ACCEPT_ALL;
 
         private Integer topK = SearchRequest.DEFAULT_TOP_K;
 
-        private Supplier<Filter.Expression> filterExpression;
+        private @Nullable Supplier<Filter.Expression> filterExpression;
 
-        private HyDeTransformer hyDeTransformer;
+        private @Nullable HyDeTransformer hyDeTransformer;
 
         private Builder() {
         }
@@ -147,19 +148,21 @@ public class HyDeRetriever implements DocumentRetriever {
             return this;
         }
 
-        public Builder filterExpression(Supplier<Filter.Expression> filterExpression) {
+        public Builder filterExpression(@Nullable Supplier<Filter.Expression> filterExpression) {
             this.filterExpression = filterExpression;
             return this;
         }
 
-        public Builder hyDeTransformer(HyDeTransformer hyDeTransformer) {
+        public Builder hyDeTransformer(@Nullable HyDeTransformer hyDeTransformer) {
             Assert.notNull(hyDeTransformer, "hyDeTransformer must not be null");
             this.hyDeTransformer = hyDeTransformer;
             return this;
         }
 
         public HyDeRetriever build() {
-            return new HyDeRetriever(hyDeTransformer, vectorStore, similarityThreshold, topK, filterExpression);
+            return new HyDeRetriever(Objects.requireNonNull(hyDeTransformer, "hyDeTransformer must not be null"),
+                    Objects.requireNonNull(vectorStore, "vectorStore must not be null"), similarityThreshold, topK,
+                    filterExpression);
         }
     }
 }

@@ -22,7 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
+import org.springframework.util.StringUtils;
 
 /**
  * @author 北极星
@@ -43,17 +45,18 @@ public class YuqueQueryBookService
 
 	@Override
 	public QueryBookResponse apply(QueryBookRequest queryBookRequest) {
-		if (queryBookRequest == null || queryBookRequest.bookId == null) {
-			return null;
+		if (queryBookRequest == null || !StringUtils.hasText(queryBookRequest.bookId)) {
+			throw new IllegalArgumentException("Yuque query book request bookId must not be empty");
 		}
 		String uri = "/repos/" + queryBookRequest.bookId + "/docs";
 		try {
-			String json = webClientTool.get(uri).block();
+			String json = Objects.requireNonNull(webClientTool.get(uri).block(),
+					"Yuque query book API returned empty response");
 			return jsonParseTool.jsonToObject(json, QueryBookResponse.class);
 		}
 		catch (Exception e) {
 			logger.error("Failed to query the Yuque book.", e);
-			return null;
+			throw new RuntimeException("Failed to query the Yuque book", e);
 		}
 	}
 

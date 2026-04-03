@@ -16,6 +16,7 @@
 
 package com.alibaba.cloud.ai.model.chat.memory.mongodb.autoconfigure;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -39,12 +40,12 @@ public class MongoDBChatMemoryProperties {
 	/**
 	 * mongodb userName.
 	 */
-	private String userName;
+	private @Nullable String userName;
 
 	/**
 	 * mongodb password.
 	 */
-	private String password;
+	private @Nullable String password;
 
 	/**
 	 * mongodb authDatabaseName.
@@ -72,19 +73,19 @@ public class MongoDBChatMemoryProperties {
 		this.port = port;
 	}
 
-	public String getUserName() {
+	public @Nullable String getUserName() {
 		return userName;
 	}
 
-	public void setUserName(String userName) {
+	public void setUserName(@Nullable String userName) {
 		this.userName = userName;
 	}
 
-	public String getPassword() {
+	public @Nullable String getPassword() {
 		return password;
 	}
 
-	public void setPassword(String password) {
+	public void setPassword(@Nullable String password) {
 		this.password = password;
 	}
 

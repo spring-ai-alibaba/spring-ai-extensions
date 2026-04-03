@@ -22,6 +22,7 @@ import com.alibaba.dashscope.embeddings.TextEmbeddingResult;
 import com.alibaba.dashscope.embeddings.TextEmbeddingResultItem;
 import com.alibaba.dashscope.embeddings.TextEmbeddingUsage;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.metadata.EmptyUsage;
 import org.springframework.ai.chat.metadata.Usage;
@@ -76,9 +77,9 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 
 	private final ObservationRegistry observationRegistry;
 
-	private final String apiKey;
+	private final @Nullable String apiKey;
 
-	private final String workspaceId;
+	private final @Nullable String workspaceId;
 
 	private final Map<String, String> connectionHeaders;
 
@@ -86,7 +87,7 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 
 	public DashScopeSdkEmbeddingModel(DashScopeSdkTextEmbeddingClient embeddingClient,
 			DashScopeSdkEmbeddingOptions defaultOptions, MetadataMode metadataMode, RetryTemplate retryTemplate,
-			ObservationRegistry observationRegistry, String apiKey, String workspaceId,
+			ObservationRegistry observationRegistry, @Nullable String apiKey, @Nullable String workspaceId,
 			Map<String, String> connectionHeaders) {
 
 		Assert.notNull(embeddingClient, "embeddingClient cannot be null");
@@ -149,6 +150,7 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 				.dimensions(ModelOptionsUtils.mergeOption(runtimeOptions.getDimensions(), this.defaultOptions.getDimensions()))
 				.textType(ModelOptionsUtils.mergeOption(runtimeOptions.getTextType(), this.defaultOptions.getTextType()))
 				.build();
+		requestOptions = java.util.Objects.requireNonNull(requestOptions);
 
 		if (runtimeOptions != null && !CollectionUtils.isEmpty(runtimeOptions.getHttpHeaders())) {
 			requestOptions.setHttpHeaders(runtimeOptions.getHttpHeaders());
@@ -162,9 +164,12 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 
 	private TextEmbeddingParam createRequest(EmbeddingRequest request) {
 		DashScopeSdkEmbeddingOptions requestOptions = (DashScopeSdkEmbeddingOptions) request.getOptions();
+		Assert.notNull(requestOptions, "DashScopeSdkEmbeddingOptions cannot be null");
+		String model = java.util.Objects.requireNonNull(requestOptions.getModel(),
+				"DashScopeSdkEmbeddingOptions model cannot be null");
 
 		TextEmbeddingParam.TextEmbeddingParamBuilder<?, ?> builder = TextEmbeddingParam.builder()
-			.model(requestOptions.getModel())
+			.model(model)
 			.texts(request.getInstructions());
 
 		if (StringUtils.hasText(requestOptions.getTextType())) {
@@ -225,7 +230,7 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 		return new EmbeddingResponse(embeddings, metadata);
 	}
 
-	private TextEmbeddingParam.TextType toTextType(String textType) {
+	private TextEmbeddingParam.@Nullable TextType toTextType(@Nullable String textType) {
 		if (!StringUtils.hasText(textType)) {
 			return null;
 		}
@@ -275,7 +280,7 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 	}
 
 	public DashScopeSdkEmbeddingOptions getDefaultOptions() {
-		return DashScopeSdkEmbeddingOptions.fromOptions(this.defaultOptions);
+		return java.util.Objects.requireNonNull(DashScopeSdkEmbeddingOptions.fromOptions(this.defaultOptions));
 	}
 
 	public void setObservationConvention(EmbeddingModelObservationConvention observationConvention) {
@@ -310,9 +315,9 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 
 		private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
-		private String apiKey;
+		private @Nullable String apiKey;
 
-		private String workspaceId;
+		private @Nullable String workspaceId;
 
 		private Map<String, String> connectionHeaders = new HashMap<>();
 
@@ -355,12 +360,12 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 			return this;
 		}
 
-		public Builder apiKey(String apiKey) {
+		public Builder apiKey(@Nullable String apiKey) {
 			this.apiKey = apiKey;
 			return this;
 		}
 
-		public Builder workspaceId(String workspaceId) {
+		public Builder workspaceId(@Nullable String workspaceId) {
 			this.workspaceId = workspaceId;
 			return this;
 		}

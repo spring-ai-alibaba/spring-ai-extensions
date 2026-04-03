@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.alibaba.cloud.ai.document.DocumentWithScore;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.model.ModelResponse;
 import org.springframework.util.CollectionUtils;
 
@@ -47,7 +48,7 @@ public class RerankResponse implements ModelResponse<DocumentWithScore> {
 	}
 
 	@Override
-	public DocumentWithScore getResult() {
+	public @Nullable DocumentWithScore getResult() {
 		if (CollectionUtils.isEmpty(this.documents)) {
 			return null;
 		}

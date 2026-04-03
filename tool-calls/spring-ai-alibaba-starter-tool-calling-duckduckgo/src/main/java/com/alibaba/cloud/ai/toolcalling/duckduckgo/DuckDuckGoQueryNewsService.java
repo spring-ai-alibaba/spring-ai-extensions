@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -34,7 +35,8 @@ import java.util.function.Function;
  * @author sixiyida
  */
 public class DuckDuckGoQueryNewsService
-		implements Function<DuckDuckGoQueryNewsService.DuckDuckGoQueryNewsRequest, Map<String, Object>> {
+		implements Function<DuckDuckGoQueryNewsService.@Nullable DuckDuckGoQueryNewsRequest,
+				@Nullable Map<String, Object>> {
 
 	private static final Logger logger = LoggerFactory.getLogger(DuckDuckGoQueryNewsService.class);
 
@@ -48,8 +50,8 @@ public class DuckDuckGoQueryNewsService
 	}
 
 	@Override
-	public Map<String, Object> apply(DuckDuckGoQueryNewsRequest request) {
-		if (CommonToolCallUtils.isInvalidateRequestParams(request, request.query)) {
+	public @Nullable Map<String, Object> apply(@Nullable DuckDuckGoQueryNewsRequest request) {
+		if (request == null || CommonToolCallUtils.isInvalidateRequestParams(request.query())) {
 			return null;
 		}
 		return CommonToolCallUtils.handleServiceError("DuckDuckGo", () -> {

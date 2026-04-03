@@ -15,7 +15,10 @@
  */
 package com.alibaba.cloud.ai.memory.jdbc;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.util.Objects;
 
 /**
  * auth: dahua
@@ -37,15 +40,15 @@ public class H2ChatMemoryRepository extends JdbcChatMemoryRepository {
 
 	public static class H2Builder {
 
-		private JdbcTemplate jdbcTemplate;
+		private @Nullable JdbcTemplate jdbcTemplate;
 
-		public H2ChatMemoryRepository.H2Builder jdbcTemplate(JdbcTemplate jdbcTemplate) {
+		public H2ChatMemoryRepository.H2Builder jdbcTemplate(@Nullable JdbcTemplate jdbcTemplate) {
 			this.jdbcTemplate = jdbcTemplate;
 			return this;
 		}
 
 		public H2ChatMemoryRepository build() {
-			return new H2ChatMemoryRepository(this.jdbcTemplate);
+			return new H2ChatMemoryRepository(Objects.requireNonNull(this.jdbcTemplate, "jdbcTemplate must not be null"));
 		}
 
 	}

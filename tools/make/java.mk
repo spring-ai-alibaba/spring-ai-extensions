@@ -44,3 +44,8 @@ spotless-apply: ## Run spotless and apply changes
 checkstyle-check: ## Checkstyle Check the code and output to target/checkstyle-report.xml
 	@$(LOG_TARGET)
 	mvnd -Dmvnd.connectTimeout=30000 -Dcheckstyle.skip=false -Dcheckstyle.output.file=checkstyle-report.xml checkstyle:check
+
+.PHONY: compile-for-nullaway
+compile-for-nullaway: ## Compile the code with nullaway to check for nullability issues
+	@$(LOG_TARGET)
+	mvnd clean compile -Dmaven.test.skip=true

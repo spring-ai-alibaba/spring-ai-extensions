@@ -23,11 +23,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -67,7 +69,9 @@ public class BaiduAiSearchService
 			throw new RuntimeException("Service Api Key is Invalid.");
 		}
 		try {
-			String responseStr = webClientTool.post("/v2/ai_search/chat/completions", request).block();
+			String responseStr = Objects.requireNonNull(
+					webClientTool.post("/v2/ai_search/chat/completions", request).block(),
+					"Baidu AI search response must not be null");
 			log.debug("Response: {}", responseStr);
 			return jsonParseTool.jsonToObject(responseStr, Response.class);
 		}
@@ -89,36 +93,36 @@ public class BaiduAiSearchService
 							lite: Standard version, a simplified version of the full version with better latency performance, but slightly weaker effect.""") String edition,
 			@JsonProperty(value = "search_source",
 					defaultValue = "baidu_search_v2") @JsonPropertyDescription("Search engine version used; fixed value: baidu_search_v2") String searchSource,
-			@JsonProperty(
-					value = "resource_type_filter") @JsonPropertyDescription("""
+				@JsonProperty(
+						value = "resource_type_filter") @JsonPropertyDescription("""
 							Support setting web, video, image, and Aladdin search modalities. The maximum value of top_k for web is 50, for video is 10, for image is 30, and for Aladdin is 5. The default value is:
 							[{"type": "web","top_k": 20},{"type": "video","top_k": 0},{"type": "image","top_k": 0},{"type": "aladdin","top_k": 0}]
 							Notes when using Aladdin:
-							1. Aladdin does not support site and timeliness filtering.
-							2. It is recommended to use it with web modality to increase the number of search returns.
-							3. Aladdin's return parameters are in beta version and may change in the future.""") List<SearchResource> resourceTypeFilter,
-			@JsonProperty(
-					value = "search_filter") @JsonPropertyDescription("Filter retrieval based on conditions") SearchFilter searchFilter,
-			@JsonProperty(
-					value = "block_websites") @JsonPropertyDescription("List of sites to be blocked") List<String> blockWebsites,
-			@JsonProperty(value = "search_recency_filter") @JsonPropertyDescription("""
-					Filter by web page publication time.
+								1. Aladdin does not support site and timeliness filtering.
+								2. It is recommended to use it with web modality to increase the number of search returns.
+								3. Aladdin's return parameters are in beta version and may change in the future.""") List<SearchResource> resourceTypeFilter,
+				@JsonProperty(
+						value = "search_filter") @JsonPropertyDescription("Filter retrieval based on conditions") @Nullable SearchFilter searchFilter,
+				@JsonProperty(
+						value = "block_websites") @JsonPropertyDescription("List of sites to be blocked") @Nullable List<String> blockWebsites,
+				@JsonProperty(value = "search_recency_filter") @JsonPropertyDescription("""
+						Filter by web page publication time.
 					Enumeration values:
-					week: Last 7 days
-					month: Last 30 days
-					semiyear: Last 180 days
-					year: Last 365 days""") String searchRecencyFilter) implements SearchService.Request {
+						week: Last 7 days
+						month: Last 30 days
+						semiyear: Last 180 days
+						year: Last 365 days""") @Nullable String searchRecencyFilter) implements SearchService.Request {
 
 		@Override
 		public String getQuery() {
-			if (messages != null && !messages.isEmpty()) {
-				Message lastMessage = messages.get(messages.size() - 1);
-				if ("user".equals(lastMessage.role)) {
-					return lastMessage.content;
+				if (messages != null && !messages.isEmpty()) {
+					Message lastMessage = messages.get(messages.size() - 1);
+					if ("user".equals(lastMessage.role)) {
+						return lastMessage.content;
+					}
 				}
+				return "";
 			}
-			return null;
-		}
 
 		public static Request simplyQuery(String query) {
 			return new Request(List.of(new Message("user", query)), "standard", "baidu_search_v2",

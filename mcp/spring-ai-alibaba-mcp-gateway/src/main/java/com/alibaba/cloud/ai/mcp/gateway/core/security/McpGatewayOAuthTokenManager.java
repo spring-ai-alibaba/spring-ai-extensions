@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.mcp.gateway.core.security;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -30,6 +31,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * OAuth Token管理器 负责Token的获取、缓存和刷新
@@ -44,7 +46,7 @@ public class McpGatewayOAuthTokenManager {
 
 	private final ObjectMapper objectMapper;
 
-	private volatile CachedToken cachedToken;
+	private volatile @Nullable CachedToken cachedToken;
 
 	private final static Integer DEFAULT_EXPIRED_TIME = 3600;
 
@@ -83,23 +85,26 @@ public class McpGatewayOAuthTokenManager {
 	 */
 	private Mono<String> fetchNewToken() {
 		McpGatewayOAuthProperties.OAuthProvider provider = oauthProperties.getProvider();
-		if (provider == null) {
-			return Mono.error(new IllegalArgumentException("OAuth 未配置"));
-		}
+		String grantType = Objects.requireNonNull(provider.getGrantType(), "OAuth grantType must not be null");
+		String clientId = Objects.requireNonNull(provider.getClientId(), "OAuth clientId must not be null");
+		String clientSecret = Objects.requireNonNull(provider.getClientSecret(),
+				"OAuth clientSecret must not be null");
+		String tokenUri = Objects.requireNonNull(provider.getTokenUri(), "OAuth tokenUri must not be null");
 
 		logger.info("获取新的访问token");
 
 		MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-		formData.add("grant_type", provider.getGrantType());
-		formData.add("client_id", provider.getClientId());
-		formData.add("client_secret", provider.getClientSecret());
+		formData.add("grant_type", grantType);
+		formData.add("client_id", clientId);
+		formData.add("client_secret", clientSecret);
 
-		if (StringUtils.hasText(provider.getScope())) {
-			formData.add("scope", provider.getScope());
+		String scope = provider.getScope();
+		if (StringUtils.hasText(scope)) {
+			formData.add("scope", scope);
 		}
 
 		return webClient.post()
-			.uri(provider.getTokenUri())
+			.uri(tokenUri)
 			.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 			.body(BodyInserters.fromFormData(formData))
 			.retrieve()
@@ -119,21 +124,22 @@ public class McpGatewayOAuthTokenManager {
 	private String parseTokenResponse(String responseBody) {
 		try {
 			TokenResponse tokenResponse = objectMapper.readValue(responseBody, TokenResponse.class);
+			String accessToken = Objects.requireNonNull(tokenResponse.getAccessToken(), "响应中未找到访问token");
 
-			if (!StringUtils.hasText(tokenResponse.getAccessToken())) {
+			if (!StringUtils.hasText(accessToken)) {
 				throw new RuntimeException("响应中未找到访问token");
 			}
 
 			// 缓存Token
 			if (oauthProperties.getTokenCache().isEnabled()) {
-				cachedToken = new CachedToken(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken(),
-						Instant.now()
-							.plusSeconds(tokenResponse.getExpiresIn() != null ? tokenResponse.getExpiresIn() : DEFAULT_EXPIRED_TIME),
+				Long expiresIn = tokenResponse.getExpiresIn();
+				cachedToken = new CachedToken(accessToken, tokenResponse.getRefreshToken(), Instant.now()
+					.plusSeconds(expiresIn != null ? expiresIn : DEFAULT_EXPIRED_TIME),
 						tokenResponse.getTokenType());
 				logger.debug("缓存访问token");
 			}
 
-			return tokenResponse.getAccessToken();
+			return accessToken;
 		}
 		catch (Exception e) {
 			logger.error("解析token响应失败，响应内容: {}", responseBody, e);
@@ -145,12 +151,7 @@ public class McpGatewayOAuthTokenManager {
 	 * 检查Token是否即将过期
 	 */
 	private boolean isTokenExpiring(CachedToken cachedToken) {
-		if (cachedToken.getExpiresAt() == null) {
-			return false;
-		}
-
-		Instant refreshThreshold = cachedToken.getExpiresAt()
-			.minus(oauthProperties.getTokenCache().getRefreshBeforeExpiry());
+		Instant refreshThreshold = cachedToken.getExpiresAt().minus(oauthProperties.getTokenCache().getRefreshBeforeExpiry());
 
 		return Instant.now().isAfter(refreshThreshold);
 	}
@@ -191,57 +192,57 @@ public class McpGatewayOAuthTokenManager {
 	public static class TokenResponse {
 
 		@JsonProperty("access_token")
-		private String accessToken;
+		private @Nullable String accessToken;
 
 		@JsonProperty("refresh_token")
-		private String refreshToken;
+		private @Nullable String refreshToken;
 
 		@JsonProperty("expires_in")
-		private Long expiresIn;
+		private @Nullable Long expiresIn;
 
 		@JsonProperty("token_type")
-		private String tokenType;
+		private @Nullable String tokenType;
 
 		@JsonProperty("scope")
-		private String scope;
+		private @Nullable String scope;
 
-		public String getAccessToken() {
+		public @Nullable String getAccessToken() {
 			return accessToken;
 		}
 
-		public void setAccessToken(String accessToken) {
+		public void setAccessToken(@Nullable String accessToken) {
 			this.accessToken = accessToken;
 		}
 
-		public String getRefreshToken() {
+		public @Nullable String getRefreshToken() {
 			return refreshToken;
 		}
 
-		public void setRefreshToken(String refreshToken) {
+		public void setRefreshToken(@Nullable String refreshToken) {
 			this.refreshToken = refreshToken;
 		}
 
-		public Long getExpiresIn() {
+		public @Nullable Long getExpiresIn() {
 			return expiresIn;
 		}
 
-		public void setExpiresIn(Long expiresIn) {
+		public void setExpiresIn(@Nullable Long expiresIn) {
 			this.expiresIn = expiresIn;
 		}
 
-		public String getTokenType() {
+		public @Nullable String getTokenType() {
 			return tokenType;
 		}
 
-		public void setTokenType(String tokenType) {
+		public void setTokenType(@Nullable String tokenType) {
 			this.tokenType = tokenType;
 		}
 
-		public String getScope() {
+		public @Nullable String getScope() {
 			return scope;
 		}
 
-		public void setScope(String scope) {
+		public void setScope(@Nullable String scope) {
 			this.scope = scope;
 		}
 
@@ -254,13 +255,14 @@ public class McpGatewayOAuthTokenManager {
 
 		private final String accessToken;
 
-		private final String refreshToken;
+		private final @Nullable String refreshToken;
 
 		private final Instant expiresAt;
 
-		private final String tokenType;
+		private final @Nullable String tokenType;
 
-		public CachedToken(String accessToken, String refreshToken, Instant expiresAt, String tokenType) {
+		public CachedToken(String accessToken, @Nullable String refreshToken, Instant expiresAt,
+				@Nullable String tokenType) {
 			this.accessToken = accessToken;
 			this.refreshToken = refreshToken;
 			this.expiresAt = expiresAt;
@@ -271,7 +273,7 @@ public class McpGatewayOAuthTokenManager {
 			return accessToken;
 		}
 
-		public String getRefreshToken() {
+		public @Nullable String getRefreshToken() {
 			return refreshToken;
 		}
 
@@ -279,7 +281,7 @@ public class McpGatewayOAuthTokenManager {
 			return expiresAt;
 		}
 
-		public String getTokenType() {
+		public @Nullable String getTokenType() {
 			return tokenType;
 		}
 

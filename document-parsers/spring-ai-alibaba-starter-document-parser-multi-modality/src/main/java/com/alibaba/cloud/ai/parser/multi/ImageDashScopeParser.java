@@ -19,9 +19,10 @@ package com.alibaba.cloud.ai.parser.multi;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.Objects;
 
 import com.alibaba.cloud.ai.document.DocumentParser;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversation;
@@ -96,8 +97,10 @@ public class ImageDashScopeParser implements DocumentParser {
 				.message(userMessage)
 				.build();
 			MultiModalConversationResult result = conversation.call(param);
-			return List.of(new Document(
-					result.getOutput().getChoices().get(0).getMessage().getContent().get(0).get("text").toString()));
+			Object textContent = Objects.requireNonNull(
+					result.getOutput().getChoices().get(0).getMessage().getContent().get(0).get("text"),
+					"DashScope response missing text content");
+			return List.of(new Document(textContent.toString()));
 
 		}
 		catch (ApiException | NoApiKeyException | UploadFileException e) {

@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.reader.arxiv;
 
+import org.jspecify.annotations.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -57,7 +59,7 @@ public class ArxivResource {
 
 	private final int maxDocuments;
 
-	private Path tempFilePath;
+	private @Nullable Path tempFilePath;
 
 	public ArxivResource(String queryString, int maxDocuments) {
 		this.queryString = queryString;

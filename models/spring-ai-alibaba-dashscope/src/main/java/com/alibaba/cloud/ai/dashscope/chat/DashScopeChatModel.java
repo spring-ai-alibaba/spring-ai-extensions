@@ -39,6 +39,7 @@ import com.alibaba.cloud.ai.tool.validator.ToolCallValidator;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -194,7 +195,7 @@ public class DashScopeChatModel implements ChatModel {
 		return DashScopeChatOptions.fromOptions(this.defaultOptions);
 	}
 
-	public ChatResponse internalCall(Prompt prompt, ChatResponse previousChatResponse) {
+	public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
 		ChatCompletionRequest request = createRequest(prompt, false);
 
 		ChatModelObservationContext observationContext = ChatModelObservationContext.builder()
@@ -249,7 +250,7 @@ public class DashScopeChatModel implements ChatModel {
 	}
 
     // @formatter:off
-	public Flux<ChatResponse> internalStream(Prompt prompt, ChatResponse previousChatResponse) {
+	public Flux<ChatResponse> internalStream(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
 
         return Flux.deferContextual(contextView -> {
 			ChatCompletionRequest request = createRequest(prompt, true);
@@ -336,7 +337,7 @@ public class DashScopeChatModel implements ChatModel {
 		});
 	}
 
-	private static String finishReasonToMetadataValue(DashScopeApiSpec.ChatCompletionFinishReason finishReason) {
+	private static String finishReasonToMetadataValue(DashScopeApiSpec.@Nullable ChatCompletionFinishReason finishReason) {
 
         if (finishReason == null || finishReason == DashScopeApiSpec.ChatCompletionFinishReason.NULL) {
 			return "";
@@ -346,10 +347,10 @@ public class DashScopeChatModel implements ChatModel {
 	}
 
 	private ChatResponse toChatResponse(
-            ChatCompletion chatCompletion,
-            ChatResponse previousChatResponse,
-			ChatCompletionRequest request,
-            ConcurrentHashMap<String, String> roleMap
+            @Nullable ChatCompletion chatCompletion,
+            @Nullable ChatResponse previousChatResponse,
+				ChatCompletionRequest request,
+            @Nullable ConcurrentHashMap<String, String> roleMap
     ) {
 
 		if (chatCompletion == null) {
@@ -357,32 +358,40 @@ public class DashScopeChatModel implements ChatModel {
 			return new ChatResponse(List.of());
 		}
 
-		List<ChatCompletionOutput.Choice> choices = chatCompletion.output().choices();
-		if (choices == null) {
-			logger.warn("No choices returned");
-			return new ChatResponse(List.of());
-		}
-
-		// Dashscope searchInfos
-        DashScopeApiSpec.SearchInfo searchInfo = chatCompletion.output().searchInfo();
-
-		ConcurrentHashMap<String, String> finalRoleMap = roleMap == null ? new ConcurrentHashMap<>() : roleMap;
-
-		List<Generation> generations = choices.stream().map(choice -> {
-
-			if (choice.message().role() != null) {
-				finalRoleMap.putIfAbsent(chatCompletion.requestId(), choice.message().role().name());
+			ChatCompletionOutput output = chatCompletion.output();
+			if (output == null) {
+				logger.warn("No output returned");
+				return new ChatResponse(List.of());
 			}
 
-			// @formatter:off
-			Map<String, Object> metadata = Map.of(
-					"id", chatCompletion.requestId(),
-					"role", finalRoleMap.getOrDefault(chatCompletion.requestId(), ""),
-					"finishReason", finishReasonToMetadataValue(choice.finishReason()),
-					"reasoningContent", StringUtils.hasText(choice.message().reasoningContent()) ? choice.message().reasoningContent() : "",
-					"search_info", Objects.isNull(searchInfo) ? "" : searchInfo
-			);
-			// @formatter:on
+			List<ChatCompletionOutput.Choice> choices = output.choices();
+			if (choices == null) {
+				logger.warn("No choices returned");
+				return new ChatResponse(List.of());
+			}
+
+			// Dashscope searchInfos
+	        DashScopeApiSpec.SearchInfo searchInfo = output.searchInfo();
+
+			ConcurrentHashMap<String, String> finalRoleMap = roleMap == null ? new ConcurrentHashMap<>() : roleMap;
+
+			List<Generation> generations = choices.stream().map(choice -> {
+				ChatCompletionMessage choiceMessage = choice.message();
+				String requestId = chatCompletion.requestId() != null ? chatCompletion.requestId() : "";
+
+				if (choiceMessage != null && choiceMessage.role() != null && chatCompletion.requestId() != null) {
+					finalRoleMap.putIfAbsent(chatCompletion.requestId(), choiceMessage.role().name());
+				}
+
+				// @formatter:off
+				Map<String, Object> metadata = Map.of(
+						"id", requestId,
+						"role", requestId.isEmpty() ? "" : finalRoleMap.getOrDefault(requestId, ""),
+						"finishReason", finishReasonToMetadataValue(choice.finishReason()),
+						"reasoningContent", choiceMessage != null && StringUtils.hasText(choiceMessage.reasoningContent()) ? choiceMessage.reasoningContent() : "",
+						"search_info", Objects.isNull(searchInfo) ? "" : searchInfo
+				);
+				// @formatter:on
 			return buildGeneration(choice, metadata, request);
 		}).toList();
 
@@ -405,9 +414,11 @@ public class DashScopeChatModel implements ChatModel {
 
 	private Generation buildGeneration(Choice choice, Map<String, Object> metadata,
 			ChatCompletionRequest request) {
+		ChatCompletionMessage choiceMessage = choice.message();
 		// Use the validator to filter and validate tool calls
 		List<DashScopeApiSpec.ChatCompletionMessage.ToolCall> validatedToolCalls =
-				toolCallingValidator.validate(choice.message().toolCalls(), choice.finishReason());
+				toolCallingValidator.validate(choiceMessage != null ? choiceMessage.toolCalls() : null,
+						choice.finishReason());
 
 		List<AssistantMessage.ToolCall> toolCalls = validatedToolCalls.stream()
 				.map(toolCall -> new AssistantMessage.ToolCall(toolCall.id(), "function",
@@ -418,7 +429,7 @@ public class DashScopeChatModel implements ChatModel {
 		var generationMetadataBuilder = ChatGenerationMetadata.builder().finishReason(finishReason);
 
 		var assistantMessage = AssistantMessage.builder()
-			.content(choice.message().content())
+			.content(choiceMessage != null ? choiceMessage.content() : "")
 			.properties(metadata)
 			.toolCalls(toolCalls)
 			.build();
@@ -583,7 +594,9 @@ public class DashScopeChatModel implements ChatModel {
 			}
 		}).flatMap(List::stream).toList();
 
-		DashScopeChatOptions requestOptions = (DashScopeChatOptions) prompt.getOptions();
+		Assert.state(prompt.getOptions() instanceof DashScopeChatOptions,
+				"Prompt options must be DashScopeChatOptions");
+		DashScopeChatOptions requestOptions = (DashScopeChatOptions) Objects.requireNonNull(prompt.getOptions());
 
 		// Add the tool definitions to the request's tools parameter.
 		List<ToolDefinition> toolDefinitions = this.toolCallingManager.resolveToolDefinitions(requestOptions);
@@ -592,10 +605,13 @@ public class DashScopeChatModel implements ChatModel {
 		}
 
 		Boolean multiModel = requestOptions.getMultiModel();
+		String model = StringUtils.hasText(requestOptions.getModel()) ? requestOptions.getModel()
+				: this.defaultOptions.getModel();
+		Assert.hasText(model, "DashScope model must not be empty");
 
-		return new ChatCompletionRequest(requestOptions.getModel(),
+		return new ChatCompletionRequest(model,
 				new ChatCompletionRequestInput(chatCompletionMessages),
-				toDashScopeRequestParameter(requestOptions, stream), stream, multiModel);
+				toDashScopeRequestParameter(requestOptions, stream), stream, Boolean.TRUE.equals(multiModel));
 	}
 
 	private HttpHeaders getAdditionalHttpHeaders(Prompt prompt) {
@@ -615,7 +631,7 @@ public class DashScopeChatModel implements ChatModel {
 	 * @return A Map containing cache control settings, or null if not present.
 	 */
 	@SuppressWarnings("unchecked")
-	private Map<String, String> extractCacheControl(Message message) {
+	private @Nullable Map<String, String> extractCacheControl(Message message) {
 		if (message.getMetadata() == null) {
 			return null;
 		}
@@ -640,7 +656,7 @@ public class DashScopeChatModel implements ChatModel {
 		return null;
 	}
 
-	private List<MediaContent> convertMediaContent(UserMessage message, Map<String, String> cacheControl) {
+	private List<MediaContent> convertMediaContent(UserMessage message, @Nullable Map<String, String> cacheControl) {
 		MessageFormat format = MessageFormat.IMAGE;
 		if (message.getMetadata().get(DashScopeApiConstants.MESSAGE_FORMAT) instanceof MessageFormat messageFormat) {
 			format = messageFormat;
@@ -709,7 +725,7 @@ public class DashScopeChatModel implements ChatModel {
 		}).toList();
 	}
 
-	private ChatCompletionRequestParameter toDashScopeRequestParameter(DashScopeChatOptions options, boolean stream) {
+	private ChatCompletionRequestParameter toDashScopeRequestParameter(@Nullable DashScopeChatOptions options, boolean stream) {
 
 		if (options == null) {
 			return new ChatCompletionRequestParameter();
@@ -779,8 +795,8 @@ public class DashScopeChatModel implements ChatModel {
      * @param defaultExtraBody The default extra body
      * @return The merged extra body
      */
-    private Map<String, Object> mergeExtraBody(Map<String, Object> runtimeExtraBody,
-            Map<String, Object> defaultExtraBody) {
+	    private @Nullable Map<String, Object> mergeExtraBody(@Nullable Map<String, Object> runtimeExtraBody,
+	            @Nullable Map<String, Object> defaultExtraBody) {
         if (defaultExtraBody == null && runtimeExtraBody == null) {
             return null;
         }
@@ -834,7 +850,7 @@ public class DashScopeChatModel implements ChatModel {
 			this.toolCallValidator = dashScopeChatModel.toolCallingValidator;
 		}
 
-		private DashScopeApi dashScopeApi;
+		private @Nullable DashScopeApi dashScopeApi;
 
 		private DashScopeChatOptions defaultOptions = DashScopeChatOptions.builder()
 			.model(DEFAULT_MODEL_NAME)
@@ -850,7 +866,7 @@ public class DashScopeChatModel implements ChatModel {
 
 		private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
-		public Builder dashScopeApi(DashScopeApi dashScopeApi) {
+		public Builder dashScopeApi(@Nullable DashScopeApi dashScopeApi) {
 			this.dashScopeApi = dashScopeApi;
 			return this;
 		}
@@ -887,8 +903,10 @@ public class DashScopeChatModel implements ChatModel {
 		}
 
 		public DashScopeChatModel build() {
+			DashScopeApi dashScopeApi = this.dashScopeApi;
+			Assert.notNull(dashScopeApi, "dashScopeApi cannot be null");
 
-            return new DashScopeChatModel(this.dashScopeApi, this.defaultOptions, this.toolCallingManager,
+            return new DashScopeChatModel(dashScopeApi, this.defaultOptions, this.toolCallingManager,
                     this.retryTemplate, this.observationRegistry, this.toolExecutionEligibilityPredicate,
                     this.toolCallValidator);
 

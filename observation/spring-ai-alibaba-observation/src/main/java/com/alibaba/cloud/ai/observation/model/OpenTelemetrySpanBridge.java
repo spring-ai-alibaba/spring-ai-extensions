@@ -28,7 +28,7 @@ public final class OpenTelemetrySpanBridge {
 
 	private static final Logger logger = LoggerFactory.getLogger(OpenTelemetrySpanBridge.class);
 
-	private static Method toOtelMethod;
+	private static @Nullable Method toOtelMethod;
 
 	@Nullable
 	public static Span retrieveOtelSpan(TracingObservationHandler.@Nullable TracingContext tracingContext) {
@@ -36,17 +36,19 @@ public final class OpenTelemetrySpanBridge {
 			return null;
 		}
 
-		io.micrometer.tracing.Span micrometerSpan = tracingContext.getSpan();
+		io.micrometer.tracing.@Nullable Span micrometerSpan = tracingContext.getSpan();
+		if (micrometerSpan == null) {
+			return null;
+		}
 		try {
-			if (toOtelMethod == null) {
-				Method method = tracingContext.getSpan()
-					.getClass()
-					.getDeclaredMethod("toOtel", io.micrometer.tracing.Span.class);
+			Method method = toOtelMethod;
+			if (method == null) {
+				method = micrometerSpan.getClass().getDeclaredMethod("toOtel", io.micrometer.tracing.Span.class);
 				method.setAccessible(true);
 				toOtelMethod = method;
 			}
 
-			Object otelSpanObject = toOtelMethod.invoke(null, micrometerSpan);
+			Object otelSpanObject = method.invoke(null, micrometerSpan);
 			if (otelSpanObject instanceof Span otelSpan) {
 				return otelSpan;
 			}

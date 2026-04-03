@@ -20,6 +20,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Rich result type for Paraformer / Fun-ASR real-time recognition via WebSocket.
@@ -55,7 +56,7 @@ public record RecognitionResult(
 	/**
 	 * Convenience: get the recognized text (from sentence or stash).
 	 */
-	public String getText() {
+	public @Nullable String getText() {
 		if (sentence == null) {
 			return null;
 		}
