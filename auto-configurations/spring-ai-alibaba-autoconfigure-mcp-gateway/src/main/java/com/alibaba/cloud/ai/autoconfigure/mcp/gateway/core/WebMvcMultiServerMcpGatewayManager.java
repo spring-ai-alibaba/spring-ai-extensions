@@ -24,6 +24,7 @@ import com.alibaba.cloud.ai.mcp.gateway.nacos.tools.NacosMcpGatewayToolsInitiali
 import com.alibaba.cloud.ai.mcp.gateway.nacos.watcher.NacosMcpGatewayToolsWatcher;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
@@ -45,6 +46,10 @@ import java.util.List;
  * {@link WebMvcStreamableServerTransportProvider} per configured server entry, and
  * aggregates their {@link RouterFunction}s into a single combined route that can be
  * registered as a Spring MVC {@code RouterFunction} bean.
+ *
+ * <p>
+ * Requires MCP Java SDK 0.14+ ({@code jsonMapper} / {@code JacksonMcpJsonMapper} on transport
+ * builders).
  *
  * @author vera-qwang
  */
@@ -69,17 +74,15 @@ public class WebMvcMultiServerMcpGatewayManager extends MultiServerMcpGatewayMan
 	private void initServerEntry(McpGatewayMultiServerProperties.ServerConfig cfg,
 			NacosMcpOperationService nacosService, ObjectMapper objectMapper) {
 
-		// 1. Create transport and resolve server builder by transport type.
-		// Both builders receive the Spring-managed ObjectMapper (auto-configured by Spring
-		// Boot with FAIL_ON_UNKNOWN_PROPERTIES=false) so that newer MCP client protocol
-		// fields (e.g. capabilities.elicitation.form) are silently ignored instead of
-		// causing a parse error.
+		// 1. Create transport and resolve server builder by transport type (MCP SDK 0.14+).
+		// JacksonMcpJsonMapper wraps Spring's ObjectMapper (e.g. FAIL_ON_UNKNOWN_PROPERTIES=false).
+		var mcpJsonMapper = new JacksonMcpJsonMapper(objectMapper);
 		RouterFunction<ServerResponse> routerFunction;
 		McpServer.SyncSpecification<?> serverBuilder;
 
 		if (cfg.getTransport() == McpGatewayMultiServerProperties.TransportType.STREAMABLE) {
 			WebMvcStreamableServerTransportProvider transport = WebMvcStreamableServerTransportProvider.builder()
-				.objectMapper(objectMapper)
+				.jsonMapper(mcpJsonMapper)
 				.mcpEndpoint(cfg.getMcpEndpoint())
 				.build();
 			serverBuilder = McpServer.sync(transport);
@@ -87,7 +90,7 @@ public class WebMvcMultiServerMcpGatewayManager extends MultiServerMcpGatewayMan
 		}
 		else {
 			WebMvcSseServerTransportProvider transport = WebMvcSseServerTransportProvider.builder()
-				.objectMapper(objectMapper)
+				.jsonMapper(mcpJsonMapper)
 				.sseEndpoint(cfg.getSseEndpoint())
 				.messageEndpoint(cfg.getMessageEndpoint())
 				.build();

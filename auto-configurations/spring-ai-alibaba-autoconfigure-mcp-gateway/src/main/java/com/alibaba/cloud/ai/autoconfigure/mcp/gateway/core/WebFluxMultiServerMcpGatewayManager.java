@@ -24,6 +24,7 @@ import com.alibaba.cloud.ai.mcp.gateway.nacos.tools.NacosMcpGatewayToolsInitiali
 import com.alibaba.cloud.ai.mcp.gateway.nacos.watcher.NacosMcpGatewayToolsWatcher;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures.AsyncToolSpecification;
@@ -50,6 +51,10 @@ import java.util.List;
  * Uses {@link McpAsyncServer} (instead of {@code McpSyncServer}) to avoid blocking Netty
  * event-loop threads in a reactive environment.
  *
+ * <p>
+ * Requires MCP Java SDK 0.14+ ({@code jsonMapper} / {@code JacksonMcpJsonMapper} on transport
+ * builders).
+ *
  * @author vera-qwang
  */
 public class WebFluxMultiServerMcpGatewayManager extends MultiServerMcpGatewayManager {
@@ -74,17 +79,15 @@ public class WebFluxMultiServerMcpGatewayManager extends MultiServerMcpGatewayMa
 	private void initServerEntry(McpGatewayMultiServerProperties.ServerConfig cfg,
 			NacosMcpOperationService nacosService, ObjectMapper objectMapper) {
 
-		// 1. Create transport and resolve server builder by transport type.
+		// 1. Create transport and resolve server builder by transport type (MCP SDK 0.14+).
 		// WebFlux transports return RouterFunction<?> so we cast with suppressed warning.
-		// Both builders receive the Spring-managed ObjectMapper (auto-configured by Spring
-		// Boot with FAIL_ON_UNKNOWN_PROPERTIES=false) so that newer MCP client protocol
-		// fields (e.g. capabilities.elicitation.form) are silently ignored.
+		var mcpJsonMapper = new JacksonMcpJsonMapper(objectMapper);
 		RouterFunction<ServerResponse> routerFunction;
 		McpServer.AsyncSpecification<?> serverBuilder;
 
 		if (cfg.getTransport() == McpGatewayMultiServerProperties.TransportType.STREAMABLE) {
 			WebFluxStreamableServerTransportProvider transport = WebFluxStreamableServerTransportProvider.builder()
-				.objectMapper(objectMapper)
+				.jsonMapper(mcpJsonMapper)
 				.messageEndpoint(cfg.getMcpEndpoint())
 				.build();
 			serverBuilder = McpServer.async(transport);
@@ -92,7 +95,7 @@ public class WebFluxMultiServerMcpGatewayManager extends MultiServerMcpGatewayMa
 		}
 		else {
 			WebFluxSseServerTransportProvider transport = WebFluxSseServerTransportProvider.builder()
-				.objectMapper(objectMapper)
+				.jsonMapper(mcpJsonMapper)
 				.sseEndpoint(cfg.getSseEndpoint())
 				.messageEndpoint(cfg.getMessageEndpoint())
 				.build();
