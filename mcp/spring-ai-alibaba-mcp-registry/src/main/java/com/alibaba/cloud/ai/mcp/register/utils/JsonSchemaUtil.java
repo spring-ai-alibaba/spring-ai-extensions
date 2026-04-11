@@ -50,6 +50,28 @@ public class JsonSchemaUtil {
 		if (originNode == null || targetNode == null) {
 			return false;
 		}
+		JsonNode originType = originNode.get("type");
+		JsonNode targetType = targetNode.get("type");
+
+		if (originType != null && targetType != null && !originType.equals(targetType)) {
+			return false;
+		}
+
+		if ((originType == null) != (targetType == null)) {
+			return false;
+		}
+
+		if (originType != null && originType.isTextual() && "array".equals(originType.asText())) {
+			JsonNode originItems = originNode.get("items");
+			JsonNode targetItems = targetNode.get("items");
+			if ((originItems == null) != (targetItems == null)) {
+				return false;
+			}
+			if (originItems != null && !compare(originItems, targetItems)) {
+				return false;
+			}
+		}
+
 		JsonNode originProperties = originNode.get("properties");
 		JsonNode targetProperties = targetNode.get("properties");
 
@@ -80,10 +102,10 @@ public class JsonSchemaUtil {
 				}
 
 				JsonNode targetValueNode = targetProperties.get(key);
-				JsonNode targetTypeNode = targetValueNode.get("type");
-				String targetType = targetTypeNode != null && targetTypeNode.isTextual() ? targetTypeNode.asText() : "";
+				JsonNode targetPropTypeNode = targetValueNode.get("type");
+				String targetPropType = targetPropTypeNode != null && targetPropTypeNode.isTextual() ? targetPropTypeNode.asText() : "";
 
-				if (!type.equals(targetType)) {
+				if (!type.equals(targetPropType)) {
 					return false;
 				}
 
@@ -97,10 +119,11 @@ public class JsonSchemaUtil {
 				else if ("array".equals(type)) {
 					JsonNode originItems = valueNode.get("items");
 					JsonNode targetItems = targetValueNode.get("items");
-					if (originItems != null && targetItems != null) {
-						if (!compare(originItems, targetItems)) {
-							return false;
-						}
+					if ((originItems == null) != (targetItems == null)) {
+						return false;
+					}
+					if (originItems != null && !compare(originItems, targetItems)) {
+						return false;
 					}
 				}
 			}
