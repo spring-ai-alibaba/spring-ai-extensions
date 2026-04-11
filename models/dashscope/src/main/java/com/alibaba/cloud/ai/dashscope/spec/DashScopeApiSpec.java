@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.model.ModelOptionsUtils;
 /**
@@ -1130,6 +1131,13 @@ public class DashScopeApiSpec {
     ) { }
 
 
+    @JsonTypeInfo(
+			use = JsonTypeInfo.Id.CLASS,
+            include = JsonTypeInfo.As.PROPERTY,
+            property = "@class",
+            defaultImpl = SearchResult.class
+    )
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record SearchResult(@JsonProperty("site_name") String siteName, @JsonProperty("icon") String icon,
                                @JsonProperty("index") Integer index, @JsonProperty("title") String title,
