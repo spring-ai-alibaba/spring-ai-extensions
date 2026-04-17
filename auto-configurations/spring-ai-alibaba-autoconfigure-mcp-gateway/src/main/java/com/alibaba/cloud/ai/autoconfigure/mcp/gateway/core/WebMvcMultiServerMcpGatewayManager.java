@@ -116,9 +116,11 @@ public class WebMvcMultiServerMcpGatewayManager extends MultiServerMcpGatewayMan
 
 		// 4. Create tool manager and watcher for dynamic Nacos updates (30s polling)
 		NacosMcpSyncGatewayToolsProvider toolManager = new NacosMcpSyncGatewayToolsProvider(server);
-		NacosMcpGatewayToolsWatcher watcher = new NacosMcpGatewayToolsWatcher(toolManager, nacosService,
-				perEntryProps);
-		watchers.add(watcher);
+		if (cfg.getServiceNames() != null && !cfg.getServiceNames().isEmpty()) {
+			NacosMcpGatewayToolsWatcher watcher = new NacosMcpGatewayToolsWatcher(toolManager, nacosService,
+					perEntryProps);
+			watchers.add(watcher);
+		}
 
 		// 5. Accumulate router functions
 		combinedRouterFunction = (combinedRouterFunction == null) ? routerFunction
