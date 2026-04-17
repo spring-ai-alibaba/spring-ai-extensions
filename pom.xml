@@ -499,12 +499,12 @@
                     <compilerArgs>
                         <compilerArg>-parameters</compilerArg>
                     </compilerArgs>
-                  <annotationProcessorPaths>
-                    <path>
-                      <groupId>org.springframework.boot</groupId>
-                      <artifactId>spring-boot-configuration-processor</artifactId>
-                    </path>
-                  </annotationProcessorPaths>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
                 <executions>
                     <!-- Replacing default-compile as it is treated specially by Maven -->
