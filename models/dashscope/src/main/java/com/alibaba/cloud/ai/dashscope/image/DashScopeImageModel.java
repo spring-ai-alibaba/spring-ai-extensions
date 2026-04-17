@@ -320,11 +320,11 @@ public class DashScopeImageModel implements ImageModel {
      * This logic must be consistent with DashScopeImageApi.isAsyncOnlyModel().
      */
     private boolean isAsyncOnlyModelForModel(String model) {
-        return model.equals("qwen-image") ||
-               model.equals("qwen-image-plus") ||
-               model.equals("qwen-mt-image") ||
-               model.equals("wanx-v1") ||
-               model.equals("wanx2.1-imageedit");
+        return "qwen-image".equals(model) ||
+                "qwen-image-plus".equals(model) ||
+                "qwen-mt-image".equals(model) ||
+                "wanx-v1".equals(model) ||
+                "wanx2.1-imageedit".equals(model);
     }
 
     /**
