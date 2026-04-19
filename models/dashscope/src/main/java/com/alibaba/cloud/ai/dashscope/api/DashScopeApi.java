@@ -58,7 +58,9 @@ import java.time.Duration;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -108,6 +110,8 @@ public class DashScopeApi {
 	private final String embeddingsPath;
 
 	private final String rerankPath;
+
+	private final boolean openAiCompatible;
 
 	private final MultiValueMap<String, String> headers;
 
@@ -169,6 +173,23 @@ public class DashScopeApi {
 			WebClient.Builder webClientBuilder,
 			ResponseErrorHandler responseErrorHandler
 	) {
+		this(baseUrl, apiKey, header, workSpaceId, completionsPath, embeddingsPath, rerankPath,
+				restClientBuilder, webClientBuilder, responseErrorHandler, false);
+	}
+
+	public DashScopeApi(
+			String baseUrl,
+			ApiKey apiKey,
+			MultiValueMap<String, String> header,
+			String workSpaceId,
+			String completionsPath,
+			String embeddingsPath,
+			String rerankPath,
+			RestClient.Builder restClientBuilder,
+			WebClient.Builder webClientBuilder,
+			ResponseErrorHandler responseErrorHandler,
+			boolean openAiCompatible
+	) {
 
 		this.baseUrl = baseUrl;
 		this.apiKey = apiKey;
@@ -178,6 +199,7 @@ public class DashScopeApi {
 		this.embeddingsPath = embeddingsPath;
         this.rerankPath = rerankPath;
 		this.responseErrorHandler = responseErrorHandler;
+		this.openAiCompatible = openAiCompatible;
 
 		// For DashScope API, the workspace ID is passed in the headers.
 		if (StringUtils.hasText(workSpaceId)) {
@@ -524,13 +546,14 @@ public class DashScopeApi {
 		}
 
 		// @formatter:off
+		Object requestBody = this.openAiCompatible ? toOpenAiCompatibleBody(chatRequest) : chatRequest;
 		return this.restClient.post()
 				.uri(chatCompletionUri)
 				.headers(headers -> {
 					headers.addAll(additionalHttpHeader);
 					addDefaultHeadersIfMissing(headers);
 				})
-				.body(chatRequest)
+				.body(requestBody)
 				.retrieve()
 				.toEntity(DashScopeApiSpec.ChatCompletion.class);
 		// @formatter:on
@@ -585,7 +608,9 @@ public class DashScopeApi {
 			headers.add(HEADER_SSE, ENABLED);
 			addDefaultHeadersIfMissing(headers);
 		})
-			.body(Mono.just(chatRequest), DashScopeApiSpec.ChatCompletionRequest.class)
+			.body(this.openAiCompatible
+				? Mono.just(toOpenAiCompatibleBody(chatRequest))
+				: Mono.just(chatRequest), Object.class)
 			.retrieve()
 			.bodyToFlux(String.class)
 			.takeUntil(SSE_DONE_PREDICATE)
@@ -657,6 +682,50 @@ public class DashScopeApi {
 		return this.responseErrorHandler;
 	}
 
+	boolean isOpenAiCompatible() {
+		return this.openAiCompatible;
+	}
+
+	/**
+	 * Converts a DashScope-format {@link DashScopeApiSpec.ChatCompletionRequest} into an
+	 * OpenAI-compatible flat {@link Map}, lifting {@code messages} to the top level and
+	 * flattening individual {@code parameters} fields.
+	 *
+	 * <p>The DashScope native API wraps messages inside an {@code input} object:
+	 * <pre>{@code {"model":"qwen-turbo","input":{"messages":[...]},"parameters":{...}}}</pre>
+	 * OpenAI-compatible endpoints (local / private models) require the flat format:
+	 * <pre>{@code {"model":"qwen-turbo","messages":[...],"temperature":0.7,...}}</pre>
+	 *
+	 * <p>Used when {@link #openAiCompatible} is {@code true}.
+	 */
+	Map<String, Object> toOpenAiCompatibleBody(DashScopeApiSpec.ChatCompletionRequest chatRequest) {
+		Map<String, Object> body = new LinkedHashMap<>();
+		body.put("model", chatRequest.model());
+		if (chatRequest.input() != null && chatRequest.input().messages() != null) {
+			body.put("messages", chatRequest.input().messages());
+		}
+		if (chatRequest.stream() != null) {
+			body.put("stream", chatRequest.stream());
+		}
+		DashScopeApiSpec.ChatCompletionRequestParameter params = chatRequest.parameters();
+		if (params != null) {
+			if (params.temperature()     != null) body.put("temperature",       params.temperature());
+			if (params.topP()            != null) body.put("top_p",             params.topP());
+			if (params.maxTokens()       != null) body.put("max_tokens",        params.maxTokens());
+			if (params.stop()            != null) body.put("stop",              params.stop());
+			if (params.tools()           != null) body.put("tools",             params.tools());
+			if (params.toolChoice()      != null) body.put("tool_choice",       params.toolChoice());
+			if (params.parallelToolCalls() != null) body.put("parallel_tool_calls", params.parallelToolCalls());
+			if (params.responseFormat()  != null) body.put("response_format",   params.responseFormat());
+			if (params.presencePenalty() != null) body.put("presence_penalty",  params.presencePenalty());
+			if (params.seed()            != null) body.put("seed",              params.seed());
+			if (params.logprobs()        != null) body.put("logprobs",          params.logprobs());
+			if (params.topLogprobs()     != null) body.put("top_logprobs",      params.topLogprobs());
+			if (params.streamOptions()   != null) body.put("stream_options",    params.streamOptions());
+		}
+		return body;
+	}
+
 	public static class Builder {
 
         private String baseUrl = DEFAULT_BASE_URL;
@@ -678,6 +747,8 @@ public class DashScopeApi {
         private WebClient.Builder webClientBuilder = createDefaultWebClientBuilder();
 
         private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
+
+		private boolean openAiCompatible = false;
 
 		public Builder() {
 		}
@@ -757,6 +828,7 @@ public class DashScopeApi {
 			this.restClientBuilder = api.restClient != null ? api.restClient.mutate() : RestClient.builder();
 			this.webClientBuilder = api.webClient != null ? api.webClient.mutate() : WebClient.builder();
 			this.responseErrorHandler = api.getResponseErrorHandler();
+		this.openAiCompatible = api.isOpenAiCompatible();
 		}
 
 		public Builder baseUrl(String baseUrl) {
@@ -823,13 +895,19 @@ public class DashScopeApi {
 			return this;
 		}
 
+		public Builder openAiCompatible(boolean openAiCompatible) {
+			this.openAiCompatible = openAiCompatible;
+			return this;
+		}
+
 		public DashScopeApi build() {
 
 			Assert.notNull(apiKey, "API key cannot be null");
 
 			return new DashScopeApi(this.baseUrl, this.apiKey, this.headers, this.workSpaceId,
                     this.completionsPath, this.embeddingsPath, this.rerankPath,
-                    this.restClientBuilder, this.webClientBuilder, this.responseErrorHandler);
+                    this.restClientBuilder, this.webClientBuilder, this.responseErrorHandler,
+                    this.openAiCompatible);
 		}
 
 	}
