@@ -205,10 +205,8 @@ public class DashScopeChatModel implements ChatModel {
 			.observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
 					this.observationRegistry)
 			.observe(() -> {
-
 				ResponseEntity<ChatCompletion> completionEntity = this.retryTemplate
 					.execute(ctx -> dashscopeApi.chatCompletionEntity(request, getAdditionalHttpHeaders(prompt)));
-
 				var completionResponse = completionEntity.getBody();
 				ChatResponse chatResponse = toChatResponse(completionResponse, previousChatResponse, request, null);
 
