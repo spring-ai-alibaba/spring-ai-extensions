@@ -49,6 +49,35 @@ public class DashScopeChatProperties extends DashScopeParentProperties {
 	 */
 	private String completionsPath = DashScopeApiConstants.TEXT_GENERATION_RESTFUL_URL;
 
+	/**
+	 * When set to {@code true}, the request body is serialized in the OpenAI-compatible
+	 * flat format ({@code messages} at the top level) instead of the DashScope-native
+	 * format ({@code messages} nested inside {@code input}).
+	 *
+	 * <p>Enable this when targeting private or locally-deployed models that expose an
+	 * OpenAI-compatible API endpoint, to avoid the
+	 * {@code "you must provide a messages parameter"} 400 error.
+	 *
+	 * <p>Example {@code application.yml}:
+	 * <pre>{@code
+	 * spring:
+	 *   ai:
+	 *     dashscope:
+	 *       chat:
+	 *         open-ai-compatible: true
+	 *         base-url: http://localhost:11434/v1
+	 * }</pre>
+	 */
+	private boolean openAiCompatible = false;
+
+	public boolean isOpenAiCompatible() {
+		return openAiCompatible;
+	}
+
+	public void setOpenAiCompatible(boolean openAiCompatible) {
+		this.openAiCompatible = openAiCompatible;
+	}
+
 	@NestedConfigurationProperty
 	private DashScopeChatOptions options = DashScopeChatOptions.builder()
 		.model(DEFAULT_DEPLOYMENT_NAME)

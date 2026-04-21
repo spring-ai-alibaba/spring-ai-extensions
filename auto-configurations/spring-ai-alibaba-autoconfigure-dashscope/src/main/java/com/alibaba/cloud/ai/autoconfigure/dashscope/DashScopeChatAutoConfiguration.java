@@ -127,6 +127,7 @@ public class DashScopeChatAutoConfiguration {
 					.webClientBuilder(webClientBuilder)
 					.restClientBuilder(restClientBuilder)
 					.responseErrorHandler(responseErrorHandler)
+					.openAiCompatible(chatProperties.isOpenAiCompatible())
 					.build();
 		}
 }
