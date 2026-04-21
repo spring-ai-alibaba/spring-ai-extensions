@@ -42,8 +42,10 @@ import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.IMAGE2IMAGE_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.IMAGE_GENERATION_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MULTIMODAL_GENERATION_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.OUT_PAINTING_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.QUERY_TASK_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.TEXT2IMAGE_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.IMAGE_OUT_PAINTING;
 import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_IMAGE;
 import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.QWEN_MT_IMAGE;
 import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.WAN_2_6_IMAGE;
@@ -61,6 +63,8 @@ import static com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel.WAN_
  *   wan2.5-t2i-preview, wan2.2-t2i-*, wanx2.1-t2i-*, wanx2.0-t2i-turbo, wanx-v1 (Wanx text-to-image V2 legacy)</li>
  *   <li>{@value com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants#IMAGE2IMAGE_RESTFUL_URL}:
  *   qwen-mt-image (Qwen image translation)</li>
+ *   <li>{@value com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants#OUT_PAINTING_RESTFUL_URL}:
+ *   image-out-painting (AI image out-painting)</li>
  * </ul>
  *
  * @author nuocheng.lxm
@@ -118,9 +122,9 @@ public class DashScopeImageApi {
 
 		this.restClient = restClientBuilder.clone()
             .baseUrl(baseUrl)
-			.defaultHeaders(ApiUtils.getJsonContentHeaders(apiKey.getValue(), workSpaceId))
-			.defaultStatusHandler(responseErrorHandler)
-			.build();
+				.defaultHeaders(ApiUtils.getJsonContentHeaders(apiKey.getValue(), workSpaceId))
+				.defaultStatusHandler(responseErrorHandler)
+				.build();
 	}
 
 	public ResponseEntity<DashScopeApiSpec.DashScopeImageAsyncResponse> submitImageGenTask(DashScopeApiSpec.DashScopeImageRequest request, boolean needsAsync) {
@@ -128,7 +132,11 @@ public class DashScopeImageApi {
 		String model = request.model();
 		ImageApiPath path = resolveImagePath(model);
 		String imagesUri = path.uri;
-		Object requestBody = path.needImageGenerationBody ? convertToImageGenerationRequest(request) : request;
+		Object requestBody = switch (path.bodyType) {
+			case IMAGE_GENERATION -> convertToImageGenerationRequest(request);
+			case OUT_PAINTING -> convertToOutPaintingRequest(request);
+			default -> request;
+		};
 
 		var requestBuilder = this.restClient.post()
 			.uri(imagesUri)
@@ -150,18 +158,22 @@ public class DashScopeImageApi {
 	private ImageApiPath resolveImagePath(String model) {
 		// wan2.6-image: Wanx 2.6 async -> image-generation/generation + dedicated request body
 		if (WAN_2_6_IMAGE.getValue().equals(model)) {
-			return new ImageApiPath(IMAGE_GENERATION_RESTFUL_URL, true);
+			return new ImageApiPath(IMAGE_GENERATION_RESTFUL_URL, RequestBodyType.IMAGE_GENERATION);
+		}
+		// image-out-painting: AI out-painting -> image2image/out-painting
+		if (IMAGE_OUT_PAINTING.getValue().equals(model)) {
+			return new ImageApiPath(OUT_PAINTING_RESTFUL_URL, RequestBodyType.OUT_PAINTING);
 		}
 		// qwen-mt-image: Qwen image translation -> image2image/image-synthesis
 		if (QWEN_MT_IMAGE.getValue().equals(model)) {
-			return new ImageApiPath(IMAGE2IMAGE_RESTFUL_URL, false);
+			return new ImageApiPath(IMAGE2IMAGE_RESTFUL_URL, RequestBodyType.STANDARD);
 		}
 		// qwen-image*, z-image* (incl. qwen-image-edit*): Qwen text-to-image/edit, Z-Image -> multimodal-generation/generation
 		if (model.startsWith("qwen-image") || model.startsWith("z-image")) {
-			return new ImageApiPath(MULTIMODAL_GENERATION_RESTFUL_URL, false);
+			return new ImageApiPath(MULTIMODAL_GENERATION_RESTFUL_URL, RequestBodyType.STANDARD);
 		}
 		// Wanx 2.5 and below, wanx series: text2image/image-synthesis
-		return new ImageApiPath(this.imagesPath, false);
+		return new ImageApiPath(this.imagesPath, RequestBodyType.STANDARD);
 	}
 
 	/**
@@ -176,13 +188,15 @@ public class DashScopeImageApi {
 			   model.equals("wanx2.1-imageedit");
 	}
 
+	enum RequestBodyType { STANDARD, IMAGE_GENERATION, OUT_PAINTING }
+
 	private static final class ImageApiPath {
 		final String uri;
-		final boolean needImageGenerationBody;
+		final RequestBodyType bodyType;
 
-		ImageApiPath(String uri, boolean needImageGenerationBody) {
+		ImageApiPath(String uri, RequestBodyType bodyType) {
 			this.uri = uri;
-			this.needImageGenerationBody = needImageGenerationBody;
+			this.bodyType = bodyType;
 		}
 	}
 
@@ -203,6 +217,24 @@ public class DashScopeImageApi {
                         request.parameters().promptExtend(),
                         request.parameters().watermark()
                 ));
+    }
+
+    private DashScopeApiSpec.DashScopeOutPaintingRequest convertToOutPaintingRequest(DashScopeImageRequest request) {
+        return new DashScopeApiSpec.DashScopeOutPaintingRequest(
+                request.model(),
+                new DashScopeApiSpec.DashScopeOutPaintingRequest.DashScopeOutPaintingRequestInput(
+                        request.input().baseImageUrl()),
+                new DashScopeApiSpec.DashScopeOutPaintingRequest.DashScopeOutPaintingRequestParameter(
+                        request.parameters().outputRatio(),
+                        request.parameters().xScale(),
+                        request.parameters().yScale(),
+                        request.parameters().angle(),
+                        request.parameters().leftOffset(),
+                        request.parameters().rightOffset(),
+                        request.parameters().topOffset(),
+                        request.parameters().bottomOffset(),
+                        request.parameters().bestQuality(),
+                        request.parameters().limitImageSize()));
     }
 
     @NonNull

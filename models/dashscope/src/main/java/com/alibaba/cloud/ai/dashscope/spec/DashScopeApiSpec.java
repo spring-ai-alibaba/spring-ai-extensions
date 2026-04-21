@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.model.ModelOptionsUtils;
 /**
@@ -1130,6 +1131,13 @@ public class DashScopeApiSpec {
     ) { }
 
 
+    @JsonTypeInfo(
+			use = JsonTypeInfo.Id.CLASS,
+            include = JsonTypeInfo.As.PROPERTY,
+            property = "@class",
+            defaultImpl = SearchResult.class
+    )
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record SearchResult(@JsonProperty("site_name") String siteName, @JsonProperty("icon") String icon,
                                @JsonProperty("index") Integer index, @JsonProperty("title") String title,
@@ -1396,7 +1404,17 @@ public class DashScopeApiSpec {
                                                      @JsonProperty("mask_color") Integer[][] maskColor,
                                                      @JsonProperty("negative_prompt") String negativePrompt,
                                                      @JsonProperty("max_images") Integer maxImages,
-                                                     @JsonProperty("enable_interleave") Boolean enableInterleave){
+                                                     @JsonProperty("enable_interleave") Boolean enableInterleave,
+                                                     @JsonProperty("output_ratio") String outputRatio,
+                                                     @JsonProperty("x_scale") Float xScale,
+                                                     @JsonProperty("y_scale") Float yScale,
+                                                     @JsonProperty("angle") Integer angle,
+                                                     @JsonProperty("left_offset") Integer leftOffset,
+                                                     @JsonProperty("right_offset") Integer rightOffset,
+                                                     @JsonProperty("top_offset") Integer topOffset,
+                                                     @JsonProperty("bottom_offset") Integer bottomOffset,
+                                                     @JsonProperty("best_quality") Boolean bestQuality,
+                                                     @JsonProperty("limit_image_size") Boolean limitImageSize){
         }
     }
 
@@ -1429,6 +1447,29 @@ public class DashScopeApiSpec {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record DashScopeOutPaintingRequest(@JsonProperty("model") String model,
+                                              @JsonProperty("input") DashScopeOutPaintingRequestInput input,
+                                              @JsonProperty("parameters") DashScopeOutPaintingRequestParameter parameters
+    ) {
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public record DashScopeOutPaintingRequestInput(@JsonProperty("image_url") String imageUrl) {
+        }
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public record DashScopeOutPaintingRequestParameter(@JsonProperty("output_ratio") String outputRatio,
+                                                           @JsonProperty("x_scale") Float xScale,
+                                                           @JsonProperty("y_scale") Float yScale,
+                                                           @JsonProperty("angle") Integer angle,
+                                                           @JsonProperty("left_offset") Integer leftOffset,
+                                                           @JsonProperty("right_offset") Integer rightOffset,
+                                                           @JsonProperty("top_offset") Integer topOffset,
+                                                           @JsonProperty("bottom_offset") Integer bottomOffset,
+                                                           @JsonProperty("best_quality") Boolean bestQuality,
+                                                           @JsonProperty("limit_image_size") Boolean limitImageSize) {
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record DashScopeImageAsyncResponse(@JsonProperty("request_id") String requestId,
                                               @JsonProperty("output") DashScopeImageAsyncResponseOutput output,
                                               @JsonProperty("usage") DashScopeImageAsyncResponseUsage usage) {
@@ -1440,6 +1481,7 @@ public class DashScopeApiSpec {
                                                         @JsonProperty("scheduled_time") String scheduledTime,
                                                         @JsonProperty("end_time") String endTime,
                                                         @JsonProperty("results") List<DashScopeImageAsyncResponseResult> results,
+                                                        @JsonProperty("output_image_url") String outputImageUrl,
                                                         @JsonProperty("choices") List<DashScopeImageAsyncResponseChoice> choices,
                                                         @JsonProperty("task_metrics") DashScopeImageAsyncResponseTaskMetrics taskMetrics,
                                                         @JsonProperty("code") String code, @JsonProperty("message") String message) {

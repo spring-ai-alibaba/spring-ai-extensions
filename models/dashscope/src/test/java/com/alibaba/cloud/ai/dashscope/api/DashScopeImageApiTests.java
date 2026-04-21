@@ -116,7 +116,8 @@ class DashScopeImageApiTests {
 		Integer[][] colorArray = { { 0, 0, 0 }, { 134, 134, 134 } };
 
         DashScopeApiSpec.DashScopeImageRequest.DashScopeImageRequestParameter parameter = new DashScopeApiSpec.DashScopeImageRequest.DashScopeImageRequestParameter(
-				"anime", "1024*1024", 1, 123456, 0.5f, "canny", true, true, 5, true, colorArray, colorArray,"",1,false);
+				"anime", "1024*1024", 1, 123456, 0.5f, "canny", true, true, 5, true, colorArray, colorArray,"",1,false,
+					null, null, null, null, null, null, null, null, null, null);
 
         DashScopeApiSpec.DashScopeImageRequest request = new DashScopeApiSpec.DashScopeImageRequest(
 				"stable-diffusion-xl", input, parameter);
@@ -148,7 +149,7 @@ class DashScopeImageApiTests {
 				1, 1, 0);
 
         DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput output = new DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput(
-                "task-id", "completed", null, null, null, results, null, metrics, "200", "success");
+                "task-id", "completed", null, null, null, results, null, null, metrics, "200", "success");
 
         DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage usage = new DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage(
 				1);
