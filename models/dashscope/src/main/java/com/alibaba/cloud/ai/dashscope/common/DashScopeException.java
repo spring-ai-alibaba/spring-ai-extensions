@@ -21,16 +21,30 @@ package com.alibaba.cloud.ai.dashscope.common;
  */
 public class DashScopeException extends RuntimeException {
 
-	public DashScopeException(String message) {
-		super(message);
-	}
+    private final String code;
 
-	public DashScopeException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public DashScopeException(String message) {
+        super(message);
+        this.code = "DashScopeError";
+    }
 
-	public DashScopeException(ErrorCodeEnum error) {
-		super(error.getCode() + ":" + error.message());
-	}
+    public DashScopeException(String code, String message) {
+        super(message);
+        this.code = code;
+    }
+
+    public DashScopeException(String message, Throwable cause) {
+        super(message, cause);
+        this.code = "DashScopeError";
+    }
+
+    public DashScopeException(ErrorCodeEnum error) {
+        super(error.getCode() + ":" + error.message());
+        this.code = error.getCode();
+    }
+
+    public String getCode() {
+        return this.code;
+    }
 
 }

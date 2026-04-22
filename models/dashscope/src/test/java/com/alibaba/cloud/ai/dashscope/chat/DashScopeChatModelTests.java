@@ -657,6 +657,27 @@ class DashScopeChatModelTests {
     }
 
     @Test
+    void testStreamErrorResponseWithCode() {
+        Message message = new UserMessage("Test error handling");
+        Prompt prompt = new Prompt(List.of(message));
+
+        when(dashScopeApi.chatCompletionStream(any(), any())).thenReturn(Flux.error(
+                new com.alibaba.cloud.ai.dashscope.common.DashScopeException("InvalidParameter",
+                        "[InvalidParameter] invalid input (requestId: error-request-123)")));
+
+        Flux<ChatResponse> responseFlux = chatModel.stream(prompt);
+
+        StepVerifier.create(responseFlux)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof com.alibaba.cloud.ai.dashscope.common.DashScopeException
+                                && ((com.alibaba.cloud.ai.dashscope.common.DashScopeException) throwable).getCode()
+                                .equals("InvalidParameter")
+                                && throwable.getMessage().contains("InvalidParameter")
+                                && throwable.getMessage().contains("error-request-123"))
+                .verify();
+    }
+
+    @Test
     void testBuildRequestPrompt() {
         DashScopeChatOptions runtimeOptions = DashScopeChatOptions.builder()
                 .model("qwen-plus")

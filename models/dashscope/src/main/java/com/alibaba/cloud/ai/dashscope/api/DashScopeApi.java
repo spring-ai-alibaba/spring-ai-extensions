@@ -593,7 +593,7 @@ public class DashScopeApi {
 			.map(content -> {
 				DashScopeApiSpec.DashScopeErrorResponse error = ModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.DashScopeErrorResponse.class);
 				if (error != null && error.code() != null) {
-					throw new DashScopeException(String.format("[%s] %s (requestId: %s)",
+					throw new DashScopeException(error.code(),String.format("[%s] %s (requestId: %s)",
 						error.code(), error.message(), error.requestId()));
 				}
 				DashScopeApiSpec.ChatCompletionChunk chunk = ModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.ChatCompletionChunk.class);
