@@ -98,7 +98,18 @@ public class DashScopeApiSpec {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Embedding(@JsonProperty("text_index") Integer textIndex,
-                            @JsonProperty("embedding") float[] embedding) {
+                            @JsonProperty("embedding") float[] embedding,
+                            @JsonProperty("sparse_embedding") List<SparseEmbeddingItem> sparseEmbedding) {
+
+        public Embedding(Integer textIndex, float[] embedding) {
+            this(textIndex, embedding, null);
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record SparseEmbeddingItem(@JsonProperty("index") Integer index,
+                                      @JsonProperty("token") String token,
+                                      @JsonProperty("value") Float value) {
     }
 
     // @formatter:off
@@ -123,11 +134,12 @@ public class DashScopeApiSpec {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record EmbeddingRequestInputParameters(@JsonProperty("text_type") String textType,
-                                                  @JsonProperty("dimension") Integer dimension) {
+                                                  @JsonProperty("dimension") Integer dimension,
+                                                  @JsonProperty("output_type") String outputType) {
 
         @Deprecated
         public EmbeddingRequestInputParameters(String textType) {
-            this(textType == null ? DEFAULT_EMBEDDING_TEXT_TYPE : textType, null);
+            this(textType == null ? DEFAULT_EMBEDDING_TEXT_TYPE : textType, null, null);
         }
 
         public static Builder builder() {
@@ -139,6 +151,8 @@ public class DashScopeApiSpec {
             private String textType;
 
             private Integer dimension;
+
+            private String outputType;
 
             private Builder() {
 
@@ -154,10 +168,15 @@ public class DashScopeApiSpec {
                 return this;
             }
 
+            public Builder outputType(String outputType) {
+                this.outputType = outputType;
+                return this;
+            }
+
             public EmbeddingRequestInputParameters build() {
                 // Handle null textType for FastJson compatibility.
                 String finalTextType = textType == null ? DEFAULT_EMBEDDING_TEXT_TYPE : textType;
-                return new EmbeddingRequestInputParameters(finalTextType, dimension);
+                return new EmbeddingRequestInputParameters(finalTextType, dimension, outputType);
             }
 
         }
@@ -221,6 +240,8 @@ public class DashScopeApiSpec {
 
             private Integer dimension;
 
+            private String outputType;
+
             private Builder() {
             }
 
@@ -249,9 +270,18 @@ public class DashScopeApiSpec {
                 return this;
             }
 
+            public Builder outputType(String outputType) {
+                this.outputType = outputType;
+                return this;
+            }
+
             public EmbeddingRequest build() {
                 return new EmbeddingRequest(model, new EmbeddingRequestInput(texts),
-                        EmbeddingRequestInputParameters.builder().textType(textType).dimension(dimension).build());
+                        EmbeddingRequestInputParameters.builder()
+                            .textType(textType)
+                            .dimension(dimension)
+                            .outputType(outputType)
+                            .build());
             }
 
         }
@@ -1584,4 +1614,3 @@ public class DashScopeApiSpec {
 	}
 
 }
-

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingModel.Builder;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.Embedding;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.EmbeddingList;
@@ -29,9 +30,11 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.EmbeddingModel;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.MetadataMode;
+import org.springframework.ai.embedding.TokenCountBatchingStrategy;
 import org.springframework.ai.embedding.EmbeddingRequest;
 import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.retry.RetryUtils;
@@ -323,5 +326,144 @@ class DashScopeEmbeddingModelTests {
 
         assertThat(response.getMetadata().getUsage().getTotalTokens()).isEqualTo(10L);
     }
+
+	@Test
+	void testOutputTypePropagation() {
+		float[] embeddingVector = { 0.1f, 0.2f, 0.3f };
+		Embedding embedding = new Embedding(0, embeddingVector);
+		Embeddings embeddings = new Embeddings(List.of(embedding));
+		EmbeddingList embeddingList = new EmbeddingList(TEST_REQUEST_ID, null, null, embeddings, new EmbeddingUsage(10L));
+		when(dashScopeApi.embeddings(any())).thenReturn(ResponseEntity.ok(embeddingList));
+
+		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
+			.model(TEST_MODEL)
+			.textType(TEST_TEXT_TYPE)
+			.dimensions(TEST_DIMENSION)
+			.outputType(DashScopeEmbeddingOptions.OUTPUT_TYPE_DENSE_AND_SPARSE)
+			.build();
+
+		embeddingModel.call(new EmbeddingRequest(List.of(TEST_TEXT), options));
+
+		ArgumentCaptor<DashScopeApiSpec.EmbeddingRequest> captor = ArgumentCaptor.forClass(DashScopeApiSpec.EmbeddingRequest.class);
+		verify(dashScopeApi).embeddings(captor.capture());
+		assertThat(captor.getValue().parameters().outputType())
+			.isEqualTo(DashScopeEmbeddingOptions.OUTPUT_TYPE_DENSE_AND_SPARSE);
+	}
+
+	@Test
+	void testSparseEmbeddingStoredInMetadata() {
+		DashScopeApiSpec.SparseEmbeddingItem sparseItem = new DashScopeApiSpec.SparseEmbeddingItem(108386, "你好", 2.3828f);
+		Embedding embedding = new Embedding(0, null, List.of(sparseItem));
+		Embeddings embeddings = new Embeddings(List.of(embedding));
+		EmbeddingList embeddingList = new EmbeddingList(TEST_REQUEST_ID, null, null, embeddings, new EmbeddingUsage(2L));
+		when(dashScopeApi.embeddings(any())).thenReturn(ResponseEntity.ok(embeddingList));
+
+		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
+			.model(TEST_MODEL)
+			.textType(TEST_TEXT_TYPE)
+			.outputType(DashScopeEmbeddingOptions.OUTPUT_TYPE_SPARSE)
+			.build();
+
+		EmbeddingResponse response = embeddingModel.call(new EmbeddingRequest(List.of("你好"), options));
+
+		assertThat(response.getResults()).hasSize(1);
+		assertThat(response.getResults().get(0).getOutput()).isEmpty();
+		@SuppressWarnings("unchecked")
+		Map<Integer, List<DashScopeApiSpec.SparseEmbeddingItem>> sparseEmbeddings =
+				(Map<Integer, List<DashScopeApiSpec.SparseEmbeddingItem>>) response.getMetadata()
+					.get(DashScopeEmbeddingModel.SPARSE_EMBEDDINGS_METADATA);
+		assertThat(sparseEmbeddings).containsKey(0);
+		assertThat(sparseEmbeddings.get(0)).hasSize(1);
+		assertThat(sparseEmbeddings.get(0).get(0).index()).isEqualTo(108386);
+		assertThat(sparseEmbeddings.get(0).get(0).token()).isEqualTo("你好");
+		assertThat(sparseEmbeddings.get(0).get(0).value()).isEqualTo(2.3828f);
+	}
+
+	@Test
+	void testDenseAndSparseEmbeddingsAreBothReturned() {
+		float[] vector1 = { 0.1f, 0.2f, 0.3f };
+		float[] vector2 = { 0.4f, 0.5f, 0.6f };
+		DashScopeApiSpec.SparseEmbeddingItem sparse1 = new DashScopeApiSpec.SparseEmbeddingItem(7149, "风", 0.829f);
+		DashScopeApiSpec.SparseEmbeddingItem sparse2 = new DashScopeApiSpec.SparseEmbeddingItem(246351, "渚", 1.0483f);
+		List<Embedding> apiEmbeddings = List.of(
+				new Embedding(0, vector1, List.of(sparse1)),
+				new Embedding(1, vector2, List.of(sparse2)));
+		EmbeddingList embeddingList = new EmbeddingList(TEST_REQUEST_ID, null, null, new Embeddings(apiEmbeddings),
+				new EmbeddingUsage(27L));
+		when(dashScopeApi.embeddings(any())).thenReturn(ResponseEntity.ok(embeddingList));
+
+		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
+			.model(TEST_MODEL)
+			.textType(TEST_TEXT_TYPE)
+			.outputType(DashScopeEmbeddingOptions.OUTPUT_TYPE_DENSE_AND_SPARSE)
+			.build();
+
+		EmbeddingResponse response = embeddingModel.call(new EmbeddingRequest(List.of("第一句", "第二句"), options));
+
+		assertThat(response.getResults()).hasSize(2);
+		assertThat(response.getResults().get(0).getOutput()).containsExactly(vector1);
+		assertThat(response.getResults().get(1).getOutput()).containsExactly(vector2);
+		assertThat(response.getResults().get(0).getIndex()).isEqualTo(0);
+		assertThat(response.getResults().get(1).getIndex()).isEqualTo(1);
+		@SuppressWarnings("unchecked")
+		Map<Integer, List<DashScopeApiSpec.SparseEmbeddingItem>> sparseEmbeddings =
+				(Map<Integer, List<DashScopeApiSpec.SparseEmbeddingItem>>) response.getMetadata()
+					.get(DashScopeEmbeddingModel.SPARSE_EMBEDDINGS_METADATA);
+		assertThat(sparseEmbeddings).hasSize(2);
+		assertThat(sparseEmbeddings.get(0).get(0).token()).isEqualTo("风");
+		assertThat(sparseEmbeddings.get(1).get(0).token()).isEqualTo("渚");
+	}
+
+	@Test
+	void testDocumentEmbeddingPathShouldPreserveOutputType() {
+		float[] embeddingVector = { 0.1f, 0.2f, 0.3f };
+		Embedding embedding = new Embedding(0, embeddingVector,
+				List.of(new DashScopeApiSpec.SparseEmbeddingItem(108386, "你好", 2.3828f)));
+		Embeddings embeddings = new Embeddings(List.of(embedding));
+		EmbeddingList embeddingList = new EmbeddingList(TEST_REQUEST_ID, null, null, embeddings, new EmbeddingUsage(10L));
+		when(dashScopeApi.embeddings(any())).thenReturn(ResponseEntity.ok(embeddingList));
+
+		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
+			.outputType(DashScopeEmbeddingOptions.OUTPUT_TYPE_DENSE_AND_SPARSE)
+			.build();
+
+		embeddingModel.embed(List.of(new Document("你好")), options, new TokenCountBatchingStrategy());
+
+		ArgumentCaptor<DashScopeApiSpec.EmbeddingRequest> captor = ArgumentCaptor.forClass(DashScopeApiSpec.EmbeddingRequest.class);
+		verify(dashScopeApi).embeddings(captor.capture());
+		assertThat(captor.getValue().parameters().outputType())
+			.isEqualTo(DashScopeEmbeddingOptions.OUTPUT_TYPE_DENSE_AND_SPARSE);
+	}
+
+	@Test
+	void testDocumentEmbeddingPathShouldRejectSparseOnlyOutput() {
+		Embedding embedding = new Embedding(0, null,
+				List.of(new DashScopeApiSpec.SparseEmbeddingItem(108386, "你好", 2.3828f)));
+		Embeddings embeddings = new Embeddings(List.of(embedding));
+		EmbeddingList embeddingList = new EmbeddingList(TEST_REQUEST_ID, null, null, embeddings, new EmbeddingUsage(2L));
+		when(dashScopeApi.embeddings(any())).thenReturn(ResponseEntity.ok(embeddingList));
+
+		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
+			.outputType(DashScopeEmbeddingOptions.OUTPUT_TYPE_SPARSE)
+			.build();
+
+		assertThatThrownBy(() -> embeddingModel.embed(List.of(new Document("你好")), options, new TokenCountBatchingStrategy()))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessageContaining("sparse-only");
+	}
+
+	@Test
+	void testTextEmbeddingPathShouldRejectSparseOnlyDefaultOutput() {
+		DashScopeEmbeddingModel sparseDefaultModel = new DashScopeEmbeddingModel(dashScopeApi, MetadataMode.EMBED,
+				DashScopeEmbeddingOptions.builder()
+					.model(TEST_MODEL)
+					.textType(TEST_TEXT_TYPE)
+					.outputType(DashScopeEmbeddingOptions.OUTPUT_TYPE_SPARSE)
+					.build());
+
+		assertThatThrownBy(() -> sparseDefaultModel.embed(List.of("你好")))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessageContaining("sparse-only");
+	}
 
 }

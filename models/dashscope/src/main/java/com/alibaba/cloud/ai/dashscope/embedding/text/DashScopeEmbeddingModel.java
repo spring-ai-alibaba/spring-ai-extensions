@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.embedding.text;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,13 @@ import org.springframework.util.Assert;
 public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 
 	private static final Logger logger = LoggerFactory.getLogger(DashScopeEmbeddingModel.class);
+
+	/**
+	 * Metadata key for sparse embeddings stored in {@link EmbeddingResponseMetadata}. The
+	 * associated value is a {@code Map<Integer,
+	 * List<DashScopeApiSpec.SparseEmbeddingItem>>} keyed by DashScope {@code text_index}.
+	 */
+	public static final String SPARSE_EMBEDDINGS_METADATA = "sparse-embeddings";
 
 	private static final EmbeddingModelObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DefaultEmbeddingModelObservationConvention();
 
@@ -174,14 +182,21 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 
                     Usage embeddingUsage = usage != null ? this.getDefaultUsage(usage) : new EmptyUsage();
 
-                    var metadata = generateResponseMetadata(apiRequest.model(), embeddingUsage);
-                    List<Embedding> embeddings = apiEmbeddingResponse.output()
-                            .embeddings()
-                            .stream()
-                            .map(e -> new Embedding(e.embedding(), e.textIndex()))
-                            .toList();
+					Map<Integer, List<DashScopeApiSpec.SparseEmbeddingItem>> sparseEmbeddings = new HashMap<>();
+					List<Embedding> embeddings = new ArrayList<>();
+					if (apiEmbeddingResponse.output() != null && apiEmbeddingResponse.output().embeddings() != null) {
+						for (DashScopeApiSpec.Embedding embedding : apiEmbeddingResponse.output().embeddings()) {
+							int textIndex = embedding.textIndex() != null ? embedding.textIndex() : embeddings.size();
+							float[] denseEmbedding = embedding.embedding() != null ? embedding.embedding() : new float[0];
+							embeddings.add(new Embedding(denseEmbedding, textIndex));
+							if (embedding.sparseEmbedding() != null && !embedding.sparseEmbedding().isEmpty()) {
+								sparseEmbeddings.put(textIndex, embedding.sparseEmbedding());
+							}
+						}
+					}
+					var metadata = generateResponseMetadata(apiRequest.model(), embeddingUsage, sparseEmbeddings);
 
-                    EmbeddingResponse embeddingResponse = new EmbeddingResponse(embeddings, metadata);
+					EmbeddingResponse embeddingResponse = new EmbeddingResponse(embeddings, metadata);
 
                     observationContext.setResponse(embeddingResponse);
 
@@ -194,26 +209,27 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 	}
 
 	private EmbeddingRequest buildEmbeddingRequest(EmbeddingRequest embeddingRequest) {
-		// Process runtime options
+		DashScopeEmbeddingOptions requestOptions = mergeOptions(embeddingRequest.getOptions());
+		return new EmbeddingRequest(embeddingRequest.getInstructions(), requestOptions);
+	}
+
+	private DashScopeEmbeddingOptions mergeOptions(EmbeddingOptions options) {
 		DashScopeEmbeddingOptions runtimeOptions = null;
-		if (embeddingRequest.getOptions() != null) {
-			runtimeOptions = ModelOptionsUtils.copyToTarget(embeddingRequest.getOptions(), EmbeddingOptions.class,
+		if (options != null) {
+			runtimeOptions = ModelOptionsUtils.copyToTarget(options, EmbeddingOptions.class,
 					DashScopeEmbeddingOptions.class);
 		}
 
-		DashScopeEmbeddingOptions requestOptions = runtimeOptions == null ? this.defaultOptions
+		return runtimeOptions == null ? this.defaultOptions
 				: DashScopeEmbeddingOptions.builder()
-					// Handle portable embedding options
 					.model(ModelOptionsUtils.mergeOption(runtimeOptions.getModel(), this.defaultOptions.getModel()))
 					.dimensions(ModelOptionsUtils.mergeOption(runtimeOptions.getDimensions(),
-							defaultOptions.getDimensions()))
-
-					// Handle dashscope specific embedding options
-					.textType(
-							ModelOptionsUtils.mergeOption(runtimeOptions.getTextType(), defaultOptions.getTextType()))
+							this.defaultOptions.getDimensions()))
+					.textType(ModelOptionsUtils.mergeOption(runtimeOptions.getTextType(),
+							this.defaultOptions.getTextType()))
+					.outputType(ModelOptionsUtils.mergeOption(runtimeOptions.getOutputType(),
+							this.defaultOptions.getOutputType()))
 					.build();
-
-		return new EmbeddingRequest(embeddingRequest.getInstructions(), requestOptions);
 	}
 
 	private DashScopeApiSpec.EmbeddingRequest createRequest(EmbeddingRequest request) {
@@ -223,13 +239,30 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 			.texts(request.getInstructions())
 			.textType(requestOptions.getTextType())
 			.dimension(requestOptions.getDimensions())
+			.outputType(requestOptions.getOutputType())
 			.build();
 	}
 
-	private EmbeddingResponseMetadata generateResponseMetadata(String model, Usage usage) {
+	/**
+	 * Dense embedding convenience APIs cannot return sparse-only outputs because their
+	 * contract is fixed to {@code float[]} results. Callers that need sparse embeddings
+	 * must use {@link #call(EmbeddingRequest)} instead.
+	 */
+	private void validateDenseEmbeddingApiOutputType(DashScopeEmbeddingOptions options) {
+		if (DashScopeEmbeddingOptions.OUTPUT_TYPE_SPARSE.equalsIgnoreCase(options.getOutputType())) {
+			throw new IllegalStateException(
+					"DashScope sparse-only output cannot be returned from dense embedding APIs. Use call() to access sparse embeddings.");
+		}
+	}
+
+	private EmbeddingResponseMetadata generateResponseMetadata(String model, Usage usage,
+			Map<Integer, List<DashScopeApiSpec.SparseEmbeddingItem>> sparseEmbeddings) {
 		Map<String, Object> map = new HashMap<>();
 		map.put("model", model);
 		map.put("total-tokens", usage.getTotalTokens());
+		if (!sparseEmbeddings.isEmpty()) {
+			map.put(SPARSE_EMBEDDINGS_METADATA, sparseEmbeddings);
+		}
 
 		return new EmbeddingResponseMetadata(model, usage, map);
 	}
@@ -250,6 +283,7 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 	@Override
 	public List<float[]> embed(List<String> texts) {
 		Assert.notNull(texts, "Texts must not be null");
+		validateDenseEmbeddingApiOutputType(this.defaultOptions);
 		return this.call(new EmbeddingRequest(texts, defaultOptions))
 			.getResults()
 			.stream()
@@ -263,10 +297,9 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 	 */
 	@Override
 	public List<float[]> embed(List<Document> documents, EmbeddingOptions options, BatchingStrategy batchingStrategy) {
-		if (options.getModel() == null && options.getDimensions() == null && defaultOptions != null) {
-			options = defaultOptions;
-		}
-		return super.embed(documents, options, batchingStrategy);
+		DashScopeEmbeddingOptions requestOptions = mergeOptions(options);
+		validateDenseEmbeddingApiOutputType(requestOptions);
+		return super.embed(documents, requestOptions, batchingStrategy);
 	}
 
 	/**

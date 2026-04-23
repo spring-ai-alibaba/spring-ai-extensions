@@ -30,9 +30,17 @@ import org.springframework.ai.embedding.EmbeddingOptions;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 
+	public static final String OUTPUT_TYPE_DENSE = "dense";
+
+	public static final String OUTPUT_TYPE_SPARSE = "sparse";
+
+	public static final String OUTPUT_TYPE_DENSE_AND_SPARSE = "dense&sparse";
+
 	private @JsonProperty("model") String model;
 
 	private @JsonProperty("text_type") String textType;
+
+	private @JsonProperty("output_type") String outputType;
 
 	private @JsonProperty("dimensions") Integer dimensions;
 
@@ -67,6 +75,19 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 
 	public void setTextType(String textType) {
 		this.textType = textType;
+	}
+
+	public String getOutputType() {
+		return this.outputType;
+	}
+
+	public void setOutputType(String outputType) {
+		if (outputType != null && !OUTPUT_TYPE_DENSE.equals(outputType) && !OUTPUT_TYPE_SPARSE.equals(outputType)
+				&& !OUTPUT_TYPE_DENSE_AND_SPARSE.equals(outputType)) {
+			throw new IllegalArgumentException(
+					"outputType only supports " + OUTPUT_TYPE_DENSE + ", " + OUTPUT_TYPE_SPARSE + ", " + OUTPUT_TYPE_DENSE_AND_SPARSE);
+		}
+		this.outputType = outputType;
 	}
 
 	public String getEmbeddingsPath() {
@@ -110,10 +131,16 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 			return this;
 		}
 
+		public Builder outputType(String outputType) {
+			this.options.setOutputType(outputType);
+			return this;
+		}
+
 		@Deprecated
 		public Builder withTextType(String textType) {
 			return textType(textType);
 		}
+
 
 		public Builder embeddingsPath(String embeddingsPath) {
 			this.options.setEmbeddingsPath(embeddingsPath);
