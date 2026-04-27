@@ -80,11 +80,12 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
 
     private static final Logger logger = LoggerFactory.getLogger(NacosMcpGatewayToolCallback.class);
 
-    private static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{\\{\\s*(\\.(?:[\\w]+(?:\\.[\\w]+)*)?)\\s*\\}\\}");
+    // Match {{ .args.key1 }} or {{ .args.key_2 }} or {{ .args.key-3 }}
+    private static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{\\{\\s*(\\.(?:[\\w-]+(?:\\.[\\w-]+)*)?)\\s*\\}\\}");
 
-    // Match {{ ${nacos.dataId/group} }} or {{ ${nacos.dataId/group}.key1.key2 }}
+    // Match {{ ${nacos.dataId/group} }} or {{ ${nacos.dataId/group}.key1.key2 }} or {{ ${nacos.dataId/group}.key-1.key_2 }}
     private static final Pattern NACOS_TEMPLATE_PATTERN = Pattern
-            .compile("\\{\\{\\s*\\$\\{nacos\\.([^}]+)\\}(\\.[\\w]+(?:\\.[\\w]+)*)?\\s*}}");
+            .compile("\\{\\{\\s*\\$\\{nacos\\.([^}]+)\\}(\\.[\\w-]+(?:\\.[\\w-]+)*)?\\s*}}");
 
     /**
      * The Object mapper.
