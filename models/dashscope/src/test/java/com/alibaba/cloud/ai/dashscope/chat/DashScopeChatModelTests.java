@@ -47,6 +47,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.tool.ToolCallback;
@@ -702,6 +703,36 @@ class DashScopeChatModelTests {
         assertThat(prompt.getOptions()).asInstanceOf(type(DashScopeChatOptions.class))
                 .extracting(DashScopeChatOptions::getExtraBody)
                 .isEqualTo(Map.of("thinking_budget", 50));
+    }
+
+    @Test
+    void testBuildRequestPromptKeepsDefaultMultiModelWhenRuntimeUsesToolCallingOptions() {
+        DashScopeChatOptions multiModelOptions = DashScopeChatOptions.builder()
+                .model("qwen3.6-plus")
+                .multiModel(true)
+                .build();
+        DashScopeChatModel multiModelChatModel = DashScopeChatModel.builder()
+                .dashScopeApi(dashScopeApi)
+                .defaultOptions(multiModelOptions)
+                .build();
+        ToolCallingChatOptions runtimeToolOptions = ToolCallingChatOptions.builder()
+                .toolContext(Map.of("key1", "value1"))
+                .build();
+
+        Prompt requestPrompt = multiModelChatModel.buildRequestPrompt(Prompt.builder()
+                .content(TEST_PROMPT)
+                .chatOptions(runtimeToolOptions)
+                .build());
+        ChatCompletionRequest request = multiModelChatModel.createRequest(requestPrompt, false);
+
+        assertThat(requestPrompt.getOptions()).isInstanceOf(DashScopeChatOptions.class);
+        assertThat(requestPrompt.getOptions()).asInstanceOf(type(DashScopeChatOptions.class))
+                .extracting(DashScopeChatOptions::getMultiModel)
+                .isEqualTo(true);
+        assertThat(requestPrompt.getOptions()).asInstanceOf(type(DashScopeChatOptions.class))
+                .extracting(DashScopeChatOptions::getToolContext)
+                .isEqualTo(Map.of("key1", "value1"));
+        assertThat(request.multiModel()).isTrue();
     }
 
     @Test
