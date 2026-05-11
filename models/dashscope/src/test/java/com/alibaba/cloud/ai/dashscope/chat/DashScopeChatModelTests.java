@@ -594,6 +594,7 @@ class DashScopeChatModelTests {
 
         var request = chatModel.createRequest(prompt, false);
         assertThat(request.parameters().incrementalOutput()).isFalse();
+        assertThat(request.parameters().stream()).isNull();
 
         var chatResponse = chatModel.call(prompt);
         assertThat(chatResponse).isNotNull();
@@ -614,6 +615,7 @@ class DashScopeChatModelTests {
 
         var request = chatModel.createRequest(prompt, true);
         assertThat(request.parameters().incrementalOutput()).isTrue();
+        assertThat(request.parameters().stream()).isTrue();
 
         var chatResponseFlux = chatModel.stream(prompt);
         assertThat(chatResponseFlux).isNotNull();

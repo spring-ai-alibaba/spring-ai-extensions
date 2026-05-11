@@ -704,6 +704,7 @@ public class DashScopeChatModel implements ChatModel {
         // @formatter:off
 		// todo: sync modify by {@link ChatCompletionRequestParameter} new params.
 		Boolean incrementalOutput = stream && options.getIncrementalOutput();
+		Boolean parameterStream = stream ? Boolean.TRUE : null;
 		return new ChatCompletionRequestParameter(
                 "message",
                 options.getSeed(),
@@ -741,7 +742,7 @@ public class DashScopeChatModel implements ChatModel {
 
                 options.getTranslationOptions(),
 
-                options.getStream(),
+                parameterStream,
                 options.getStreamOptions(),
 
                 options.getModalities(),
