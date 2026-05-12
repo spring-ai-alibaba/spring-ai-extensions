@@ -121,7 +121,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      *   <li>false (default): Disable internet search.
      * </ul>
      */
-    private @JsonProperty("enable_search") Boolean enableSearch;
+    private @Nullable @JsonProperty("enable_search") Boolean enableSearch;
 
     /**
      * Models can specify the format of the returned content. Valid values: {"type": "text"} or {"type": "json_object"}
@@ -194,7 +194,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
     /**
      * Whether to enable the thinking process of the model.
      */
-    private @JsonProperty("enable_thinking") Boolean enableThinking;
+    private @Nullable @JsonProperty("enable_thinking") Boolean enableThinking;
 
     /**
      * The maximum length of the thinking process takes effect when enable_thinking is true,
@@ -539,11 +539,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         this.responseFormat = responseFormat;
     }
 
-    public Boolean getEnableSearch() {
+    public @Nullable Boolean getEnableSearch() {
         return enableSearch;
     }
 
-    public void setEnableSearch(Boolean enableSearch) {
+    public void setEnableSearch(@Nullable Boolean enableSearch) {
         this.enableSearch = enableSearch;
     }
 
@@ -646,11 +646,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         this.vlHighResolutionImages = vlHighResolutionImages;
     }
 
-    public Boolean getEnableThinking() {
+    public @Nullable Boolean getEnableThinking() {
         return enableThinking;
     }
 
-    public void setEnableThinking(Boolean enableThinking) {
+    public void setEnableThinking(@Nullable Boolean enableThinking) {
         this.enableThinking = enableThinking;
     }
 

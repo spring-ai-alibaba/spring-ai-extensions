@@ -222,7 +222,7 @@
     <properties>
 
         <!-- Spring AI Alibaba Version -->
-        <revision>2.0.0.0-SNAPSHOT</revision>
+        <revision>2.0.0-M1.1</revision>
 
         <!-- Maven project basic config -->
         <java.version>17</java.version>
@@ -296,7 +296,7 @@
         <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
         <!-- The version (range) of the JDK we want to use to compile.
           This is different from ${java.version} which we use as -release target. -->
-        <compiler.jdk.version>[21.0.8,)</compiler.jdk.version>
+        <compiler.jdk.version>[21.0.2,)</compiler.jdk.version>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <maven-site-plugin.version>4.0.0-M13</maven-site-plugin.version>
         <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
