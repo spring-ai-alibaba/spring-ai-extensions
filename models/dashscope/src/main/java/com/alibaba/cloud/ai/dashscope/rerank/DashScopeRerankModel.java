@@ -59,7 +59,7 @@ public class DashScopeRerankModel implements RerankModel {
 	private final DashScopeRerankOptions defaultOptions;
 
 	public DashScopeRerankModel(DashScopeApi dashScopeApi) {
-		this(dashScopeApi, DashScopeRerankOptions.builder().build());
+		this(dashScopeApi, DashScopeRerankOptions.builder().model("gte-rerank").topN(3).returnDocuments(false).build());
 	}
 
 	public DashScopeRerankModel(DashScopeApi dashScopeApi, DashScopeRerankOptions defaultOptions) {
@@ -158,7 +158,8 @@ public class DashScopeRerankModel implements RerankModel {
 
         private DashScopeApi dashScopeApi;
 
-        private DashScopeRerankOptions defaultOptions = DashScopeRerankOptions.builder().build();
+        private DashScopeRerankOptions defaultOptions = DashScopeRerankOptions.builder()
+                .model("gte-rerank").topN(3).returnDocuments(false).build();
 
         private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
 

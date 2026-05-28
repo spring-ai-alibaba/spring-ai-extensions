@@ -38,17 +38,17 @@ class DashScopeRerankOptionsTests {
 	private static final Boolean TEST_RETURN_DOCUMENTS = true;
 
 	/**
-	 * Test default values of DashScopeRerankOptions. Verifies that a newly created
-	 * instance has the expected default values: - model = "gte-rerank" - topN = 3 -
-	 * returnDocuments = false
+	 * Test that an empty builder produces null fields. All fields default to null so that
+	 * ModelOptionsUtils.mergeOption() correctly falls through to the configured defaults
+	 * rather than having constructor values silently override them.
 	 */
 	@Test
 	void testDefaultValues() {
 		DashScopeRerankOptions options = DashScopeRerankOptions.builder().build();
 
-		assertThat(options.getModel()).isEqualTo("gte-rerank");
-		assertThat(options.getTopN()).isEqualTo(3);
-		assertThat(options.getReturnDocuments()).isFalse();
+		assertThat(options.getModel()).isNull();
+		assertThat(options.getTopN()).isNull();
+		assertThat(options.getReturnDocuments()).isNull();
 	}
 
 	/**
@@ -86,8 +86,8 @@ class DashScopeRerankOptionsTests {
 	}
 
 	/**
-	 * Test builder with partial values set. Verifies that when only some properties are
-	 * set using the builder, the unset properties retain their default values.
+	 * Test builder with partial values set. Unset fields remain null so they do not
+	 * accidentally override configured defaults during options merging.
 	 */
 	@Test
 	void testBuilderWithPartialValues() {
@@ -98,7 +98,33 @@ class DashScopeRerankOptionsTests {
 
 		assertThat(options.getModel()).isEqualTo(TEST_MODEL);
 		assertThat(options.getTopN()).isEqualTo(TEST_TOP_N);
-		assertThat(options.getReturnDocuments()).isFalse(); // Default value
+		assertThat(options.getReturnDocuments()).isNull();
+	}
+
+	/**
+	 * Test that null fields in runtime options fall through to the configured default.
+	 * This is the core contract that prevents hardcoded constructor values from silently
+	 * overriding yml-configured model names when merging options.
+	 */
+	@Test
+	void testNullFieldsFallThroughToDefault() {
+		DashScopeRerankOptions configuredDefaults = DashScopeRerankOptions.builder()
+			.model("gte-rerank-v2")
+			.topN(10)
+			.returnDocuments(true)
+			.build();
+
+		// Runtime options with only topN set — model and returnDocuments are null
+		DashScopeRerankOptions runtimeOptions = DashScopeRerankOptions.builder().topN(5).build();
+
+		String mergedModel = runtimeOptions.getModel() != null ? runtimeOptions.getModel() : configuredDefaults.getModel();
+		Integer mergedTopN = runtimeOptions.getTopN() != null ? runtimeOptions.getTopN() : configuredDefaults.getTopN();
+		Boolean mergedReturnDocs = runtimeOptions.getReturnDocuments() != null ? runtimeOptions.getReturnDocuments()
+				: configuredDefaults.getReturnDocuments();
+
+		assertThat(mergedModel).isEqualTo("gte-rerank-v2");
+		assertThat(mergedTopN).isEqualTo(5);
+		assertThat(mergedReturnDocs).isTrue();
 	}
 
 	@Test
