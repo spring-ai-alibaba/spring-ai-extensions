@@ -33,10 +33,10 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.model.ModelOptionsUtils;
+
 /**
  * @author yuluo, yingzi
  */
-
 public class DashScopeApiSpec {
 
     public static final String DEFAULT_EMBEDDING_MODEL = DashScopeModel.EmbeddingModel.EMBEDDING_V2.getValue();
@@ -79,7 +79,7 @@ public class DashScopeApiSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Embedding(@JsonProperty("text_index") Integer textIndex,
                             @JsonProperty("embedding") float[] embedding,
-                            @JsonProperty("sparse_embedding") List<SparseEmbeddingItem> sparseEmbedding) {
+                            @JsonProperty("sparse_embedding") @Nullable List<SparseEmbeddingItem> sparseEmbedding) {
 
         public Embedding(Integer textIndex, float[] embedding) {
             this(textIndex, embedding, null);
@@ -113,10 +113,9 @@ public class DashScopeApiSpec {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record EmbeddingRequestInputParameters(@JsonProperty("text_type") String textType,
-                                                  @JsonProperty("dimension") @Nullable Integer dimension) {
-                                                  @JsonProperty("dimension") Integer dimension,
-                                                  @JsonProperty("output_type") String outputType) {
+    public record EmbeddingRequestInputParameters(@JsonProperty("text_type") @Nullable String textType,
+                                                  @JsonProperty("dimension") @Nullable Integer dimension,
+                                                  @JsonProperty("output_type") @Nullable String outputType) {
 
         public static Builder builder() {
             return new Builder();
@@ -128,7 +127,7 @@ public class DashScopeApiSpec {
 
             private @Nullable Integer dimension;
 
-            private String outputType;
+            private @Nullable String outputType;
 
             private Builder() {
 
@@ -144,7 +143,7 @@ public class DashScopeApiSpec {
                 return this;
             }
 
-            public Builder outputType(String outputType) {
+            public Builder outputType(@Nullable String outputType) {
                 this.outputType = outputType;
                 return this;
             }
@@ -180,7 +179,7 @@ public class DashScopeApiSpec {
 
             private @Nullable Integer dimension;
 
-            private String outputType;
+            private @Nullable String outputType;
 
             private Builder() {
             }
@@ -210,7 +209,7 @@ public class DashScopeApiSpec {
                 return this;
             }
 
-            public Builder outputType(String outputType) {
+            public Builder outputType(@Nullable String outputType) {
                 this.outputType = outputType;
                 return this;
             }

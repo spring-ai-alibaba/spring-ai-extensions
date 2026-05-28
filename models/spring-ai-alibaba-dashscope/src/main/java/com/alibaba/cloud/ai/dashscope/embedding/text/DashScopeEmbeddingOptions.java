@@ -37,14 +37,13 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 
 	public static final String OUTPUT_TYPE_DENSE_AND_SPARSE = "dense&sparse";
 
-	private @JsonProperty("model") String model;
+	private @JsonProperty("model") @Nullable String model;
 
 	private @JsonProperty("text_type") @Nullable String textType;
 
 	private @JsonProperty("dimensions") @Nullable Integer dimensions;
-	private @JsonProperty("output_type") String outputType;
 
-	private @JsonProperty("dimensions") Integer dimensions;
+	private @JsonProperty("output_type") @Nullable String outputType;
 
 	@JsonIgnore
 	private @Nullable String embeddingsPath;
@@ -79,11 +78,11 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 		this.textType = textType;
 	}
 
-	public String getOutputType() {
+	public @Nullable String getOutputType() {
 		return this.outputType;
 	}
 
-	public void setOutputType(String outputType) {
+	public void setOutputType(@Nullable String outputType) {
 		if (outputType != null && !OUTPUT_TYPE_DENSE.equals(outputType) && !OUTPUT_TYPE_SPARSE.equals(outputType)
 				&& !OUTPUT_TYPE_DENSE_AND_SPARSE.equals(outputType)) {
 			throw new IllegalArgumentException(
@@ -123,7 +122,7 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 			return this;
 		}
 
-		public Builder outputType(String outputType) {
+		public Builder outputType(@Nullable String outputType) {
 			this.options.setOutputType(outputType);
 			return this;
 		}
