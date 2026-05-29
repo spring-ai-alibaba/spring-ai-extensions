@@ -18,11 +18,10 @@ package com.alibaba.cloud.ai.toolcalling.jsonprocessor;
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
+import tools.jackson.databind.JsonNode;
 
 import java.util.function.Function;
 
@@ -46,13 +45,7 @@ public class JsonProcessorInsertService implements Function<JsonProcessorInsertS
 		JsonNode value = request.value;
 		Assert.notNull(field, "insert json field can not be null");
 		Assert.notNull(value, "insert json fieldValue can not be null");
-		try {
-			return jsonParseTool.setFieldValue(content, field, value);
-		}
-		catch (JsonProcessingException e) {
-			logger.error("Error occurred while json processing: {}", e.getMessage());
-			throw new RuntimeException(e);
-		}
+        return jsonParseTool.setFieldValue(content, field, value);
 	}
 
 	@JsonClassDescription("JsonProcessorInsertService request")

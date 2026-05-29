@@ -34,8 +34,6 @@ import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.alibaba.nacos.api.utils.NetUtils;
 import com.alibaba.nacos.api.utils.StringUtils;
-import com.alibaba.nacos.common.utils.JacksonUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -44,11 +42,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerProperties;
 import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerSseProperties;
 import org.springframework.ai.mcp.server.common.autoconfigure.properties.McpServerStreamableHttpProperties;
+import org.springframework.ai.util.JsonHelper;
 import org.springframework.boot.web.server.context.ConfigurableWebServerApplicationContext;
 import org.springframework.boot.web.server.context.WebServerApplicationContext;
 import org.springframework.boot.web.server.context.WebServerInitializedEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
+import org.springframework.core.ParameterizedTypeReference;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -96,6 +96,8 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 
 	private boolean success = false;
 
+    private JsonHelper jsonHelper;
+
 	@SuppressWarnings("NullAway.Init")
 	public NacosMcpRegister(NacosMcpOperationService nacosMcpOperationService, McpAsyncServer mcpAsyncServer,
 							NacosMcpProperties nacosMcpProperties, NacosMcpRegisterProperties nacosMcpRegistryProperties,
@@ -112,6 +114,7 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 		this.mcpServerSseProperties = mcpServerSseProperties;
 		this.applicationContext = applicationContext;
 		this.mcpServerStreamableHttpProperties = this.applicationContext.getBean(McpServerStreamableHttpProperties.class);
+        this.jsonHelper = new JsonHelper();
 
 		try {
 			if (StringUtils.isBlank(this.mcpServerProperties.getVersion())) {
@@ -167,8 +170,8 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 				List<McpSchema.Tool> toolsNeedtoRegister = this.tools.stream()
 						.map(McpServerFeatures.AsyncToolSpecification::tool)
 						.toList();
-				String toolsStr = JacksonUtils.toJson(toolsNeedtoRegister);
-				List<McpTool> toolsToNacosList = JacksonUtils.toObj(toolsStr, new TypeReference<>() {
+				String toolsStr = jsonHelper.toJson(toolsNeedtoRegister);
+				List<McpTool> toolsToNacosList = jsonHelper.fromJson(toolsStr, new ParameterizedTypeReference<>() {
 				});
 				mcpToolSpec.setTools(toolsToNacosList);
 			}
@@ -276,14 +279,13 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 				&& !localToolRegistration.tool().description().equals(toolInNacos.description())) {
 			changed = true;
 		}
-		String localInputSchemaString = JacksonUtils.toJson(localToolRegistration.tool().inputSchema());
-		Map<String, Object> localInputSchemaMap = JacksonUtils.toObj(localInputSchemaString, new TypeReference<>() {
-		});
+		String localInputSchemaString = jsonHelper.toJson(localToolRegistration.tool().inputSchema());
+		Map<String, Object> localInputSchemaMap = jsonHelper.fromJsonToMap(localInputSchemaString);
 		Map<String, Object> localProperties = Objects.requireNonNull(
 				(Map<String, Object>) localInputSchemaMap.get("properties"));
 
-		String nacosInputSchemaString = JacksonUtils.toJson(toolInNacos.inputSchema());
-		Map<Object, Object> nacosInputSchemaMap = JacksonUtils.toObj(nacosInputSchemaString, new TypeReference<>() {
+		String nacosInputSchemaString = jsonHelper.toJson(toolInNacos.inputSchema());
+		Map<Object, Object> nacosInputSchemaMap = jsonHelper.fromJson(nacosInputSchemaString, new ParameterizedTypeReference<>() {
 		});
 		Map<String, Object> nacosProperties = Objects.requireNonNull(
 				(Map<String, Object>) nacosInputSchemaMap.get("properties"));
@@ -325,8 +327,8 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 				log.info("[Nacos MCP Register] Mcp server tools in nacos is null, skip local mcp server tools update");
 				return;
 			}
-			String toolsInNacosStr = JacksonUtils.toJson(toolSpec.getTools());
-			List<McpSchema.Tool> toolsInNacos = JacksonUtils.toObj(toolsInNacosStr, new TypeReference<>() {
+			String toolsInNacosStr = jsonHelper.toJson(toolSpec.getTools());
+			List<McpSchema.Tool> toolsInNacos = jsonHelper.fromJson(toolsInNacosStr, new ParameterizedTypeReference<>() {
 			});
 			changed = compareToolsMeta(toolSpec.getToolsMeta());
 			this.toolsMeta = toolSpec.getToolsMeta();
@@ -433,9 +435,9 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 			return new CheckCompatibleResult(false, "Local tools list is not compatible with tools list in Nacos");
 		}
 		for (String toolName : toolsInNacos.keySet()) {
-			String jsonSchemaStringInNacos = JacksonUtils.toJson(toolsInNacos.get(toolName).getInputSchema());
+			String jsonSchemaStringInNacos = jsonHelper.toJson(toolsInNacos.get(toolName).getInputSchema());
 			McpSchema.Tool localTool = Objects.requireNonNull(toolsInLocal.get(toolName));
-			String jsonSchemaStringInLocal = JacksonUtils.toJson(localTool.inputSchema());
+			String jsonSchemaStringInLocal = jsonHelper.toJson(localTool.inputSchema());
 			if (!JsonSchemaUtil.compare(jsonSchemaStringInNacos, jsonSchemaStringInLocal)) {
 				String message = String.format("Input Schema of local tool %s is not compatible with tool in Nacos",
 						toolName);

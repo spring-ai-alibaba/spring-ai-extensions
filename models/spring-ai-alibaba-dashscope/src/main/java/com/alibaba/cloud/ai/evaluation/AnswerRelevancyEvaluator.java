@@ -15,9 +15,8 @@
  */
 package com.alibaba.cloud.ai.evaluation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.evaluation.EvaluationRequest;
 import org.springframework.ai.evaluation.EvaluationResponse;
@@ -92,13 +91,7 @@ public class AnswerRelevancyEvaluator extends LaajEvaluator {
 			.call()
 			.content();
 
-		JsonNode evaluationResponse = null;
-		try {
-			evaluationResponse = getObjectMapper().readTree(llmEvaluationResponse);
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
+		JsonNode evaluationResponse = getObjectMapper().readTree(llmEvaluationResponse);
 
 		float score = (float) evaluationResponse.get("score").asDouble();
 		String feedback = evaluationResponse.get("feedback").asText();

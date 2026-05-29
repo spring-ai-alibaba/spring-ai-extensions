@@ -28,13 +28,13 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * @author YunLong
@@ -86,8 +86,8 @@ public class YuQueResource implements Resource {
 			HttpResponse<String> response = this.httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 			String body = response.body();
 			// Parse the JSON response using Jackson
-			ObjectMapper objectMapper = new ObjectMapper();
-			JsonNode jsonObject = objectMapper.readTree(body);
+			JsonMapper jsonMapper = JsonMapper.shared();
+			JsonNode jsonObject = jsonMapper.readTree(body);
 			JsonNode dataObject = jsonObject.get("data");
 
 			if (dataObject == null || !dataObject.isObject()) {

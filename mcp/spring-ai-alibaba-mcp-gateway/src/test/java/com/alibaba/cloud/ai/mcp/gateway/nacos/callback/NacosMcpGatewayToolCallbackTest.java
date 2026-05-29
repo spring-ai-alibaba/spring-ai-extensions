@@ -20,9 +20,9 @@ import com.alibaba.cloud.ai.mcp.gateway.core.utils.SpringBeanUtils;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.definition.NacosMcpGatewayToolDefinition;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
 import com.alibaba.nacos.api.ai.model.mcp.McpServerRemoteServiceConfig;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ class NacosMcpGatewayToolCallbackTest {
 
 	private GenericApplicationContext applicationContext;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final JsonMapper jsonMapper = JsonMapper.shared();
 
 	@BeforeEach
 	void setUp() {
@@ -73,7 +73,7 @@ class NacosMcpGatewayToolCallbackTest {
 
 		NacosMcpGatewayToolCallback callback = new NacosMcpGatewayToolCallback(definition);
 
-		ObjectNode responseTemplate = objectMapper.createObjectNode();
+		ObjectNode responseTemplate = jsonMapper.createObjectNode();
 		responseTemplate.put("body", "{{.}}");
 
 		JsonNode templateNode = responseTemplate;

@@ -15,15 +15,13 @@
  */
 package com.alibaba.cloud.ai.toolcalling.common;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -38,23 +36,22 @@ public class JsonParseTool {
 	private final ObjectMapper objectMapper;
 
 	JsonParseTool() {
-		this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule())
-			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		this.objectMapper = JsonMapper.shared();
 	}
 
 	public JsonParseTool(ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
 	}
 
-	public <T> String objectToJson(T obj) throws JsonProcessingException {
+	public <T> String objectToJson(T obj) {
 		return objectMapper.writeValueAsString(obj);
 	}
 
-	public <T> T jsonToObject(@Nullable String json, Class<T> clazz) throws JsonProcessingException {
+	public <T> T jsonToObject(@Nullable String json, Class<T> clazz) {
 		return objectMapper.readValue(Objects.requireNonNull(json, "JSON content must not be null"), clazz);
 	}
 
-	public <T> T jsonToObject(@Nullable String json, TypeReference<T> typeRef) throws JsonProcessingException {
+	public <T> T jsonToObject(@Nullable String json, TypeReference<T> typeRef) {
 		return objectMapper.readValue(Objects.requireNonNull(json, "JSON content must not be null"), typeRef);
 	}
 
@@ -63,7 +60,7 @@ public class JsonParseTool {
 	 * @param json json string
 	 * @param clazz class in List
 	 */
-	public <T> List<T> jsonToList(String json, Class<T> clazz) throws JsonProcessingException {
+	public <T> List<T> jsonToList(String json, Class<T> clazz) {
 		JavaType type = objectMapper.getTypeFactory().constructCollectionType(List.class, clazz);
 		return objectMapper.readValue(json, type);
 	}
@@ -73,7 +70,7 @@ public class JsonParseTool {
 	 * @param json json string
 	 * @param typeRef class in List, TypeReference object
 	 */
-	public <T> List<T> jsonToList(String json, TypeReference<T> typeRef) throws JsonProcessingException {
+	public <T> List<T> jsonToList(String json, TypeReference<T> typeRef) {
 		JavaType type = objectMapper.getTypeFactory().constructType(typeRef);
 		return objectMapper.readValue(json, type);
 	}
@@ -83,7 +80,7 @@ public class JsonParseTool {
 	 * @param json json string
 	 * @param clazz class in Map Value
 	 */
-	public <T> Map<String, T> jsonToMap(String json, Class<T> clazz) throws JsonProcessingException {
+	public <T> Map<String, T> jsonToMap(String json, Class<T> clazz) {
 		JavaType type = objectMapper.getTypeFactory().constructMapType(Map.class, String.class, clazz);
 		return objectMapper.readValue(json, type);
 	}
@@ -94,7 +91,7 @@ public class JsonParseTool {
 	 * @param typeRef target class
 	 * @param fieldName keyName
 	 */
-	public <T> T getFieldValue(String json, TypeReference<T> typeRef, String fieldName) throws JsonProcessingException {
+	public <T> T getFieldValue(String json, TypeReference<T> typeRef, String fieldName) {
 		JsonNode rootNode = objectMapper.readTree(json);
 		JsonNode fieldNode = rootNode.path(fieldName);
 		return objectMapper.treeToValue(fieldNode, typeRef);
@@ -106,7 +103,7 @@ public class JsonParseTool {
 	 * @param clazz target class
 	 * @param fieldName keyName
 	 */
-	public <T> T getFieldValue(String json, Class<T> clazz, String fieldName) throws JsonProcessingException {
+	public <T> T getFieldValue(String json, Class<T> clazz, String fieldName) {
 		JsonNode rootNode = objectMapper.readTree(json);
 		JsonNode fieldNode = rootNode.path(fieldName);
 		return objectMapper.treeToValue(fieldNode, clazz);
@@ -117,7 +114,7 @@ public class JsonParseTool {
 	 * @param json json string
 	 * @param fieldName keyName
 	 */
-	public String getFieldValueAsString(String json, String fieldName) throws JsonProcessingException {
+	public String getFieldValueAsString(String json, String fieldName) {
 		JsonNode rootNode = objectMapper.readTree(json);
 		JsonNode fieldNode = rootNode.path(fieldName);
 		return fieldNode.toString();
@@ -128,7 +125,7 @@ public class JsonParseTool {
 	 * @param json json string
 	 * @param fieldName keyName
 	 */
-	public String getFieldValueAsText(String json, String fieldName) throws JsonProcessingException {
+	public String getFieldValueAsText(String json, String fieldName) {
 		JsonNode rootNode = objectMapper.readTree(json);
 		JsonNode fieldNode = rootNode.get(fieldName);
 		return fieldNode.asText();
@@ -139,8 +136,7 @@ public class JsonParseTool {
 	 * @param json json string
 	 * @param fieldNames keyNames
 	 */
-	public <T> T getDepthFieldValue(String json, TypeReference<T> typeRef, String... fieldNames)
-			throws JsonProcessingException {
+	public <T> T getDepthFieldValue(String json, TypeReference<T> typeRef, String... fieldNames) {
 		return this.jsonToObject(this.getDepthFieldValueAsString(json, fieldNames), typeRef);
 	}
 
@@ -149,7 +145,7 @@ public class JsonParseTool {
 	 * @param json json string
 	 * @param fieldNames keyNames
 	 */
-	public String getDepthFieldValueAsString(String json, String... fieldNames) throws JsonProcessingException {
+	public String getDepthFieldValueAsString(String json, String... fieldNames) {
 		for (String fieldName : fieldNames) {
 			json = getFieldValueAsString(json, fieldName);
 		}
@@ -162,7 +158,7 @@ public class JsonParseTool {
 	 * @param fieldName fieldName
 	 * @param value value
 	 */
-	public String setFieldValue(String json, String fieldName, String value) throws JsonProcessingException {
+	public String setFieldValue(String json, String fieldName, String value) {
 		JsonNode jsonNode = objectMapper.readTree(json);
 		if (!(jsonNode instanceof ObjectNode rootNode)) {
 			throw new RuntimeException("no json object string");
@@ -177,7 +173,7 @@ public class JsonParseTool {
 	 * @param fieldName fieldName
 	 * @param value JsonNode value
 	 */
-	public Object setFieldValue(String json, String fieldName, JsonNode value) throws JsonProcessingException {
+	public Object setFieldValue(String json, String fieldName, JsonNode value) {
 		JsonNode jsonNode = objectMapper.readTree(json);
 		if (!(jsonNode instanceof ObjectNode rootNode)) {
 			throw new RuntimeException("no json object string");
@@ -190,7 +186,7 @@ public class JsonParseTool {
 	 * @param json json string
 	 * @param fieldName fieldName
 	 */
-	public Object removeFieldValue(String json, String fieldName) throws JsonProcessingException {
+	public Object removeFieldValue(String json, String fieldName) {
 		JsonNode jsonNode = objectMapper.readTree(json);
 		if (!(jsonNode instanceof ObjectNode rootNode)) {
 			throw new RuntimeException("no json object string");
@@ -204,7 +200,7 @@ public class JsonParseTool {
 	 * @param fieldName fieldName
 	 * @param value JsonNode value
 	 */
-	public Object replaceFieldValue(String json, String fieldName, JsonNode value) throws JsonProcessingException {
+	public Object replaceFieldValue(String json, String fieldName, JsonNode value) {
 		JsonNode jsonNode = objectMapper.readTree(json);
 		if (!(jsonNode instanceof ObjectNode rootNode)) {
 			throw new RuntimeException("no json object string");
@@ -220,8 +216,7 @@ public class JsonParseTool {
 	 * @param fieldName fieldName
 	 * @param objectJson sub json string
 	 */
-	public String setFieldJsonObjectAsString(String json, String fieldName, String objectJson)
-			throws JsonProcessingException {
+	public String setFieldJsonObjectAsString(String json, String fieldName, String objectJson) {
 		JsonNode jsonNode = objectMapper.readTree(json);
 		if (!(jsonNode instanceof ObjectNode rootNode)) {
 			throw new RuntimeException("no json object string");
@@ -238,8 +233,7 @@ public class JsonParseTool {
 	 * @param fieldName fieldName
 	 * @param objectJsons sub json string list
 	 */
-	public String setFieldJsonObjectAsString(String json, String fieldName, List<String> objectJsons)
-			throws JsonProcessingException {
+	public String setFieldJsonObjectAsString(String json, String fieldName, List<String> objectJsons) {
 		JsonNode jsonNode = objectMapper.readTree(json);
 		if (!(jsonNode instanceof ObjectNode rootNode)) {
 			throw new RuntimeException("no json object string");
@@ -258,7 +252,7 @@ public class JsonParseTool {
 	 * @param arrayJson array json string
 	 * @return element json string
 	 */
-	public @Nullable String getFirstElementFromJsonArrayString(String arrayJson) throws JsonProcessingException {
+	public @Nullable String getFirstElementFromJsonArrayString(String arrayJson) {
 		JsonNode jsonNode = objectMapper.readTree(arrayJson);
 		if (jsonNode.isArray() && !jsonNode.isEmpty()) {
 			JsonNode firstElement = jsonNode.get(0);

@@ -15,7 +15,6 @@
  */
 package com.alibaba.cloud.ai.toolcalling.common;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -134,8 +133,7 @@ public class WebClientTool {
 				.contentType(mediaType)
 				.bodyValue(json)
 				.retrieve()
-				.bodyToMono(String.class))
-			.onErrorMap(JsonProcessingException.class, e -> new RuntimeException("Serialization failed", e));
+				.bodyToMono(String.class));
 	}
 
 	/**
@@ -179,8 +177,7 @@ public class WebClientTool {
 				.contentType(mediaType)
 				.bodyValue(json)
 				.retrieve()
-				.bodyToMono(String.class))
-			.onErrorMap(JsonProcessingException.class, e -> new RuntimeException("Serialization failed", e));
+				.bodyToMono(String.class));
 	}
 
 	public <T> Mono<String> put(String uri, T value) {

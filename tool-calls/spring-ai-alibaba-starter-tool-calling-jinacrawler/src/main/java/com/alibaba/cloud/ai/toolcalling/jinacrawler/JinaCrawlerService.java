@@ -20,8 +20,8 @@ import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +69,7 @@ public class JinaCrawlerService implements Function<JinaCrawlerService.Request, 
 		}
 		catch (Exception e) {
 			log.error("Jina reader request failed: ", e);
-			if (e instanceof JsonProcessingException && StringUtils.hasText(responseStr)) {
+			if (e instanceof JacksonException && StringUtils.hasText(responseStr)) {
 				String rawResponse = Objects.requireNonNull(responseStr, "Jina crawler response must not be null");
 				return new Response(Map.of("data", rawResponse), null);
 			}

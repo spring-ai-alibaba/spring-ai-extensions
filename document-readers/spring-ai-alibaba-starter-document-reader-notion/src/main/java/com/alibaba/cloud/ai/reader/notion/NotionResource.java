@@ -27,12 +27,12 @@ import java.net.http.HttpResponse;
 import java.util.Iterator;
 import java.util.Objects;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Notion Resource class Supports accessing Notion pages and databases
@@ -136,8 +136,8 @@ public class NotionResource implements Resource {
 			Assert.isTrue(pageResponse.statusCode() == 200, "Failed to fetch page content");
 
 			// 2. Parse page content
-			ObjectMapper objectMapper = new ObjectMapper();
-			JsonNode pageJson = objectMapper.readTree(pageResponse.body());
+            JsonMapper jsonMapper = JsonMapper.shared();
+			JsonNode pageJson = jsonMapper.readTree(pageResponse.body());
 			StringBuilder content = new StringBuilder();
 
 			// Extract page title
@@ -167,7 +167,7 @@ public class NotionResource implements Resource {
 			Assert.isTrue(blocksResponse.statusCode() == 200, "Failed to fetch page blocks");
 
 			// 4. Parse block content
-			JsonNode blocksJson = objectMapper.readTree(blocksResponse.body());
+			JsonNode blocksJson = jsonMapper.readTree(blocksResponse.body());
 			JsonNode blocks = blocksJson.get("results");
 
 			// 5. Extract text content
@@ -212,8 +212,8 @@ public class NotionResource implements Resource {
 			Assert.isTrue(response.statusCode() == 200, "Failed to fetch database content");
 
 			// 2. Parse database content
-			ObjectMapper objectMapper = new ObjectMapper();
-			JsonNode jsonResponse = objectMapper.readTree(response.body());
+            JsonMapper jsonMapper = JsonMapper.shared();
+			JsonNode jsonResponse = jsonMapper.readTree(response.body());
 			JsonNode results = jsonResponse.get("results");
 
 			// 3. Extract property values
@@ -222,7 +222,7 @@ public class NotionResource implements Resource {
 				for (JsonNode row : results) {
 					JsonNode properties = row.get("properties");
 
-					for (Iterator<String> it = properties.fieldNames(); it.hasNext();) {
+					for (Iterator<String> it = properties.propertyNames().iterator(); it.hasNext();) {
 						String propertyName = it.next();
 						JsonNode property = properties.get(propertyName);
 						String type = property.get("type").asText();
@@ -272,8 +272,8 @@ public class NotionResource implements Resource {
 			HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 			Assert.isTrue(response.statusCode() == 200, "Failed to fetch resource metadata");
 
-			ObjectMapper objectMapper = new ObjectMapper();
-			return objectMapper.readTree(response.body());
+            JsonMapper jsonMapper = JsonMapper.shared();
+			return jsonMapper.readTree(response.body());
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to get resource metadata", e);

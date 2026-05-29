@@ -60,8 +60,8 @@ public class YuqueUpdateBookService
 	}
 
 	public record updateBookRequest(@JsonProperty("bookId") String bookId, @JsonProperty("name") String name,
-			@JsonProperty("slug") String slug, @JsonProperty("description") String description,
-			@JsonProperty("public") Integer isPublic, @JsonProperty("toc") String toc) {
+                                    @JsonProperty("slug") String slug, @JsonProperty("description") String description,
+                                    @JsonProperty("public") Integer isPublic, @JsonProperty("toc") String toc) {
 	}
 
 	public record updateBookResponse(@JsonProperty("data") YuqueConstants.BookSerializer data) {

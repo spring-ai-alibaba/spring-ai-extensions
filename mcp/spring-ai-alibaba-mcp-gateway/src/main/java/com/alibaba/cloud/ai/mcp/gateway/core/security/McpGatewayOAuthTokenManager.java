@@ -17,7 +17,6 @@
 package com.alibaba.cloud.ai.mcp.gateway.core.security;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +28,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -44,7 +44,7 @@ public class McpGatewayOAuthTokenManager {
 
 	private final McpGatewayOAuthProperties oauthProperties;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	private volatile @Nullable CachedToken cachedToken;
 
@@ -53,7 +53,7 @@ public class McpGatewayOAuthTokenManager {
 	public McpGatewayOAuthTokenManager(WebClient.Builder webClientBuilder, McpGatewayOAuthProperties oauthProperties) {
 		this.webClient = webClientBuilder.clone().build();
 		this.oauthProperties = oauthProperties;
-		this.objectMapper = new ObjectMapper();
+		this.jsonMapper = JsonMapper.shared();
 		this.cachedToken = null;
 	}
 
@@ -123,7 +123,7 @@ public class McpGatewayOAuthTokenManager {
 	 */
 	private String parseTokenResponse(String responseBody) {
 		try {
-			TokenResponse tokenResponse = objectMapper.readValue(responseBody, TokenResponse.class);
+			TokenResponse tokenResponse = jsonMapper.readValue(responseBody, TokenResponse.class);
 			String accessToken = Objects.requireNonNull(tokenResponse.getAccessToken(), "响应中未找到访问token");
 
 			if (!StringUtils.hasText(accessToken)) {

@@ -16,8 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.api.tts;
 
 import com.alibaba.cloud.ai.dashscope.api.ApiUtils;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -30,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.ByteBuffer;
 import java.util.Base64;
@@ -72,7 +72,7 @@ public class QwenTTSRealtimeWebSocketClient extends WebSocketListener {
 	private final String apiKey;
 	private final @Nullable String workSpaceId;
 	private final Map<String, String> customHeaders;
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	private @Nullable WebSocket webSocket;
 	private @Nullable FluxSink<ByteBuffer> binarySink;
@@ -80,12 +80,12 @@ public class QwenTTSRealtimeWebSocketClient extends WebSocketListener {
 	private final AtomicBoolean completed = new AtomicBoolean(false);
 
 	public QwenTTSRealtimeWebSocketClient(String url, String apiKey, @Nullable String workSpaceId,
-			Map<String, String> customHeaders, ObjectMapper objectMapper) {
+			Map<String, String> customHeaders, JsonMapper jsonMapper) {
 		this.url = url;
 		this.apiKey = apiKey;
 		this.workSpaceId = workSpaceId;
 		this.customHeaders = customHeaders != null ? customHeaders : Collections.emptyMap();
-		this.objectMapper = objectMapper;
+		this.jsonMapper = jsonMapper;
 	}
 
 	/**
@@ -171,7 +171,7 @@ public class QwenTTSRealtimeWebSocketClient extends WebSocketListener {
 
 	private void sendMessage(Map<String, Object> message) {
 		try {
-			String json = objectMapper.writeValueAsString(message);
+			String json = jsonMapper.writeValueAsString(message);
 			if (webSocket != null) {
 				webSocket.send(json);
 			}
@@ -220,7 +220,7 @@ public class QwenTTSRealtimeWebSocketClient extends WebSocketListener {
 	@Override
 	public void onMessage(WebSocket webSocket, String text) {
 		try {
-			JsonNode node = objectMapper.readTree(text);
+			JsonNode node = jsonMapper.readTree(text);
 			if (!node.has(QwenTTSRealtimeConstants.PROTOCOL_TYPE)) {
 				log.debug("Received message without type");
 				return;

@@ -18,24 +18,23 @@ package com.alibaba.cloud.ai.toolcalling.tavily;
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
 import com.alibaba.cloud.ai.toolcalling.common.interfaces.SearchService;
+import com.alibaba.cloud.ai.toolcalling.tavily.TavilySearchService.Response.ImageInfo;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
@@ -172,12 +171,11 @@ public class TavilySearchService
 
 }
 
-class ImageInfoDeserializer extends JsonDeserializer<TavilySearchService.Response.ImageInfo> {
+class ImageInfoDeserializer extends ValueDeserializer<ImageInfo> {
 
 	@Override
-	public TavilySearchService.Response.@Nullable ImageInfo deserialize(JsonParser p, DeserializationContext ctxt)
-			throws IOException, JsonProcessingException {
-		JsonNode node = p.getCodec().readTree(p);
+	public TavilySearchService.Response.@Nullable ImageInfo deserialize(JsonParser p, DeserializationContext ctxt) {
+		JsonNode node = ctxt.readTree(p);
 
 		if (node.isTextual()) {
 			return new TavilySearchService.Response.ImageInfo(node.asText(), null);

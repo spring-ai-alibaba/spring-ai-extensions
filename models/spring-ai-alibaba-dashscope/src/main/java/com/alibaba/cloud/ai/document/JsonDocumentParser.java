@@ -15,14 +15,14 @@
  */
 package com.alibaba.cloud.ai.document;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.EmptyJsonMetadataGenerator;
 import org.springframework.ai.reader.JsonMetadataGenerator;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +39,7 @@ public class JsonDocumentParser implements DocumentParser {
 
 	private final JsonMetadataGenerator jsonMetadataGenerator;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final JsonMapper jsonMapper = JsonMapper.shared();
 
 	/**
 	 * The key from the JSON that we will use as the text to parse into the Document text
@@ -59,21 +59,16 @@ public class JsonDocumentParser implements DocumentParser {
 
 	@Override
 	public List<Document> parse(InputStream inputStream) {
-		try {
-			JsonNode rootNode = this.objectMapper.readTree(inputStream);
+        JsonNode rootNode = this.jsonMapper.readTree(inputStream);
 
-			if (rootNode.isArray()) {
-				return StreamSupport.stream(rootNode.spliterator(), true)
-					.map(jsonNode -> parseJsonNode(jsonNode, this.objectMapper))
-					.toList();
-			}
-			else {
-				return Collections.singletonList(parseJsonNode(rootNode, this.objectMapper));
-			}
-		}
-		catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+        if (rootNode.isArray()) {
+            return StreamSupport.stream(rootNode.spliterator(), true)
+                    .map(jsonNode -> parseJsonNode(jsonNode, this.jsonMapper))
+                    .toList();
+        }
+        else {
+            return Collections.singletonList(parseJsonNode(rootNode, this.jsonMapper));
+        }
 	}
 
 	private Document parseJsonNode(JsonNode jsonNode, ObjectMapper objectMapper) {
@@ -94,11 +89,11 @@ public class JsonDocumentParser implements DocumentParser {
 	protected List<Document> get(JsonNode rootNode) {
 		if (rootNode.isArray()) {
 			return StreamSupport.stream(rootNode.spliterator(), true)
-				.map(jsonNode -> parseJsonNode(jsonNode, this.objectMapper))
+				.map(jsonNode -> parseJsonNode(jsonNode, this.jsonMapper))
 				.toList();
 		}
 		else {
-			return Collections.singletonList(parseJsonNode(rootNode, this.objectMapper));
+			return Collections.singletonList(parseJsonNode(rootNode, this.jsonMapper));
 		}
 	}
 
@@ -109,19 +104,14 @@ public class JsonDocumentParser implements DocumentParser {
 	 * @throws RuntimeException if the JSON cannot be parsed or the pointer is invalid
 	 */
 	public List<Document> get(String pointer, InputStream inputStream) {
-		try {
-			JsonNode rootNode = this.objectMapper.readTree(inputStream);
-			JsonNode targetNode = rootNode.at(pointer);
+        JsonNode rootNode = this.jsonMapper.readTree(inputStream);
+        JsonNode targetNode = rootNode.at(pointer);
 
-			if (targetNode.isMissingNode()) {
-				throw new IllegalArgumentException("Invalid JSON Pointer: " + pointer);
-			}
+        if (targetNode.isMissingNode()) {
+            throw new IllegalArgumentException("Invalid JSON Pointer: " + pointer);
+        }
 
-			return get(targetNode);
-		}
-		catch (IOException e) {
-			throw new RuntimeException("Error reading JSON resource", e);
-		}
+        return get(targetNode);
 	}
 
 }

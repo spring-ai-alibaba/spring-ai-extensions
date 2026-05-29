@@ -23,9 +23,9 @@ import static org.mockito.Mockito.when;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentRequest;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentResponse;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,15 +62,15 @@ class DashScopeAgentTests {
 
   private DashScopeAgentOptions options;
 
-  private ObjectMapper objectMapper;
+  private JsonMapper jsonMapper;
 
   private JsonNode testBizParams;
 
   @BeforeEach
   void setUp() {
-    // Initialize ObjectMapper and create test bizParams
-    objectMapper = new ObjectMapper();
-    ObjectNode bizParams = objectMapper.createObjectNode();
+    // Initialize JsonMapper and create test bizParams
+    jsonMapper = JsonMapper.shared();
+    ObjectNode bizParams = jsonMapper.createObjectNode();
     bizParams.put("key1", "value1");
     bizParams.put("key2", "value2");
     testBizParams = bizParams;

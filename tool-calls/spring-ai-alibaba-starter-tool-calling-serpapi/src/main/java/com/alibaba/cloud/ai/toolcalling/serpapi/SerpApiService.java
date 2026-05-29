@@ -23,8 +23,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import org.jspecify.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -105,48 +104,43 @@ public class SerpApiService implements SearchService, Function<SerpApiService.Re
 
 	private List<SearchResult> parseJson(String jsonResponse) {
 		List<SearchResult> resultList = new ArrayList<>();
-		try {
-			TypeReference<List<Map<String, Object>>> typeRef = new TypeReference<>() {
-			};
+        TypeReference<List<Map<String, Object>>> typeRef = new TypeReference<>() {
+        };
 
-			List<Map<String, Object>> organicResults = jsonParseTool.getFieldValue(jsonResponse, typeRef,
-					"organic_results");
+        List<Map<String, Object>> organicResults = jsonParseTool.getFieldValue(jsonResponse, typeRef,
+                "organic_results");
 
-			for (Map<String, Object> result : organicResults) {
-				String title = (String) result.get("title");
-				String link = (String) result.get("link");
-				String snippet = (String) result.get("snippet");
+        for (Map<String, Object> result : organicResults) {
+            String title = (String) result.get("title");
+            String link = (String) result.get("link");
+            String snippet = (String) result.get("snippet");
 
-				// Extract icon
-				String icon = null;
-				Object aboutThisResultObj = result.get("about_this_result");
-				if (aboutThisResultObj instanceof Map) {
-					Map<String, Object> aboutThisResult = (Map<String, Object>) aboutThisResultObj;
-					Object sourceObj = aboutThisResult.get("source");
-					if (sourceObj instanceof Map) {
-						Map<String, Object> source = (Map<String, Object>) sourceObj;
-						icon = (String) source.get("icon");
-					}
-				}
+            // Extract icon
+            String icon = null;
+            Object aboutThisResultObj = result.get("about_this_result");
+            if (aboutThisResultObj instanceof Map) {
+                Map<String, Object> aboutThisResult = (Map<String, Object>) aboutThisResultObj;
+                Object sourceObj = aboutThisResult.get("source");
+                if (sourceObj instanceof Map) {
+                    Map<String, Object> source = (Map<String, Object>) sourceObj;
+                    icon = (String) source.get("icon");
+                }
+            }
 
-				try {
-					if (!StringUtils.hasText(link)) {
-						throw new IllegalArgumentException("SERP result link is empty");
-					}
-					Document document = Jsoup.connect(link).userAgent(SerpApiProperties.USER_AGENT_VALUE).get();
-					String textContent = document.body().text();
-					resultList.add(new SearchResult(title, textContent, link, icon));
-				}
-				catch (Exception e) {
-					logger.error("Failed to parse SERP API search link {}, caused by: {}", link, e.getMessage());
-					// use snippet instead of textContent
-					resultList.add(new SearchResult(title, snippet, link, icon));
-				}
-			}
-		}
-		catch (JsonProcessingException e) {
-			logger.error("Failed to parse JSON response, caused by: {}", e.getMessage());
-		}
+            try {
+                if (!StringUtils.hasText(link)) {
+                    throw new IllegalArgumentException("SERP result link is empty");
+                }
+                Document document = Jsoup.connect(link).userAgent(SerpApiProperties.USER_AGENT_VALUE).get();
+                String textContent = document.body().text();
+                resultList.add(new SearchResult(title, textContent, link, icon));
+            }
+            catch (Exception e) {
+                logger.error("Failed to parse SERP API search link {}, caused by: {}", link, e.getMessage());
+                // use snippet instead of textContent
+                resultList.add(new SearchResult(title, snippet, link, icon));
+            }
+        }
 
 		return resultList;
 	}

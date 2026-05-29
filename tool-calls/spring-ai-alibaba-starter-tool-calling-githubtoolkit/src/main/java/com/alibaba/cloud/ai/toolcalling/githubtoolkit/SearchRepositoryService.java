@@ -15,7 +15,6 @@
  */
 package com.alibaba.cloud.ai.toolcalling.githubtoolkit;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -26,8 +25,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,20 +57,14 @@ public class SearchRepositoryService implements Function<SearchRepositoryService
 		params.add("sort", request.sort() != null ? request.sort() : "best match");
 		params.add("order", request.order() != null ? request.order() : "desc");
 
-		try {
-			String responseData = GithubToolKitValueUtils
-				.requireResponseBody(webClientTool.get(SEARCH_REPOS_ENDPOINT, params).block(), "Search repository");
-			logger.info("SearchRepositoriesOperation success");
+        String responseData = GithubToolKitValueUtils
+                .requireResponseBody(webClientTool.get(SEARCH_REPOS_ENDPOINT, params).block(), "Search repository");
+        logger.info("SearchRepositoriesOperation success");
 
-			return new Response<>(parseRepositorySearchResults(responseData));
-		}
-		catch (IOException e) {
-			logger.error("Error occurred while parsing response: {}", e.getMessage());
-			throw new RuntimeException(e);
-		}
+        return new Response<>(parseRepositorySearchResults(responseData));
 	}
 
-	public List<Repository> parseRepositorySearchResults(String json) throws JsonProcessingException {
+	public List<Repository> parseRepositorySearchResults(String json) {
 		@Nullable
 		List<Map<String, Object>> itemMaps = jsonParseTool.getFieldValue(json,
 				new TypeReference<List<Map<String, Object>>>() {

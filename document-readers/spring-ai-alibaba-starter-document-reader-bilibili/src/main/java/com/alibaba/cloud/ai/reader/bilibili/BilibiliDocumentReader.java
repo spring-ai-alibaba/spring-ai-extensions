@@ -15,8 +15,7 @@
  */
 package com.alibaba.cloud.ai.reader.bilibili;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +24,7 @@ import org.springframework.ai.document.DocumentReader;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -67,7 +67,7 @@ public class BilibiliDocumentReader implements DocumentReader {
 
 	private final @Nullable List<BilibiliResource> bilibiliResourceList;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	private final WebClient webClient;
 
@@ -80,14 +80,14 @@ public class BilibiliDocumentReader implements DocumentReader {
 	public BilibiliDocumentReader(BilibiliResource bilibiliResource) {
 		this.bilibiliResource = bilibiliResource;
 		this.bilibiliResourceList = null;
-		this.objectMapper = new ObjectMapper();
+		this.jsonMapper = JsonMapper.shared();
 		this.webClient = createWebClient(bilibiliResource.getCredentials());
 	}
 
 	public BilibiliDocumentReader(List<BilibiliResource> bilibiliResourceList) {
 		this.bilibiliResourceList = bilibiliResourceList;
 		this.bilibiliResource = null;
-		this.objectMapper = new ObjectMapper();
+		this.jsonMapper = JsonMapper.shared();
 		// Use credentials from first resource for WebClient
 		this.webClient = createWebClient(
 				bilibiliResourceList.isEmpty() ? null : bilibiliResourceList.get(0).getCredentials());
@@ -309,7 +309,7 @@ public class BilibiliDocumentReader implements DocumentReader {
 	}
 
 	private JsonNode parseJson(String jsonResponse) throws IOException {
-		return objectMapper.readTree(jsonResponse);
+		return jsonMapper.readTree(jsonResponse);
 	}
 
 }

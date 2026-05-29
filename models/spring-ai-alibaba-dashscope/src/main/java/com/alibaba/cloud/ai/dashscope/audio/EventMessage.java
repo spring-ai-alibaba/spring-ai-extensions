@@ -18,7 +18,7 @@ package com.alibaba.cloud.ai.dashscope.audio;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient.EventType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 /**
  * @author yingzi

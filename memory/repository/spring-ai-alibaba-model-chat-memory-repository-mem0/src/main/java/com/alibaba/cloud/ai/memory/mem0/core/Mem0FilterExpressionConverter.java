@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Mem0 Filter Converter
@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class Mem0FilterExpressionConverter extends AbstractFilterExpressionConverter {
 
-	private static final ObjectMapper objectMapper = new ObjectMapper();
+	private static final JsonMapper JSON_MAPPER = JsonMapper.shared();
 
 	// Convenience method - Create expression
 	public static Filter.Expression eq(String field, Object value) {
@@ -200,7 +200,7 @@ public class Mem0FilterExpressionConverter extends AbstractFilterExpressionConve
 
 	private String mapToJson(Map<String, Object> map) {
 		try {
-			return objectMapper.writeValueAsString(map);
+			return JSON_MAPPER.writeValueAsString(map);
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to convert map to JSON", e);
@@ -216,5 +216,14 @@ public class Mem0FilterExpressionConverter extends AbstractFilterExpressionConve
 	protected void doKey(Filter.Key filterKey, StringBuilder context) {
 		// Optional: Implement key-to-string conversion
 	}
+
+    @Override
+    protected void doSingleValue(Object value, StringBuilder context) {
+        if (value instanceof String) {
+            context.append(String.format("\"%s\"", value));
+        } else {
+            context.append(value);
+        }
+    }
 
 }

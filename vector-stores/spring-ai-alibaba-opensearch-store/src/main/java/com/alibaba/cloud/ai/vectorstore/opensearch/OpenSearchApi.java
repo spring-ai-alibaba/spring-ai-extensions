@@ -16,12 +16,14 @@
 package com.alibaba.cloud.ai.vectorstore.opensearch;
 
 import com.aliyun.ha3engine.vector.Client;
-import com.aliyun.ha3engine.vector.models.*;
+import com.aliyun.ha3engine.vector.models.PushDocumentsRequest;
+import com.aliyun.ha3engine.vector.models.PushDocumentsResponse;
+import com.aliyun.ha3engine.vector.models.QueryRequest;
+import com.aliyun.ha3engine.vector.models.SearchResponse;
 import com.aliyun.teautil.Common;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -241,12 +243,7 @@ public class OpenSearchApi {
 		}
 
 		private static JsonNode parseJson(String jsonString) {
-			try {
-				return new ObjectMapper().readTree(jsonString);
-			}
-			catch (JsonProcessingException e) {
-				throw new RuntimeException("Failed to parse JSON", e);
-			}
+            return JsonMapper.shared().readTree(jsonString);
 		}
 
 		/**
@@ -309,12 +306,7 @@ public class OpenSearchApi {
 		}
 
 		private static JsonNode parseJson(String jsonString) {
-			try {
-				return new ObjectMapper().readTree(jsonString);
-			}
-			catch (JsonProcessingException e) {
-				throw new RuntimeException("Failed to parse JSON", e);
-			}
+            return JsonMapper.shared().readTree(jsonString);
 		}
 
 		public boolean hasError() {

@@ -17,9 +17,9 @@ package com.alibaba.cloud.ai.reader.gitbook;
 
 import com.alibaba.cloud.ai.reader.gitbook.model.GitbookPage;
 import com.alibaba.cloud.ai.reader.gitbook.model.GitbookSpace;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 import org.jspecify.annotations.Nullable;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -56,7 +56,7 @@ public class GitbookClient {
 
 	private final HttpClient httpClient;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	/**
 	 * Creates a new GitbookClient with the specified API token and optional custom API
@@ -68,7 +68,7 @@ public class GitbookClient {
 		this.apiToken = apiToken;
 		this.baseUrl = apiUrl != null ? apiUrl : DEFAULT_API_URL;
 		this.httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
-		this.objectMapper = new ObjectMapper();
+		this.jsonMapper = JsonMapper.shared();
 	}
 
 	/**
@@ -144,7 +144,7 @@ public class GitbookClient {
 						"Failed to make request to Gitbook API. Status code: " + response.statusCode());
 			}
 
-			return objectMapper.readValue(response.body(), responseType);
+			return jsonMapper.readValue(response.body(), responseType);
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to make request to Gitbook API", e);
@@ -170,7 +170,7 @@ public class GitbookClient {
 						"Failed to make request to Gitbook API. Status code: " + response.statusCode());
 			}
 
-			return objectMapper.readValue(response.body(), typeReference);
+			return jsonMapper.readValue(response.body(), typeReference);
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to make request to Gitbook API", e);

@@ -23,12 +23,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -50,12 +50,12 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 
 	private final WebClientTool webClientTool;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	public OpenAlexService(OpenAlexProperties properties, JsonParseTool jsonParseTool, WebClientTool webClientTool) {
 		this.properties = properties;
 		this.webClientTool = webClientTool;
-		this.objectMapper = new ObjectMapper();
+		this.jsonMapper = JsonMapper.shared();
 	}
 
 	@Override
@@ -148,7 +148,7 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 
 	private Response parseResponse(String responseBody, Request request) {
 		try {
-			JsonNode rootNode = objectMapper.readTree(responseBody);
+			JsonNode rootNode = jsonMapper.readTree(responseBody);
 			JsonNode resultsNode = rootNode.get("results");
 
 			List<OpenAlexResult> results = new ArrayList<>();

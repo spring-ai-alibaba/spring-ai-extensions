@@ -36,8 +36,7 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchInfo;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchResult;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
 import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.json.JsonMapper;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -740,7 +739,7 @@ class DashScopeChatModelTests {
     }
 
     @Test
-    void testCreateRequest() throws JsonProcessingException {
+    void testCreateRequest() {
         DashScopeChatOptions runtimeOptions = DashScopeChatOptions.builder()
                 .model(TEST_MODEL)
                 .enableThinking(true)

@@ -19,7 +19,7 @@ import com.alibaba.cloud.ai.dashscope.agent.DashScopeAgentFlowStreamMode;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.SimpleApiKey;

@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.memory.mem0.core;
 import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerRequest;
 import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerResp;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.MediaType;
@@ -41,12 +42,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Mem0 API Client Implementation
@@ -63,7 +63,7 @@ public class Mem0ServiceClient {
 	private static final String SEARCH_ENDPOINT = "/search";
 	private static final String RESET_ENDPOINT = "/reset";
 	private final WebClient webClient;
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 	private final Mem0Client mem0Client;
 	private final Mem0Server mem0Server;
 	private final ResourceLoader resourceLoader;
@@ -76,12 +76,13 @@ public class Mem0ServiceClient {
 		this.mem0Client = mem0Client;
 		this.mem0Server = mem0Server;
 		this.resourceLoader = resourceLoader;
-		this.objectMapper = new ObjectMapper();
-		// JSON key serialization using snake_case
-		this.objectMapper.setPropertyNamingStrategy(com.fasterxml.jackson.databind.PropertyNamingStrategies.SNAKE_CASE);
-		// Ignore null values and empty collections
-		this.objectMapper.registerModule(new JavaTimeModule())
-				.setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY);
+		this.jsonMapper = JsonMapper.builder()
+                // JSON key serialization using snake_case
+                .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                // Ignore null values and empty collections
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_EMPTY))
+                .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(JsonInclude.Include.NON_EMPTY))
+                .build();
 
 		// Create WebClient to connect to Mem0 API
 		this.webClient = WebClient.builder()
@@ -127,7 +128,7 @@ public class Mem0ServiceClient {
 			mem0server.setCustomFactExtractionPrompt(this.loadPrompt(mem0server.getCustomFactExtractionPrompt()));
 			mem0server.setCustomUpdateMemoryPrompt(this.loadPrompt(mem0server.getCustomUpdateMemoryPrompt()));
 
-			String requestJson = objectMapper.writeValueAsString(mem0server);
+			String requestJson = jsonMapper.writeValueAsString(mem0server);
 			String response = webClient.post()
 					.uri(CONFIGURE_ENDPOINT)
 					.contentType(MediaType.APPLICATION_JSON)
@@ -143,9 +144,6 @@ public class Mem0ServiceClient {
 				logger.error("Failed to configure Mem0: {}", response);
 				throw new RuntimeException("Failed to configure Mem0");
 			}
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
 		}
 		catch (Exception e) {
 			logger.error("Failed to configure Mem0: {}", e.getMessage(), e);
@@ -184,7 +182,7 @@ public class Mem0ServiceClient {
 	private void executeAddMemory(Mem0ServerRequest.MemoryCreate memoryCreate) {
 		try {
 			// Add debugging information
-			String requestJson = objectMapper.writeValueAsString(memoryCreate);
+			String requestJson = jsonMapper.writeValueAsString(memoryCreate);
 
 			String response = webClient.post()
 					.uri(MEMORIES_ENDPOINT)
@@ -197,7 +195,7 @@ public class Mem0ServiceClient {
 					.block();
 
 			if (response != null) {
-				objectMapper.readValue(response, new TypeReference<Map<String, Object>>() {
+				jsonMapper.readValue(response, new TypeReference<Map<String, Object>>() {
 				});
 				logger.info("Successfully added memory with {} messages", memoryCreate.getMessages().size());
 			}
@@ -237,7 +235,7 @@ public class Mem0ServiceClient {
 
 			if (response != null) {
 				// Mem0 service returns data in the format {"results":[],"relations":[]}
-				return objectMapper.readValue(response, new TypeReference<Mem0ServerResp>() {
+				return jsonMapper.readValue(response, new TypeReference<Mem0ServerResp>() {
 				});
 			}
 		}
@@ -263,7 +261,7 @@ public class Mem0ServiceClient {
 					.block();
 
 			if (response != null) {
-				Mem0ServerResp memory = objectMapper.readValue(response, Mem0ServerResp.class);
+				Mem0ServerResp memory = jsonMapper.readValue(response, Mem0ServerResp.class);
 				logger.info("Retrieved memory: {}", memoryId);
 				return memory;
 			}
@@ -288,7 +286,7 @@ public class Mem0ServiceClient {
 			}
 
 			// Add debug logging
-			String requestJson = objectMapper.writeValueAsString(searchRequest);
+			String requestJson = jsonMapper.writeValueAsString(searchRequest);
 			logger.info("Sending search request to Mem0: {}", requestJson);
 
 			String response = webClient.post()
@@ -305,7 +303,7 @@ public class Mem0ServiceClient {
 				logger.info("Received response from Mem0: " + response);
 				// The Mem0 service returns data in the format
 				// {"results":[],"relations":[]}
-				return objectMapper.readValue(response, new TypeReference<Mem0ServerResp>() {
+				return jsonMapper.readValue(response, new TypeReference<Mem0ServerResp>() {
 				});
 
 			}
@@ -360,7 +358,7 @@ public class Mem0ServiceClient {
 					.block();
 
 			if (response != null) {
-				Map<String, Object> result = objectMapper.readValue(response, new TypeReference<Map<String, Object>>() {
+				Map<String, Object> result = jsonMapper.readValue(response, new TypeReference<Map<String, Object>>() {
 				});
 				logger.info("Successfully updated memory: " + memoryId);
 				return result;
@@ -389,7 +387,7 @@ public class Mem0ServiceClient {
 
 			if (response != null) {
 				// Attempt to parse as an object and then extract the array
-				Map<String, Object> responseMap = objectMapper.readValue(response,
+				Map<String, Object> responseMap = jsonMapper.readValue(response,
 						new TypeReference<Map<String, Object>>() {
 						});
 
@@ -397,7 +395,7 @@ public class Mem0ServiceClient {
 				if (responseMap.containsKey("data")) {
 					Object data = responseMap.get("data");
 					if (data instanceof List) {
-						List<Map<String, Object>> history = objectMapper.convertValue(data,
+						List<Map<String, Object>> history = jsonMapper.convertValue(data,
 								new TypeReference<List<Map<String, Object>>>() {
 								});
 						return history;
@@ -406,7 +404,7 @@ public class Mem0ServiceClient {
 
 				// If there is no "data" field, attempt to parse directly as an array
 				try {
-					List<Map<String, Object>> history = objectMapper.readValue(response,
+					List<Map<String, Object>> history = jsonMapper.readValue(response,
 							new TypeReference<List<Map<String, Object>>>() {
 							});
 					logger.info("Retrieved history for memory: {}", memoryId);

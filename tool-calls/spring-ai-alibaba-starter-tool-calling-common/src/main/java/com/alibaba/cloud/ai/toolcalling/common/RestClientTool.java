@@ -15,7 +15,6 @@
  */
 package com.alibaba.cloud.ai.toolcalling.common;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -100,12 +99,7 @@ public class RestClientTool {
 	}
 
 	public <T> String post(String uri, MultiValueMap<String, String> params, Map<String, ?> variables, T value) {
-		try {
-			return this.post(uri, params, variables, jsonParseTool.objectToJson(value), MediaType.APPLICATION_JSON);
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException("Serialization failed", e);
-		}
+        return this.post(uri, params, variables, jsonParseTool.objectToJson(value), MediaType.APPLICATION_JSON);
 	}
 
 	/**

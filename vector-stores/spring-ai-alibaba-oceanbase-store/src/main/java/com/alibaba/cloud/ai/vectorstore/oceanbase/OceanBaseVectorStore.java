@@ -15,10 +15,9 @@
  */
 package com.alibaba.cloud.ai.vectorstore.oceanbase;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -89,7 +88,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 	private final Integer defaultTopK;
 	private final Double defaultSimilarityThreshold;
 	private final DataSource dataSource;
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 	private final @Nullable Integer dimension;
 	private final @Nullable String hybridSearchType;
 	private final String indexType;
@@ -103,7 +102,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		super(builder);
 		this.tableName = builder.tableName;
 		this.dataSource = builder.dataSource;
-		this.objectMapper = JsonMapper.builder()
+		this.jsonMapper = JsonMapper.builder()
 			.addModules(JacksonUtils.instantiateAvailableModules())
 			.build();
 		this.defaultSimilarityThreshold = builder.defaultSimilarityThreshold;
@@ -385,9 +384,9 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 			return "{}";
 		}
 		try {
-			return objectMapper.writeValueAsString(metadata);
+			return jsonMapper.writeValueAsString(metadata);
 		}
-		catch (JsonProcessingException e) {
+		catch (JacksonException e) {
 			logger.warn("Failed to serialize metadata, using empty object", e);
 			return "{}";
 		}
@@ -618,7 +617,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		}
 	}
 
-	private Document extractDocumentFromResultSet(ResultSet rs) throws SQLException, JsonProcessingException {
+	private Document extractDocumentFromResultSet(ResultSet rs) throws SQLException {
 		String id = rs.getString(ID_FIELD);
 		String metadataJson = rs.getString(METADATA_FIELD);
 		String distanceStr = rs.getString("distance");
@@ -651,9 +650,9 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 			return new HashMap<>();
 		}
 		try {
-			return objectMapper.readValue(metadataJson, new TypeReference<Map<String, Object>>() {});
+			return jsonMapper.readValue(metadataJson, new TypeReference<Map<String, Object>>() {});
 		}
-		catch (JsonProcessingException e) {
+		catch (JacksonException e) {
 			logger.warn("Failed to parse metadata JSON: {}", metadataJson, e);
 			return new HashMap<>();
 		}

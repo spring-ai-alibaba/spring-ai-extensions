@@ -17,9 +17,7 @@ package com.alibaba.cloud.ai.vectorstore.tair;
 
 import com.aliyun.tair.tairvector.factory.VectorBuilderFactory;
 import com.aliyun.tair.tairvector.factory.VectorBuilderFactory.KnnItem;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +32,12 @@ import org.springframework.ai.vectorstore.observation.VectorStoreObservationCont
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationConvention;
 import org.springframework.util.Assert;
 import org.springframework.beans.factory.InitializingBean;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Provides an API for interacting with Tair Vector, extending the functionality of the
@@ -81,7 +83,7 @@ public class TairVectorStore extends AbstractObservationVectorStore implements I
 
 	protected final BatchingStrategy batchingStrategy;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final JsonMapper jsonMapper = JsonMapper.shared();
 
 	private final boolean initializeSchema;
 
@@ -180,23 +182,16 @@ public class TairVectorStore extends AbstractObservationVectorStore implements I
 		for (Document document : documents) {
 			logger.info("Calling EmbeddingModel for document id = {}", document.getId());
 			float[] embedding = this.embeddingModel.embed(document);
-			String embeddingString = null;
-			try {
-				embeddingString = objectMapper.writeValueAsString(embedding);
-
-				List<String> params = new ArrayList<>();
-				params.add(ID_FIELD_NAME);
-				params.add(document.getId());
-				params.add(CONTENT_FIELD_NAME);
-				params.add(document.getText());
-				params.add(METADATA_FIELD_NAME);
-				params.add(objectMapper.writeValueAsString(document.getMetadata()));
-				this.tairVectorApi.tvshset(options.getIndexName(), document.getId(), embeddingString,
-						params.toArray(new String[0]));
-			}
-			catch (JsonProcessingException e) {
-				throw new RuntimeException("Error serializing message", e);
-			}
+			String embeddingString = jsonMapper.writeValueAsString(embedding);
+            List<String> params = new ArrayList<>();
+            params.add(ID_FIELD_NAME);
+            params.add(document.getId());
+            params.add(CONTENT_FIELD_NAME);
+            params.add(document.getText());
+            params.add(METADATA_FIELD_NAME);
+            params.add(jsonMapper.writeValueAsString(document.getMetadata()));
+            this.tairVectorApi.tvshset(options.getIndexName(), document.getId(), embeddingString,
+                    params.toArray(new String[0]));
 		}
 	}
 
@@ -208,13 +203,7 @@ public class TairVectorStore extends AbstractObservationVectorStore implements I
 	@Override
 	public List<Document> doSimilaritySearch(SearchRequest request) {
 		float[] userQueryEmbedding = getUserQueryEmbedding(request.getQuery());
-		String embeddingString = null;
-		try {
-			embeddingString = objectMapper.writeValueAsString(userQueryEmbedding);
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException("Failed to serialize JSON", e);
-		}
+		String embeddingString = jsonMapper.writeValueAsString(userQueryEmbedding);
 		VectorBuilderFactory.Knn<String> result = this.tairVectorApi.tvsknnsearch(options.getIndexName(),
 				(long) request.getTopK(), embeddingString);
 
@@ -237,14 +226,8 @@ public class TairVectorStore extends AbstractObservationVectorStore implements I
 		String id = detail.get(0);
 		String content = detail.get(1);
 		String metadataStr = detail.get(2);
-		Map<String, Object> metaData = null;
-		try {
-			metaData = objectMapper.readValue(metadataStr, new TypeReference<Map<String, Object>>() {
-			});
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException("Failed to parse JSON", e);
-		}
+		Map<String, Object> metaData = jsonMapper.readValue(metadataStr, new TypeReference<Map<String, Object>>() {
+        });
 		return new Document(id, content, metaData);
 	}
 

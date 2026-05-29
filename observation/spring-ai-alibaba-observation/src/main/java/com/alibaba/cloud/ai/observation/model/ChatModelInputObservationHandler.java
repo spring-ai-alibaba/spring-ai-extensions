@@ -22,8 +22,7 @@ import static io.opentelemetry.api.common.AttributeKey.stringKey;
 import com.alibaba.cloud.ai.observation.model.semconv.InputOutputModel.ChatMessage;
 import com.alibaba.cloud.ai.observation.model.semconv.InputOutputUtils;
 import com.alibaba.cloud.ai.observation.model.semconv.MessageMode;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.tracing.handler.TracingObservationHandler;
@@ -35,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.observation.ChatModelObservationContext;
 import org.jspecify.annotations.Nullable;
 import org.springframework.util.CollectionUtils;
+import tools.jackson.databind.json.JsonMapper;
 
 public class ChatModelInputObservationHandler implements ObservationHandler<ChatModelObservationContext> {
 
@@ -42,7 +42,7 @@ public class ChatModelInputObservationHandler implements ObservationHandler<Chat
 
 	private final AttributeKey<String> inputMessagesKey;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final JsonMapper jsonMapper = JsonMapper.shared();
 
 	public ChatModelInputObservationHandler(MessageMode mode) {
 		if (mode == LANGFUSE) {
@@ -80,9 +80,9 @@ public class ChatModelInputObservationHandler implements ObservationHandler<Chat
 			.toList();
 
 		try {
-			return objectMapper.writeValueAsString(messages);
+			return jsonMapper.writeValueAsString(messages);
 		}
-		catch (JsonProcessingException e) {
+		catch (JacksonException e) {
 			logger.warn("Failed to convert output message to JSON string", e);
 			return null;
 		}

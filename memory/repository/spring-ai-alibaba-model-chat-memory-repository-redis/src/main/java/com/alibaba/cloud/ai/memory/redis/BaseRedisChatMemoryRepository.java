@@ -17,12 +17,9 @@ package com.alibaba.cloud.ai.memory.redis;
 
 import com.alibaba.cloud.ai.memory.redis.serializer.MessageDeserializer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,24 +40,24 @@ public abstract class BaseRedisChatMemoryRepository implements ChatMemoryReposit
 
 	protected static @Nullable String CUSTOM_KEY_PREFIX;
 
-	protected final ObjectMapper objectMapper;
+	protected final JsonMapper jsonMapper;
 
 	public BaseRedisChatMemoryRepository() {
-		this.objectMapper = JsonMapper.builder()
-			.configure(MapperFeature.AUTO_DETECT_GETTERS, false)
-			.configure(MapperFeature.AUTO_DETECT_IS_GETTERS, false)
-			.visibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Message.class, new MessageDeserializer());
+		this.jsonMapper = JsonMapper.builder()
+            .changeDefaultVisibility(vc -> vc.withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withFieldVisibility(JsonAutoDetect.Visibility.ANY))
+            .addModule(module)
 			.build();
-		SimpleModule module = new SimpleModule();
-		module.addDeserializer(Message.class, new MessageDeserializer());
-		this.objectMapper.registerModule(module);
 	}
 
 	protected @Nullable Message deserializeMessage(String messageStr) {
 		try {
-			return objectMapper.readValue(messageStr, Message.class);
+			return jsonMapper.readValue(messageStr, Message.class);
 		}
-		catch (JsonProcessingException e) {
+		catch (JacksonException e) {
 			logger.error("Deserialization error for message: {}", messageStr, e);
 			return null;
 		}
@@ -68,9 +65,9 @@ public abstract class BaseRedisChatMemoryRepository implements ChatMemoryReposit
 
 	protected String serializeMessage(Message message) {
 		try {
-			return objectMapper.writeValueAsString(message);
+			return jsonMapper.writeValueAsString(message);
 		}
-		catch (JsonProcessingException e) {
+		catch (JacksonException e) {
 			throw new RuntimeException("Error serializing message", e);
 		}
 	}

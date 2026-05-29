@@ -26,15 +26,14 @@ import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Sentence;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Translation;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Usage;
-import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import org.jspecify.annotations.Nullable;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
@@ -61,7 +60,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 
 	private final RetryTemplate retryTemplate;
 
-    private final ObjectMapper mapper;
+    private final JsonMapper jsonMapper;
 
 	public DashScopeAudioTranscriptionModel(DashScopeAudioTranscriptionApi api,
 			DashScopeAudioTranscriptionOptions defaultOptions) {
@@ -75,13 +74,14 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 		this.audioTranscriptionApi = Objects.requireNonNull(api, "api must not be null");
 		this.defaultOptions = Objects.requireNonNull(defaultOptions, "options must not be null");
 		this.retryTemplate = Objects.requireNonNull(retryTemplate, "retryTemplate must not be null");
-        this.mapper = JsonMapper.builder()
+        this.jsonMapper = JsonMapper.builder()
                 // Deserialization configuration
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 // Serialization configuration
                 .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .serializationInclusion(JsonInclude.Include.NON_NULL)
+                .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
                 // Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
                 .addModules(JacksonUtils.instantiateAvailableModules())
                 .build();
@@ -259,59 +259,41 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	 * Parse WebSocket response for the existing {@code stream()} method (backward compatible).
 	 */
 	private AudioTranscriptionResponse parseWebSocketResponse(String response, String model) {
-		try {
-			logger.debug("Raw WebSocket response: {}", response);
-			JsonNode jsonNode = mapper.readTree(response).get("payload").get("output");
-			if (DashScopeAudioApiConstants.QWEN3_LONG_SHORT_TRANSLATE_LIST.contains(model)) {
-				JsonNode translationsNode = jsonNode.get("translations");
-				JsonNode transcriptionNode = jsonNode.get("transcription");
-				List<Translation> translations = mapper.convertValue(translationsNode, new TypeReference<>() {});
-				DashScopeAudioTranscription transcription = mapper.convertValue(transcriptionNode, new TypeReference<>() {});
-				return new DashScopeTranscriptionResponse(translations, transcription);
-			}
-			if (DashScopeAudioApiConstants.PARAFORMER_FUNAS_LIST.contains(model)) {
-				JsonNode sentenceNode = jsonNode.get("sentence");
-				JsonNode usageNode = jsonNode.get("usage");
-				Sentence sentence = mapper.convertValue(sentenceNode, new TypeReference<>() {});
-				Usage usage = mapper.convertValue(usageNode, new TypeReference<>() {});
-				return new DashScopeTranscriptionResponse(sentence, usage);
-			}
-			throw new IllegalArgumentException("Model " + model + " is not supported for WebSocket response parsing.");
-		}
-		catch (JsonProcessingException e) {
-			logger.error("Failed to parse WebSocket response: {}", response, e);
-			throw new RuntimeException(e);
-		}
+        logger.debug("Raw WebSocket response: {}", response);
+        JsonNode jsonNode = jsonMapper.readTree(response).get("payload").get("output");
+        if (DashScopeAudioApiConstants.QWEN3_LONG_SHORT_TRANSLATE_LIST.contains(model)) {
+            JsonNode translationsNode = jsonNode.get("translations");
+            JsonNode transcriptionNode = jsonNode.get("transcription");
+            List<Translation> translations = jsonMapper.convertValue(translationsNode, new TypeReference<>() {});
+            DashScopeAudioTranscription transcription = jsonMapper.convertValue(transcriptionNode, new TypeReference<>() {});
+            return new DashScopeTranscriptionResponse(translations, transcription);
+        }
+        if (DashScopeAudioApiConstants.PARAFORMER_FUNAS_LIST.contains(model)) {
+            JsonNode sentenceNode = jsonNode.get("sentence");
+            JsonNode usageNode = jsonNode.get("usage");
+            Sentence sentence = jsonMapper.convertValue(sentenceNode, new TypeReference<>() {});
+            Usage usage = jsonMapper.convertValue(usageNode, new TypeReference<>() {});
+            return new DashScopeTranscriptionResponse(sentence, usage);
+        }
+        throw new IllegalArgumentException("Model " + model + " is not supported for WebSocket response parsing.");
 	}
 
 	/**
 	 * Parse WebSocket response into rich {@link RecognitionResult} for Paraformer/Fun-ASR.
 	 */
 	private RecognitionResult parseRecognitionResult(String response) {
-		try {
-			logger.debug("Raw WebSocket response (recognition): {}", response);
-			JsonNode outputNode = mapper.readTree(response).get("payload").get("output");
-			return mapper.convertValue(outputNode, RecognitionResult.class);
-		}
-		catch (JsonProcessingException e) {
-			logger.error("Failed to parse recognition result: {}", response, e);
-			throw new RuntimeException(e);
-		}
+        logger.debug("Raw WebSocket response (recognition): {}", response);
+        JsonNode outputNode = jsonMapper.readTree(response).get("payload").get("output");
+        return jsonMapper.convertValue(outputNode, RecognitionResult.class);
 	}
 
 	/**
 	 * Parse WebSocket response into rich {@link TranslationRecognitionResult} for Gummy.
 	 */
 	private TranslationRecognitionResult parseTranslationRecognitionResult(String response) {
-		try {
-			logger.debug("Raw WebSocket response (translation): {}", response);
-			JsonNode outputNode = mapper.readTree(response).get("payload").get("output");
-			return mapper.convertValue(outputNode, TranslationRecognitionResult.class);
-		}
-		catch (JsonProcessingException e) {
-			logger.error("Failed to parse translation recognition result: {}", response, e);
-			throw new RuntimeException(e);
-		}
+        logger.debug("Raw WebSocket response (translation): {}", response);
+        JsonNode outputNode = jsonMapper.readTree(response).get("payload").get("output");
+        return jsonMapper.convertValue(outputNode, TranslationRecognitionResult.class);
 	}
     /**
      * Returns a builder pre-populated with the current configuration for mutation.

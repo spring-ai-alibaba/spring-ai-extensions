@@ -15,7 +15,7 @@
  */
 package com.alibaba.cloud.ai.evaluation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -23,6 +23,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.evaluation.EvaluationRequest;
 import org.springframework.ai.evaluation.EvaluationResponse;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Collections;
 import java.util.function.Consumer;
@@ -66,7 +67,7 @@ class AnswerRelevancyEvaluatorTests {
 		when(chatClientBuilder.build()).thenReturn(chatClient);
 
 		// Initialize evaluator with ObjectMapper to avoid NPE
-		ObjectMapper objectMapper = new ObjectMapper();
+		ObjectMapper objectMapper = JsonMapper.shared();
 		evaluator = new AnswerRelevancyEvaluator(chatClientBuilder, objectMapper);
 	}
 
@@ -98,7 +99,7 @@ class AnswerRelevancyEvaluatorTests {
 	 */
 	@Test
 	void testConstructorWithObjectMapper() {
-		ObjectMapper objectMapper = new ObjectMapper();
+		ObjectMapper objectMapper = JsonMapper.shared();
 		AnswerRelevancyEvaluator evaluator = new AnswerRelevancyEvaluator(chatClientBuilder, objectMapper);
 		assertThat(evaluator).isNotNull();
 		assertThat(evaluator.getObjectMapper()).isEqualTo(objectMapper);

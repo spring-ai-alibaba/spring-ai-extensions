@@ -16,8 +16,9 @@
 
 package com.alibaba.cloud.ai.mcp.gateway.core.jsontemplate;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -277,7 +278,7 @@ public class RequestTemplateParser {
 					return requestSpec.contentType(org.springframework.http.MediaType.APPLICATION_JSON)
 						.bodyValue(jsonBody);
 				}
-				catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+				catch (JacksonException e) {
 					logger.error("Failed to create JSON request body", e);
 					return requestSpec;
 				}

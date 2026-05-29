@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 
@@ -27,6 +26,7 @@ import org.springframework.ai.chat.observation.ChatModelObservationContext;
 import org.springframework.ai.chat.observation.ChatModelObservationDocumentation;
 import org.springframework.ai.chat.observation.DefaultChatModelObservationConvention;
 import org.springframework.util.CollectionUtils;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * DashScope conventions to populate observations for chat model operations.
@@ -38,7 +38,7 @@ public class DashScopeChatModelObservationConvention extends DefaultChatModelObs
 
 	private static final String ILLEGAL_STOP_CONTENT = "<illegal_stop_content>";
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final JsonMapper jsonMapper = JsonMapper.shared();
 
 	// Request
 	@Override
@@ -54,7 +54,7 @@ public class DashScopeChatModelObservationConvention extends DefaultChatModelObs
 
 			String stopSequences;
 			try {
-				stopSequences = objectMapper.writeValueAsString(stop);
+				stopSequences = jsonMapper.writeValueAsString(stop);
 			}
 			catch (Exception e) {
 				stopSequences = ILLEGAL_STOP_CONTENT;

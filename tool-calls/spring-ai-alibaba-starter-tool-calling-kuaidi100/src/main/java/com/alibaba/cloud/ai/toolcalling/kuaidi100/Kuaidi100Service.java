@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +30,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.MultiValueMap;
+import tools.jackson.core.JacksonException;
 
 import java.util.List;
 import java.util.Map;
@@ -87,7 +87,7 @@ public class Kuaidi100Service implements Function<Kuaidi100Service.Request, Kuai
 			List<QueryComResponse> queryComResponses = jsonParseTool.jsonToList(body, QueryComResponse.class);
 			return !CollectionUtils.isEmpty(queryComResponses) ? queryComResponses.get(0).comCode() : null;
 		}
-		catch (JsonProcessingException e) {
+		catch (JacksonException e) {
 			throw new Kuaidi100Exception(body, e);
 		}
 	}

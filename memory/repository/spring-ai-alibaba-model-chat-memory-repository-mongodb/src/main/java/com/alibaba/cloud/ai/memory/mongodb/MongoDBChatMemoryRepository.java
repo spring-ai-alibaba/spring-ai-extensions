@@ -15,8 +15,6 @@
  */
 package com.alibaba.cloud.ai.memory.mongodb;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
@@ -29,8 +27,11 @@ import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
-import org.springframework.ai.chat.messages.*;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.util.Assert;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,14 +62,13 @@ public class MongoDBChatMemoryRepository implements ChatMemoryRepository, AutoCl
 
 	private final MongoCollection<Document> collection;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	private final String databaseName;
 
 	public MongoDBChatMemoryRepository(MongoClient mongoClient, String databaseName) {
 		this.databaseName = databaseName;
-		this.objectMapper = new ObjectMapper();
-		this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		this.jsonMapper = JsonMapper.shared();
 		try {
 			this.mongoClient = mongoClient;
 			MongoDatabase database = mongoClient.getDatabase(databaseName);

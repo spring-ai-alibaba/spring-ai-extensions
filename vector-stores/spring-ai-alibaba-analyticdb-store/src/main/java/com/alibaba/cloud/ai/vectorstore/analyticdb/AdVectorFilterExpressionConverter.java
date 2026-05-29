@@ -113,4 +113,13 @@ public class AdVectorFilterExpressionConverter extends AbstractFilterExpressionC
 		context.append(")");
 	}
 
+    @Override
+    protected void doSingleValue(Object value, StringBuilder context) {
+        if (value instanceof String) {
+            context.append(String.format("\"%s\"", value));
+        } else {
+            context.append(value);
+        }
+    }
+
 }

@@ -27,10 +27,10 @@ import com.alibaba.cloud.ai.dashscope.api.ApiUtils;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
 import okhttp3.Headers;
@@ -76,7 +76,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	private final AtomicBoolean isOpen;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	private @Nullable WebSocket webSocketClient;
 
@@ -108,13 +108,14 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	public DashScopeWebSocketClient(DashScopeWebSocketClientOptions options) {
 		this.options = Objects.requireNonNull(options, "options must not be null");
 		this.isOpen = new AtomicBoolean(false);
-		this.objectMapper = JsonMapper.builder()
+		this.jsonMapper = JsonMapper.builder()
 			// Deserialization configuration
 			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 			// Serialization configuration
 			.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-			.serializationInclusion(JsonInclude.Include.NON_NULL)
+			.disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+            .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
 			// Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
 			.addModules(JacksonUtils.instantiateAvailableModules())
 			.build();
@@ -349,7 +350,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		logger.debug("receive ws event onMessage(text): handle={}, text={}", webSocket, text);
 
 		try {
-            EventMessage message = this.objectMapper.readValue(text, EventMessage.class);
+            EventMessage message = this.jsonMapper.readValue(text, EventMessage.class);
 			switch (message.header().event()) {
 				case TASK_STARTED:
 					logger.info("task started: text={}", text);
@@ -437,13 +438,13 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	 */
 	private String buildContinueTaskMessage(String textChunk) {
 		try {
-			var node = this.objectMapper.readTree(
+			var node = this.jsonMapper.readTree(
 					Objects.requireNonNull(this.continueTaskTemplate, "continueTaskTemplate is not initialized"));
 			if (node.has("payload") && node.get("payload").has("input")) {
-				((com.fasterxml.jackson.databind.node.ObjectNode) node.get("payload").get("input"))
+				((tools.jackson.databind.node.ObjectNode) node.get("payload").get("input"))
 					.put("text", textChunk);
 			}
-			return this.objectMapper.writeValueAsString(node);
+			return this.jsonMapper.writeValueAsString(node);
 		}
 		catch (Exception e) {
 			logger.error("Failed to build continue-task message from template", e);

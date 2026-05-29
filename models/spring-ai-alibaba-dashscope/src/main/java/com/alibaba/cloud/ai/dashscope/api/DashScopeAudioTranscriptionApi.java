@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.jspecify.annotations.Nullable;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.AsrOutPut;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.AsrResponse;
@@ -41,12 +42,10 @@ import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeTTSApiSpec.DashScopeAud
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.alibaba.cloud.ai.dashscope.api.asr.DashScopeWebSocketAsrApi;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
@@ -100,7 +99,7 @@ public class DashScopeAudioTranscriptionApi {
 
     private final WebClient webClient;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     public DashScopeAudioTranscriptionApi(
             String baseUrl,
@@ -151,13 +150,14 @@ public class DashScopeAudioTranscriptionApi {
                         .build())
 				.build();
 
-        this.objectMapper = JsonMapper.builder()
+        this.jsonMapper = JsonMapper.builder()
                 // Deserialization configuration
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 // Serialization configuration
                 .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .serializationInclusion(JsonInclude.Include.NON_NULL)
+                .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
                 // Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
                 .addModules(JacksonUtils.instantiateAvailableModules())
                 .build();
@@ -230,14 +230,7 @@ public class DashScopeAudioTranscriptionApi {
                 .bodyToFlux(String.class)  // 接收 SSE 流数据
                 .takeUntil(SSE_DONE_PREDICATE)  // 遇到 [DONE] 停止
                 .filter(SSE_DONE_PREDICATE.negate())  // 过滤掉 [DONE]
-                .map(content -> {
-                    // 解析 JSON 响应
-                    try {
-                        return this.objectMapper.readValue(content, DashScopeAudioTranscriptionResponse.class);
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException("Failed to parse TTS response: " + content, e);
-                    }
-                });
+                .map(content -> this.jsonMapper.readValue(content, DashScopeAudioTranscriptionResponse.class));
     }
 
     public Flux<String> createWebSocketTask(ByteBuffer binaryData, DashScopeAudioTranscriptionOptions options) {
@@ -355,9 +348,9 @@ public class DashScopeAudioTranscriptionApi {
                         HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
                         String responseBody = httpResponse.body();
 
-                        // Parse the JSON response using ObjectMapper
+                        // Parse the JSON response using JsonMapper
                         DashScopeAudioAsrTranscriptionResponse.TranscriptionResult transcriptionResult =
-                                objectMapper.readValue(responseBody, DashScopeAudioAsrTranscriptionResponse.TranscriptionResult.class);
+                                jsonMapper.readValue(responseBody, DashScopeAudioAsrTranscriptionResponse.TranscriptionResult.class);
 
                         if (transcriptionResult != null) {
                             allResults.add(transcriptionResult);
@@ -416,13 +409,7 @@ public class DashScopeAudioTranscriptionApi {
                 .bodyToFlux(String.class)  // 接收 SSE 流数据
                 .takeUntil(SSE_DONE_PREDICATE)  // 遇到 [DONE] 停止
                 .filter(SSE_DONE_PREDICATE.negate())  // 过滤掉 [DONE]
-                .map(content -> {
-                    try {
-                        return this.objectMapper.readValue(content, DashScopeAudioTranscriptionResponse.class);
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException("Failed to parse TTS response: " + content, e);
-                    }
-                });
+                .map(content -> this.jsonMapper.readValue(content, DashScopeAudioTranscriptionResponse.class));
     }
 
     /**

@@ -16,12 +16,12 @@
 
 package com.alibaba.cloud.ai.mcp.gateway.core.jsontemplate;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.jayway.jsonpath.JsonPath;
 import org.springframework.util.StringUtils;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 
 public class ResponseTemplateParser {
 
-	private static final ObjectMapper objectMapper = new ObjectMapper();
+	private static final JsonMapper JSON_MAPPER = JsonMapper.shared();
 
 	private static final Handlebars handlebars = new Handlebars();
 
@@ -88,7 +88,7 @@ public class ResponseTemplateParser {
 			Map<String, Object> dataContext;
 			boolean isJson = rawResponse.trim().startsWith("{") || rawResponse.trim().startsWith("[");
 			if (isJson) {
-				dataContext = objectMapper.readValue(rawResponse, new TypeReference<Map<String, Object>>() {
+				dataContext = JSON_MAPPER.readValue(rawResponse, new TypeReference<Map<String, Object>>() {
 				});
 			}
 			else {
@@ -109,7 +109,7 @@ public class ResponseTemplateParser {
 			Map<String, Object> context = null;
 			boolean isJson = rawResponse.trim().startsWith("{") || rawResponse.trim().startsWith("[");
 			if (isJson) {
-				context = objectMapper.readValue(rawResponse, new TypeReference<Map<String, Object>>() {
+				context = JSON_MAPPER.readValue(rawResponse, new TypeReference<Map<String, Object>>() {
 				});
 			}
 			StringBuffer sb = new StringBuffer();

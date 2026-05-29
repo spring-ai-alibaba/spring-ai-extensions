@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
 import org.springframework.util.StringUtils;
 
 import java.util.Collection;
@@ -115,7 +115,7 @@ public class BaiDuMapWeatherService
 			// Get Weather Info
 			return new Response(baiDuMapTools.getWeather(regionCode));
 		}
-		catch (JsonProcessingException e) {
+		catch (JacksonException e) {
 			return new Response("Invalid JSON format: " + e.getMessage());
 		}
 		catch (Exception e) {

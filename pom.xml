@@ -232,9 +232,12 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <!-- Spring version -->
-        <spring-ai.version>2.0.0-M1</spring-ai.version>
-        <spring-boot.version>4.0.0</spring-boot.version>
+        <spring-ai.version>2.0.0-M8</spring-ai.version>
+        <spring-boot.version>4.1.0-RC1</spring-boot.version>
         <springdoc-openapi.version>2.8.15</springdoc-openapi.version>
+
+        <!-- MCP -->
+        <mcp.sdk.version>2.0.0-M3</mcp.sdk.version>
 
         <!-- DashScope SDK Version -->
         <dashscope-sdk-java.version>2.15.1</dashscope-sdk-java.version>
@@ -260,6 +263,7 @@
 
         <opennlp-tools.version>2.3.3</opennlp-tools.version>
 
+        <json-schema-validator.version>3.0.1</json-schema-validator.version>
         <json-path.version>2.9.0</json-path.version>
 
         <jedis.version>5.2.0</jedis.version>
@@ -279,7 +283,6 @@
         <poi.version>5.4.0</poi.version>
         <tika.version>3.2.3</tika.version>
 
-        <mcp.version>0.14.0</mcp.version>
         <opentelemetry.version>1.38.0</opentelemetry.version>
         <a2a-sdk.version>0.2.5.Beta2</a2a-sdk.version>
 
@@ -413,7 +416,7 @@
             <dependency>
                 <groupId>io.modelcontextprotocol.sdk</groupId>
                 <artifactId>mcp-bom</artifactId>
-                <version>${mcp.version}</version>
+                <version>${mcp.sdk.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -428,6 +431,11 @@
                 <groupId>org.jspecify</groupId>
                 <artifactId>jspecify</artifactId>
                 <version>${jspecify.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>json-schema-validator</artifactId>
+                <version>${json-schema-validator.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

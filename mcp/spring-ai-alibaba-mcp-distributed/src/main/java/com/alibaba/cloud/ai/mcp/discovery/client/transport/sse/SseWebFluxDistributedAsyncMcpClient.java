@@ -26,12 +26,11 @@ import com.alibaba.nacos.api.ai.constant.AiConstants;
 import com.alibaba.nacos.api.ai.model.mcp.McpEndpointInfo;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.utils.StringUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
+import org.springframework.ai.mcp.client.webflux.transport.WebFluxSseClientTransport;
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.transport.WebFluxSseClientTransport;
 import io.modelcontextprotocol.json.McpJsonMapper;
-import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -44,6 +43,7 @@ import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -103,7 +103,7 @@ public class SseWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpC
         commonProperties = applicationContext.getBean(McpClientCommonProperties.class);
         mcpAsyncClientConfigurer = applicationContext.getBean(McpAsyncClientConfigurer.class);
         webClientBuilderTemplate = applicationContext.getBean(WebClient.Builder.class);
-        mcpJsonMapper = new JacksonMcpJsonMapper(applicationContext.getBean(ObjectMapper.class));
+        mcpJsonMapper = new JacksonMcpJsonMapper(applicationContext.getBean(JsonMapper.class));
         // Try to get the link tracking filter
 		@Nullable ExchangeFilterFunction tempTraceFilter = null;
         try {

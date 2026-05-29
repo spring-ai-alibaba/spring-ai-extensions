@@ -23,10 +23,10 @@ import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient.EventType;
 import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
 import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * DashScope WebSocket ASR API for Paraformer, Fun-ASR, and Gummy models.
@@ -37,11 +37,11 @@ import reactor.core.publisher.Flux;
 public class DashScopeWebSocketAsrApi {
 
 	private final DashScopeWebSocketClientOptions clientOptions;
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	public DashScopeWebSocketAsrApi(@Nullable DashScopeWebSocketClientOptions options) {
 		this.clientOptions = options != null ? options : DashScopeWebSocketClientOptions.builder().build();
-		this.objectMapper = new com.fasterxml.jackson.databind.json.JsonMapper();
+		this.jsonMapper = JsonMapper.shared();
 	}
 
 	/**
@@ -61,13 +61,13 @@ public class DashScopeWebSocketAsrApi {
 		WebSocketRequest finishTaskRequest = buildFinishTaskRequest(taskId);
 
 		try {
-			String runTaskMessage = objectMapper.writeValueAsString(runTaskRequest);
-			String finishTaskMessage = objectMapper.writeValueAsString(finishTaskRequest);
+			String runTaskMessage = jsonMapper.writeValueAsString(runTaskRequest);
+			String finishTaskMessage = jsonMapper.writeValueAsString(finishTaskRequest);
 			DashScopeWebSocketClient client = newWebSocketClient();
 			return client.command(runTaskMessage, binaryData, finishTaskMessage);
 		}
-		catch (JsonProcessingException e) {
-			return Flux.error(new RuntimeException("Failed to create WebSocket ASR task", e));
+		catch (JacksonException e) {
+			return Flux.error(e);
 		}
 	}
 
@@ -81,13 +81,13 @@ public class DashScopeWebSocketAsrApi {
 		WebSocketRequest finishTaskRequest = buildFinishTaskRequest(taskId);
 
 		try {
-			String runTaskMessage = objectMapper.writeValueAsString(runTaskRequest);
-			String finishTaskMessage = objectMapper.writeValueAsString(finishTaskRequest);
+			String runTaskMessage = jsonMapper.writeValueAsString(runTaskRequest);
+			String finishTaskMessage = jsonMapper.writeValueAsString(finishTaskRequest);
 			DashScopeWebSocketClient client = newWebSocketClient();
 			return client.commandStreaming(runTaskMessage, finishTaskMessage, audioStream);
 		}
-		catch (JsonProcessingException e) {
-			return Flux.error(new RuntimeException("Failed to create WebSocket ASR streaming task", e));
+		catch (JacksonException e) {
+			return Flux.error(e);
 		}
 	}
 

@@ -35,9 +35,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import static com.alibaba.cloud.ai.memory.mem0.advisor.Mem0ChatMemoryAdvisor.AGENT_ID;
 import static com.alibaba.cloud.ai.memory.mem0.advisor.Mem0ChatMemoryAdvisor.RUN_ID;
@@ -51,14 +50,14 @@ public class Mem0MemoryStore implements InitializingBean, VectorStore {
 
 	private final Mem0ServiceClient mem0Client;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	private final Mem0FilterExpressionConverter mem0FilterExpressionConverter;
 
 	protected Mem0MemoryStore(Mem0ServiceClient client) {
 		this.mem0Client = client;
 		this.mem0FilterExpressionConverter = new Mem0FilterExpressionConverter();
-		this.objectMapper = JsonMapper.builder().addModules(JacksonUtils.instantiateAvailableModules()).build();
+		this.jsonMapper = JsonMapper.builder().addModules(JacksonUtils.instantiateAvailableModules()).build();
 	}
 
 	public static Mem0MemoryStoreBuilder builder(Mem0ServiceClient client) {
@@ -122,7 +121,7 @@ public class Mem0MemoryStore implements InitializingBean, VectorStore {
 			Map<String, Object> filtersMap = null;
 			if (jsonStr != null && !jsonStr.isEmpty()) {
 				try {
-					filtersMap = objectMapper.readValue(jsonStr, new TypeReference<Map<String, Object>>() {
+					filtersMap = jsonMapper.readValue(jsonStr, new TypeReference<Map<String, Object>>() {
 					});
 				}
 				catch (Exception e) {

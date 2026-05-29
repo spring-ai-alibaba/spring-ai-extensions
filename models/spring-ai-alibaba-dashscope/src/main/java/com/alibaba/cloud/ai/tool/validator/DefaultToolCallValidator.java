@@ -17,11 +17,11 @@ package com.alibaba.cloud.ai.tool.validator;
 
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ToolCall;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.util.json.JsonParser;
+import org.springframework.ai.util.JacksonUtils;
+import tools.jackson.core.JacksonException;
 
 import java.util.List;
 
@@ -98,10 +98,10 @@ public class DefaultToolCallValidator implements ToolCallValidator {
 		}
 
 		try {
-			JsonParser.getObjectMapper().readTree(json);
+			JacksonUtils.getDefaultJsonMapper().readTree(json);
 			return true;
 		}
-		catch (JsonProcessingException e) {
+		catch (JacksonException e) {
 			logger.debug("Invalid JSON detected: {}", json);
 			return false;
 		}

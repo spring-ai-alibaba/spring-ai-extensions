@@ -22,11 +22,10 @@ import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechOptions;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.util.JacksonUtils;
@@ -48,7 +47,7 @@ public class DashScopeWebSocketTTSApi {
 	private final @Nullable ApiKey apiKey;
 	private final @Nullable String workSpaceId;
 	private final DashScopeWebSocketClientOptions clientOptions;
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	public DashScopeWebSocketTTSApi(String websocketUrl, @Nullable ApiKey apiKey, @Nullable String workSpaceId,
 			@Nullable DashScopeWebSocketClientOptions options) {
@@ -60,11 +59,12 @@ public class DashScopeWebSocketTTSApi {
 				.workSpaceId(workSpaceId)
 				.url(websocketUrl)
 				.build();
-		this.objectMapper = JsonMapper.builder()
+		this.jsonMapper = JsonMapper.builder()
 				.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 				.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-				.serializationInclusion(JsonInclude.Include.NON_NULL)
+				.disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
 				.addModules(JacksonUtils.instantiateAvailableModules())
 				.build();
 	}
@@ -92,23 +92,18 @@ public class DashScopeWebSocketTTSApi {
 				isCosyVoiceModel ? null : text);
 		WebSocketRequest finishTaskRequest = buildFinishTaskRequest(taskId, streamingMode);
 
-		try {
-			String runTaskMessage = objectMapper.writeValueAsString(runTaskRequest);
-			String finishTaskMessage = objectMapper.writeValueAsString(finishTaskRequest);
-			DashScopeWebSocketClient client = newWebSocketClient();
+        String runTaskMessage = jsonMapper.writeValueAsString(runTaskRequest);
+        String finishTaskMessage = jsonMapper.writeValueAsString(finishTaskRequest);
+        DashScopeWebSocketClient client = newWebSocketClient();
 
-			if (isCosyVoiceModel) {
-				WebSocketRequest continueTaskRequest = buildContinueTaskRequest(taskId, streamingMode, text);
-				String continueTaskMessage = objectMapper.writeValueAsString(continueTaskRequest);
-				return client.command(runTaskMessage, continueTaskMessage, finishTaskMessage);
-			}
-			else {
-				return client.command(runTaskMessage);
-			}
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
+        if (isCosyVoiceModel) {
+            WebSocketRequest continueTaskRequest = buildContinueTaskRequest(taskId, streamingMode, text);
+            String continueTaskMessage = jsonMapper.writeValueAsString(continueTaskRequest);
+            return client.command(runTaskMessage, continueTaskMessage, finishTaskMessage);
+        }
+        else {
+            return client.command(runTaskMessage);
+        }
 	}
 
 	/**
@@ -134,18 +129,13 @@ public class DashScopeWebSocketTTSApi {
 		WebSocketRequest continueTaskTemplate = buildContinueTaskRequest(taskId, streamingMode, null);
 		WebSocketRequest finishTaskRequest = buildFinishTaskRequest(taskId, streamingMode);
 
-		try {
-			String runTaskMessage = objectMapper.writeValueAsString(runTaskRequest);
-			String continueTaskTemplateMessage = objectMapper.writeValueAsString(continueTaskTemplate);
-			String finishTaskMessage = objectMapper.writeValueAsString(finishTaskRequest);
-			DashScopeWebSocketClient client = newWebSocketClient();
+        String runTaskMessage = jsonMapper.writeValueAsString(runTaskRequest);
+        String continueTaskTemplateMessage = jsonMapper.writeValueAsString(continueTaskTemplate);
+        String finishTaskMessage = jsonMapper.writeValueAsString(finishTaskRequest);
+        DashScopeWebSocketClient client = newWebSocketClient();
 
-			return client.commandStreaming(runTaskMessage, continueTaskTemplateMessage,
-					finishTaskMessage, textStream);
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
+        return client.commandStreaming(runTaskMessage, continueTaskTemplateMessage,
+                finishTaskMessage, textStream);
 	}
 
 	private WebSocketRequest buildRunTaskRequest(String taskId, String streamingMode,

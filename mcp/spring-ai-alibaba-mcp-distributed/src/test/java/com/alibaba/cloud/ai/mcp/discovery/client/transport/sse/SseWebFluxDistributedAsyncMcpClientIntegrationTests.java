@@ -31,7 +31,6 @@ import com.alibaba.nacos.api.ai.model.mcp.registry.ServerVersionDetail;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.mcp.client.common.autoconfigure.configurer.McpAsyncClientConfigurer;
@@ -41,6 +40,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -402,8 +402,8 @@ class SseWebFluxDistributedAsyncMcpClientIntegrationTests {
         }
 
         @Bean
-        ObjectMapper objectMapper() {
-            return new ObjectMapper();
+        JsonMapper jsonMapper() {
+            return JsonMapper.shared();
         }
     }
 }

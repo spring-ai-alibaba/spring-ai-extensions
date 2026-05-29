@@ -34,8 +34,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 public class ChatModelOutputObservationHandler implements ObservationHandler<ChatModelObservationContext> {
 
@@ -43,7 +43,7 @@ public class ChatModelOutputObservationHandler implements ObservationHandler<Cha
 
 	private final AttributeKey<String> outputMessagesKey;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final JsonMapper jsonMapper = JsonMapper.shared();
 
 	public ChatModelOutputObservationHandler(MessageMode mode) {
 		if (mode == LANGFUSE) {
@@ -87,9 +87,9 @@ public class ChatModelOutputObservationHandler implements ObservationHandler<Cha
 			.toList();
 
 		try {
-			return objectMapper.writeValueAsString(messages);
+			return jsonMapper.writeValueAsString(messages);
 		}
-		catch (JsonProcessingException e) {
+		catch (JacksonException e) {
 			logger.warn("Failed to convert output message to JSON string", e);
 			return null;
 		}

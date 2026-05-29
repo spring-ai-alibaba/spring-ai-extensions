@@ -18,10 +18,10 @@ package com.alibaba.cloud.ai.dashscope.api.tts;
 import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechOptions;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.NoopApiKey;
@@ -43,17 +43,18 @@ public class DashScopeQwenTTSRealtimeApi {
 	private final String baseUrl;
 	private final ApiKey apiKey;
 	private final @Nullable String workSpaceId;
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	public DashScopeQwenTTSRealtimeApi(String baseUrl, ApiKey apiKey, @Nullable String workSpaceId) {
 		this.baseUrl = baseUrl;
 		this.apiKey = apiKey;
 		this.workSpaceId = workSpaceId;
-		this.objectMapper = JsonMapper.builder()
+		this.jsonMapper = JsonMapper.builder()
 				.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 				.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-				.serializationInclusion(JsonInclude.Include.NON_NULL)
+				.disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
 				.addModules(JacksonUtils.instantiateAvailableModules())
 				.build();
 	}
@@ -65,7 +66,7 @@ public class DashScopeQwenTTSRealtimeApi {
 		String url = buildUrl(options.getModel());
 		QwenTTSRealtimeWebSocketClient client = new QwenTTSRealtimeWebSocketClient(url,
 				apiKey instanceof NoopApiKey ? "" : apiKey.getValue(), workSpaceId,
-				Collections.emptyMap(), objectMapper);
+				Collections.emptyMap(), jsonMapper);
 		return client.stream(text).doOnComplete(client::close).doOnError(e -> client.close());
 	}
 
@@ -76,7 +77,7 @@ public class DashScopeQwenTTSRealtimeApi {
 		String url = buildUrl(options.getModel());
 		QwenTTSRealtimeWebSocketClient client = new QwenTTSRealtimeWebSocketClient(url,
 				apiKey instanceof NoopApiKey ? "" : apiKey.getValue(), workSpaceId,
-				Collections.emptyMap(), objectMapper);
+				Collections.emptyMap(), jsonMapper);
 		return client.stream(textStream).doOnComplete(client::close).doOnError(e -> client.close());
 	}
 

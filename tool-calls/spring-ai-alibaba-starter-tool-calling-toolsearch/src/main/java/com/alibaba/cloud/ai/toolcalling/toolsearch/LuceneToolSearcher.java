@@ -15,7 +15,6 @@
  */
 package com.alibaba.cloud.ai.toolcalling.toolsearch;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -38,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -51,7 +51,7 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 
 	private static final Logger log = LoggerFactory.getLogger(LuceneToolSearcher.class);
 
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+	private static final JsonMapper JSON_MAPPER = JsonMapper.shared();
 
 	private final Directory indexDirectory;
 
@@ -240,7 +240,7 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 			String inputTypeSchema = definition.inputSchema();
 			if (inputTypeSchema != null && !inputTypeSchema.isEmpty()) {
 				try {
-					Object parameters = OBJECT_MAPPER.readValue(inputTypeSchema, Object.class);
+					Object parameters = JSON_MAPPER.readValue(inputTypeSchema, Object.class);
 					function.put("parameters", parameters);
 				}
 				catch (Exception e) {
@@ -254,7 +254,7 @@ public class LuceneToolSearcher implements ToolSearcher, Closeable {
 
 			schema.put("function", function);
 
-			return OBJECT_MAPPER.writeValueAsString(schema);
+			return JSON_MAPPER.writeValueAsString(schema);
 		}
 		catch (Exception e) {
 			log.error("Failed to generate schema for tool", e);

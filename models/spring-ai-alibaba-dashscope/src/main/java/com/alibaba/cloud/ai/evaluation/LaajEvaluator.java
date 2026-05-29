@@ -15,7 +15,8 @@
  */
 package com.alibaba.cloud.ai.evaluation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.ai.util.JacksonUtils;
+import tools.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.evaluation.EvaluationRequest;
@@ -38,7 +39,7 @@ public abstract class LaajEvaluator implements Evaluator {
 
 	private String evaluationPromptText;
 
-	private ObjectMapper objectMapper = new ObjectMapper();
+	private ObjectMapper objectMapper = JacksonUtils.getDefaultJsonMapper();
 
 	public LaajEvaluator(ChatClient.Builder chatClientBuilder) {
 		this.chatClientBuilder = chatClientBuilder;

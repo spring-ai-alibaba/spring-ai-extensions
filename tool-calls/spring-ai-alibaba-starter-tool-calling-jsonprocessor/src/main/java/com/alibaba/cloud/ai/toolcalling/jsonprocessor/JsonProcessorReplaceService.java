@@ -18,8 +18,7 @@ package com.alibaba.cloud.ai.toolcalling.jsonprocessor;
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -46,18 +45,12 @@ public class JsonProcessorReplaceService implements Function<JsonProcessorReplac
 		JsonNode value = request.value;
 		Assert.notNull(field, "replace json field can not be null");
 		Assert.notNull(value, "replace json fieldValue can not be null");
-		try {
-			return jsonParseTool.replaceFieldValue(content, field, value);
-		}
-		catch (JsonProcessingException e) {
-			logger.error("Error occurred while json processing: {}", e.getMessage());
-			throw new RuntimeException(e);
-		}
+        return jsonParseTool.replaceFieldValue(content, field, value);
 	}
 
 	@JsonClassDescription("JsonProcessorReplaceService request")
 	public record JsonReplaceRequest(@JsonProperty("content") String content, @JsonProperty("field") String field,
-			@JsonProperty("value") JsonNode value) {
+                                     @JsonProperty("value") JsonNode value) {
 	}
 
 }

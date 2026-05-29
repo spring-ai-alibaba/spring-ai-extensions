@@ -16,7 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.agent;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import java.util.List;
 

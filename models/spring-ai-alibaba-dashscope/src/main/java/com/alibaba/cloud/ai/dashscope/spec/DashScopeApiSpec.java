@@ -29,8 +29,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.model.ModelOptionsUtils;
 

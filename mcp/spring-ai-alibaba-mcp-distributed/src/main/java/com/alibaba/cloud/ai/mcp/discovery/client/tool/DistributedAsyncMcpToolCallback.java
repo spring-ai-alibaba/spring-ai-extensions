@@ -19,9 +19,9 @@ package com.alibaba.cloud.ai.mcp.discovery.client.tool;
 import com.alibaba.cloud.ai.mcp.discovery.client.transport.DistributedAsyncMcpClient;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.springframework.ai.mcp.McpToolUtils;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
+import org.springframework.ai.util.JsonHelper;
 import org.springframework.util.Assert;
 
 import java.util.Map;
@@ -38,11 +38,14 @@ public class DistributedAsyncMcpToolCallback implements ToolCallback {
 
     private final McpSchema.Tool tool;
 
+    private final JsonHelper jsonHelper;
+
     public DistributedAsyncMcpToolCallback(DistributedAsyncMcpClient distributedAsyncMcpClient, McpSchema.Tool tool) {
         Assert.notNull(distributedAsyncMcpClient, "distributedSyncClient must not be null");
         Assert.notNull(tool, "tool must not be null");
         this.distributedAsyncMcpClient = distributedAsyncMcpClient;
         this.tool = tool;
+        this.jsonHelper = new JsonHelper();
     }
 
     @Override
@@ -50,12 +53,12 @@ public class DistributedAsyncMcpToolCallback implements ToolCallback {
         return ToolDefinition.builder()
                 .name(McpToolUtils.prefixedToolName(this.distributedAsyncMcpClient.getServerName(), this.tool.name()))
                 .description(this.tool.description())
-                .inputSchema(ModelOptionsUtils.toJsonString(this.tool.inputSchema()))
+                .inputSchema(jsonHelper.toJson(this.tool.inputSchema()))
                 .build();    }
 
 	@Override
 	public String call(String toolInput) {
-		Map<String, Object> arguments = ModelOptionsUtils.jsonToMap(toolInput);
+		Map<String, Object> arguments = jsonHelper.fromJsonToMap(toolInput);
 		return Objects.requireNonNull(this.distributedAsyncMcpClient
 				.callTool(new McpSchema.CallToolRequest(this.tool.name(), arguments))
 				.map((response) -> {
@@ -63,7 +66,7 @@ public class DistributedAsyncMcpToolCallback implements ToolCallback {
 						throw new IllegalStateException("Error calling tool: " + String.valueOf(response.content()));
 					}
                     else {
-                        return ModelOptionsUtils.toJsonString(response.content());
+                        return jsonHelper.toJson(response.content());
                     }
 				})
 				.block(), "Distributed async MCP tool call must not return null");

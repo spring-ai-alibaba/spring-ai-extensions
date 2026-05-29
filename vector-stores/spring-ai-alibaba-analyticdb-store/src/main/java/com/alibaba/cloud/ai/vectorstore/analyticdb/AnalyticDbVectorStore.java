@@ -37,11 +37,6 @@ import com.aliyun.gpdb20160503.models.QueryCollectionDataResponse;
 import com.aliyun.gpdb20160503.models.QueryCollectionDataResponseBody;
 import com.aliyun.gpdb20160503.models.UpsertCollectionDataRequest;
 import com.aliyun.tea.TeaException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +53,9 @@ import org.springframework.ai.vectorstore.observation.VectorStoreObservationCont
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * @author HeYQ
@@ -91,7 +89,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 
 	private final Client client;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	private final Integer defaultTopK;
 
@@ -103,7 +101,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 		this.collectionName = builder.collectionName;
 		this.config = builder.config;
 		this.client = builder.client;
-		this.objectMapper = JsonMapper.builder().addModules(JacksonUtils.instantiateAvailableModules()).build();
+		this.jsonMapper = JsonMapper.builder().addModules(JacksonUtils.instantiateAvailableModules()).build();
 		this.defaultSimilarityThreshold = builder.defaultSimilarityThreshold;
 		this.defaultTopK = builder.defaultTopK;
 		this.initializeSchema = builder.initializeSchema;
@@ -175,11 +173,11 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 		catch (TeaException e) {
 			if (Objects.equals(e.getStatusCode(), 404)) {
 				// Collection does not exist, create it
-				ObjectNode metadataNode = objectMapper.createObjectNode();
+				ObjectNode metadataNode = jsonMapper.createObjectNode();
 				metadataNode.put(REF_DOC_NAME, "text");
 				metadataNode.put(CONTENT_FIELD_NAME, "text");
 				metadataNode.put(METADATA_FIELD_NAME, "jsonb");
-				String metadata = objectMapper.writeValueAsString(metadataNode);
+				String metadata = jsonMapper.writeValueAsString(metadataNode);
 				CreateCollectionRequest createRequest = new CreateCollectionRequest()
 					.setDBInstanceId(this.config.getDbInstanceId())
 					.setRegionId(this.config.getRegionId())
@@ -222,12 +220,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 			refDocId = docName != null && !docName.isEmpty() ? docName : doc.getId();
 			metadata.put(REF_DOC_NAME, refDocId);
 			metadata.put(CONTENT_FIELD_NAME, doc.getText());
-			try {
-				metadata.put(METADATA_FIELD_NAME, objectMapper.writeValueAsString(doc.getMetadata()));
-			}
-			catch (JsonProcessingException e) {
-				throw new RuntimeException("Failed to serialize metadata for document id = " + doc.getId(), e);
-			}
+            metadata.put(METADATA_FIELD_NAME, jsonMapper.writeValueAsString(doc.getMetadata()));
 
 			float[] floatEmbeddings = embeddings.get(i);
 			List<Double> embedding = IntStream.range(0, floatEmbeddings.length)
@@ -342,7 +335,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 				if (match.getScore() != null && match.getScore() > scoreThreshold) {
 					Map<String, String> metadata = match.getMetadata();
 					String pageContent = metadata.get(CONTENT_FIELD_NAME);
-					Map<String, Object> metadataJson = objectMapper.readValue(metadata.get(METADATA_FIELD_NAME),
+					Map<String, Object> metadataJson = jsonMapper.readValue(metadata.get(METADATA_FIELD_NAME),
 							new TypeReference<HashMap<String, Object>>() {
 							});
 					Document doc = Document.builder()

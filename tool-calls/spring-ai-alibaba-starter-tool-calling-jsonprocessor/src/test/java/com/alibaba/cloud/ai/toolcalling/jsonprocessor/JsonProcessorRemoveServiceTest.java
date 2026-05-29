@@ -17,12 +17,9 @@
 package com.alibaba.cloud.ai.toolcalling.jsonprocessor;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,19 +33,18 @@ public class JsonProcessorRemoveServiceTest {
 
 	private String jsonContent;
 
-	private ObjectMapper objectMapper;
+	private JsonMapper jsonMapper;
 
 	@BeforeEach
 	void setUp() {
-		objectMapper = new ObjectMapper().registerModule(new JavaTimeModule())
-			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-		JsonParseTool jsonParseTool = new JsonParseTool(objectMapper);
+		jsonMapper = JsonMapper.shared();
+		JsonParseTool jsonParseTool = new JsonParseTool(jsonMapper);
 		jsonProcessorRemoveService = new JsonProcessorRemoveService(jsonParseTool);
 		jsonContent = "{\"name\":\"John\",\"age\":30,\"city\":\"Beijing\",\"isActive\":true}";
 	}
 
 	@Test
-	void testRemoveStringField() throws JsonProcessingException {
+	void testRemoveStringField() {
 		// Test removing a string type field
 		JsonProcessorRemoveService.JsonRemoveRequest request = new JsonProcessorRemoveService.JsonRemoveRequest(
 				jsonContent, "name");
@@ -60,12 +56,12 @@ public class JsonProcessorRemoveServiceTest {
 		Assertions.assertEquals("John", result.asText());
 
 		// Verify that the field has been removed from the JSON
-		ObjectNode jsonObject = (ObjectNode) objectMapper.readTree(jsonContent);
+		ObjectNode jsonObject = (ObjectNode) jsonMapper.readTree(jsonContent);
 		jsonObject.remove("name");
 		String expectedJson = jsonObject.toString();
 
 		// Execute the service again to get the processed JSON
-		ObjectNode processedJson = (ObjectNode) objectMapper.readTree(jsonContent);
+		ObjectNode processedJson = (ObjectNode) jsonMapper.readTree(jsonContent);
 		processedJson.remove("name");
 
 		// Compare the processed JSON
@@ -123,7 +119,7 @@ public class JsonProcessorRemoveServiceTest {
 	}
 
 	@Test
-	void testRemoveAndVerifyJsonStructure() throws JsonProcessingException {
+	void testRemoveAndVerifyJsonStructure() {
 		// Test the JSON structure after removing a field
 		JsonProcessorRemoveService.JsonRemoveRequest request = new JsonProcessorRemoveService.JsonRemoveRequest(
 				jsonContent, "city");
@@ -132,13 +128,13 @@ public class JsonProcessorRemoveServiceTest {
 		jsonProcessorRemoveService.apply(request);
 
 		// Manually build the expected JSON structure
-		ObjectNode expectedJson = objectMapper.createObjectNode();
+		ObjectNode expectedJson = jsonMapper.createObjectNode();
 		expectedJson.put("name", "John");
 		expectedJson.put("age", 30);
 		expectedJson.put("isActive", true);
 
 		// Manually remove the field and compare
-		ObjectNode actualJson = (ObjectNode) objectMapper.readTree(jsonContent);
+		ObjectNode actualJson = (ObjectNode) jsonMapper.readTree(jsonContent);
 
 		actualJson.remove("city");
 

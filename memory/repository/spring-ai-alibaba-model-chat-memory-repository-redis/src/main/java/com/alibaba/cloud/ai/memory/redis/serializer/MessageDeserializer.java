@@ -16,18 +16,25 @@
 package com.alibaba.cloud.ai.memory.redis.serializer;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.ToolResponseMessage;
+import org.springframework.ai.chat.messages.UserMessage;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.messages.*;
 import org.springframework.util.CollectionUtils;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -37,17 +44,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author yingzi
  * @author benym
  */
-public class MessageDeserializer extends JsonDeserializer<Message> {
+public class MessageDeserializer extends ValueDeserializer<Message> {
 
 	private static final Logger logger = LoggerFactory.getLogger(MessageDeserializer.class);
 
 	private static final Map<String, MessageFactory> MESSAGE_FACTORIES = new ConcurrentHashMap<>();
 
-	private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
-		.configure(MapperFeature.AUTO_DETECT_GETTERS, false)
-		.configure(MapperFeature.AUTO_DETECT_IS_GETTERS, false)
-		.visibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-		.build();
+    private static final JsonMapper JSON_MAPPER = JsonMapper.builder()
+            .changeDefaultVisibility(vc -> vc.withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withFieldVisibility(JsonAutoDetect.Visibility.ANY))
+            .build();
 
 	static {
 		MESSAGE_FACTORIES.put("USER",
@@ -74,8 +81,8 @@ public class MessageDeserializer extends JsonDeserializer<Message> {
 	}
 
 	@Override
-	public Message deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-		JsonNode node = p.getCodec().readTree(p);
+	public Message deserialize(JsonParser p, DeserializationContext ctxt) {
+		JsonNode node = ctxt.readTree(p);
 
 		logger.debug("Deserializing message: {}", node);
 
@@ -139,7 +146,7 @@ public class MessageDeserializer extends JsonDeserializer<Message> {
 	private Map<String, Object> extractMetadata(JsonNode node) {
 		return Optional.ofNullable(node.get("metadata")).map(metadataNode -> {
 			try {
-				return OBJECT_MAPPER.convertValue(metadataNode, new TypeReference<>() {
+				return JSON_MAPPER.convertValue(metadataNode, new TypeReference<>() {
 				});
 			}
 			catch (IllegalArgumentException e) {
@@ -155,7 +162,7 @@ public class MessageDeserializer extends JsonDeserializer<Message> {
 	private List<AssistantMessage.ToolCall> extractToolCalls(JsonNode node) {
 		return Optional.ofNullable(node.get("toolCalls")).filter(JsonNode::isArray).map(toolCallNode -> {
 			try {
-				return OBJECT_MAPPER.convertValue(toolCallNode, new TypeReference<>() {
+				return JSON_MAPPER.convertValue(toolCallNode, new TypeReference<>() {
 				});
 			}
 			catch (IllegalArgumentException e) {
@@ -171,7 +178,7 @@ public class MessageDeserializer extends JsonDeserializer<Message> {
 	private List<ToolResponseMessage.ToolResponse> extractToolResponses(JsonNode node) {
 		return Optional.ofNullable(node.get("responses")).filter(JsonNode::isArray).map(toolResponsesNode -> {
 			try {
-				return OBJECT_MAPPER.convertValue(toolResponsesNode, new TypeReference<>() {
+				return JSON_MAPPER.convertValue(toolResponsesNode, new TypeReference<>() {
 				});
 			}
 			catch (IllegalArgumentException e) {

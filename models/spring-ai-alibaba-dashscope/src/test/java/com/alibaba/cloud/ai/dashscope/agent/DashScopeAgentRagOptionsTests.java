@@ -15,8 +15,8 @@
  */
 package com.alibaba.cloud.ai.dashscope.agent;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -25,12 +25,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DashScopeAgentRagOptionsTests {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper jsonMapper = JsonMapper.shared();
 
     @Test
     void testBuilderWithMethods() {
-        ObjectNode metadataFilter = this.objectMapper.createObjectNode().put("author", "alice");
-        ObjectNode structuredFilter = this.objectMapper.createObjectNode().put("category", "tech");
+        ObjectNode metadataFilter = this.jsonMapper.createObjectNode().put("author", "alice");
+        ObjectNode structuredFilter = this.jsonMapper.createObjectNode().put("category", "tech");
 
         DashScopeAgentRagOptions options = DashScopeAgentRagOptions.builder()
                 .pipelineIds(List.of("p1", "p2"))
@@ -51,8 +51,8 @@ class DashScopeAgentRagOptionsTests {
 
     @Test
     void testSettersAndGetters() {
-        ObjectNode metadataFilter = this.objectMapper.createObjectNode().put("k", "v");
-        ObjectNode structuredFilter = this.objectMapper.createObjectNode().put("s", "x");
+        ObjectNode metadataFilter = this.jsonMapper.createObjectNode().put("k", "v");
+        ObjectNode structuredFilter = this.jsonMapper.createObjectNode().put("s", "x");
 
         DashScopeAgentRagOptions options = new DashScopeAgentRagOptions();
         options.setPipelineIds(List.of("p1"));

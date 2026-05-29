@@ -16,8 +16,10 @@
 
 package com.alibaba.cloud.ai.mcp.register.utils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -29,16 +31,18 @@ import java.util.Set;
  */
 public class JsonSchemaUtil {
 
-	private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger log = LoggerFactory.getLogger(JsonSchemaUtil.class);
+
+	private static final JsonMapper JSON_MAPPER = JsonMapper.shared();
 
 	public static boolean compare(String origin, String target) {
 		try {
-			JsonNode originNode = objectMapper.readTree(origin);
-			JsonNode targetNode = objectMapper.readTree(target);
+			JsonNode originNode = JSON_MAPPER.readTree(origin);
+			JsonNode targetNode = JSON_MAPPER.readTree(target);
 			return compare(originNode, targetNode);
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			log.error("Json string compare failed", e);
 			return false;
 		}
 	}
@@ -83,7 +87,7 @@ public class JsonSchemaUtil {
 		}
 		else if (originProperties != null && targetProperties != null) {
 			// 遍历原始 properties
-			for (Iterator<Map.Entry<String, JsonNode>> it = originProperties.fields(); it.hasNext();) {
+			for (Iterator<Map.Entry<String, JsonNode>> it = originProperties.properties().iterator(); it.hasNext();) {
 				Map.Entry<String, JsonNode> entry = it.next();
 				String key = entry.getKey();
 				JsonNode valueNode = entry.getValue();
@@ -129,7 +133,7 @@ public class JsonSchemaUtil {
 			}
 
 			// 检查新增字段
-			for (Iterator<Map.Entry<String, JsonNode>> it = targetProperties.fields(); it.hasNext();) {
+			for (Iterator<Map.Entry<String, JsonNode>> it = targetProperties.properties().iterator(); it.hasNext();) {
 				Map.Entry<String, JsonNode> entry = it.next();
 				String key = entry.getKey();
 				if (!originProperties.has(key)) {

@@ -15,7 +15,6 @@
  */
 package com.alibaba.cloud.ai.toolcalling.githubtoolkit;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -26,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,20 +55,14 @@ public class GetIssueService implements Function<GetIssueService.Request, Respon
 
 	@Override
 	public Response apply(Request request) {
-		try {
-			String endpoint = REPO_ENDPOINT + ISSUES_ENDPOINT + "/{issueNumber}";
-			String responseData = GithubToolKitValueUtils.requireResponseBody(
-					webClientTool.get(endpoint, repositoryVariables(request.issueNumber())).block(), "Get issue");
-			logger.info("GetIssueOperation response: {}", responseData);
-			return new Response<>(parseIssueDetails(responseData));
-		}
-		catch (IOException e) {
-			logger.error("Error occurred while parsing response: {}", e.getMessage());
-			throw new RuntimeException(e);
-		}
+        String endpoint = REPO_ENDPOINT + ISSUES_ENDPOINT + "/{issueNumber}";
+        String responseData = GithubToolKitValueUtils.requireResponseBody(
+                webClientTool.get(endpoint, repositoryVariables(request.issueNumber())).block(), "Get issue");
+        logger.info("GetIssueOperation response: {}", responseData);
+        return new Response<>(parseIssueDetails(responseData));
 	}
 
-	public Issue parseIssueDetails(String json) throws JsonProcessingException {
+	public Issue parseIssueDetails(String json) {
 		Map<String, Object> issueMap = jsonParseTool.jsonToMap(json, Object.class);
 		Map<String, Object> userMap = GithubToolKitValueUtils.requireObject(issueMap, "user");
 		long id = GithubToolKitValueUtils.requireLong(issueMap, "id");

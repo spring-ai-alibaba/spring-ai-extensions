@@ -17,9 +17,9 @@ package com.alibaba.cloud.ai.dashscope.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -44,15 +44,15 @@ class DashScopeAgentOptionsTests {
 
     private static final String TEST_MODEL_ID = "qwen-plus";
 
-    private ObjectMapper objectMapper;
+    private JsonMapper jsonMapper;
 
     private JsonNode testBizParams;
 
     @BeforeEach
     void setUp() {
-        // Initialize ObjectMapper and create test bizParams
-        objectMapper = new ObjectMapper();
-        ObjectNode bizParams = objectMapper.createObjectNode();
+        // Initialize JsonMapper and create test bizParams
+        jsonMapper = JsonMapper.shared();
+        ObjectNode bizParams = jsonMapper.createObjectNode();
         bizParams.put("key1", "value1");
         bizParams.put("key2", "value2");
         testBizParams = bizParams;

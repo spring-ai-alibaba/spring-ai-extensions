@@ -30,13 +30,13 @@ import com.alibaba.nacos.api.ai.model.mcp.McpServerDetailInfo;
 
 import com.alibaba.nacos.api.ai.model.mcp.McpToolMeta;
 import com.alibaba.nacos.api.ai.model.mcp.McpToolSpecification;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -89,7 +89,7 @@ public class McpRouterService {
 
 	private final McpProxyService mcpProxyService;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final JsonMapper jsonMapper = JsonMapper.shared();
 
 	public McpRouterService(McpServiceDiscovery mcpServiceDiscovery, McpServerVectorStore mcpServerVectorStore,
 			NacosMcpOperationService nacosMcpOperationService, McpProxyService mcpProxyService) {
@@ -411,8 +411,8 @@ public class McpRouterService {
 			if (parameters == null || parameters.trim().isEmpty()) {
 				return new HashMap<>();
 			}
-			JsonNode paramsNode = objectMapper.readTree(parameters);
-			return objectMapper.convertValue(paramsNode, Map.class);
+			JsonNode paramsNode = jsonMapper.readTree(parameters);
+			return jsonMapper.convertValue(paramsNode, Map.class);
 		}
 		catch (Exception e) {
 			logger.error("解析工具参数时发生错误", e);
@@ -507,7 +507,7 @@ public class McpRouterService {
 
 		// 尝试解析为JSON
 		try {
-			JsonNode jsonNode = objectMapper.readTree(rawResult);
+			JsonNode jsonNode = jsonMapper.readTree(rawResult);
 			return McpToolExecutionResponse.McpToolExecutionResult.json(jsonNode, rawResult);
 		}
 		catch (Exception e) {

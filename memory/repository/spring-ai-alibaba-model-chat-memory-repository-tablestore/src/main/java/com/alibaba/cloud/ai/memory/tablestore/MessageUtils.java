@@ -16,10 +16,10 @@
 package com.alibaba.cloud.ai.memory.tablestore;
 
 import com.aliyun.openservices.tablestore.agent.model.Metadata;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.std.NullSerializer;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.ser.std.NullSerializer;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,7 @@ public class MessageUtils {
 
 	private static final Logger log = LoggerFactory.getLogger(MessageUtils.class);
 
-	private static final ObjectMapper MAPPER;
+	private static final JsonMapper MAPPER;
 
 	public static final String MESSAGE_TYPE = AbstractMessage.MESSAGE_TYPE;
 
@@ -54,10 +54,9 @@ public class MessageUtils {
 	public static final String MESSAGE_TOOL_RESPONSE = "_spring_ai_message_tool_response";
 
 	static {
-		MAPPER = new ObjectMapper();
 		SimpleModule module = new SimpleModule();
 		module.addSerializer(byte[].class, NullSerializer.instance);
-		MAPPER.registerModule(module);
+        MAPPER = JsonMapper.builder().addModule(module).build();
 	}
 
 	private static final Set<Class<?>> SUPPORTED_VALUE_TYPES = new LinkedHashSet<>();

@@ -15,8 +15,7 @@
  */
 package com.alibaba.cloud.ai.reader.youtube;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jspecify.annotations.Nullable;
@@ -25,6 +24,7 @@ import org.springframework.ai.document.DocumentReader;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -44,7 +44,7 @@ public class YoutubeDocumentReader implements DocumentReader {
 
 	private static final String WATCH_URL = "https://www.youtube.com/watch?v=%s";
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	private static final List<String> YOUTUBE_URL_PATTERNS = List.of("youtube\\.com/watch\\?v=([^&]+)",
 			"youtu\\.be/([^?&]+)");
@@ -65,7 +65,7 @@ public class YoutubeDocumentReader implements DocumentReader {
 	public YoutubeDocumentReader(String resourcePath) {
 		Assert.hasText(resourcePath, "Query string must not be empty");
 		this.resourcePath = resourcePath;
-		this.objectMapper = new ObjectMapper();
+		this.jsonMapper = JsonMapper.shared();
 	}
 
 	@Override
@@ -103,7 +103,7 @@ public class YoutubeDocumentReader implements DocumentReader {
 		// Step 2: Extract the subtitle tracks from the HTML
 		String captionsJsonString = extractCaptionsJson(htmlContent);
 		if (captionsJsonString != null) {
-			JsonNode captionsJson = objectMapper.readTree(captionsJsonString);
+			JsonNode captionsJson = jsonMapper.readTree(captionsJsonString);
 			JsonNode captionTracks = captionsJson.path("playerCaptionsTracklistRenderer").path("captionTracks");
 
 			// Check if captionTracks exists and is an array

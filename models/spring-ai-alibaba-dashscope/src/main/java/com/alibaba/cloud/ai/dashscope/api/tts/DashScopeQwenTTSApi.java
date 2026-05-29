@@ -20,11 +20,6 @@ import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeTTSApiSpec.DashScopeAud
 import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeTTSApiSpec.DashScopeAudioTTSResponse;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +35,10 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -63,7 +62,7 @@ public class DashScopeQwenTTSApi {
 	private final @Nullable String workSpaceId;
 	private final RestClient restClient;
 	private final WebClient webClient;
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	public DashScopeQwenTTSApi(String baseUrl, ApiKey apiKey, @Nullable String workSpaceId,
 			@Nullable HttpHeaders headers, RestClient.Builder restClientBuilder,
@@ -93,11 +92,12 @@ public class DashScopeQwenTTSApi {
 				.defaultHeaders(authHeaders)
 				.build();
 
-		this.objectMapper = JsonMapper.builder()
+		this.jsonMapper = JsonMapper.builder()
 				.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 				.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-				.serializationInclusion(JsonInclude.Include.NON_NULL)
+				.disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
 				.addModules(JacksonUtils.instantiateAvailableModules())
 				.build();
 	}
@@ -147,14 +147,7 @@ public class DashScopeQwenTTSApi {
 				.bodyToFlux(String.class)
 				.takeUntil(SSE_DONE_PREDICATE)
 				.filter(SSE_DONE_PREDICATE.negate())
-				.map(content -> {
-					try {
-						return objectMapper.readValue(content, DashScopeAudioTTSResponse.class);
-					}
-					catch (JsonProcessingException e) {
-						throw new RuntimeException("Failed to parse TTS response: " + content, e);
-					}
-				});
+				.map(content -> jsonMapper.readValue(content, DashScopeAudioTTSResponse.class));
 	}
 
 	public static Builder builder() {

@@ -16,9 +16,8 @@
 package com.alibaba.cloud.ai.vectorstore.opensearch;
 
 import com.aliyun.ha3engine.vector.models.QueryRequest;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +35,13 @@ import org.springframework.ai.vectorstore.observation.VectorStoreObservationConv
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.util.Assert;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -98,7 +102,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	 */
 	private final Converter<JsonNode, com.alibaba.cloud.ai.vectorstore.opensearch.OpenSearchApi.SimilarityResult> itemConverter = new SimilarityResultConverter();
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final JsonMapper jsonMapper = JsonMapper.shared();
 
 	/**
 	 * Constructs a new instance of OpenSearchVectorStore with the specified parameters.
@@ -171,12 +175,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 			documentFields.put(ID_FIELD_NAME, document.getId());
 			documentFields.put(CONTENT_FIELD_NAME, document.getText());
 			// Convert metadata to JSON
-			try {
-				documentFields.put(METADATA_FIELD_NAME, objectMapper.writeValueAsString(document.getMetadata()));
-			}
-			catch (JsonProcessingException e) {
-				throw new RuntimeException("Failed to serialize JSON", e);
-			}
+            documentFields.put(METADATA_FIELD_NAME, jsonMapper.writeValueAsString(document.getMetadata()));
 
 			// Add document content to documentEntry structure.
 			documentMap.put("fields", documentFields);
@@ -423,9 +422,9 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 				JsonNode fields = jsonDocument.get(FIELDS_KEY);
 				String metadataStr = fields.path(METADATA_FIELD_NAME).asText();
 				try {
-					return new ObjectMapper().readValue(metadataStr, HashMap.class);
+					return JsonMapper.shared().readValue(metadataStr, HashMap.class);
 				}
-				catch (JsonProcessingException e) {
+				catch (JacksonException e) {
 					return new HashMap<>();
 				}
 			}

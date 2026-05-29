@@ -15,18 +15,16 @@
  */
 package com.alibaba.cloud.ai.toolcalling.githubtoolkit;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,10 +71,6 @@ public class CreatePullRequestService implements Function<CreatePullRequestServi
 			logger.info("Pull request created successfully.");
 			return new Response<>(parsePullRequest(responseData));
 		}
-		catch (IOException e) {
-			logger.error("Error parsing pull request data: {}", e.getMessage());
-			throw new RuntimeException("Error parsing response", e);
-		}
 		catch (Exception e) {
 			logger.error("Unexpected error: {}", e.getMessage());
 			throw new RuntimeException("Unexpected error", e);
@@ -89,7 +83,7 @@ public class CreatePullRequestService implements Function<CreatePullRequestServi
 		}
 	}
 
-	public PullRequest parsePullRequest(String json) throws JsonProcessingException {
+	public PullRequest parsePullRequest(String json) {
 		Map<String, Object> prMap = jsonParseTool.jsonToMap(json, Object.class);
 		Map<String, Object> userMap = GithubToolKitValueUtils.requireObject(prMap, "user");
 		Map<String, Object> headMap = GithubToolKitValueUtils.requireObject(prMap, "head");

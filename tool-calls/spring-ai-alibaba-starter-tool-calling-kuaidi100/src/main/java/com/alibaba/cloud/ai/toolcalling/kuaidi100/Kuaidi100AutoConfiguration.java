@@ -17,10 +17,6 @@ package com.alibaba.cloud.ai.toolcalling.kuaidi100;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.RestClientTool;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -28,6 +24,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Description;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * @author XiaoYunTao
@@ -50,10 +47,8 @@ public class Kuaidi100AutoConfiguration {
 	}
 
 	private JsonParseTool createJsonParseTool() {
-		ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule())
-			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-		return new JsonParseTool(objectMapper);
+		JsonMapper jsonMapper = JsonMapper.shared();
+		return new JsonParseTool(jsonMapper);
 	}
 
 }

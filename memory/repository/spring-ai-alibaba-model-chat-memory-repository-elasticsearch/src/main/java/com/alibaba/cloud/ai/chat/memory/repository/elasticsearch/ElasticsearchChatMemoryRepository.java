@@ -21,8 +21,6 @@ import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +31,7 @@ import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.util.Assert;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,12 +51,10 @@ public class ElasticsearchChatMemoryRepository implements ChatMemoryRepository, 
 
 	private final ElasticsearchClient client;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	public ElasticsearchChatMemoryRepository(ElasticsearchClient client) {
-		this.objectMapper = new ObjectMapper();
-		// Configure Jackson to ignore unknown properties to handle schema changes
-		this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		this.jsonMapper = JsonMapper.shared();
 		try {
 			this.client = client;
 			createIndexIfNotExists();

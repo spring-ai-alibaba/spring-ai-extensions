@@ -18,12 +18,8 @@ package com.alibaba.cloud.ai.memory.memcached;
 import com.alibaba.cloud.ai.memory.memcached.serializer.MessageDeserializer;
 import com.alibaba.cloud.ai.toolcalling.memcached.MemcachedService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
@@ -42,7 +38,7 @@ public class MemcachedChatMemoryRepository implements ChatMemoryRepository, Auto
 
 	private final MemcachedService memcachedService;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	private static final String DEFAULT_CONVERSATION = "spring_ai_alibaba_chat_memory_conversation";
 
@@ -50,14 +46,14 @@ public class MemcachedChatMemoryRepository implements ChatMemoryRepository, Auto
 
 	public MemcachedChatMemoryRepository(MemcachedService memcachedService) {
 		this.memcachedService = memcachedService;
-		this.objectMapper = JsonMapper.builder()
-			.configure(MapperFeature.AUTO_DETECT_GETTERS, false)
-			.configure(MapperFeature.AUTO_DETECT_IS_GETTERS, false)
-			.visibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-			.build();
-		SimpleModule module = new SimpleModule();
-		module.addDeserializer(Message.class, new MessageDeserializer());
-		this.objectMapper.registerModule(module);
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Message.class, new MessageDeserializer());
+        this.jsonMapper = JsonMapper.builder()
+                .changeDefaultVisibility(vc -> vc.withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+                        .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+                        .withFieldVisibility(JsonAutoDetect.Visibility.ANY))
+                .addModule(module)
+                .build();
 	}
 
 	@Override
@@ -81,14 +77,8 @@ public class MemcachedChatMemoryRepository implements ChatMemoryRepository, Auto
 			.apply(new MemcachedService.MemcachedServiceGetter.Request(DEFAULT_KEY_PREFIX + conversationId));
 		if (apply != null) {
 			List<String> messageList = (List<String>) apply;
-			return messageList.stream().map(messageStr -> {
-				try {
-					return objectMapper.readValue(messageStr, Message.class);
-				}
-				catch (JsonProcessingException e) {
-					throw new RuntimeException("Error deserializing message", e);
-				}
-			}).toList();
+			return messageList.stream().map(messageStr ->
+                    jsonMapper.readValue(messageStr, Message.class)).toList();
 		}
 		return List.of();
 	}
@@ -101,14 +91,7 @@ public class MemcachedChatMemoryRepository implements ChatMemoryRepository, Auto
 		conversationIds.add(conversationId);
 		this.memcachedService.setter()
 			.apply(new MemcachedService.MemcachedServiceSetter.Request(DEFAULT_CONVERSATION, conversationIds, 0));
-		List<String> serializingMessage = messages.stream().map(message -> {
-			try {
-				return this.objectMapper.writeValueAsString(message);
-			}
-			catch (JsonProcessingException e) {
-				throw new RuntimeException("Error serializing message", e);
-			}
-		}).toList();
+		List<String> serializingMessage = messages.stream().map(this.jsonMapper::writeValueAsString).toList();
 		this.memcachedService.setter()
 			.apply(new MemcachedService.MemcachedServiceSetter.Request(DEFAULT_KEY_PREFIX + conversationId,
 					serializingMessage, 0));

@@ -17,18 +17,16 @@
 package com.alibaba.cloud.ai.toolcalling.jsonprocessor;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.IntNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static com.fasterxml.jackson.databind.node.BooleanNode.TRUE;
+import static tools.jackson.databind.node.BooleanNode.TRUE;
 
 /**
  * JsonReplaceService Test Class
@@ -39,20 +37,19 @@ public class JsonProcessorReplaceServiceTest {
 
 	private String jsonContent;
 
-	private ObjectMapper objectMapper;
+	private JsonMapper jsonMapper;
 
 	@BeforeEach
 	void setUp() {
-		objectMapper = new ObjectMapper().registerModule(new JavaTimeModule())
-			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-		JsonParseTool jsonParseTool = new JsonParseTool(objectMapper);
+		jsonMapper = JsonMapper.shared();
+		JsonParseTool jsonParseTool = new JsonParseTool(jsonMapper);
 		jsonProcessorReplaceService = new JsonProcessorReplaceService(jsonParseTool);
 		jsonContent = "{\"name\":\"John\",\"age\":30,\"city\":\"Beijing\"}";
 	}
 
 	@Test
 	void testReplaceStringValue() {
-		JsonNode newValue = new TextNode("David");
+		JsonNode newValue = new StringNode("David");
 		JsonProcessorReplaceService.JsonReplaceRequest request = new JsonProcessorReplaceService.JsonReplaceRequest(
 				jsonContent, "name", newValue);
 
@@ -92,7 +89,7 @@ public class JsonProcessorReplaceServiceTest {
 
 	@Test
 	void testReplaceWithJsonObject() {
-		ObjectNode addressObject = objectMapper.createObjectNode();
+		ObjectNode addressObject = jsonMapper.createObjectNode();
 		addressObject.put("street", "Chang'an Street");
 		addressObject.put("zipCode", "100000");
 
@@ -107,7 +104,7 @@ public class JsonProcessorReplaceServiceTest {
 
 	@Test
 	void testNullField() {
-		JsonNode newValue = new TextNode("David");
+		JsonNode newValue = new StringNode("David");
 		JsonProcessorReplaceService.JsonReplaceRequest request = new JsonProcessorReplaceService.JsonReplaceRequest(
 				jsonContent, null, newValue);
 

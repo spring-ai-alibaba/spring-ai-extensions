@@ -15,12 +15,14 @@
  */
 package com.alibaba.cloud.ai.reader.huggingface.fs;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 import org.springframework.util.Assert;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,7 +43,7 @@ public class HuggingFaceFSDocumentReader implements DocumentReader {
 
 	private final String resourcePath;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	/**
 	 * Create a new HuggingFaceFSDocumentReader instance.
@@ -50,7 +52,7 @@ public class HuggingFaceFSDocumentReader implements DocumentReader {
 	public HuggingFaceFSDocumentReader(String resourcePath) {
 		Assert.notNull(resourcePath, "Resource path must not be null");
 		this.resourcePath = resourcePath;
-		this.objectMapper = new ObjectMapper();
+		this.jsonMapper = JsonMapper.shared();
 	}
 
 	@Override
@@ -84,7 +86,7 @@ public class HuggingFaceFSDocumentReader implements DocumentReader {
 		// Handle gzip compressed files
 		if (resourcePath.endsWith(".gz")) {
 			try (InputStream inputStream = new ByteArrayInputStream(content);
-					GZIPInputStream gzipInputStream = new GZIPInputStream(inputStream)) {
+                 GZIPInputStream gzipInputStream = new GZIPInputStream(inputStream)) {
 				data = new String(gzipInputStream.readAllBytes());
 			}
 		}
@@ -99,7 +101,7 @@ public class HuggingFaceFSDocumentReader implements DocumentReader {
 			try {
 				if (!line.trim().isEmpty()) {
 					@SuppressWarnings("unchecked")
-					Map<String, Object> jsonDict = objectMapper.readValue(line, Map.class);
+					Map<String, Object> jsonDict = jsonMapper.readValue(line, Map.class);
 					jsonDicts.add(jsonDict);
 				}
 			}
