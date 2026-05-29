@@ -262,12 +262,6 @@
                 <version>${project.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-observation-extension</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
             <!-- Spring AI Alibaba RAG -->
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
