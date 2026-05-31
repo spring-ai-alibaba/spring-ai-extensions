@@ -62,10 +62,8 @@
     <dependencies>
 
         <dependency>
-            <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-dashscope</artifactId>
-            <version>${project.parent.version}</version>
-            <optional>true</optional>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-model-chat-memory-repository-jdbc</artifactId>
         </dependency>
 
         <dependency>
@@ -78,11 +76,6 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-model-chat-memory-repository-jdbc</artifactId>
         </dependency>
 
         <dependency>
