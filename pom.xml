@@ -264,8 +264,6 @@
         <json-schema-validator.version>3.0.1</json-schema-validator.version>
         <json-path.version>2.9.0</json-path.version>
 
-        <jedis.version>5.2.0</jedis.version>
-
         <redisson.version>3.52.0</redisson.version>
 
         <postgresql.version>42.4.4</postgresql.version>
