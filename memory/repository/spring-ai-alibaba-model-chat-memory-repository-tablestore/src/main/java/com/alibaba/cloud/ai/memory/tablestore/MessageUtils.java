@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -100,7 +101,7 @@ public class MessageUtils {
 		String content = tablestoreMessage.getContent();
 		Map<String, Object> metadataMap = metadata.toMap();
 		try {
-			MessageType messageType = MessageType.fromValue(metadata.getString(MESSAGE_TYPE));
+			MessageType messageType = MessageType.valueOf(Objects.requireNonNull(metadata.getString(MESSAGE_TYPE)).toUpperCase());
 			metadataMap.put(AbstractMessage.MESSAGE_TYPE, messageType);
 			switch (messageType) {
 				case USER: {

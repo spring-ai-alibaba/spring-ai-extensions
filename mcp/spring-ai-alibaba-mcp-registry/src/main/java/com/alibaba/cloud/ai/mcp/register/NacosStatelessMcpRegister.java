@@ -290,9 +290,12 @@ public class NacosStatelessMcpRegister implements ApplicationListener<WebServerI
             }
         }
 
-        McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema("object", localInputSchemaMap, localToolRegistration.tool().inputSchema()
-                .required(), localToolRegistration.tool().inputSchema().additionalProperties(), localToolRegistration.tool().inputSchema().defs(),
-                localToolRegistration.tool().inputSchema().definitions());
+        McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema("object",
+                localInputSchemaMap,
+                (List<String>) localToolRegistration.tool().inputSchema().get("required"),
+                (Boolean) localToolRegistration.tool().inputSchema().get("additionalProperties"),
+                (Map<String, Object>) localToolRegistration.tool().inputSchema().get("$defs"),
+                (Map<String, Object>) localToolRegistration.tool().inputSchema().get("definitions"));
         if (changed) {
             McpSchema.Tool toolNeededUpdate = new McpSchema.Tool.Builder().name(localToolRegistration.tool().name())
                     .description(toolInNacos.description()).inputSchema(inputSchema)

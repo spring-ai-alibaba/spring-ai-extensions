@@ -49,6 +49,7 @@ import org.springframework.boot.web.server.context.WebServerInitializedEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.util.Assert;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -285,8 +286,7 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 				(Map<String, Object>) localInputSchemaMap.get("properties"));
 
 		String nacosInputSchemaString = jsonHelper.toJson(toolInNacos.inputSchema());
-		Map<Object, Object> nacosInputSchemaMap = jsonHelper.fromJson(nacosInputSchemaString, new ParameterizedTypeReference<>() {
-		});
+		Map<String, Object> nacosInputSchemaMap = jsonHelper.fromJsonToMap(nacosInputSchemaString);
 		Map<String, Object> nacosProperties = Objects.requireNonNull(
 				(Map<String, Object>) nacosInputSchemaMap.get("properties"));
 
@@ -302,9 +302,12 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 				}
 			}
 		}
-		McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema("object", localInputSchemaMap, localToolRegistration.tool().inputSchema()
-				.required(), localToolRegistration.tool().inputSchema().additionalProperties(), localToolRegistration.tool().inputSchema().defs(),
-				localToolRegistration.tool().inputSchema().definitions());
+        McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema("object",
+                localInputSchemaMap,
+                (List<String>) localToolRegistration.tool().inputSchema().get("required"),
+                (Boolean) localToolRegistration.tool().inputSchema().get("additionalProperties"),
+                (Map<String, Object>) localToolRegistration.tool().inputSchema().get("$defs"),
+                (Map<String, Object>) localToolRegistration.tool().inputSchema().get("definitions"));
 		if (changed) {
 			McpSchema.Tool toolNeededUpdate = new McpSchema.Tool.Builder().name(localToolRegistration.tool().name())
 					.description(toolInNacos.description()).inputSchema(inputSchema)
@@ -314,7 +317,7 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 					.meta(localToolRegistration.tool().meta())
 					.build();
 			toolsRegistrationNeedToUpdate
-					.add(new McpServerFeatures.AsyncToolSpecification(toolNeededUpdate, localToolRegistration.call()));
+					.add(new McpServerFeatures.AsyncToolSpecification(toolNeededUpdate, localToolRegistration.callHandler()));
 		}
 
 	}
@@ -330,6 +333,7 @@ public class NacosMcpRegister implements ApplicationListener<WebServerInitialize
 			String toolsInNacosStr = jsonHelper.toJson(toolSpec.getTools());
 			List<McpSchema.Tool> toolsInNacos = jsonHelper.fromJson(toolsInNacosStr, new ParameterizedTypeReference<>() {
 			});
+            Assert.notNull(toolsInNacos, "toolsInNacos must not be null");
 			changed = compareToolsMeta(toolSpec.getToolsMeta());
 			this.toolsMeta = toolSpec.getToolsMeta();
 			List<McpServerFeatures.AsyncToolSpecification> toolsRegistrationNeedToUpdate = new ArrayList<>();
