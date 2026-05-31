@@ -259,8 +259,6 @@
         <commons-exec.version>1.3</commons-exec.version>
         <commons-collections4.version>4.4</commons-collections4.version>
 
-        <docker-java.version>3.7.0</docker-java.version>
-
         <opennlp-tools.version>2.3.3</opennlp-tools.version>
 
         <json-schema-validator.version>3.0.1</json-schema-validator.version>
@@ -351,13 +349,6 @@
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp-bom</artifactId>
                 <version>${okhttp.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.github.docker-java</groupId>
-                <artifactId>docker-java-bom</artifactId>
-                <version>${docker-java.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
