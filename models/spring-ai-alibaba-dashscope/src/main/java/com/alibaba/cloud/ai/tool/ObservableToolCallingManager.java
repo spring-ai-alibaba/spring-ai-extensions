@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -248,7 +249,7 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 			if (StringUtils.hasText(toolCallChunk.id()) && StringUtils.hasText(toolCallChunk.name())) {
 				if (StringUtils.hasText(id) && StringUtils.hasText(name)) {
 					// save previous one
-					toolCalls.add(new AssistantMessage.ToolCall(id, type, name, argumentsContent.toString()));
+					toolCalls.add(new AssistantMessage.ToolCall(id, Objects.requireNonNullElse(type, "function"), name, argumentsContent.toString()));
 					argumentsContent.setLength(0);
 				}
 				id = toolCallChunk.id();
@@ -262,7 +263,7 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 
 		if (StringUtils.hasText(id) && StringUtils.hasText(name)) {
 			// save last one
-			toolCalls.add(new AssistantMessage.ToolCall(id, type, name, argumentsContent.toString()));
+			toolCalls.add(new AssistantMessage.ToolCall(id, Objects.requireNonNullElse(type, "function"), name, argumentsContent.toString()));
 		}
 		return AssistantMessage.builder()
 			.content(assistantMessage.getText())

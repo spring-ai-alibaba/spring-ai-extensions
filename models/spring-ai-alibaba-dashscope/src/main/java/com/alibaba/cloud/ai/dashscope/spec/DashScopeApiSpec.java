@@ -55,6 +55,7 @@ public class DashScopeApiSpec {
                                     @JsonProperty("data") T data) implements ApiResponse {
     }
 
+    @SuppressWarnings("NullAway")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record EmbeddingUsage(@JsonProperty("total_tokens") Long totalTokens) implements Usage {
         @Override

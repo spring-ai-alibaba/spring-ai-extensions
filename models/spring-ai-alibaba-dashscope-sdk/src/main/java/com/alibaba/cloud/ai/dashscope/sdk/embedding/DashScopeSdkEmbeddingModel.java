@@ -246,8 +246,8 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 	}
 
 	@Override
-	public List<float[]> embed(List<Document> documents, EmbeddingOptions options, BatchingStrategy batchingStrategy) {
-		if (options.getModel() == null && options.getDimensions() == null && this.defaultOptions != null) {
+	public List<float[]> embed(List<Document> documents, @Nullable EmbeddingOptions options, BatchingStrategy batchingStrategy) {
+		if (options == null) {
 			options = this.defaultOptions;
 		}
 		return super.embed(documents, options, batchingStrategy);

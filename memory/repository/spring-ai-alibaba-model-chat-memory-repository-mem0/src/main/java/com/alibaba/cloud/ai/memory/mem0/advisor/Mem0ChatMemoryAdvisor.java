@@ -130,9 +130,9 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 				|| request.context().containsKey(RUN_ID), "user_id, agent_id, and run_id cannot all be null");
 
 		UserMessage userMessage = request.prompt().getUserMessage();
-		String query = userMessage != null ? userMessage.getText() : "";
+		String query = userMessage.getText() != null ? userMessage.getText() : "";
 
-		Map<String, Object> params = request.context();
+        Map<String, Object> params = new HashMap<>(request.context());
 		@Nullable String userId = optionalString(params.get(USER_ID));
 		@Nullable String agentId = optionalString(params.get(AGENT_ID));
 		@Nullable String runId = optionalString(params.get(RUN_ID));
@@ -211,13 +211,6 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 
 	private static @Nullable String optionalString(@Nullable Object value) {
 		return value != null ? Objects.toString(value, null) : null;
-	}
-
-	private Mem0ServerRequest.SearchRequest getConversationId(Map<String, Object> context) {
-		Mem0ServerRequest.SearchRequest build = Mem0ServerRequest.SearchRequest.mem0Builder()
-				.userId(context.getOrDefault(USER_ID, "").toString())
-				.build();
-		return build;
 	}
 
 	@Override

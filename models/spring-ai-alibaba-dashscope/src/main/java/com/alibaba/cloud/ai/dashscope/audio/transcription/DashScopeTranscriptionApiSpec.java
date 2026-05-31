@@ -199,6 +199,7 @@ public class DashScopeTranscriptionApiSpec {
         private @Nullable List<Choice> choices;
 
         // Default constructor for Jackson deserialization
+        @SuppressWarnings("NullAway")
         public DashScopeAudioTranscriptionResponse() {
             super(null);
         }

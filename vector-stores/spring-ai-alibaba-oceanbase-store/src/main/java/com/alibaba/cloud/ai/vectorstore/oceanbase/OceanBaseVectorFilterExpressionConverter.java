@@ -20,6 +20,7 @@ import org.springframework.ai.vectorstore.filter.Filter.Expression;
 import org.springframework.ai.vectorstore.filter.Filter.Group;
 import org.springframework.ai.vectorstore.filter.Filter.Key;
 import org.springframework.ai.vectorstore.filter.converter.AbstractFilterExpressionConverter;
+import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Set;
@@ -47,6 +48,7 @@ public class OceanBaseVectorFilterExpressionConverter extends AbstractFilterExpr
 		else {
 			this.convertOperand(expression.left(), context);
 			context.append(getOperationSymbol(expression));
+            Assert.state(expression.right() != null, "expected an expression with a right operand");
 			this.convertOperand(expression.right(), context);
 		}
 	}
@@ -59,6 +61,7 @@ public class OceanBaseVectorFilterExpressionConverter extends AbstractFilterExpr
 
 	@SuppressWarnings("unchecked")
 	private void convertToConditions(Expression expression, StringBuilder context) {
+        Assert.state(expression.right() != null, "expected an expression with a right operand");
 		Filter.Value right = (Filter.Value) expression.right();
 		Object value = right.value();
 		if (!(value instanceof List)) {

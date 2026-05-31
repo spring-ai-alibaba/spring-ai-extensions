@@ -165,9 +165,9 @@ public class DashScopeDocumentRetrievalAdvisor implements BaseAdvisor {
 		else {
 			chatResponseBuilder = ChatResponse.builder().from(response.chatResponse());
 			var result = response.chatResponse().getResult();
-			if (enableReference) {
+			if (enableReference && result != null && result.getMetadata() != null) {
 				ChatCompletionFinishReason finishReason = ChatCompletionFinishReason
-					.valueOf(result.getMetadata().getFinishReason());
+					.valueOf(Objects.requireNonNullElse(result.getMetadata().getFinishReason(), ChatCompletionFinishReason.NULL.name()));
 				if (finishReason == ChatCompletionFinishReason.NULL) {
 					String fullContent = context.getOrDefault("full_content", "").toString()
 							+ result.getOutput().getText();

@@ -117,7 +117,7 @@ public final class DashScopeAgent extends Agent implements ChatModel {
             requestPrompt = messages.get(0).getText();
         } else {
             requestMessages = messages.stream()
-                    .map(msg -> new DashScopeAgentRequestMessage(msg.getMessageType().getValue(), msg.getText()))
+                    .map(msg -> new DashScopeAgentRequestMessage(msg.getMessageType().getValue(), Objects.requireNonNullElse(msg.getText(), "")))
                     .toList();
         }
 

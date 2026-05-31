@@ -365,11 +365,11 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 	@Override
 	public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
 
-		return VectorStoreObservationContext.builder(DATA_BASE_SYSTEM, operationName)
-			.collectionName(this.collectionName)
-			.dimensions(this.embeddingModel.dimensions())
-			.namespace(this.config.getNamespace())
-			.similarityMetric(this.config.getMetrics());
+        return VectorStoreObservationContext.builder(DATA_BASE_SYSTEM, operationName)
+                .collectionName(this.collectionName)
+                .dimensions(this.embeddingModel.dimensions())
+                .namespace(Objects.requireNonNullElse(this.config.getNamespace(), ""))
+                .similarityMetric(this.config.getMetrics());
 	}
 
 	/**

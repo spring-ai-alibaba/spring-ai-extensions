@@ -34,12 +34,14 @@ public class DashScopeAudioTranscriptionPrompt extends AudioTranscriptionPrompt 
 
     private final @Nullable List<String> fileUrls;
 
+    @SuppressWarnings("NullAway")
     public DashScopeAudioTranscriptionPrompt(AudioTranscriptionOptions options, TranscriptionUserMessage  message) {
         super(null, options);
         this.messages = List.of(message);
         this.fileUrls = null;
     }
 
+    @SuppressWarnings("NullAway")
     public DashScopeAudioTranscriptionPrompt(AudioTranscriptionOptions options, List<String> fileUrls) {
         super(null, options);
         this.messages = null;

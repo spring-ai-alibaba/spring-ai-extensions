@@ -144,7 +144,7 @@ public class DashScopeTTSApiSpec {
                 @JsonProperty("request_id") @Nullable String requestId,
                 @JsonProperty("output") @Nullable TTSOutput output,
                 @JsonProperty("usage") @Nullable TTSUsage usage) {
-            super(createSpeechList(output), null);
+            super(createSpeechList(output));
             this.requestId = requestId;
             this.output = output;
             this.usage = usage;

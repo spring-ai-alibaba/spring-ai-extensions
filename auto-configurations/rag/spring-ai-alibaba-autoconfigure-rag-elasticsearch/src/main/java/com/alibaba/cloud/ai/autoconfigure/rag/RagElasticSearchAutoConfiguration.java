@@ -29,6 +29,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.util.Assert;
 
@@ -54,10 +55,15 @@ public class RagElasticSearchAutoConfiguration {
         Assert.notNull(elasticsearchClient, "elasticsearchClient must not be null");
         Assert.notNull(embeddingModel, "embeddingModel must not be null");
         ElasticsearchVectorStoreOptions elasticsearchVectorStoreOptions = new ElasticsearchVectorStoreOptions();
-        elasticsearchVectorStoreOptions.setIndexName(vectorStoreProperties.getIndexName());
-        elasticsearchVectorStoreOptions.setDimensions(vectorStoreProperties.getDimensions());
-        elasticsearchVectorStoreOptions.setSimilarity(vectorStoreProperties.getSimilarity());
-        elasticsearchVectorStoreOptions.setEmbeddingFieldName(vectorStoreProperties.getEmbeddingFieldName());
+        PropertyMapper mapper = PropertyMapper.get();
+        mapper.from(vectorStoreProperties::getIndexName)
+                .whenHasText()
+                .to(elasticsearchVectorStoreOptions::setIndexName);
+        mapper.from(vectorStoreProperties::getDimensions).to(elasticsearchVectorStoreOptions::setDimensions);
+        mapper.from(vectorStoreProperties::getSimilarity).to(elasticsearchVectorStoreOptions::setSimilarity);
+        mapper.from(vectorStoreProperties::getEmbeddingFieldName)
+                .whenHasText()
+                .to(elasticsearchVectorStoreOptions::setEmbeddingFieldName);
         return HybridElasticsearchRetriever.builder()
                 .vectorStoreOptions(elasticsearchVectorStoreOptions)
                 .elasticsearchClient(elasticsearchClient)

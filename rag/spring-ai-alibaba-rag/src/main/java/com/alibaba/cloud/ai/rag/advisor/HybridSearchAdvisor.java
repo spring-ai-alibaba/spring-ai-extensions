@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Hybrid Search Advisor
@@ -89,7 +90,7 @@ public class HybridSearchAdvisor implements BaseAdvisor {
         Map<String, Object> context = new HashMap<>(chatClientRequest.context());
         // 1. Create a query from the user text, parameters, and conversation history.
         Query originalQuery = Query.builder()
-                .text(chatClientRequest.prompt().getUserMessage().getText())
+                .text(Objects.requireNonNullElse(chatClientRequest.prompt().getUserMessage().getText(), ""))
                 .history(chatClientRequest.prompt().getInstructions())
                 .context(context)
                 .build();
@@ -138,7 +139,8 @@ public class HybridSearchAdvisor implements BaseAdvisor {
         } else {
             chatResponseBuilder = ChatResponse.builder().from(chatClientResponse.chatResponse());
         }
-        chatResponseBuilder.metadata(DOCUMENT_CONTEXT, chatClientResponse.context().get(DOCUMENT_CONTEXT));
+        chatResponseBuilder.metadata(DOCUMENT_CONTEXT,
+                Objects.requireNonNullElse(chatClientResponse.context().get(DOCUMENT_CONTEXT), List.of()));
         return ChatClientResponse.builder()
                 .chatResponse(chatResponseBuilder.build())
                 .context(chatClientResponse.context())

@@ -28,6 +28,7 @@ import com.alibaba.cloud.ai.observation.model.semconv.InputOutputModel.RoleEnum;
 import com.alibaba.cloud.ai.observation.model.semconv.InputOutputModel.TextPart;
 import com.alibaba.cloud.ai.observation.model.semconv.InputOutputModel.ToolCallRequestPart;
 import com.alibaba.cloud.ai.observation.model.semconv.InputOutputModel.ToolCallResponsePart;
+import java.util.Objects;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -63,7 +64,7 @@ public final class InputOutputUtils {
 	}
 
 	public static OutputMessage convertFromGeneration(Generation generation) {
-		String finishReason = generation.getMetadata().getFinishReason();
+		String finishReason = Objects.requireNonNullElse(generation.getMetadata().getFinishReason(), "");
 		String role = getRole(generation.getOutput().getMessageType());
 		List<MessagePart> messageParts = new ArrayList<>();
 		if (generation.getOutput().hasToolCalls()) {

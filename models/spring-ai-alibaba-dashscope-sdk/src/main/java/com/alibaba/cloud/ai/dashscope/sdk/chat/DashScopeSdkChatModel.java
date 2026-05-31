@@ -170,6 +170,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 				return chatResponse;
 			});
 
+        Assert.state(prompt.getOptions() != null, "options must not be null");
 		if (this.toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
 			ToolExecutionResult toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
 			if (toolExecutionResult.returnDirect()) {
@@ -207,6 +208,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 				.map(result -> toChatResponse(result, previousChatResponse, request.getModel()));
 
 			Flux<ChatResponse> flux = chatResponse.flatMap(response -> {
+                        Assert.state(prompt.getOptions() != null, "options must not be null");
 				if (this.toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
 					return Flux.defer(() -> {
 						ToolExecutionResult toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);

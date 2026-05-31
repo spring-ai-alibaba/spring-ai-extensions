@@ -15,8 +15,10 @@
  */
 package com.alibaba.cloud.ai.advisor;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
@@ -136,7 +138,8 @@ public class DocumentRetrievalAdvisor implements BaseAdvisor {
 
 		var context = request.context();
 		var userMessage = request.prompt().getUserMessage();
-		Query query = new Query(userMessage.getText(), request.prompt().getInstructions(), context);
+        Assert.hasText(userMessage.getText(), "The user message text must not be null or empty!");
+		Query query = new Query(userMessage.getText(), request.prompt().getInstructions(), new HashMap<>(context));
 		List<Document> documents = retriever.retrieve(query);
 		context.put(RETRIEVED_DOCUMENTS, documents);
 
@@ -160,7 +163,7 @@ public class DocumentRetrievalAdvisor implements BaseAdvisor {
 		else {
 			chatResponseBuilder = ChatResponse.builder().from(chatClientResponse.chatResponse());
 		}
-		chatResponseBuilder.metadata(RETRIEVED_DOCUMENTS, chatClientResponse.context().get(RETRIEVED_DOCUMENTS));
+		chatResponseBuilder.metadata(RETRIEVED_DOCUMENTS, Objects.requireNonNullElse(chatClientResponse.context().get(RETRIEVED_DOCUMENTS), List.of()));
 		return ChatClientResponse.builder()
 			.chatResponse(chatResponseBuilder.build())
 			.context(chatClientResponse.context())

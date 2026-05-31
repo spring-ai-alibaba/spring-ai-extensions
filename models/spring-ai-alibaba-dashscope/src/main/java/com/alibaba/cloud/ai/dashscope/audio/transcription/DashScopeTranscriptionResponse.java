@@ -25,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.transcription.AudioTranscription;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
@@ -50,13 +49,13 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
         this.transcription = transcription;
     }
 
+    @SuppressWarnings("NullAway")
     public DashScopeTranscriptionResponse(Sentence sentence, Usage usage) {
         super(null);
         this.transcription = null;
         this.metadata = new DashScopeAudioTranscriptionResponseMetadata(sentence, usage);
     }
 
-    @NonNull
     public DashScopeAudioTranscription getResult() {
         return Objects.requireNonNull(this.transcription, "transcription must not be null");
     }
@@ -65,6 +64,7 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
         return this.metadata;
     }
 
+    @SuppressWarnings("NullAway")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class DashScopeAudioTranscription extends AudioTranscription {
@@ -80,21 +80,16 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
             this.text = text;
         }
 
-        public void setMetadata(@Nullable DashScopeAudioTranscriptionMetadata metadata) {
-            this.metadata = metadata;
-        }
-
-        public @Nullable DashScopeAudioTranscriptionMetadata withTranscriptionMetadata(
-                @Nullable DashScopeAudioTranscriptionMetadata metadata) {
-            return this.metadata = metadata;
-        }
-
         public String getText() {
             return text;
         }
 
         public @Nullable DashScopeAudioTranscriptionMetadata getMetadata() {
             return metadata;
+        }
+
+        public void setMetadata(@Nullable DashScopeAudioTranscriptionMetadata metadata) {
+            this.metadata = metadata;
         }
 
     }

@@ -23,6 +23,7 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ToolContext;
@@ -37,7 +38,7 @@ import java.util.function.BiFunction;
  * This tool allows the agent to execute Python code snippets and get results.
  * It uses GraalVM's polyglot API to run Python code in a sandboxed environment.
  */
-public class PythonService implements BiFunction<PythonService.Request, ToolContext, PythonService.Response> {
+public class PythonService implements BiFunction<PythonService.@Nullable Request, @Nullable ToolContext, PythonService.Response> {
 
     private static final Logger log = LoggerFactory.getLogger(PythonService.class);
 
@@ -77,8 +78,8 @@ public class PythonService implements BiFunction<PythonService.Request, ToolCont
     }
 
     @Override
-    public Response apply(Request request, ToolContext toolContext) {
-        if (request.code == null || request.code.trim().isEmpty()) {
+    public Response apply(@Nullable Request request, @Nullable ToolContext toolContext) {
+        if (request == null || request.code == null || request.code.trim().isEmpty()) {
             return new Response("Error: Python code cannot be empty");
         }
         try {

@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.Filter.Expression;
 import org.springframework.ai.vectorstore.filter.converter.AbstractFilterExpressionConverter;
+import org.springframework.util.Assert;
 
 /**
  * @author 北极星
@@ -45,6 +46,7 @@ public class OpenSearchVectorStoreFilterExpressionConverter extends AbstractFilt
 
 	@Override
 	protected void doExpression(Expression expression, StringBuilder context) {
+        Assert.state(expression.right() != null, "expected an expression with a right operand");
 		if (expression.type() == Filter.ExpressionType.IN || expression.type() == Filter.ExpressionType.NIN) {
 			context.append(getOperationSymbol(expression));
 			context.append("(");

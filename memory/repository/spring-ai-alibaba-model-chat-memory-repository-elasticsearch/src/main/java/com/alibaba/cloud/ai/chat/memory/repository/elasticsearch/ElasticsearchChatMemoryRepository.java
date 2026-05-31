@@ -356,7 +356,7 @@ public class ElasticsearchChatMemoryRepository implements ChatMemoryRepository, 
 		public ChatMessage(String conversationId, Message message) {
 			this.conversationId = conversationId;
 			this.messageType = message.getMessageType().toString();
-			this.messageText = message.getText();
+			this.messageText = Objects.requireNonNullElse(message.getText(), "");
 			this.timestamp = System.currentTimeMillis();
 		}
 

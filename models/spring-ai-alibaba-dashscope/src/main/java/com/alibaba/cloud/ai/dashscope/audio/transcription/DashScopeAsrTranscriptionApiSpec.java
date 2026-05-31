@@ -325,6 +325,7 @@ public class DashScopeAsrTranscriptionApiSpec {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class DashScopeAudioAsrTranscriptionResponse extends AudioTranscriptionResponse {
 

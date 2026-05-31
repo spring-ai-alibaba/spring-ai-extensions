@@ -19,6 +19,7 @@ package com.alibaba.cloud.ai.advisor;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.alibaba.cloud.ai.document.DocumentWithScore;
@@ -125,13 +126,14 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 		return this.order;
 	}
 
-	protected Filter.@Nullable Expression doGetFilterExpression(Map<String, Object> context) {
+	protected Filter.@Nullable Expression doGetFilterExpression(Map<String, @Nullable Object> context) {
 
-		if (!context.containsKey(FILTER_EXPRESSION)
-				|| !StringUtils.hasText(context.get(FILTER_EXPRESSION).toString())) {
+		Object filterExpressionValue = context.get(FILTER_EXPRESSION);
+		if (filterExpressionValue == null
+				|| !StringUtils.hasText(filterExpressionValue.toString())) {
 			return this.searchRequest.getFilterExpression();
 		}
-		return new FilterExpressionTextParser().parse(context.get(FILTER_EXPRESSION).toString());
+		return new FilterExpressionTextParser().parse(filterExpressionValue.toString());
 
 	}
 
@@ -140,7 +142,8 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 			return documents;
 		}
 
-		var rerankRequest = new RerankRequest(request.prompt().getUserMessage().getText(), documents);
+        String text = request.prompt().getUserMessage().getText();
+        var rerankRequest = new RerankRequest(Objects.requireNonNullElse(text, ""), documents);
 
 		RerankResponse response = rerankModel.call(rerankRequest);
 		logger.debug("reranked documents: {}", response);
@@ -163,7 +166,7 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 		var userMessage = request.prompt().getUserMessage();
 
 		var searchRequestToUse = SearchRequest.from(this.searchRequest)
-			.query(userMessage.getText())
+			.query(Objects.requireNonNullElse(userMessage.getText(), ""))
 			.filterExpression(doGetFilterExpression(context))
 			.build();
 
@@ -192,7 +195,8 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 		else {
 			chatResponseBuilder = ChatResponse.builder().from(chatClientResponse.chatResponse());
 		}
-		chatResponseBuilder.metadata(RETRIEVED_DOCUMENTS, chatClientResponse.context().get(RETRIEVED_DOCUMENTS));
+        chatResponseBuilder.metadata(RETRIEVED_DOCUMENTS,
+                Objects.requireNonNullElse(chatClientResponse.context().get(RETRIEVED_DOCUMENTS), List.of()));
 		return ChatClientResponse.builder()
 			.chatResponse(chatResponseBuilder.build())
 			.context(chatClientResponse.context())

@@ -75,7 +75,8 @@ public class ChatModelOutputObservationHandler implements ObservationHandler<Cha
 			return null;
 		}
 
-		if (!StringUtils.hasText(context.getResponse().getResult().getOutput().getText())) {
+		if (context.getResponse().getResult() == null
+				|| !StringUtils.hasText(context.getResponse().getResult().getOutput().getText())) {
 			return "";
 		}
 

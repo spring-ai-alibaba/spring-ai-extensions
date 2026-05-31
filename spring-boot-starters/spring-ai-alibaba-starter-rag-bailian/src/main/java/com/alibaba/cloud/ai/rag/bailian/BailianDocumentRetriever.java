@@ -79,7 +79,7 @@ public class BailianDocumentRetriever implements DocumentRetriever {
 				MessageType messageType = message.getMessageType();
 				if (messageType == MessageType.USER || messageType == MessageType.ASSISTANT) {
 					String role = messageType == MessageType.USER ? "user" : "assistant";
-					QueryHistoryEntry entry = new QueryHistoryEntry(role, message.getText());
+                    QueryHistoryEntry entry = new QueryHistoryEntry(role, Objects.requireNonNullElse(message.getText(), ""));
 					conversationHistory.add(entry);
 				}
 			}
