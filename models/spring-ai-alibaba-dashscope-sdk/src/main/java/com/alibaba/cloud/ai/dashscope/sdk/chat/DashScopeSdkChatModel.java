@@ -509,30 +509,17 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	private Map<String, Object> mergeHeaders(Map<String, String> runtimeHeaders) {
 		Map<String, Object> headers = new HashMap<>();
-		headers.putAll(this.connectionHeaders);
+        if (!CollectionUtils.isEmpty(this.connectionHeaders)) {
+            headers.putAll(this.connectionHeaders);
+        }
 		if (!CollectionUtils.isEmpty(runtimeHeaders)) {
 			headers.putAll(runtimeHeaders);
 		}
 		return headers;
 	}
 
-	private @Nullable Map<String, Object> mergeExtraBody(@Nullable Map<String, Object> runtimeExtraBody,
-			@Nullable Map<String, Object> defaultExtraBody) {
-		if (defaultExtraBody == null && runtimeExtraBody == null) {
-			return null;
-		}
-		Map<String, Object> merged = new HashMap<>();
-		if (defaultExtraBody != null) {
-			merged.putAll(defaultExtraBody);
-		}
-		if (runtimeExtraBody != null) {
-			merged.putAll(runtimeExtraBody);
-		}
-		return merged.isEmpty() ? null : merged;
-	}
-
 	public DashScopeSdkChatOptions getDashScopeSdkChatOptions() {
-		return this.defaultOptions;
+		return this.defaultOptions.copy();
 	}
 
 	public void setDashScopeSdkChatOptions(DashScopeSdkChatOptions options) {

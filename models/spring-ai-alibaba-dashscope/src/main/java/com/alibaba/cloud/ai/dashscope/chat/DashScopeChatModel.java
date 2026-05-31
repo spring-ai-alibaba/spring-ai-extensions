@@ -738,27 +738,6 @@ public class DashScopeChatModel implements ChatModel {
         // @formatter:on
     }
 
-    /**
-     * Merge the extra body from the runtime options with the default options.
-     * @param runtimeExtraBody The extra body from the runtime options
-     * @param defaultExtraBody The default extra body
-     * @return The merged extra body
-     */
-	    private @Nullable Map<String, Object> mergeExtraBody(@Nullable Map<String, Object> runtimeExtraBody,
-	            @Nullable Map<String, Object> defaultExtraBody) {
-        if (defaultExtraBody == null && runtimeExtraBody == null) {
-            return null;
-        }
-        Map<String, Object> merged = new HashMap<>();
-        if (defaultExtraBody != null) {
-            merged.putAll(defaultExtraBody);
-        }
-        if (runtimeExtraBody != null) {
-            merged.putAll(runtimeExtraBody); // runtime overrides default
-        }
-        return merged.isEmpty() ? null : merged;
-    }
-
 	/**
 	 * Use the provided convention for reporting observation data
 	 * @param observationConvention The provided convention

@@ -1054,7 +1054,10 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                     this.parallelToolCalls = that.parallelToolCalls;
                 }
                 if (that.httpHeaders != null && !that.httpHeaders.isEmpty()) {
-                    this.httpHeaders = that.httpHeaders;
+                    if (this.httpHeaders == null) {
+                        this.httpHeaders = new HashMap<>();
+                    }
+                    this.httpHeaders.putAll(that.httpHeaders);
                 }
                 if (that.toolChoice != null) {
                     this.toolChoice = that.toolChoice;
@@ -1108,7 +1111,10 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                     this.outputFormat = that.outputFormat;
                 }
                 if (that.extraBody != null) {
-                    this.extraBody = that.extraBody;
+                    if (this.extraBody == null) {
+                        this.extraBody = new HashMap<>();
+                    }
+                    this.extraBody.putAll(that.extraBody);
                 }
             }
             return self();

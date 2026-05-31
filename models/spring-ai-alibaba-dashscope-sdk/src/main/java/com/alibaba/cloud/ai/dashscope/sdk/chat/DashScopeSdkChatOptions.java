@@ -471,10 +471,16 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 					this.toolChoice = that.toolChoice;
 				}
 				if (that.httpHeaders != null && !that.httpHeaders.isEmpty()) {
-					this.httpHeaders = new HashMap<>(that.httpHeaders);
+                    if (this.httpHeaders == null) {
+                        this.httpHeaders = new HashMap<>();
+                    }
+                    this.httpHeaders.putAll(that.httpHeaders);
 				}
 				if (that.extraBody != null) {
-                    this.extraBody = that.extraBody;
+                    if (this.extraBody == null) {
+                        this.extraBody = new HashMap<>();
+                    }
+                    this.extraBody.putAll(that.extraBody);
 				}
 			}
 			return self();
