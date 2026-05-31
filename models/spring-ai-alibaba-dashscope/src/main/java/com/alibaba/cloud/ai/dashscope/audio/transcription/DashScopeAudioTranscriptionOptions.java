@@ -15,7 +15,9 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -32,100 +34,100 @@ import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
  */
 public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOptions {
 
-    public static final String DEFAULT_MODEL = AudioModel.GUMMY_REALTIME_V1.getValue();
+	public static final String DEFAULT_MODEL = AudioModel.GUMMY_REALTIME_V1.getValue();
 
-    @JsonProperty("model")
-    private @Nullable String model;
+	@JsonProperty("model")
+	private final String model;
 
-    @JsonProperty("vocabulary_id")
-    private @Nullable String vocabularyId;
+	@JsonProperty("vocabulary_id")
+	private final @Nullable String vocabularyId;
 
 	@JsonProperty("sample_rate")
-	private Integer sampleRate = 16000;
+	private final Integer sampleRate;
 
 	@JsonProperty("format")
-	private String format = "pcm";
+	private final String format;
 
-    @JsonProperty("source_language")
-    private @Nullable String sourceLanguage;
+	@JsonProperty("source_language")
+	private final @Nullable String sourceLanguage;
 
-    @JsonProperty("transcription_enabled")
-    private @Nullable Boolean transcriptionEnabled;
+	@JsonProperty("transcription_enabled")
+	private final @Nullable Boolean transcriptionEnabled;
 
-    @JsonProperty("translation_enabled")
-    private @Nullable Boolean translationEnabled;
+	@JsonProperty("translation_enabled")
+	private final @Nullable Boolean translationEnabled;
 
-    @JsonProperty("translation_target_languages")
-    private @Nullable List<String> translationTargetLanguages;
+	@JsonProperty("translation_target_languages")
+	private final @Nullable List<String> translationTargetLanguages;
 
-    @JsonProperty("max_end_silence")
-    private @Nullable Integer maxEndSilence;
+	@JsonProperty("max_end_silence")
+	private final @Nullable Integer maxEndSilence;
 
-    @JsonProperty("modalities")
-    private @Nullable List<String> modalities;
+	@JsonProperty("modalities")
+	private final @Nullable List<String> modalities;
 
-    @JsonProperty("audio")
-    private @Nullable Audio audio;
+	@JsonProperty("audio")
+	private final @Nullable Audio audio;
 
-    @JsonProperty("stream")
-    private @Nullable Boolean stream;
+	@JsonProperty("stream")
+	private final @Nullable Boolean stream;
 
-    @JsonProperty("stream_options")
-    private @Nullable StreamOptions streamOptions;
+	@JsonProperty("stream_options")
+	private final @Nullable StreamOptions streamOptions;
 
-    @JsonProperty("max_tokens")
-    private @Nullable Integer maxTokens;
+	@JsonProperty("max_tokens")
+	private final @Nullable Integer maxTokens;
 
-    @JsonProperty("seed")
-    private @Nullable Integer seed;
+	@JsonProperty("seed")
+	private final @Nullable Integer seed;
 
-    @JsonProperty("temperature")
-    private @Nullable Float temperature;
+	@JsonProperty("temperature")
+	private final @Nullable Float temperature;
 
-    @JsonProperty("top_p")
-    private @Nullable Float topP;
+	@JsonProperty("top_p")
+	private final @Nullable Float topP;
 
-    @JsonProperty("presence_penalty")
-    private @Nullable Float presencePenalty;
+	@JsonProperty("presence_penalty")
+	private final @Nullable Float presencePenalty;
 
-    @JsonProperty("top_k")
-    private @Nullable Integer topK;
+	@JsonProperty("top_k")
+	private final @Nullable Integer topK;
 
-    @JsonProperty("repetition_penalty")
-    private @Nullable Float repetitionPenalty;
+	@JsonProperty("repetition_penalty")
+	private final @Nullable Float repetitionPenalty;
 
-    @JsonProperty("translation_options")
-    private @Nullable TranslationOptions translationOptions;
+	@JsonProperty("translation_options")
+	private final @Nullable TranslationOptions translationOptions;
 
-    @JsonProperty("disfluency_removal_enabled")
-    private @Nullable Boolean disfluencyRemovalEnabled;
+	@JsonProperty("disfluency_removal_enabled")
+	private final @Nullable Boolean disfluencyRemovalEnabled;
 
-    @JsonProperty("language_hints")
-    private @Nullable List<String> languageHints;
+	@JsonProperty("language_hints")
+	private final @Nullable List<String> languageHints;
 
-    @JsonProperty("semantic_punctuation_enabled")
-    private @Nullable Boolean semanticPunctuationEnabled;
+	@JsonProperty("semantic_punctuation_enabled")
+	private final @Nullable Boolean semanticPunctuationEnabled;
 
-    @JsonProperty("max_sentence_silence")
-    private @Nullable Integer maxSentenceSilence;
+	@JsonProperty("max_sentence_silence")
+	private final @Nullable Integer maxSentenceSilence;
 
-    @JsonProperty("multi_threshold_mode_enabled")
-    private @Nullable Boolean multiThresholdModeEnabled;
+	@JsonProperty("multi_threshold_mode_enabled")
+	private final @Nullable Boolean multiThresholdModeEnabled;
 
-    @JsonProperty("punctuation_prediction_enabled")
-    private @Nullable Boolean punctuationPredictionEnabled;
+	@JsonProperty("punctuation_prediction_enabled")
+	private final @Nullable Boolean punctuationPredictionEnabled;
 
-    @JsonProperty("heartbeat")
-    private @Nullable Boolean heartbeat;
+	@JsonProperty("heartbeat")
+	private final @Nullable Boolean heartbeat;
 
-    @JsonProperty("inverse_text_normalization_enabled")
-    private @Nullable Boolean inverseTextNormalizationEnabled;
+	@JsonProperty("inverse_text_normalization_enabled")
+	private final @Nullable Boolean inverseTextNormalizationEnabled;
 
-    @JsonProperty("resources")
-    private @Nullable List<Resource> resources;
+	@JsonProperty("resources")
+	private final @Nullable List<Resource> resources;
 
-    @JsonProperty("timestamp_alignment_enabled")
-    private @Nullable Boolean timestampAlignmentEnabled;
+	@JsonProperty("timestamp_alignment_enabled")
+	private final @Nullable Boolean timestampAlignmentEnabled;
 
     @JsonProperty("special_word_filter")
     private @Nullable String specialWordFilter;
@@ -133,627 +135,954 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
     @JsonProperty("diarization_enabled")
     private @Nullable Boolean diarizationEnabled;
 
-    @JsonProperty("speaker_count")
-    private @Nullable Integer speakerCount;
+	@JsonProperty("speaker_count")
+	private final @Nullable Integer speakerCount;
 
-    @JsonProperty("channel_id")
-    private @Nullable List<Integer> channelId;
+	@JsonProperty("channel_id")
+	private final @Nullable List<Integer> channelId;
 
-    @JsonProperty("asr_options")
-    private @Nullable AsrOptions asrOptions;
+	@JsonProperty("asr_options")
+	private final @Nullable AsrOptions asrOptions;
 
-    @Override
-	public @Nullable String getModel() {
-		return model;
+	protected DashScopeAudioTranscriptionOptions(@Nullable String model, @Nullable String vocabularyId,
+			@Nullable Integer sampleRate, @Nullable String format, @Nullable String sourceLanguage,
+			@Nullable Boolean transcriptionEnabled, @Nullable Boolean translationEnabled,
+			@Nullable List<String> translationTargetLanguages, @Nullable Integer maxEndSilence,
+			@Nullable List<String> modalities, @Nullable Audio audio, @Nullable Boolean stream,
+			@Nullable StreamOptions streamOptions, @Nullable Integer maxTokens, @Nullable Integer seed,
+			@Nullable Float temperature, @Nullable Float topP, @Nullable Float presencePenalty,
+			@Nullable Integer topK, @Nullable Float repetitionPenalty, @Nullable TranslationOptions translationOptions,
+			@Nullable Boolean disfluencyRemovalEnabled, @Nullable List<String> languageHints,
+			@Nullable Boolean semanticPunctuationEnabled, @Nullable Integer maxSentenceSilence,
+			@Nullable Boolean multiThresholdModeEnabled, @Nullable Boolean punctuationPredictionEnabled,
+			@Nullable Boolean heartbeat, @Nullable Boolean inverseTextNormalizationEnabled,
+			@Nullable List<Resource> resources, @Nullable Boolean timestampAlignmentEnabled,
+			@Nullable String specialWordFilter, @Nullable Boolean diarizationEnabled, @Nullable Integer speakerCount,
+			@Nullable List<Integer> channelId, @Nullable AsrOptions asrOptions) {
+		this.model = model != null ? model : DEFAULT_MODEL;
+		this.vocabularyId = vocabularyId;
+		this.sampleRate = sampleRate != null ? sampleRate : 16000;
+		this.format = format != null ? format : "pcm";
+		this.sourceLanguage = sourceLanguage;
+		this.transcriptionEnabled = transcriptionEnabled;
+		this.translationEnabled = translationEnabled;
+		this.translationTargetLanguages = translationTargetLanguages != null ? new ArrayList<>(translationTargetLanguages) : null;
+		this.maxEndSilence = maxEndSilence;
+		this.modalities = modalities != null ? new ArrayList<>(modalities) : null;
+		this.audio = audio;
+		this.stream = stream;
+		this.streamOptions = streamOptions;
+		this.maxTokens = maxTokens;
+		this.seed = seed;
+		this.temperature = temperature;
+		this.topP = topP;
+		this.presencePenalty = presencePenalty;
+		this.topK = topK;
+		this.repetitionPenalty = repetitionPenalty;
+		this.translationOptions = translationOptions;
+		this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
+		this.languageHints = languageHints != null ? new ArrayList<>(languageHints) : null;
+		this.semanticPunctuationEnabled = semanticPunctuationEnabled;
+		this.maxSentenceSilence = maxSentenceSilence;
+		this.multiThresholdModeEnabled = multiThresholdModeEnabled;
+		this.punctuationPredictionEnabled = punctuationPredictionEnabled;
+		this.heartbeat = heartbeat;
+		this.inverseTextNormalizationEnabled = inverseTextNormalizationEnabled;
+		this.resources = resources != null ? new ArrayList<>(resources) : null;
+		this.timestampAlignmentEnabled = timestampAlignmentEnabled;
+		this.specialWordFilter = specialWordFilter;
+		this.diarizationEnabled = diarizationEnabled;
+		this.speakerCount = speakerCount;
+		this.channelId = channelId != null ? new ArrayList<>(channelId) : null;
+		this.asrOptions = asrOptions;
 	}
 
-    public void setModel(@Nullable String model) {
-        this.model = model;
-    }
-
-    public @Nullable String getVocabularyId() {
-        return vocabularyId;
-    }
-
-    public void setVocabularyId(@Nullable String vocabularyId) {
-        this.vocabularyId = vocabularyId;
-    }
-
-    public String getFormat() {
-        return format;
-    }
-
-    public void setFormat(String format) {
-        this.format = format;
-    }
-
-    public Integer getSampleRate() {
-        return sampleRate;
-    }
-
-    public void setSampleRate(Integer sampleRate) {
-        this.sampleRate = sampleRate;
-    }
-
-    public @Nullable String getSourceLanguage() {
-        return sourceLanguage;
-    }
-
-    public void setSourceLanguage(@Nullable String sourceLanguage) {
-        this.sourceLanguage = sourceLanguage;
-    }
-
-    public @Nullable Boolean getTranscriptionEnabled() {
-        return transcriptionEnabled;
-    }
-
-    public void setTranscriptionEnabled(@Nullable Boolean transcriptionEnabled) {
-        this.transcriptionEnabled = transcriptionEnabled;
-    }
-
-    public @Nullable Boolean getTranslationEnabled() {
-        return translationEnabled;
-    }
-
-    public void setTranslationEnabled(@Nullable Boolean translationEnabled) {
-        this.translationEnabled = translationEnabled;
-    }
-
-    public @Nullable List<String> getTranslationTargetLanguages() {
-        return translationTargetLanguages;
-    }
-
-    public void setTranslationTargetLanguages(@Nullable List<String> translationTargetLanguages) {
-        this.translationTargetLanguages = translationTargetLanguages;
-    }
-
-    public @Nullable AsrOptions getAsrOptions() {
-        return asrOptions;
-    }
-
-    public void setAsrOptions(@Nullable AsrOptions asrOptions) {
-        this.asrOptions = asrOptions;
-    }
-
-    public @Nullable Integer getMaxEndSilence() {
-        return maxEndSilence;
-    }
-
-    public void setMaxEndSilence(@Nullable Integer maxEndSilence) {
-        this.maxEndSilence = maxEndSilence;
-    }
-
-    public @Nullable List<String> getModalities() {
-        return modalities;
-    }
-
-    public void setModalities(@Nullable List<String> modalities) {
-        this.modalities = modalities;
-    }
-
-    public @Nullable Audio getAudio() {
-        return audio;
-    }
-
-    public void setAudio(@Nullable Audio audio) {
-        this.audio = audio;
-    }
-
-    public @Nullable Boolean getStream() {
-        return stream;
-    }
-
-    public void setStream(@Nullable Boolean stream) {
-        this.stream = stream;
-    }
-
-    public @Nullable StreamOptions getStreamOptions() {
-        return streamOptions;
-    }
-
-    public void setStreamOptions(@Nullable StreamOptions streamOptions) {
-        this.streamOptions = streamOptions;
-    }
-
-    public @Nullable Integer getMaxTokens() {
-        return maxTokens;
-    }
-
-    public void setMaxTokens(@Nullable Integer maxTokens) {
-        this.maxTokens = maxTokens;
-    }
-
-    public @Nullable Integer getSeed() {
-        return seed;
-    }
-
-    public void setSeed(@Nullable Integer seed) {
-        this.seed = seed;
-    }
-
-    public @Nullable Float getTemperature() {
-        return temperature;
-    }
-
-    public void setTemperature(@Nullable Float temperature) {
-        this.temperature = temperature;
-    }
-
-    public @Nullable Float getTopP() {
-        return topP;
-    }
-
-    public void setTopP(@Nullable Float topP) {
-        this.topP = topP;
-    }
-
-    public @Nullable Float getPresencePenalty() {
-        return presencePenalty;
-    }
-
-    public void setPresencePenalty(@Nullable Float presencePenalty) {
-        this.presencePenalty = presencePenalty;
-    }
-
-    public @Nullable Integer getTopK() {
-        return topK;
-    }
-
-    public void setTopK(@Nullable Integer topK) {
-        this.topK = topK;
-    }
-
-    public @Nullable Float getRepetitionPenalty() {
-        return repetitionPenalty;
-    }
-
-    public void setRepetitionPenalty(@Nullable Float repetitionPenalty) {
-        this.repetitionPenalty = repetitionPenalty;
-    }
-
-    public @Nullable TranslationOptions getTranslationOptions() {
-        return translationOptions;
-    }
-
-    public void setTranslationOptions(@Nullable TranslationOptions translationOptions) {
-        this.translationOptions = translationOptions;
-    }
-
-    public @Nullable Boolean getDisfluencyRemovalEnabled() {
-        return disfluencyRemovalEnabled;
-    }
-
-    public void setDisfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
-        this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
-    }
-
-    public @Nullable List<String> getLanguageHints() {
-        return languageHints;
-    }
-
-    public void setLanguageHints(@Nullable List<String> languageHints) {
-        this.languageHints = languageHints;
-    }
-
-    public @Nullable Boolean getSemanticPunctuationEnabled() {
-        return semanticPunctuationEnabled;
-    }
-
-    public void setSemanticPunctuationEnabled(@Nullable Boolean semanticPunctuationEnabled) {
-        this.semanticPunctuationEnabled = semanticPunctuationEnabled;
-    }
-
-    public @Nullable Integer getMaxSentenceSilence() {
-        return maxSentenceSilence;
-    }
-
-    public void setMaxSentenceSilence(@Nullable Integer maxSentenceSilence) {
-        this.maxSentenceSilence = maxSentenceSilence;
-    }
-
-    public @Nullable Boolean getMultiThresholdModeEnabled() {
-        return multiThresholdModeEnabled;
-    }
-
-    public void setMultiThresholdModeEnabled(@Nullable Boolean multiThresholdModeEnabled) {
-        this.multiThresholdModeEnabled = multiThresholdModeEnabled;
-    }
-
-    public @Nullable Boolean getPunctuationPredictionEnabled() {
-        return punctuationPredictionEnabled;
-    }
-
-    public void setPunctuationPredictionEnabled(@Nullable Boolean punctuationPredictionEnabled) {
-        this.punctuationPredictionEnabled = punctuationPredictionEnabled;
-    }
-
-    public @Nullable Boolean getHeartbeat() {
-        return heartbeat;
-    }
-
-    public void setHeartbeat(@Nullable Boolean heartbeat) {
-        this.heartbeat = heartbeat;
-    }
-
-    public @Nullable Boolean getInverseTextNormalizationEnabled() {
-        return inverseTextNormalizationEnabled;
-    }
-
-    public void setInverseTextNormalizationEnabled(@Nullable Boolean inverseTextNormalizationEnabled) {
-        this.inverseTextNormalizationEnabled = inverseTextNormalizationEnabled;
-    }
-
-    public @Nullable List<Resource> getResources() {
-        return resources;
-    }
-
-    public void setResources(@Nullable List<Resource> resources) {
-        this.resources = resources;
-    }
-
-    public @Nullable Boolean getTimestampAlignmentEnabled() {
-        return timestampAlignmentEnabled;
-    }
-
-    public void setTimestampAlignmentEnabled(@Nullable Boolean timestampAlignmentEnabled) {
-        this.timestampAlignmentEnabled = timestampAlignmentEnabled;
-    }
-
-    public @Nullable String getSpecialWordFilter() {
-        return specialWordFilter;
-    }
-
-    public void setSpecialWordFilter(@Nullable String specialWordFilter) {
-        this.specialWordFilter = specialWordFilter;
-    }
-
-    public @Nullable Boolean getDiarizationEnabled() {
-        return diarizationEnabled;
-    }
-
-    public void setDiarizationEnabled(@Nullable Boolean diarizationEnabled) {
-        this.diarizationEnabled = diarizationEnabled;
-    }
-
-    public @Nullable Integer getSpeakerCount() {
-        return speakerCount;
-    }
-
-    public void setSpeakerCount(@Nullable Integer speakerCount) {
-        this.speakerCount = speakerCount;
-    }
-
-    public @Nullable List<Integer> getChannelId() {
-        return channelId;
-    }
-
-    public void setChannelId(@Nullable List<Integer> channelId) {
-        this.channelId = channelId;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-        private final DashScopeAudioTranscriptionOptions options;
-
-        public Builder() {
-            options = new DashScopeAudioTranscriptionOptions();
-        }
-
-        public Builder model(@Nullable String model) {
-            options.setModel(model);
-            return this;
-        }
-
-        public Builder vocabularyId(@Nullable String vocabularyId) {
-            options.setVocabularyId(vocabularyId);
-            return this;
-        }
-
-        public Builder sampleRate(Integer sampleRate) {
-            options.setSampleRate(sampleRate);
-            return this;
-        }
-
-        public Builder format(String format) {
-            options.setFormat(format);
-            return this;
-        }
-
-        public Builder sourceLanguage(@Nullable String sourceLanguage) {
-            options.setSourceLanguage(sourceLanguage);
-            return this;
-        }
-
-        public Builder transcriptionEnabled(@Nullable Boolean transcriptionEnabled) {
-            options.setTranscriptionEnabled(transcriptionEnabled);
-            return this;
-        }
-
-        public Builder translationEnabled(@Nullable Boolean translationEnabled) {
-            options.setTranslationEnabled(translationEnabled);
-            return this;
-        }
-
-        public Builder translationTargetLanguages(@Nullable List<String> translationTargetLanguages) {
-            options.setTranslationTargetLanguages(translationTargetLanguages);
-            return this;
-        }
-
-        public Builder maxEndSilence(@Nullable Integer maxEndSilence) {
-            options.setMaxEndSilence(maxEndSilence);
-            return this;
-        }
-
-        public Builder modalities(@Nullable List<String> modalities) {
-            options.setModalities(modalities);
-            return this;
-        }
-
-        public Builder audio(@Nullable Audio audio) {
-            options.setAudio(audio);
-            return this;
-        }
-
-        public Builder stream(@Nullable Boolean stream) {
-            options.setStream(stream);
-            return this;
-        }
-
-        public Builder streamOptions(@Nullable StreamOptions streamOptions) {
-            options.setStreamOptions(streamOptions);
-            return this;
-        }
-
-        public Builder maxTokens(@Nullable Integer maxTokens) {
-            options.setMaxTokens(maxTokens);
-            return this;
-        }
-
-        public Builder seed(@Nullable Integer seed) {
-            options.setSeed(seed);
-            return this;
-        }
-
-        public Builder temperature(Float temperature) {
-            options.setTemperature(temperature);
-            return this;
-        }
-
-        public Builder topP(Float topP) {
-            options.setTopP(topP);
-            return this;
-        }
-
-        public Builder presencePenalty(Float presencePenalty) {
-            options.setPresencePenalty(presencePenalty);
-            return this;
-        }
-
-        public Builder topK(Integer topK) {
-            options.setTopK(topK);
-            return this;
-        }
-
-        public Builder repetitionPenalty(Float repetitionPenalty) {
-            options.setRepetitionPenalty(repetitionPenalty);
-            return this;
-        }
-
-        public Builder translationOptions(TranslationOptions translationOptions) {
-            options.setTranslationOptions(translationOptions);
-            return this;
-        }
-
-        public Builder disfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
-            options.setDisfluencyRemovalEnabled(disfluencyRemovalEnabled);
-            return this;
-        }
-
-        public Builder languageHints(List<String> languageHints) {
-            options.setLanguageHints(languageHints);
-            return this;
-        }
-
-        public Builder semanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
-            options.setSemanticPunctuationEnabled(semanticPunctuationEnabled);
-            return this;
-        }
-
-        public Builder maxSentenceSilence(Integer maxSentenceSilence) {
-            options.setMaxSentenceSilence(maxSentenceSilence);
-            return this;
-        }
-
-        public Builder multiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
-            options.setMultiThresholdModeEnabled(multiThresholdModeEnabled);
-            return this;
-        }
-
-        public Builder punctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
-            options.setPunctuationPredictionEnabled(punctuationPredictionEnabled);
-            return this;
-        }
-
-        public Builder heartbeat(Boolean heartbeat) {
-            options.setHeartbeat(heartbeat);
-            return this;
-        }
-
-        public Builder inverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
-            options.setInverseTextNormalizationEnabled(inverseTextNormalizationEnabled);
-            return this;
-        }
-
-        public Builder resources(List<Resource> resources) {
-            options.setResources(resources);
-            return this;
-        }
-
-        public Builder timestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
-            options.setTimestampAlignmentEnabled(timestampAlignmentEnabled);
-            return this;
-        }
-
-        public Builder specialWordFilter(String specialWordFilter) {
-            options.setSpecialWordFilter(specialWordFilter);
-            return this;
-        }
-
-        public Builder diarizationEnabled(Boolean diarizationEnabled) {
-            options.setDiarizationEnabled(diarizationEnabled);
-            return this;
-        }
-
-        public Builder speakerCount(Integer speakerCount) {
-            options.setSpeakerCount(speakerCount);
-            return this;
-        }
-
-        public Builder channelId(List<Integer> channelId) {
-            options.setChannelId(channelId);
-            return this;
-        }
-
-        public Builder asrOptions(AsrOptions asrOptions) {
-            options.setAsrOptions(asrOptions);
-            return this;
-        }
-
-        public DashScopeAudioTranscriptionOptions build() {
-            return this.options;
-        }
-    }
-
-    public static class Audio {
-        @JsonProperty("voice")
-        private @Nullable String voice;
-
-        @JsonProperty("format")
-        private @Nullable String format;
-
-        public Audio() {}
-
-        public Audio(@Nullable String voice, @Nullable String format) {
-            this.voice = voice;
-            this.format = format;
-        }
-
-        public @Nullable String getVoice() {
-            return voice;
-        }
-
-        public void setVoice(@Nullable String voice) {
-            this.voice = voice;
-        }
-
-        public @Nullable String getFormat() {
-            return format;
-        }
-
-        public void setFormat(@Nullable String format) {
-            this.format = format;
-        }
-    }
-
-    public static class StreamOptions {
-        @JsonProperty("include_usage")
-        private @Nullable Boolean includeUsage;
-
-        public StreamOptions() {}
-
-        public StreamOptions(@Nullable Boolean includeUsage) {
-            this.includeUsage = includeUsage;
-        }
-
-        public @Nullable Boolean getIncludeUsage() {
-            return includeUsage;
-        }
-
-        public void setIncludeUsage(@Nullable Boolean includeUsage) {
-            this.includeUsage = includeUsage;
-        }
-    }
-
-    public static class TranslationOptions {
-        @JsonProperty("source_lang")
-        private @Nullable String sourceLang;
-
-        @JsonProperty("target_lang")
-        private @Nullable String targetLang;
-
-        public TranslationOptions() {}
-
-        public TranslationOptions(@Nullable String sourceLang, @Nullable String targetLang) {
-            this.sourceLang = sourceLang;
-            this.targetLang = targetLang;
-        }
-
-        public @Nullable String getSourceLang() {
-            return sourceLang;
-        }
-
-        public void setSourceLang(@Nullable String sourceLang) {
-            this.sourceLang = sourceLang;
-        }
-
-        public @Nullable String getTargetLang() {
-            return targetLang;
-        }
-
-        public void setTargetLang(@Nullable String targetLang) {
-            this.targetLang = targetLang;
-        }
-    }
-
-    public static class Resource {
-        @JsonProperty("resource_id")
-        private @Nullable String resourceId;
-
-        @JsonProperty("resource_type")
-        private @Nullable String resourceType;
-
-        public @Nullable String getResourceId() {
-            return resourceId;
-        }
-
-        public void setResourceId(@Nullable String resourceId) {
-            this.resourceId = resourceId;
-        }
-
-        public @Nullable String getResourceType() {
-            return resourceType;
-        }
-
-        public void setResourceType(@Nullable String resourceType) {
-            this.resourceType = resourceType;
-        }
-    }
-
-    public static class AsrOptions {
-        @JsonProperty("language")
-        private @Nullable String language;
-
-        public @Nullable String getLanguage() {
-            return language;
-        }
-
-        public void setLanguage(@Nullable String language) {
-            this.language = language;
-        }
-
-        public @Nullable Boolean getEnableItn() {
-            return enableItn;
-        }
-
-        public void setEnableItn(@Nullable Boolean enableItn) {
-            this.enableItn = enableItn;
-        }
-
-        @JsonProperty("enable_itn")
-        private @Nullable Boolean enableItn;
-    }
+	@Override
+	public String getModel() {
+		return this.model;
+	}
+
+	public @Nullable String getVocabularyId() {
+		return this.vocabularyId;
+	}
+
+	public String getFormat() {
+		return this.format;
+	}
+
+	public Integer getSampleRate() {
+		return this.sampleRate;
+	}
+
+	public @Nullable String getSourceLanguage() {
+		return this.sourceLanguage;
+	}
+
+	public @Nullable Boolean getTranscriptionEnabled() {
+		return this.transcriptionEnabled;
+	}
+
+	public @Nullable Boolean getTranslationEnabled() {
+		return this.translationEnabled;
+	}
+
+	public @Nullable List<String> getTranslationTargetLanguages() {
+		return this.translationTargetLanguages;
+	}
+
+	public @Nullable AsrOptions getAsrOptions() {
+		return this.asrOptions;
+	}
+
+	public @Nullable Integer getMaxEndSilence() {
+		return this.maxEndSilence;
+	}
+
+	public @Nullable List<String> getModalities() {
+		return this.modalities;
+	}
+
+	public @Nullable Audio getAudio() {
+		return this.audio;
+	}
+
+	public @Nullable Boolean getStream() {
+		return this.stream;
+	}
+
+	public @Nullable StreamOptions getStreamOptions() {
+		return this.streamOptions;
+	}
+
+	public @Nullable Integer getMaxTokens() {
+		return this.maxTokens;
+	}
+
+	public @Nullable Integer getSeed() {
+		return this.seed;
+	}
+
+	public @Nullable Float getTemperature() {
+		return this.temperature;
+	}
+
+	public @Nullable Float getTopP() {
+		return this.topP;
+	}
+
+	public @Nullable Float getPresencePenalty() {
+		return this.presencePenalty;
+	}
+
+	public @Nullable Integer getTopK() {
+		return this.topK;
+	}
+
+	public @Nullable Float getRepetitionPenalty() {
+		return this.repetitionPenalty;
+	}
+
+	public @Nullable TranslationOptions getTranslationOptions() {
+		return this.translationOptions;
+	}
+
+	public @Nullable Boolean getDisfluencyRemovalEnabled() {
+		return this.disfluencyRemovalEnabled;
+	}
+
+	public @Nullable List<String> getLanguageHints() {
+		return this.languageHints;
+	}
+
+	public @Nullable Boolean getSemanticPunctuationEnabled() {
+		return this.semanticPunctuationEnabled;
+	}
+
+	public @Nullable Integer getMaxSentenceSilence() {
+		return this.maxSentenceSilence;
+	}
+
+	public @Nullable Boolean getMultiThresholdModeEnabled() {
+		return this.multiThresholdModeEnabled;
+	}
+
+	public @Nullable Boolean getPunctuationPredictionEnabled() {
+		return this.punctuationPredictionEnabled;
+	}
+
+	public @Nullable Boolean getHeartbeat() {
+		return this.heartbeat;
+	}
+
+	public @Nullable Boolean getInverseTextNormalizationEnabled() {
+		return this.inverseTextNormalizationEnabled;
+	}
+
+	public @Nullable List<Resource> getResources() {
+		return this.resources;
+	}
+
+	public @Nullable Boolean getTimestampAlignmentEnabled() {
+		return this.timestampAlignmentEnabled;
+	}
+
+	public @Nullable String getSpecialWordFilter() {
+		return this.specialWordFilter;
+	}
+
+	public @Nullable Boolean getDiarizationEnabled() {
+		return this.diarizationEnabled;
+	}
+
+	public @Nullable Integer getSpeakerCount() {
+		return this.speakerCount;
+	}
+
+	public @Nullable List<Integer> getChannelId() {
+		return this.channelId;
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static DashScopeAudioTranscriptionOptions fromOptions(DashScopeAudioTranscriptionOptions options) {
+		return options.mutate().build();
+	}
+
+	public Builder mutate() {
+		return builder()
+			.model(this.model)
+			.vocabularyId(this.vocabularyId)
+			.sampleRate(this.sampleRate)
+			.format(this.format)
+			.sourceLanguage(this.sourceLanguage)
+			.transcriptionEnabled(this.transcriptionEnabled)
+			.translationEnabled(this.translationEnabled)
+			.translationTargetLanguages(this.translationTargetLanguages)
+			.maxEndSilence(this.maxEndSilence)
+			.modalities(this.modalities)
+			.audio(this.audio)
+			.stream(this.stream)
+			.streamOptions(this.streamOptions)
+			.maxTokens(this.maxTokens)
+			.seed(this.seed)
+			.temperature(this.temperature)
+			.topP(this.topP)
+			.presencePenalty(this.presencePenalty)
+			.topK(this.topK)
+			.repetitionPenalty(this.repetitionPenalty)
+			.translationOptions(this.translationOptions)
+			.disfluencyRemovalEnabled(this.disfluencyRemovalEnabled)
+			.languageHints(this.languageHints)
+			.semanticPunctuationEnabled(this.semanticPunctuationEnabled)
+			.maxSentenceSilence(this.maxSentenceSilence)
+			.multiThresholdModeEnabled(this.multiThresholdModeEnabled)
+			.punctuationPredictionEnabled(this.punctuationPredictionEnabled)
+			.heartbeat(this.heartbeat)
+			.inverseTextNormalizationEnabled(this.inverseTextNormalizationEnabled)
+			.resources(this.resources)
+			.timestampAlignmentEnabled(this.timestampAlignmentEnabled)
+			.specialWordFilter(this.specialWordFilter)
+			.diarizationEnabled(this.diarizationEnabled)
+			.speakerCount(this.speakerCount)
+			.channelId(this.channelId)
+			.asrOptions(this.asrOptions);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		DashScopeAudioTranscriptionOptions that = (DashScopeAudioTranscriptionOptions) o;
+		return Objects.equals(this.model, that.model) && Objects.equals(this.vocabularyId, that.vocabularyId)
+				&& Objects.equals(this.sampleRate, that.sampleRate) && Objects.equals(this.format, that.format)
+				&& Objects.equals(this.sourceLanguage, that.sourceLanguage)
+				&& Objects.equals(this.transcriptionEnabled, that.transcriptionEnabled)
+				&& Objects.equals(this.translationEnabled, that.translationEnabled)
+				&& Objects.equals(this.translationTargetLanguages, that.translationTargetLanguages)
+				&& Objects.equals(this.maxEndSilence, that.maxEndSilence) && Objects.equals(this.modalities, that.modalities)
+				&& Objects.equals(this.audio, that.audio) && Objects.equals(this.stream, that.stream)
+				&& Objects.equals(this.streamOptions, that.streamOptions) && Objects.equals(this.maxTokens, that.maxTokens)
+				&& Objects.equals(this.seed, that.seed) && Objects.equals(this.temperature, that.temperature)
+				&& Objects.equals(this.topP, that.topP) && Objects.equals(this.presencePenalty, that.presencePenalty)
+				&& Objects.equals(this.topK, that.topK) && Objects.equals(this.repetitionPenalty, that.repetitionPenalty)
+				&& Objects.equals(this.translationOptions, that.translationOptions)
+				&& Objects.equals(this.disfluencyRemovalEnabled, that.disfluencyRemovalEnabled)
+				&& Objects.equals(this.languageHints, that.languageHints)
+				&& Objects.equals(this.semanticPunctuationEnabled, that.semanticPunctuationEnabled)
+				&& Objects.equals(this.maxSentenceSilence, that.maxSentenceSilence)
+				&& Objects.equals(this.multiThresholdModeEnabled, that.multiThresholdModeEnabled)
+				&& Objects.equals(this.punctuationPredictionEnabled, that.punctuationPredictionEnabled)
+				&& Objects.equals(this.heartbeat, that.heartbeat)
+				&& Objects.equals(this.inverseTextNormalizationEnabled, that.inverseTextNormalizationEnabled)
+				&& Objects.equals(this.resources, that.resources)
+				&& Objects.equals(this.timestampAlignmentEnabled, that.timestampAlignmentEnabled)
+				&& Objects.equals(this.specialWordFilter, that.specialWordFilter)
+				&& Objects.equals(this.diarizationEnabled, that.diarizationEnabled)
+				&& Objects.equals(this.speakerCount, that.speakerCount)
+				&& Objects.equals(this.channelId, that.channelId) && Objects.equals(this.asrOptions, that.asrOptions);
+	}
+
+    // @formatter:off
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.model, this.vocabularyId, this.sampleRate, this.format, this.sourceLanguage,
+				this.transcriptionEnabled, this.translationEnabled, this.translationTargetLanguages,
+				this.maxEndSilence, this.modalities, this.audio, this.stream, this.streamOptions, this.maxTokens,
+				this.seed, this.temperature, this.topP, this.presencePenalty, this.topK, this.repetitionPenalty,
+				this.translationOptions, this.disfluencyRemovalEnabled, this.languageHints,
+				this.semanticPunctuationEnabled, this.maxSentenceSilence, this.multiThresholdModeEnabled,
+				this.punctuationPredictionEnabled, this.heartbeat, this.inverseTextNormalizationEnabled,
+				this.resources, this.timestampAlignmentEnabled, this.specialWordFilter, this.diarizationEnabled,
+				this.speakerCount, this.channelId, this.asrOptions);
+	}
+    // @formatter:on
+
+	@Override
+	public String toString() {
+		return "DashScopeAudioTranscriptionOptions{" + "model='" + this.model + '\'' + ", vocabularyId='"
+				+ this.vocabularyId + '\'' + ", sampleRate=" + this.sampleRate + ", format='" + this.format + '\''
+				+ ", sourceLanguage='" + this.sourceLanguage + '\'' + ", transcriptionEnabled="
+				+ this.transcriptionEnabled + ", translationEnabled=" + this.translationEnabled
+				+ ", translationTargetLanguages=" + this.translationTargetLanguages + ", maxEndSilence="
+				+ this.maxEndSilence + ", modalities=" + this.modalities + ", audio=" + this.audio + ", stream="
+				+ this.stream + ", streamOptions=" + this.streamOptions + ", maxTokens=" + this.maxTokens
+				+ ", seed=" + this.seed + ", temperature=" + this.temperature + ", topP=" + this.topP
+				+ ", presencePenalty=" + this.presencePenalty + ", topK=" + this.topK + ", repetitionPenalty="
+				+ this.repetitionPenalty + ", translationOptions=" + this.translationOptions
+				+ ", disfluencyRemovalEnabled=" + this.disfluencyRemovalEnabled + ", languageHints="
+				+ this.languageHints + ", semanticPunctuationEnabled=" + this.semanticPunctuationEnabled
+				+ ", maxSentenceSilence=" + this.maxSentenceSilence + ", multiThresholdModeEnabled="
+				+ this.multiThresholdModeEnabled + ", punctuationPredictionEnabled="
+				+ this.punctuationPredictionEnabled + ", heartbeat=" + this.heartbeat
+				+ ", inverseTextNormalizationEnabled=" + this.inverseTextNormalizationEnabled + ", resources="
+				+ this.resources + ", timestampAlignmentEnabled=" + this.timestampAlignmentEnabled
+				+ ", specialWordFilter='" + this.specialWordFilter + '\'' + ", diarizationEnabled="
+				+ this.diarizationEnabled + ", speakerCount=" + this.speakerCount + ", channelId=" + this.channelId
+				+ ", asrOptions=" + this.asrOptions + '}';
+	}
+
+	public static class Builder {
+
+		protected @Nullable String model;
+
+		protected @Nullable String vocabularyId;
+
+		protected @Nullable Integer sampleRate;
+
+		protected @Nullable String format;
+
+		protected @Nullable String sourceLanguage;
+
+		protected @Nullable Boolean transcriptionEnabled;
+
+		protected @Nullable Boolean translationEnabled;
+
+		protected @Nullable List<String> translationTargetLanguages;
+
+		protected @Nullable Integer maxEndSilence;
+
+		protected @Nullable List<String> modalities;
+
+		protected @Nullable Audio audio;
+
+		protected @Nullable Boolean stream;
+
+		protected @Nullable StreamOptions streamOptions;
+
+		protected @Nullable Integer maxTokens;
+
+		protected @Nullable Integer seed;
+
+		protected @Nullable Float temperature;
+
+		protected @Nullable Float topP;
+
+		protected @Nullable Float presencePenalty;
+
+		protected @Nullable Integer topK;
+
+		protected @Nullable Float repetitionPenalty;
+
+		protected @Nullable TranslationOptions translationOptions;
+
+		protected @Nullable Boolean disfluencyRemovalEnabled;
+
+		protected @Nullable List<String> languageHints;
+
+		protected @Nullable Boolean semanticPunctuationEnabled;
+
+		protected @Nullable Integer maxSentenceSilence;
+
+		protected @Nullable Boolean multiThresholdModeEnabled;
+
+		protected @Nullable Boolean punctuationPredictionEnabled;
+
+		protected @Nullable Boolean heartbeat;
+
+		protected @Nullable Boolean inverseTextNormalizationEnabled;
+
+		protected @Nullable List<Resource> resources;
+
+		protected @Nullable Boolean timestampAlignmentEnabled;
+
+		protected @Nullable String specialWordFilter;
+
+		protected @Nullable Boolean diarizationEnabled;
+
+		protected @Nullable Integer speakerCount;
+
+		protected @Nullable List<Integer> channelId;
+
+		protected @Nullable AsrOptions asrOptions;
+
+		public Builder() {
+		}
+
+		public Builder model(@Nullable String model) {
+			this.model = model;
+			return this;
+		}
+
+		public Builder vocabularyId(@Nullable String vocabularyId) {
+			this.vocabularyId = vocabularyId;
+			return this;
+		}
+
+		public Builder sampleRate(@Nullable Integer sampleRate) {
+			this.sampleRate = sampleRate;
+			return this;
+		}
+
+		public Builder format(@Nullable String format) {
+			this.format = format;
+			return this;
+		}
+
+		public Builder sourceLanguage(@Nullable String sourceLanguage) {
+			this.sourceLanguage = sourceLanguage;
+			return this;
+		}
+
+		public Builder transcriptionEnabled(@Nullable Boolean transcriptionEnabled) {
+			this.transcriptionEnabled = transcriptionEnabled;
+			return this;
+		}
+
+		public Builder translationEnabled(@Nullable Boolean translationEnabled) {
+			this.translationEnabled = translationEnabled;
+			return this;
+		}
+
+		public Builder translationTargetLanguages(@Nullable List<String> translationTargetLanguages) {
+			this.translationTargetLanguages = translationTargetLanguages;
+			return this;
+		}
+
+		public Builder maxEndSilence(@Nullable Integer maxEndSilence) {
+			this.maxEndSilence = maxEndSilence;
+			return this;
+		}
+
+		public Builder modalities(@Nullable List<String> modalities) {
+			this.modalities = modalities;
+			return this;
+		}
+
+		public Builder audio(@Nullable Audio audio) {
+			this.audio = audio;
+			return this;
+		}
+
+		public Builder stream(@Nullable Boolean stream) {
+			this.stream = stream;
+			return this;
+		}
+
+		public Builder streamOptions(@Nullable StreamOptions streamOptions) {
+			this.streamOptions = streamOptions;
+			return this;
+		}
+
+		public Builder maxTokens(@Nullable Integer maxTokens) {
+			this.maxTokens = maxTokens;
+			return this;
+		}
+
+		public Builder seed(@Nullable Integer seed) {
+			this.seed = seed;
+			return this;
+		}
+
+		public Builder temperature(@Nullable Float temperature) {
+			this.temperature = temperature;
+			return this;
+		}
+
+		public Builder topP(@Nullable Float topP) {
+			this.topP = topP;
+			return this;
+		}
+
+		public Builder presencePenalty(@Nullable Float presencePenalty) {
+			this.presencePenalty = presencePenalty;
+			return this;
+		}
+
+		public Builder topK(@Nullable Integer topK) {
+			this.topK = topK;
+			return this;
+		}
+
+		public Builder repetitionPenalty(@Nullable Float repetitionPenalty) {
+			this.repetitionPenalty = repetitionPenalty;
+			return this;
+		}
+
+		public Builder translationOptions(@Nullable TranslationOptions translationOptions) {
+			this.translationOptions = translationOptions;
+			return this;
+		}
+
+		public Builder disfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
+			this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
+			return this;
+		}
+
+		public Builder languageHints(@Nullable List<String> languageHints) {
+			this.languageHints = languageHints;
+			return this;
+		}
+
+		public Builder semanticPunctuationEnabled(@Nullable Boolean semanticPunctuationEnabled) {
+			this.semanticPunctuationEnabled = semanticPunctuationEnabled;
+			return this;
+		}
+
+		public Builder maxSentenceSilence(@Nullable Integer maxSentenceSilence) {
+			this.maxSentenceSilence = maxSentenceSilence;
+			return this;
+		}
+
+		public Builder multiThresholdModeEnabled(@Nullable Boolean multiThresholdModeEnabled) {
+			this.multiThresholdModeEnabled = multiThresholdModeEnabled;
+			return this;
+		}
+
+		public Builder punctuationPredictionEnabled(@Nullable Boolean punctuationPredictionEnabled) {
+			this.punctuationPredictionEnabled = punctuationPredictionEnabled;
+			return this;
+		}
+
+		public Builder heartbeat(@Nullable Boolean heartbeat) {
+			this.heartbeat = heartbeat;
+			return this;
+		}
+
+		public Builder inverseTextNormalizationEnabled(@Nullable Boolean inverseTextNormalizationEnabled) {
+			this.inverseTextNormalizationEnabled = inverseTextNormalizationEnabled;
+			return this;
+		}
+
+		public Builder resources(@Nullable List<Resource> resources) {
+			this.resources = resources;
+			return this;
+		}
+
+		public Builder timestampAlignmentEnabled(@Nullable Boolean timestampAlignmentEnabled) {
+			this.timestampAlignmentEnabled = timestampAlignmentEnabled;
+			return this;
+		}
+
+		public Builder specialWordFilter(@Nullable String specialWordFilter) {
+			this.specialWordFilter = specialWordFilter;
+			return this;
+		}
+
+		public Builder diarizationEnabled(@Nullable Boolean diarizationEnabled) {
+			this.diarizationEnabled = diarizationEnabled;
+			return this;
+		}
+
+		public Builder speakerCount(@Nullable Integer speakerCount) {
+			this.speakerCount = speakerCount;
+			return this;
+		}
+
+		public Builder channelId(@Nullable List<Integer> channelId) {
+			this.channelId = channelId;
+			return this;
+		}
+
+		public Builder asrOptions(@Nullable AsrOptions asrOptions) {
+			this.asrOptions = asrOptions;
+			return this;
+		}
+
+		public Builder from(DashScopeAudioTranscriptionOptions fromOptions) {
+			this.model = fromOptions.getModel();
+			this.vocabularyId = fromOptions.getVocabularyId();
+			this.sampleRate = fromOptions.getSampleRate();
+			this.format = fromOptions.getFormat();
+			this.sourceLanguage = fromOptions.getSourceLanguage();
+			this.transcriptionEnabled = fromOptions.getTranscriptionEnabled();
+			this.translationEnabled = fromOptions.getTranslationEnabled();
+			this.translationTargetLanguages = fromOptions.getTranslationTargetLanguages();
+			this.maxEndSilence = fromOptions.getMaxEndSilence();
+			this.modalities = fromOptions.getModalities();
+			this.audio = fromOptions.getAudio();
+			this.stream = fromOptions.getStream();
+			this.streamOptions = fromOptions.getStreamOptions();
+			this.maxTokens = fromOptions.getMaxTokens();
+			this.seed = fromOptions.getSeed();
+			this.temperature = fromOptions.getTemperature();
+			this.topP = fromOptions.getTopP();
+			this.presencePenalty = fromOptions.getPresencePenalty();
+			this.topK = fromOptions.getTopK();
+			this.repetitionPenalty = fromOptions.getRepetitionPenalty();
+			this.translationOptions = fromOptions.getTranslationOptions();
+			this.disfluencyRemovalEnabled = fromOptions.getDisfluencyRemovalEnabled();
+			this.languageHints = fromOptions.getLanguageHints();
+			this.semanticPunctuationEnabled = fromOptions.getSemanticPunctuationEnabled();
+			this.maxSentenceSilence = fromOptions.getMaxSentenceSilence();
+			this.multiThresholdModeEnabled = fromOptions.getMultiThresholdModeEnabled();
+			this.punctuationPredictionEnabled = fromOptions.getPunctuationPredictionEnabled();
+			this.heartbeat = fromOptions.getHeartbeat();
+			this.inverseTextNormalizationEnabled = fromOptions.getInverseTextNormalizationEnabled();
+			this.resources = fromOptions.getResources();
+			this.timestampAlignmentEnabled = fromOptions.getTimestampAlignmentEnabled();
+			this.specialWordFilter = fromOptions.getSpecialWordFilter();
+			this.diarizationEnabled = fromOptions.getDiarizationEnabled();
+			this.speakerCount = fromOptions.getSpeakerCount();
+			this.channelId = fromOptions.getChannelId();
+			this.asrOptions = fromOptions.getAsrOptions();
+			return this;
+		}
+
+		public Builder merge(@Nullable AudioTranscriptionOptions from) {
+			if (from == null) {
+				return this;
+			}
+			if (from.getModel() != null) {
+				this.model = from.getModel();
+			}
+			if (from instanceof DashScopeAudioTranscriptionOptions castFrom) {
+				if (castFrom.getVocabularyId() != null) {
+					this.vocabularyId = castFrom.getVocabularyId();
+				}
+				if (castFrom.getSampleRate() != null) {
+					this.sampleRate = castFrom.getSampleRate();
+				}
+				if (castFrom.getFormat() != null) {
+					this.format = castFrom.getFormat();
+				}
+				if (castFrom.getSourceLanguage() != null) {
+					this.sourceLanguage = castFrom.getSourceLanguage();
+				}
+				if (castFrom.getTranscriptionEnabled() != null) {
+					this.transcriptionEnabled = castFrom.getTranscriptionEnabled();
+				}
+				if (castFrom.getTranslationEnabled() != null) {
+					this.translationEnabled = castFrom.getTranslationEnabled();
+				}
+				if (castFrom.getTranslationTargetLanguages() != null) {
+					this.translationTargetLanguages = castFrom.getTranslationTargetLanguages();
+				}
+				if (castFrom.getMaxEndSilence() != null) {
+					this.maxEndSilence = castFrom.getMaxEndSilence();
+				}
+				if (castFrom.getModalities() != null) {
+					this.modalities = castFrom.getModalities();
+				}
+				if (castFrom.getAudio() != null) {
+					this.audio = castFrom.getAudio();
+				}
+				if (castFrom.getStream() != null) {
+					this.stream = castFrom.getStream();
+				}
+				if (castFrom.getStreamOptions() != null) {
+					this.streamOptions = castFrom.getStreamOptions();
+				}
+				if (castFrom.getMaxTokens() != null) {
+					this.maxTokens = castFrom.getMaxTokens();
+				}
+				if (castFrom.getSeed() != null) {
+					this.seed = castFrom.getSeed();
+				}
+				if (castFrom.getTemperature() != null) {
+					this.temperature = castFrom.getTemperature();
+				}
+				if (castFrom.getTopP() != null) {
+					this.topP = castFrom.getTopP();
+				}
+				if (castFrom.getPresencePenalty() != null) {
+					this.presencePenalty = castFrom.getPresencePenalty();
+				}
+				if (castFrom.getTopK() != null) {
+					this.topK = castFrom.getTopK();
+				}
+				if (castFrom.getRepetitionPenalty() != null) {
+					this.repetitionPenalty = castFrom.getRepetitionPenalty();
+				}
+				if (castFrom.getTranslationOptions() != null) {
+					this.translationOptions = castFrom.getTranslationOptions();
+				}
+				if (castFrom.getDisfluencyRemovalEnabled() != null) {
+					this.disfluencyRemovalEnabled = castFrom.getDisfluencyRemovalEnabled();
+				}
+				if (castFrom.getLanguageHints() != null) {
+					this.languageHints = castFrom.getLanguageHints();
+				}
+				if (castFrom.getSemanticPunctuationEnabled() != null) {
+					this.semanticPunctuationEnabled = castFrom.getSemanticPunctuationEnabled();
+				}
+				if (castFrom.getMaxSentenceSilence() != null) {
+					this.maxSentenceSilence = castFrom.getMaxSentenceSilence();
+				}
+				if (castFrom.getMultiThresholdModeEnabled() != null) {
+					this.multiThresholdModeEnabled = castFrom.getMultiThresholdModeEnabled();
+				}
+				if (castFrom.getPunctuationPredictionEnabled() != null) {
+					this.punctuationPredictionEnabled = castFrom.getPunctuationPredictionEnabled();
+				}
+				if (castFrom.getHeartbeat() != null) {
+					this.heartbeat = castFrom.getHeartbeat();
+				}
+				if (castFrom.getInverseTextNormalizationEnabled() != null) {
+					this.inverseTextNormalizationEnabled = castFrom.getInverseTextNormalizationEnabled();
+				}
+				if (castFrom.getResources() != null) {
+					this.resources = castFrom.getResources();
+				}
+				if (castFrom.getTimestampAlignmentEnabled() != null) {
+					this.timestampAlignmentEnabled = castFrom.getTimestampAlignmentEnabled();
+				}
+				if (castFrom.getSpecialWordFilter() != null) {
+					this.specialWordFilter = castFrom.getSpecialWordFilter();
+				}
+				if (castFrom.getDiarizationEnabled() != null) {
+					this.diarizationEnabled = castFrom.getDiarizationEnabled();
+				}
+				if (castFrom.getSpeakerCount() != null) {
+					this.speakerCount = castFrom.getSpeakerCount();
+				}
+				if (castFrom.getChannelId() != null) {
+					this.channelId = castFrom.getChannelId();
+				}
+				if (castFrom.getAsrOptions() != null) {
+					this.asrOptions = castFrom.getAsrOptions();
+				}
+			}
+			return this;
+		}
+
+        // @formatter:off
+		public DashScopeAudioTranscriptionOptions build() {
+			return new DashScopeAudioTranscriptionOptions(this.model, this.vocabularyId, this.sampleRate, this.format,
+					this.sourceLanguage, this.transcriptionEnabled, this.translationEnabled,
+					this.translationTargetLanguages, this.maxEndSilence, this.modalities, this.audio, this.stream,
+					this.streamOptions, this.maxTokens, this.seed, this.temperature, this.topP,
+					this.presencePenalty, this.topK, this.repetitionPenalty, this.translationOptions,
+					this.disfluencyRemovalEnabled, this.languageHints, this.semanticPunctuationEnabled,
+					this.maxSentenceSilence, this.multiThresholdModeEnabled, this.punctuationPredictionEnabled,
+					this.heartbeat, this.inverseTextNormalizationEnabled, this.resources,
+					this.timestampAlignmentEnabled, this.specialWordFilter, this.diarizationEnabled,
+					this.speakerCount, this.channelId, this.asrOptions);
+		}
+        // @formatter:on
+
+	}
+
+	public static class Audio {
+
+		@JsonProperty("voice")
+		private final @Nullable String voice;
+
+		@JsonProperty("format")
+		private final @Nullable String format;
+
+		public Audio(@Nullable String voice, @Nullable String format) {
+			this.voice = voice;
+			this.format = format;
+		}
+
+		public @Nullable String getVoice() {
+			return this.voice;
+		}
+
+		public @Nullable String getFormat() {
+			return this.format;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			Audio that = (Audio) o;
+			return Objects.equals(this.voice, that.voice) && Objects.equals(this.format, that.format);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.voice, this.format);
+		}
+	}
+
+	public static class StreamOptions {
+
+		@JsonProperty("include_usage")
+		private final @Nullable Boolean includeUsage;
+
+		public StreamOptions(@Nullable Boolean includeUsage) {
+			this.includeUsage = includeUsage;
+		}
+
+		public @Nullable Boolean getIncludeUsage() {
+			return this.includeUsage;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			StreamOptions that = (StreamOptions) o;
+			return Objects.equals(this.includeUsage, that.includeUsage);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.includeUsage);
+		}
+	}
+
+	public static class TranslationOptions {
+
+		@JsonProperty("source_lang")
+		private final @Nullable String sourceLang;
+
+		@JsonProperty("target_lang")
+		private final @Nullable String targetLang;
+
+		public TranslationOptions(@Nullable String sourceLang, @Nullable String targetLang) {
+			this.sourceLang = sourceLang;
+			this.targetLang = targetLang;
+		}
+
+		public @Nullable String getSourceLang() {
+			return this.sourceLang;
+		}
+
+		public @Nullable String getTargetLang() {
+			return this.targetLang;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			TranslationOptions that = (TranslationOptions) o;
+			return Objects.equals(this.sourceLang, that.sourceLang) && Objects.equals(this.targetLang, that.targetLang);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.sourceLang, this.targetLang);
+		}
+	}
+
+	public static class Resource {
+
+		@JsonProperty("resource_id")
+		private final @Nullable String resourceId;
+
+		@JsonProperty("resource_type")
+		private final @Nullable String resourceType;
+
+		public Resource(@Nullable String resourceId, @Nullable String resourceType) {
+			this.resourceId = resourceId;
+			this.resourceType = resourceType;
+		}
+
+		public @Nullable String getResourceId() {
+			return this.resourceId;
+		}
+
+		public @Nullable String getResourceType() {
+			return this.resourceType;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			Resource that = (Resource) o;
+			return Objects.equals(this.resourceId, that.resourceId) && Objects.equals(this.resourceType, that.resourceType);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.resourceId, this.resourceType);
+		}
+	}
+
+	public static class AsrOptions {
+
+		@JsonProperty("language")
+		private final @Nullable String language;
+
+		@JsonProperty("enable_itn")
+		private final @Nullable Boolean enableItn;
+
+		public AsrOptions(@Nullable String language, @Nullable Boolean enableItn) {
+			this.language = language;
+			this.enableItn = enableItn;
+		}
+
+		public @Nullable String getLanguage() {
+			return this.language;
+		}
+
+		public @Nullable Boolean getEnableItn() {
+			return this.enableItn;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			AsrOptions that = (AsrOptions) o;
+			return Objects.equals(this.language, that.language) && Objects.equals(this.enableItn, that.enableItn);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.language, this.enableItn);
+		}
+	}
 
 }

@@ -25,7 +25,6 @@ import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoResponse;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.TransientAiException;
 import org.springframework.core.retry.RetryTemplate;
@@ -145,7 +144,11 @@ public class DashScopeVideoModel implements VideoModel {
 
     private DashScopeVideoRequest buildDashScopeVideoRequest(VideoPrompt prompt) {
 
-        DashScopeVideoOptions options = toVideoOptions(prompt.getOptions());
+        // Merge request options with default options
+        DashScopeVideoOptions options = DashScopeVideoOptions.builder()
+                .from(this.defaultOptions)
+                .merge(prompt.getOptions())
+                .build();
         logger.debug("Submitting video generation task with options: {}", options);
         String model = options.getModel();
         Assert.hasText(model, "Video model must not be empty");
@@ -155,23 +158,6 @@ public class DashScopeVideoModel implements VideoModel {
                 .input(DashScopeVideoRequest.VideoInput.optionsConvertReq(options.getInput()))
                 .parameters(DashScopeVideoRequest.VideoParameters.optionsConvertReq(options.getParameters()))
                 .build();
-    }
-
-    /**
-     * Merge Video options. Notice: Programmatically(runtime) set options parameters take
-     * precedence.
-     */
-    private DashScopeVideoOptions toVideoOptions(VideoOptions runtimeOptions) {
-        // set default image model
-        var currentOptions = DashScopeVideoOptions.builder().build();
-
-        if (Objects.nonNull(runtimeOptions)) {
-            currentOptions = ModelOptionsUtils.copyToTarget(runtimeOptions, VideoOptions.class, DashScopeVideoOptions.class);
-        }
-
-        currentOptions = ModelOptionsUtils.merge(currentOptions, this.defaultOptions, DashScopeVideoOptions.class);
-
-        return currentOptions;
     }
 
     public static final class Builder {

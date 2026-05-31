@@ -26,12 +26,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.transcription.AudioTranscription;
-import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponseMetadata;
 import org.springframework.ai.audio.transcription.TranscriptionModel;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.CollectionUtils;
@@ -47,6 +45,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -85,7 +84,11 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 
 	@Override
 	public AudioTranscriptionResponse call(AudioTranscriptionPrompt prompt) {
-		DashScopeSdkAudioTranscriptionOptions options = mergeOptions(prompt.getOptions());
+        // Merge request options with default options
+		DashScopeSdkAudioTranscriptionOptions options = DashScopeSdkAudioTranscriptionOptions.builder()
+                .from(this.defaultOptions)
+                .merge(prompt.getOptions())
+                .build();
 		List<String> fileUrls = resolveFileUrls(prompt, options);
 		if (CollectionUtils.isEmpty(fileUrls)) {
 			throw new IllegalArgumentException(
@@ -102,26 +105,6 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 		TranscriptionQueryParam query = TranscriptionQueryParam.FromTranscriptionParam(request, submitResult.getTaskId());
 		TranscriptionResult finalResult = RetryUtils.execute(this.retryTemplate, () -> executeWait(query));
 		return toAudioResponse(finalResult == null ? submitResult : finalResult);
-	}
-
-	private DashScopeSdkAudioTranscriptionOptions mergeOptions(AudioTranscriptionOptions runtimeOptions) {
-		DashScopeSdkAudioTranscriptionOptions options = java.util.Objects.requireNonNull(
-				DashScopeSdkAudioTranscriptionOptions.fromOptions(this.defaultOptions));
-		if (runtimeOptions == null) {
-			return options;
-		}
-
-		DashScopeSdkAudioTranscriptionOptions runtime = ModelOptionsUtils.copyToTarget(runtimeOptions,
-				AudioTranscriptionOptions.class, DashScopeSdkAudioTranscriptionOptions.class);
-		DashScopeSdkAudioTranscriptionOptions merged = ModelOptionsUtils.merge(runtime, options,
-				DashScopeSdkAudioTranscriptionOptions.class);
-		if (runtime != null && !CollectionUtils.isEmpty(runtime.getHttpHeaders())) {
-			merged.setHttpHeaders(runtime.getHttpHeaders());
-		}
-		else {
-			merged.setHttpHeaders(this.defaultOptions.getHttpHeaders());
-		}
-		return merged;
 	}
 
 	private List<String> resolveFileUrls(AudioTranscriptionPrompt prompt, DashScopeSdkAudioTranscriptionOptions options) {
@@ -144,7 +127,7 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 	}
 
 	private TranscriptionParam createRequest(List<String> fileUrls, DashScopeSdkAudioTranscriptionOptions options) {
-		String model = java.util.Objects.requireNonNull(options.getModel(),
+		String model = Objects.requireNonNull(options.getModel(),
 				"DashScopeSdkAudioTranscriptionOptions model cannot be null");
 		TranscriptionParam.TranscriptionParamBuilder<?, ?> builder = TranscriptionParam.builder()
 			.model(model)
@@ -332,7 +315,7 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 	}
 
 	public DashScopeSdkAudioTranscriptionOptions getDefaultOptions() {
-		return java.util.Objects.requireNonNull(DashScopeSdkAudioTranscriptionOptions.fromOptions(this.defaultOptions));
+		return Objects.requireNonNull(DashScopeSdkAudioTranscriptionOptions.fromOptions(this.defaultOptions));
 	}
 
 	public Builder mutate() {

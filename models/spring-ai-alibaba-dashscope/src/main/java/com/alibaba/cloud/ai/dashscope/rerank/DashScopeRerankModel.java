@@ -21,7 +21,6 @@ import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.document.DocumentWithScore;
 import com.alibaba.cloud.ai.model.RerankModel;
-import com.alibaba.cloud.ai.model.RerankOptions;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
 import com.alibaba.cloud.ai.model.RerankResponseMetadata;
@@ -30,7 +29,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
@@ -82,7 +80,11 @@ public class DashScopeRerankModel implements RerankModel {
 		Assert.notNull(request.getQuery(), "query must not be null");
 		Assert.notNull(request.getInstructions(), "documents must not be null");
 
-		DashScopeRerankOptions requestOptions = mergeOptions(request.getOptions(), this.defaultOptions);
+        // Merge request options with default options
+		DashScopeRerankOptions requestOptions = DashScopeRerankOptions.builder()
+                .from(defaultOptions)
+                .merge(request.getOptions())
+                .build();
         DashScopeApiSpec.RerankRequest rerankRequest = createRequest(request, requestOptions);
 
 		ResponseEntity<DashScopeApiSpec.RerankResponse> responseEntity = RetryUtils.execute(this.retryTemplate,
@@ -115,27 +117,6 @@ public class DashScopeRerankModel implements RerankModel {
 				requestOptions.getTopN(), requestOptions.getReturnDocuments());
 		var input = new DashScopeApiSpec.RerankRequestInput(request.getQuery(), docs);
 		return new DashScopeApiSpec.RerankRequest(requestOptions.getModel(), input, parameter);
-	}
-
-	/**
-	 * Merge runtime and default {@link RerankOptions} to compute the final options to use
-	 * in the request.
-	 */
-	private DashScopeRerankOptions mergeOptions(@Nullable RerankOptions runtimeOptions,
-			DashScopeRerankOptions defaultOptions) {
-		var runtimeOptionsForProvider = ModelOptionsUtils.copyToTarget(runtimeOptions, RerankOptions.class,
-				DashScopeRerankOptions.class);
-
-		if (runtimeOptionsForProvider == null) {
-			return defaultOptions;
-		}
-
-		return DashScopeRerankOptions.builder()
-			.model(ModelOptionsUtils.mergeOption(runtimeOptionsForProvider.getModel(), defaultOptions.getModel()))
-			.topN(ModelOptionsUtils.mergeOption(runtimeOptionsForProvider.getTopN(), defaultOptions.getTopN()))
-			.returnDocuments(ModelOptionsUtils.mergeOption(runtimeOptionsForProvider.getReturnDocuments(),
-					defaultOptions.getReturnDocuments()))
-			.build();
 	}
 
     /**

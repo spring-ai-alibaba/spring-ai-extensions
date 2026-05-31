@@ -26,11 +26,9 @@ import io.reactivex.disposables.Disposable;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.tts.Speech;
 import org.springframework.ai.audio.tts.TextToSpeechModel;
-import org.springframework.ai.audio.tts.TextToSpeechOptions;
 import org.springframework.ai.audio.tts.TextToSpeechPrompt;
 import org.springframework.ai.audio.tts.TextToSpeechResponse;
 import org.springframework.ai.audio.tts.TextToSpeechResponseMetadata;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.CollectionUtils;
@@ -41,6 +39,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * {@link TextToSpeechModel} implementation backed by DashScope Java SDK.
@@ -93,8 +92,12 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 	}
 
 	private SpeechSynthesisParam createRequest(TextToSpeechPrompt prompt, boolean stream) {
-		DashScopeSdkAudioSpeechOptions options = mergeOptions(prompt.getOptions());
-		String model = java.util.Objects.requireNonNull(options.getModel(),
+        // Merge request options with default options
+		DashScopeSdkAudioSpeechOptions options = DashScopeSdkAudioSpeechOptions.builder()
+                .from(this.defaultOptions)
+                .merge(prompt.getOptions())
+                .build();
+		String model = Objects.requireNonNull(options.getModel(),
 				"DashScopeSdkAudioSpeechOptions model cannot be null");
 
 		SpeechSynthesisParam.SpeechSynthesisParamBuilder<?, ?> builder = SpeechSynthesisParam.builder()
@@ -149,25 +152,6 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 		}
 
 		return builder.build();
-	}
-
-	private DashScopeSdkAudioSpeechOptions mergeOptions(TextToSpeechOptions runtimeOptions) {
-		DashScopeSdkAudioSpeechOptions options = java.util.Objects.requireNonNull(
-				DashScopeSdkAudioSpeechOptions.fromOptions(this.defaultOptions));
-		if (runtimeOptions == null) {
-			return options;
-		}
-		DashScopeSdkAudioSpeechOptions runtime = ModelOptionsUtils.copyToTarget(runtimeOptions, TextToSpeechOptions.class,
-				DashScopeSdkAudioSpeechOptions.class);
-		DashScopeSdkAudioSpeechOptions merged = ModelOptionsUtils.merge(runtime, options,
-				DashScopeSdkAudioSpeechOptions.class);
-		if (runtime != null && !CollectionUtils.isEmpty(runtime.getHttpHeaders())) {
-			merged.setHttpHeaders(runtime.getHttpHeaders());
-		}
-		else {
-			merged.setHttpHeaders(this.defaultOptions.getHttpHeaders());
-		}
-		return merged;
 	}
 
 	private ByteBuffer executeCall(SpeechSynthesisParam request) {
@@ -240,7 +224,7 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 
 	@Override
 	public DashScopeSdkAudioSpeechOptions getDefaultOptions() {
-		return java.util.Objects.requireNonNull(DashScopeSdkAudioSpeechOptions.fromOptions(this.defaultOptions));
+		return Objects.requireNonNull(DashScopeSdkAudioSpeechOptions.fromOptions(this.defaultOptions));
 	}
 
 	public Builder mutate() {

@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -131,7 +132,8 @@ public class DashScopeDocumentRetrievalAdvisor implements BaseAdvisor {
 	public ChatClientRequest before(ChatClientRequest chatClientRequest, @Nullable AdvisorChain advisorChain) {
 		Map<String, Object> context = new HashMap<>(chatClientRequest.context());
 
-		Query originalQuery = Query.builder().text(chatClientRequest.prompt().getUserMessage().getText()).build();
+        String text = chatClientRequest.prompt().getUserMessage().getText();
+        Query originalQuery = Query.builder().text(Objects.requireNonNullElse(text, "")).build();
 
 		List<Document> documents = retriever.retrieve(originalQuery);
 
@@ -202,8 +204,8 @@ public class DashScopeDocumentRetrievalAdvisor implements BaseAdvisor {
 				}
 			}
 		}
-		chatResponseBuilder.metadata(DashScopeApiConstants.RETRIEVED_DOCUMENTS,
-				response.context().get(DashScopeApiConstants.RETRIEVED_DOCUMENTS));
+        chatResponseBuilder.metadata(DashScopeApiConstants.RETRIEVED_DOCUMENTS,
+                Objects.requireNonNullElse(response.context().get(DashScopeApiConstants.RETRIEVED_DOCUMENTS), Map.of()));
 		return ChatClientResponse.builder().chatResponse(chatResponseBuilder.build()).context(context).build();
 	}
 

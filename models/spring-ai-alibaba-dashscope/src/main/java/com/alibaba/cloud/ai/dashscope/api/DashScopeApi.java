@@ -42,10 +42,10 @@ import okhttp3.Response;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.model.ApiKey;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.model.NoopApiKey;
 import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.retry.RetryUtils;
+import org.springframework.ai.util.JsonHelper;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpEntity;
@@ -125,6 +125,8 @@ public class DashScopeApi {
 
 	private final ResponseErrorHandler responseErrorHandler;
 
+	private final JsonHelper jsonHelper;
+
     @Override
     public DashScopeApi clone() {
         return mutate().build();
@@ -177,6 +179,7 @@ public class DashScopeApi {
 		this.embeddingsPath = embeddingsPath;
         this.rerankPath = rerankPath;
 		this.responseErrorHandler = responseErrorHandler;
+        this.jsonHelper = new JsonHelper();
 
 		// For DashScope API, the workspace ID is passed in the headers.
 		if (StringUtils.hasText(workSpaceId)) {
@@ -382,7 +385,7 @@ public class DashScopeApi {
 				new DashScopeApiSpec.EmbeddingConfiguredTransformations.EmbeddingComponent(embeddingModelName));
 		DashScopeDocumentTransformerOptions transformerOptions = storeOptions.getTransformerOptions();
 		if (transformerOptions == null) {
-			transformerOptions = new DashScopeDocumentTransformerOptions();
+			transformerOptions = DashScopeDocumentTransformerOptions.builder().build();
 		}
 		DashScopeApiSpec.ParserConfiguredTransformations parserConfig = new DashScopeApiSpec.ParserConfiguredTransformations(
 				"DASHSCOPE_JSON_NODE_PARSER",
@@ -391,7 +394,7 @@ public class DashScopeApi {
 						transformerOptions.getSeparator(), transformerOptions.getLanguage()));
 		DashScopeDocumentRetrieverOptions retrieverOptions = storeOptions.getRetrieverOptions();
 		if (retrieverOptions == null) {
-			retrieverOptions = new DashScopeDocumentRetrieverOptions();
+			retrieverOptions = DashScopeDocumentRetrieverOptions.builder().build();
 		}
 		DashScopeApiSpec.RetrieverConfiguredTransformations retrieverConfig = new DashScopeApiSpec.RetrieverConfiguredTransformations(
 				"DASHSCOPE_RETRIEVER",
@@ -594,12 +597,12 @@ public class DashScopeApi {
 			.takeUntil(SSE_DONE_PREDICATE)
 			.filter(SSE_DONE_PREDICATE.negate())
 			.map(content -> {
-				DashScopeApiSpec.DashScopeErrorResponse error = ModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.DashScopeErrorResponse.class);
+				DashScopeApiSpec.DashScopeErrorResponse error = jsonHelper.fromJson(content, DashScopeApiSpec.DashScopeErrorResponse.class);
 				if (error != null && error.code() != null) {
 					throw new DashScopeException(error.code(),String.format("[%s] %s (requestId: %s)",
 						error.code(), error.message(), error.requestId()));
 				}
-				DashScopeApiSpec.ChatCompletionChunk chunk = ModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.ChatCompletionChunk.class);
+				DashScopeApiSpec.ChatCompletionChunk chunk = jsonHelper.fromJson(content, DashScopeApiSpec.ChatCompletionChunk.class);
 				if (chunk == null) {
 					throw new DashScopeException("Failed to parse response content: " + content);
 				}

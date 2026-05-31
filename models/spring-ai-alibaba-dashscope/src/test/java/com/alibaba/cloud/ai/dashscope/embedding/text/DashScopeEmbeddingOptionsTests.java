@@ -20,10 +20,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.embedding.EmbeddingOptions;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Test cases for DashScopeEmbeddingOptions. Tests cover builder pattern, getters/setters,
- * and JSON properties.
+ * Test cases for DashScopeEmbeddingOptions. Tests cover builder pattern, getters,
+ * fromOptions, validation, and JSON properties.
  *
  * @author yuluo
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
@@ -40,30 +41,12 @@ class DashScopeEmbeddingOptionsTests {
 
 	@Test
 	void testBuilderAndGetters() {
-		// Test building DashScopeEmbeddingOptions using builder pattern and verify
-		// getters
 		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
 			.model(TEST_MODEL)
 			.textType(TEST_TEXT_TYPE)
 			.dimensions(TEST_DIMENSIONS)
 			.build();
 
-		// Verify all fields are set correctly
-		assertThat(options.getModel()).isEqualTo(TEST_MODEL);
-		assertThat(options.getTextType()).isEqualTo(TEST_TEXT_TYPE);
-		assertThat(options.getDimensions()).isEqualTo(TEST_DIMENSIONS);
-	}
-
-	@Test
-	void testSettersAndGetters() {
-		// Test setters and getters
-		DashScopeEmbeddingOptions options = new DashScopeEmbeddingOptions();
-
-		options.setModel(TEST_MODEL);
-		options.setTextType(TEST_TEXT_TYPE);
-		options.setDimensions(TEST_DIMENSIONS);
-
-		// Verify all fields are set correctly
 		assertThat(options.getModel()).isEqualTo(TEST_MODEL);
 		assertThat(options.getTextType()).isEqualTo(TEST_TEXT_TYPE);
 		assertThat(options.getDimensions()).isEqualTo(TEST_DIMENSIONS);
@@ -71,47 +54,42 @@ class DashScopeEmbeddingOptionsTests {
 
 	@Test
 	void testDefaultValues() {
-		// Test default values when creating a new instance
-		DashScopeEmbeddingOptions options = new DashScopeEmbeddingOptions();
+		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder().build();
 
-		// Verify default values are null
 		assertThat(options.getModel()).isNull();
 		assertThat(options.getTextType()).isNull();
 		assertThat(options.getDimensions()).isNull();
+		assertThat(options.getOutputType()).isNull();
+		assertThat(options.getEmbeddingsPath()).isNull();
 	}
 
 	@Test
 	void testBuilderWithDefaultModel() {
-		// Test builder with default embedding model
 		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
 			.model(DashScopeApi.DEFAULT_EMBEDDING_MODEL)
 			.build();
 
-		// Verify default model is set correctly
 		assertThat(options.getModel()).isEqualTo(DashScopeApi.DEFAULT_EMBEDDING_MODEL);
 	}
 
 	@Test
 	void testBuilderWithDefaultTextType() {
-		// Test builder with default text type
 		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
 			.textType(DashScopeApi.DEFAULT_EMBEDDING_TEXT_TYPE)
 			.build();
 
-		// Verify default text type is set correctly
 		assertThat(options.getTextType()).isEqualTo(DashScopeApi.DEFAULT_EMBEDDING_TEXT_TYPE);
 	}
 
 	@Test
 	void testImplementsEmbeddingOptions() {
-		// Test that DashScopeEmbeddingOptions implements EmbeddingOptions interface
-		DashScopeEmbeddingOptions options = new DashScopeEmbeddingOptions();
+		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder().build();
 
 		assertThat(options).isInstanceOf(EmbeddingOptions.class);
 	}
 
 	@Test
-	void testDeprecatedWithMethodsAndEmbeddingsPath() {
+	void testEmbeddingsPath() {
 		DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
 			.model(TEST_MODEL)
 			.textType(TEST_TEXT_TYPE)
@@ -123,6 +101,61 @@ class DashScopeEmbeddingOptionsTests {
 		assertThat(options.getTextType()).isEqualTo(TEST_TEXT_TYPE);
 		assertThat(options.getDimensions()).isEqualTo(TEST_DIMENSIONS);
 		assertThat(options.getEmbeddingsPath()).isEqualTo("/tmp/embeddings");
+	}
+
+	@Test
+	void testOutputTypeValidationAcceptsValidValues() {
+		DashScopeEmbeddingOptions dense = DashScopeEmbeddingOptions.builder()
+			.outputType(DashScopeEmbeddingOptions.OUTPUT_TYPE_DENSE)
+			.build();
+		assertThat(dense.getOutputType()).isEqualTo("dense");
+
+		DashScopeEmbeddingOptions sparse = DashScopeEmbeddingOptions.builder()
+			.outputType(DashScopeEmbeddingOptions.OUTPUT_TYPE_SPARSE)
+			.build();
+		assertThat(sparse.getOutputType()).isEqualTo("sparse");
+
+		DashScopeEmbeddingOptions both = DashScopeEmbeddingOptions.builder()
+			.outputType(DashScopeEmbeddingOptions.OUTPUT_TYPE_DENSE_AND_SPARSE)
+			.build();
+		assertThat(both.getOutputType()).isEqualTo("dense&sparse");
+	}
+
+	@Test
+	void testOutputTypeValidationRejectsInvalidValue() {
+		assertThatThrownBy(() -> DashScopeEmbeddingOptions.builder().outputType("invalid"))
+			.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void testFromOptions() {
+		DashScopeEmbeddingOptions original = DashScopeEmbeddingOptions.builder()
+			.model(TEST_MODEL)
+			.textType(TEST_TEXT_TYPE)
+			.dimensions(TEST_DIMENSIONS)
+			.outputType(DashScopeEmbeddingOptions.OUTPUT_TYPE_DENSE)
+			.embeddingsPath("/tmp/embeddings")
+			.build();
+
+		DashScopeEmbeddingOptions copy = DashScopeEmbeddingOptions.fromOptions(original);
+
+		assertThat(copy).usingRecursiveComparison().isEqualTo(original);
+		assertThat(copy).isNotSameAs(original);
+	}
+
+	@Test
+	void testEqualsAndHashCode() {
+		DashScopeEmbeddingOptions options1 = DashScopeEmbeddingOptions.builder()
+			.model(TEST_MODEL)
+			.textType(TEST_TEXT_TYPE)
+			.build();
+		DashScopeEmbeddingOptions options2 = DashScopeEmbeddingOptions.builder()
+			.model(TEST_MODEL)
+			.textType(TEST_TEXT_TYPE)
+			.build();
+
+		assertThat(options1).isEqualTo(options2);
+		assertThat(options1.hashCode()).isEqualTo(options2.hashCode());
 	}
 
 }

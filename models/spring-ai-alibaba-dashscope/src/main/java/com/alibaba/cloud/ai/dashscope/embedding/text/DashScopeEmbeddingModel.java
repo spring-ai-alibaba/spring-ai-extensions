@@ -45,7 +45,6 @@ import org.springframework.ai.embedding.observation.DefaultEmbeddingModelObserva
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationContext;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationConvention;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationDocumentation;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.Assert;
@@ -204,27 +203,12 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
     }
 
     private EmbeddingRequest buildEmbeddingRequest(EmbeddingRequest embeddingRequest) {
-        DashScopeEmbeddingOptions requestOptions = mergeOptions(embeddingRequest.getOptions());
-        return new EmbeddingRequest(embeddingRequest.getInstructions(), requestOptions);
-    }
-
-    private DashScopeEmbeddingOptions mergeOptions(@Nullable EmbeddingOptions options) {
-        DashScopeEmbeddingOptions runtimeOptions = null;
-        if (options != null) {
-            runtimeOptions = ModelOptionsUtils.copyToTarget(options, EmbeddingOptions.class,
-                    DashScopeEmbeddingOptions.class);
-        }
-
-        return runtimeOptions == null ? this.defaultOptions
-                : DashScopeEmbeddingOptions.builder()
-                .model(ModelOptionsUtils.mergeOption(runtimeOptions.getModel(), this.defaultOptions.getModel()))
-                .dimensions(ModelOptionsUtils.mergeOption(runtimeOptions.getDimensions(),
-                        this.defaultOptions.getDimensions()))
-                .textType(ModelOptionsUtils.mergeOption(runtimeOptions.getTextType(),
-                        this.defaultOptions.getTextType()))
-                .outputType(ModelOptionsUtils.mergeOption(runtimeOptions.getOutputType(),
-                        this.defaultOptions.getOutputType()))
+        // Merge request options with default options
+        DashScopeEmbeddingOptions requestOptions = DashScopeEmbeddingOptions.builder()
+                .from(this.defaultOptions)
+                .merge(embeddingRequest.getOptions())
                 .build();
+        return new EmbeddingRequest(embeddingRequest.getInstructions(), requestOptions);
     }
 
     private DashScopeApiSpec.EmbeddingRequest createRequest(EmbeddingRequest request) {
@@ -293,8 +277,12 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
      * @return The embeddings
      */
     @Override
-    public List<float[]> embed(List<Document> documents, EmbeddingOptions options, BatchingStrategy batchingStrategy) {
-        DashScopeEmbeddingOptions requestOptions = mergeOptions(options);
+    public List<float[]> embed(List<Document> documents, @Nullable EmbeddingOptions options, BatchingStrategy batchingStrategy) {
+        // Merge request options with default options
+        DashScopeEmbeddingOptions requestOptions = DashScopeEmbeddingOptions.builder()
+                .from(this.defaultOptions)
+                .merge(options)
+                .build();
         validateDenseEmbeddingApiOutputType(requestOptions);
         return super.embed(documents, requestOptions, batchingStrategy);
     }

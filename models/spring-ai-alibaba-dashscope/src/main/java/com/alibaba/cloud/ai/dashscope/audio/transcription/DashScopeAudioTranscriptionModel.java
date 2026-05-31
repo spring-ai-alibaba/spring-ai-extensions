@@ -36,10 +36,8 @@ import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.util.JacksonUtils;
 import org.springframework.core.retry.RetryTemplate;
@@ -89,7 +87,11 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 
 	@Override
 	public AudioTranscriptionResponse call(AudioTranscriptionPrompt prompt) {
-        DashScopeAudioTranscriptionOptions options = this.mergeOptions(prompt);
+        // Merge request options with default options
+        DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+                .from(defaultOptions)
+                .merge(prompt.getOptions())
+                .build();
 		String model = Objects.requireNonNull(options.getModel(), "model must not be null");
         if (DashScopeAudioApiConstants.isLiveTranslate(model)) {
             // prompt 类型强转判断
@@ -124,7 +126,11 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 
 	@Override
 	public Flux<AudioTranscriptionResponse> stream(AudioTranscriptionPrompt prompt) {
-        DashScopeAudioTranscriptionOptions options = this.mergeOptions(prompt);
+        // Merge request options with default options
+        DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+                .from(defaultOptions)
+                .merge(prompt.getOptions())
+                .build();
 		String model = Objects.requireNonNull(options.getModel(), "model must not be null");
         if (DashScopeAudioApiConstants.isLiveTranslate(model)) {
             // prompt 类型强转判断
@@ -173,7 +179,11 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	 */
 	public Flux<RecognitionResult> streamRecognition(Flux<ByteBuffer> audioStream,
 			DashScopeAudioTranscriptionOptions options) {
-		DashScopeAudioTranscriptionOptions mergedOptions = mergeOptions(options);
+        // Merge request options with default options
+        DashScopeAudioTranscriptionOptions mergedOptions = DashScopeAudioTranscriptionOptions.builder()
+                .from(defaultOptions)
+                .merge(options)
+                .build();
 		String model = Objects.requireNonNull(mergedOptions.getModel(), "model must not be null");
 		if (!DashScopeAudioApiConstants.PARAFORMER_REALTIME_ONLY_LIST.contains(model)) {
 			throw new IllegalArgumentException(
@@ -198,7 +208,11 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	 */
 	public Flux<TranslationRecognitionResult> streamTranslation(Flux<ByteBuffer> audioStream,
 			DashScopeAudioTranscriptionOptions options) {
-		DashScopeAudioTranscriptionOptions mergedOptions = mergeOptions(options);
+        // Merge request options with default options
+        DashScopeAudioTranscriptionOptions mergedOptions = DashScopeAudioTranscriptionOptions.builder()
+                .from(defaultOptions)
+                .merge(options)
+                .build();
 		String model = Objects.requireNonNull(mergedOptions.getModel(), "model must not be null");
 		if (!DashScopeAudioApiConstants.GUMMY_REALTIME_LIST.contains(model)) {
 			throw new IllegalArgumentException(
@@ -222,7 +236,11 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	 */
 	public Flux<TranslationRecognitionResult> streamTranslationChat(Flux<ByteBuffer> audioStream,
 			DashScopeAudioTranscriptionOptions options) {
-		DashScopeAudioTranscriptionOptions mergedOptions = mergeOptions(options);
+        // Merge request options with default options
+        DashScopeAudioTranscriptionOptions mergedOptions = DashScopeAudioTranscriptionOptions.builder()
+                .from(defaultOptions)
+                .merge(options)
+                .build();
 		String model = Objects.requireNonNull(mergedOptions.getModel(), "model must not be null");
 		if (!DashScopeAudioApiConstants.GUMMY_CHAT_LIST.contains(model)) {
 			throw new IllegalArgumentException(
@@ -233,24 +251,6 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 		return audioTranscriptionApi.createWebSocketStreamingTask(audioStream, mergedOptions)
 				.map(this::parseTranslationRecognitionResult)
 				.takeUntil(TranslationRecognitionResult::isSentenceEnd);
-	}
-
-	// ==================== Option Merging ====================
-
-	private DashScopeAudioTranscriptionOptions mergeOptions(AudioTranscriptionPrompt prompt) {
-        DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder().build();
-        DashScopeAudioTranscriptionOptions runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(), AudioTranscriptionOptions.class, DashScopeAudioTranscriptionOptions.class);
-
-        options = ModelOptionsUtils.merge(runtimeOptions, options, DashScopeAudioTranscriptionOptions.class);
-
-        return ModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioTranscriptionOptions.class);
-	}
-
-	private DashScopeAudioTranscriptionOptions mergeOptions(DashScopeAudioTranscriptionOptions options) {
-		if (options == null) {
-			return this.defaultOptions;
-		}
-		return ModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioTranscriptionOptions.class);
 	}
 
 	// ==================== WebSocket Response Parsing ====================

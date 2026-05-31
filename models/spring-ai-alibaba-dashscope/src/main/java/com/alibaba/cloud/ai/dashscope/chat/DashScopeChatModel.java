@@ -61,9 +61,7 @@ import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.chat.observation.ChatModelObservationDocumentation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.model.tool.ToolExecutionEligibilityPredicate;
 import org.springframework.ai.model.tool.ToolExecutionResult;
@@ -192,7 +190,7 @@ public class DashScopeChatModel implements ChatModel {
 
 	@Override
 	public ChatOptions getDefaultOptions() {
-		return DashScopeChatOptions.fromOptions(this.defaultOptions);
+		return this.defaultOptions.copy();
 	}
 
 	public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
@@ -458,65 +456,13 @@ public class DashScopeChatModel implements ChatModel {
 		return ChatResponseMetadata.builder().id(result.requestId()).usage(usage).model("").build();
 	}
 
-	Prompt buildRequestPrompt(Prompt prompt) {
-		// Process runtime options
-		DashScopeChatOptions runtimeOptions = null;
-		if (prompt.getOptions() != null) {
-			if (prompt.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions) {
-				runtimeOptions = ModelOptionsUtils.copyToTarget(toolCallingChatOptions, ToolCallingChatOptions.class,
-						DashScopeChatOptions.class);
-			}
-			else {
-				runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(), ChatOptions.class,
-						DashScopeChatOptions.class);
-			}
-		}
-
-		// Define request options by merging runtime options and default options
-		DashScopeChatOptions requestOptions = ModelOptionsUtils.merge(runtimeOptions, this.defaultOptions,
-				DashScopeChatOptions.class);
-
-		// copy http headers options.
-		if (runtimeOptions != null && !CollectionUtils.isEmpty(runtimeOptions.getHttpHeaders())) {
-			requestOptions.setHttpHeaders(runtimeOptions.getHttpHeaders());
-		}
-		else {
-			requestOptions.setHttpHeaders(this.defaultOptions.getHttpHeaders());
-		}
-
-		// Merge @JsonIgnore-annotated options explicitly since they are ignored by
-		// Jackson, used by ModelOptionsUtils.
-		if (runtimeOptions != null) {
-			requestOptions.setInternalToolExecutionEnabled(
-					ModelOptionsUtils.mergeOption(runtimeOptions.getInternalToolExecutionEnabled(),
-							this.defaultOptions.getInternalToolExecutionEnabled()));
-			requestOptions.setToolNames(ToolCallingChatOptions.mergeToolNames(runtimeOptions.getToolNames(),
-					this.defaultOptions.getToolNames()));
-			requestOptions.setToolCallbacks(ToolCallingChatOptions.mergeToolCallbacks(runtimeOptions.getToolCallbacks(),
-					this.defaultOptions.getToolCallbacks()));
-			requestOptions.setToolContext(ToolCallingChatOptions.mergeToolContext(runtimeOptions.getToolContext(),
-					this.defaultOptions.getToolContext()));
-            requestOptions.setExtraBody(mergeExtraBody(runtimeOptions.getExtraBody(), this.defaultOptions.getExtraBody()));
-		}
-		else {
-			requestOptions.setInternalToolExecutionEnabled(this.defaultOptions.getInternalToolExecutionEnabled());
-			requestOptions.setToolNames(this.defaultOptions.getToolNames());
-			requestOptions.setToolCallbacks(this.defaultOptions.getToolCallbacks());
-			requestOptions.setToolContext(this.defaultOptions.getToolContext());
-            requestOptions.setExtraBody(this.defaultOptions.getExtraBody());
-		}
-
-		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
-
-		return new Prompt(prompt.getInstructions(), requestOptions);
-	}
-
 	/**
 	 * Accessible for testing.
 	 */
 	ChatCompletionRequest createRequest(Prompt prompt, boolean stream) {
 
 		List<ChatCompletionMessage> chatCompletionMessages = prompt.getInstructions().stream().map(message -> {
+            Assert.notNull(message.getText(), "Text must not be null");
 			if (message.getMessageType() == MessageType.USER || message.getMessageType() == MessageType.SYSTEM) {
 				Object content = message.getText();
 				Map<String, String> cacheControl = extractCacheControl(message);
@@ -526,11 +472,13 @@ public class DashScopeChatModel implements ChatModel {
 						content = convertMediaContent(userMessage, cacheControl);
 					}
 					else if (cacheControl != null) {
+                        Assert.notNull(message.getText(), "Text must not be null");
 						// Convert text to MediaContent with cache_control
 						content = List.of(new MediaContent(message.getText(), cacheControl));
 					}
 				}
 				else if (message instanceof SystemMessage && cacheControl != null) {
+                    Assert.notNull(message.getText(), "Text must not be null");
 					// Convert system message text to MediaContent with cache_control
 					content = List.of(new MediaContent(message.getText(), cacheControl));
 				}
@@ -598,18 +546,16 @@ public class DashScopeChatModel implements ChatModel {
 				"Prompt options must be DashScopeChatOptions");
 		DashScopeChatOptions requestOptions = (DashScopeChatOptions) Objects.requireNonNull(prompt.getOptions());
 
-		// Add the tool definitions to the request's tools parameter.
-		List<ToolDefinition> toolDefinitions = this.toolCallingManager.resolveToolDefinitions(requestOptions);
-		if (!CollectionUtils.isEmpty(toolDefinitions)) {
-			requestOptions.setTools(getFunctionTools(toolDefinitions));
-		}
+        // Add the tool definitions to the request's tools parameter.
+        List<ToolDefinition> toolDefinitions = this.toolCallingManager.resolveToolDefinitions(requestOptions);
+        if (!CollectionUtils.isEmpty(toolDefinitions)) {
+            requestOptions = requestOptions.mutate().tools(getFunctionTools(toolDefinitions)).build();
+        }
 
 		Boolean multiModel = requestOptions.getMultiModel();
-		String model = StringUtils.hasText(requestOptions.getModel()) ? requestOptions.getModel()
-				: this.defaultOptions.getModel();
-		Assert.hasText(model, "DashScope model must not be empty");
+		Assert.hasText(requestOptions.getModel(), "DashScope model must not be empty");
 
-		return new ChatCompletionRequest(model,
+		return new ChatCompletionRequest(requestOptions.getModel(),
 				new ChatCompletionRequestInput(chatCompletionMessages),
 				toDashScopeRequestParameter(requestOptions, stream), stream, Boolean.TRUE.equals(multiModel));
 	}
@@ -657,6 +603,7 @@ public class DashScopeChatModel implements ChatModel {
 	}
 
 	private List<MediaContent> convertMediaContent(UserMessage message, @Nullable Map<String, String> cacheControl) {
+        Assert.hasText(message.getText(), "User message text must not be empty");
 		MessageFormat format = MessageFormat.IMAGE;
 		if (message.getMetadata().get(DashScopeApiConstants.MESSAGE_FORMAT) instanceof MessageFormat messageFormat) {
 			format = messageFormat;

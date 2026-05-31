@@ -20,7 +20,7 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
-import org.springframework.ai.model.ModelOptionsUtils;
+import org.springframework.ai.util.JsonHelper;
 
 /**
  * Lets you specify the format of the returned content. Valid values: {"type": "text"} or
@@ -110,7 +110,7 @@ public class DashScopeResponseFormat {
 
 	@Override
 	public String toString() {
-        return ModelOptionsUtils.toJsonString(this);
+        return new JsonHelper().toJson(this);
 	}
 
 	@Override

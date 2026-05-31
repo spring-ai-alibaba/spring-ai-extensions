@@ -40,7 +40,6 @@ import org.springframework.ai.embedding.observation.DefaultEmbeddingModelObserva
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationContext;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationConvention;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationDocumentation;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.Assert;
@@ -51,6 +50,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * {@link EmbeddingModel} implementation backed by DashScope Java SDK.
@@ -137,35 +137,17 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 	}
 
 	private EmbeddingRequest buildEmbeddingRequest(EmbeddingRequest embeddingRequest) {
-		DashScopeSdkEmbeddingOptions runtimeOptions = null;
-		if (embeddingRequest.getOptions() != null) {
-			runtimeOptions = ModelOptionsUtils.copyToTarget(embeddingRequest.getOptions(), EmbeddingOptions.class,
-					DashScopeSdkEmbeddingOptions.class);
-		}
-
-		DashScopeSdkEmbeddingOptions requestOptions = runtimeOptions == null ? DashScopeSdkEmbeddingOptions
-			.fromOptions(this.defaultOptions)
-			: DashScopeSdkEmbeddingOptions.builder()
-				.model(ModelOptionsUtils.mergeOption(runtimeOptions.getModel(), this.defaultOptions.getModel()))
-				.dimensions(ModelOptionsUtils.mergeOption(runtimeOptions.getDimensions(), this.defaultOptions.getDimensions()))
-				.textType(ModelOptionsUtils.mergeOption(runtimeOptions.getTextType(), this.defaultOptions.getTextType()))
+		DashScopeSdkEmbeddingOptions requestOptions = DashScopeSdkEmbeddingOptions.builder()
+				.from(this.defaultOptions)
+				.merge(embeddingRequest.getOptions())
 				.build();
-		requestOptions = java.util.Objects.requireNonNull(requestOptions);
-
-		if (runtimeOptions != null && !CollectionUtils.isEmpty(runtimeOptions.getHttpHeaders())) {
-			requestOptions.setHttpHeaders(runtimeOptions.getHttpHeaders());
-		}
-		else {
-			requestOptions.setHttpHeaders(this.defaultOptions.getHttpHeaders());
-		}
-
 		return new EmbeddingRequest(embeddingRequest.getInstructions(), requestOptions);
 	}
 
 	private TextEmbeddingParam createRequest(EmbeddingRequest request) {
 		DashScopeSdkEmbeddingOptions requestOptions = (DashScopeSdkEmbeddingOptions) request.getOptions();
 		Assert.notNull(requestOptions, "DashScopeSdkEmbeddingOptions cannot be null");
-		String model = java.util.Objects.requireNonNull(requestOptions.getModel(),
+		String model = Objects.requireNonNull(requestOptions.getModel(),
 				"DashScopeSdkEmbeddingOptions model cannot be null");
 
 		TextEmbeddingParam.TextEmbeddingParamBuilder<?, ?> builder = TextEmbeddingParam.builder()
@@ -280,7 +262,7 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 	}
 
 	public DashScopeSdkEmbeddingOptions getDefaultOptions() {
-		return java.util.Objects.requireNonNull(DashScopeSdkEmbeddingOptions.fromOptions(this.defaultOptions));
+		return Objects.requireNonNull(DashScopeSdkEmbeddingOptions.fromOptions(this.defaultOptions));
 	}
 
 	public void setObservationConvention(EmbeddingModelObservationConvention observationConvention) {

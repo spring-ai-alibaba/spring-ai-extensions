@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.alibaba.cloud.ai.dashscope.sdk.chat;
 
 import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException;
@@ -54,9 +53,7 @@ import org.springframework.ai.chat.observation.ChatModelObservationDocumentation
 import org.springframework.ai.chat.observation.DefaultChatModelObservationConvention;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.model.tool.ToolExecutionEligibilityPredicate;
 import org.springframework.ai.model.tool.ToolExecutionResult;
@@ -75,6 +72,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * {@link ChatModel} implementation backed by DashScope Java SDK.
@@ -151,7 +149,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	@Override
 	public ChatOptions getDefaultOptions() {
-		return java.util.Objects.requireNonNull(DashScopeSdkChatOptions.fromOptions(this.defaultOptions));
+		return Objects.requireNonNull(DashScopeSdkChatOptions.fromOptions(this.defaultOptions));
 	}
 
 	public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
@@ -231,57 +229,10 @@ public class DashScopeSdkChatModel implements ChatModel {
 		});
 	}
 
-	Prompt buildRequestPrompt(Prompt prompt) {
-		DashScopeSdkChatOptions runtimeOptions = null;
-		if (prompt.getOptions() != null) {
-			if (prompt.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions) {
-				runtimeOptions = ModelOptionsUtils.copyToTarget(toolCallingChatOptions, ToolCallingChatOptions.class,
-						DashScopeSdkChatOptions.class);
-			}
-			else {
-				runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(), ChatOptions.class,
-						DashScopeSdkChatOptions.class);
-			}
-		}
-
-		DashScopeSdkChatOptions requestOptions = ModelOptionsUtils.merge(runtimeOptions, this.defaultOptions,
-				DashScopeSdkChatOptions.class);
-
-		if (runtimeOptions != null && !CollectionUtils.isEmpty(runtimeOptions.getHttpHeaders())) {
-			requestOptions.setHttpHeaders(runtimeOptions.getHttpHeaders());
-		}
-		else {
-			requestOptions.setHttpHeaders(this.defaultOptions.getHttpHeaders());
-		}
-
-		if (runtimeOptions != null) {
-			requestOptions.setInternalToolExecutionEnabled(ModelOptionsUtils.mergeOption(
-					runtimeOptions.getInternalToolExecutionEnabled(),
-					this.defaultOptions.getInternalToolExecutionEnabled()));
-			requestOptions.setToolNames(ToolCallingChatOptions.mergeToolNames(runtimeOptions.getToolNames(),
-					this.defaultOptions.getToolNames()));
-			requestOptions.setToolCallbacks(ToolCallingChatOptions.mergeToolCallbacks(runtimeOptions.getToolCallbacks(),
-					this.defaultOptions.getToolCallbacks()));
-			requestOptions.setToolContext(ToolCallingChatOptions.mergeToolContext(runtimeOptions.getToolContext(),
-					this.defaultOptions.getToolContext()));
-			requestOptions.setExtraBody(mergeExtraBody(runtimeOptions.getExtraBody(), this.defaultOptions.getExtraBody()));
-		}
-		else {
-			requestOptions.setInternalToolExecutionEnabled(this.defaultOptions.getInternalToolExecutionEnabled());
-			requestOptions.setToolNames(this.defaultOptions.getToolNames());
-			requestOptions.setToolCallbacks(this.defaultOptions.getToolCallbacks());
-			requestOptions.setToolContext(this.defaultOptions.getToolContext());
-			requestOptions.setExtraBody(this.defaultOptions.getExtraBody());
-		}
-
-		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
-		return new Prompt(prompt.getInstructions(), requestOptions);
-	}
-
 	GenerationParam createRequest(Prompt prompt, boolean stream) {
 		DashScopeSdkChatOptions requestOptions = (DashScopeSdkChatOptions) prompt.getOptions();
 		Assert.notNull(requestOptions, "DashScopeSdkChatOptions cannot be null");
-		String model = java.util.Objects.requireNonNull(requestOptions.getModel(),
+		String model = Objects.requireNonNull(requestOptions.getModel(),
 				"DashScopeSdkChatOptions model cannot be null");
 		List<Message> sdkMessages = toSdkMessages(prompt);
 

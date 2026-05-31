@@ -73,16 +73,36 @@ class DashScopeRerankOptionsTests {
 	 * instance creation using setter methods and retrieved using getter methods.
 	 */
 	@Test
-	void testSettersAndGetters() {
-		DashScopeRerankOptions options = DashScopeRerankOptions.builder().build();
+	void testMutate() {
+		DashScopeRerankOptions original = DashScopeRerankOptions.builder()
+			.model(TEST_MODEL)
+			.topN(TEST_TOP_N)
+			.returnDocuments(TEST_RETURN_DOCUMENTS)
+			.build();
 
-		options.setModel(TEST_MODEL);
-		options.setTopN(TEST_TOP_N);
-		options.setReturnDocuments(TEST_RETURN_DOCUMENTS);
+		DashScopeRerankOptions modified = original.mutate()
+			.model("modified-model")
+			.build();
 
-		assertThat(options.getModel()).isEqualTo(TEST_MODEL);
-		assertThat(options.getTopN()).isEqualTo(TEST_TOP_N);
-		assertThat(options.getReturnDocuments()).isEqualTo(TEST_RETURN_DOCUMENTS);
+		assertThat(modified).isNotSameAs(original);
+		assertThat(modified.getModel()).isEqualTo("modified-model");
+		assertThat(modified.getTopN()).isEqualTo(TEST_TOP_N);
+		assertThat(modified.getReturnDocuments()).isEqualTo(TEST_RETURN_DOCUMENTS);
+		assertThat(original.getModel()).isEqualTo(TEST_MODEL);
+	}
+
+	@Test
+	void testFromOptions() {
+		DashScopeRerankOptions original = DashScopeRerankOptions.builder()
+			.model(TEST_MODEL)
+			.topN(TEST_TOP_N)
+			.build();
+
+		DashScopeRerankOptions copy = DashScopeRerankOptions.fromOptions(original);
+
+		assertThat(copy).isNotSameAs(original);
+		assertThat(copy.getModel()).isEqualTo(TEST_MODEL);
+		assertThat(copy.getTopN()).isEqualTo(TEST_TOP_N);
 	}
 
 	/**

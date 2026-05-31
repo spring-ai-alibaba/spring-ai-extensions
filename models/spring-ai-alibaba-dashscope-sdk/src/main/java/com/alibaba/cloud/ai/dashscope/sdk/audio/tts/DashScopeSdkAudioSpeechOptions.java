@@ -33,63 +33,65 @@ import java.util.Objects;
 public class DashScopeSdkAudioSpeechOptions implements TextToSpeechOptions {
 
 	@JsonProperty("model")
-	private @Nullable String model;
+	private final @Nullable String model;
 
 	@JsonProperty("voice")
-	private @Nullable String voice;
+	private final @Nullable String voice;
 
 	@JsonProperty("format")
-	private @Nullable String format;
+	private final @Nullable String format;
 
 	@JsonProperty("speed")
-	private @Nullable Double speed;
+	private final @Nullable Double speed;
 
 	@JsonProperty("text_type")
-	private @Nullable String textType;
+	private final @Nullable String textType;
 
 	@JsonProperty("sample_rate")
-	private @Nullable Integer sampleRate;
+	private final @Nullable Integer sampleRate;
 
 	@JsonProperty("volume")
-	private @Nullable Integer volume;
+	private final @Nullable Integer volume;
 
 	@JsonProperty("rate")
-	private @Nullable Float rate;
+	private final @Nullable Float rate;
 
 	@JsonProperty("pitch")
-	private @Nullable Float pitch;
+	private final @Nullable Float pitch;
 
 	@JsonProperty("word_timestamp_enabled")
-	private @Nullable Boolean wordTimestampEnabled;
+	private final @Nullable Boolean wordTimestampEnabled;
 
 	@JsonProperty("phoneme_timestamp_enabled")
-	private @Nullable Boolean phonemeTimestampEnabled;
+	private final @Nullable Boolean phonemeTimestampEnabled;
 
 	@JsonIgnore
-	private Map<String, String> httpHeaders = new HashMap<>();
+	private final Map<String, String> httpHeaders;
 
-	public static DashScopeSdkAudioSpeechOptionsBuilder builder() {
-		return new DashScopeSdkAudioSpeechOptionsBuilder();
+	protected DashScopeSdkAudioSpeechOptions(@Nullable String model, @Nullable String voice, @Nullable String format,
+			@Nullable Double speed, @Nullable String textType, @Nullable Integer sampleRate, @Nullable Integer volume,
+			@Nullable Float rate, @Nullable Float pitch, @Nullable Boolean wordTimestampEnabled,
+			@Nullable Boolean phonemeTimestampEnabled, @Nullable Map<String, String> httpHeaders) {
+		this.model = model;
+		this.voice = voice;
+		this.format = format;
+		this.speed = speed;
+		this.textType = textType;
+		this.sampleRate = sampleRate;
+		this.volume = volume;
+		this.rate = rate;
+		this.pitch = pitch;
+		this.wordTimestampEnabled = wordTimestampEnabled;
+		this.phonemeTimestampEnabled = phonemeTimestampEnabled;
+		this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
 	}
 
-	public static @Nullable DashScopeSdkAudioSpeechOptions fromOptions(@Nullable DashScopeSdkAudioSpeechOptions options) {
-		if (options == null) {
-			return null;
-		}
-		DashScopeSdkAudioSpeechOptions copy = new DashScopeSdkAudioSpeechOptions();
-		copy.setModel(options.getModel());
-		copy.setVoice(options.getVoice());
-		copy.setFormat(options.getFormat());
-		copy.setSpeed(options.getSpeed());
-		copy.setTextType(options.getTextType());
-		copy.setSampleRate(options.getSampleRate());
-		copy.setVolume(options.getVolume());
-		copy.setRate(options.getRate());
-		copy.setPitch(options.getPitch());
-		copy.setWordTimestampEnabled(options.getWordTimestampEnabled());
-		copy.setPhonemeTimestampEnabled(options.getPhonemeTimestampEnabled());
-		copy.setHttpHeaders(options.getHttpHeaders() == null ? new HashMap<>() : new HashMap<>(options.getHttpHeaders()));
-		return copy;
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static DashScopeSdkAudioSpeechOptions fromOptions(DashScopeSdkAudioSpeechOptions options) {
+		return options.mutate().build();
 	}
 
 	@Override
@@ -97,17 +99,9 @@ public class DashScopeSdkAudioSpeechOptions implements TextToSpeechOptions {
 		return this.model;
 	}
 
-	public void setModel(@Nullable String model) {
-		this.model = model;
-	}
-
 	@Override
 	public @Nullable String getVoice() {
 		return this.voice;
-	}
-
-	public void setVoice(@Nullable String voice) {
-		this.voice = voice;
 	}
 
 	@Override
@@ -115,87 +109,62 @@ public class DashScopeSdkAudioSpeechOptions implements TextToSpeechOptions {
 		return this.format;
 	}
 
-	public void setFormat(@Nullable String format) {
-		this.format = format;
-	}
-
 	@Override
 	public @Nullable Double getSpeed() {
 		return this.speed;
-	}
-
-	public void setSpeed(@Nullable Double speed) {
-		this.speed = speed;
 	}
 
 	public @Nullable String getTextType() {
 		return this.textType;
 	}
 
-	public void setTextType(@Nullable String textType) {
-		this.textType = textType;
-	}
-
 	public @Nullable Integer getSampleRate() {
 		return this.sampleRate;
-	}
-
-	public void setSampleRate(@Nullable Integer sampleRate) {
-		this.sampleRate = sampleRate;
 	}
 
 	public @Nullable Integer getVolume() {
 		return this.volume;
 	}
 
-	public void setVolume(@Nullable Integer volume) {
-		this.volume = volume;
-	}
-
 	public @Nullable Float getRate() {
 		return this.rate;
-	}
-
-	public void setRate(@Nullable Float rate) {
-		this.rate = rate;
 	}
 
 	public @Nullable Float getPitch() {
 		return this.pitch;
 	}
 
-	public void setPitch(@Nullable Float pitch) {
-		this.pitch = pitch;
-	}
-
 	public @Nullable Boolean getWordTimestampEnabled() {
 		return this.wordTimestampEnabled;
-	}
-
-	public void setWordTimestampEnabled(@Nullable Boolean wordTimestampEnabled) {
-		this.wordTimestampEnabled = wordTimestampEnabled;
 	}
 
 	public @Nullable Boolean getPhonemeTimestampEnabled() {
 		return this.phonemeTimestampEnabled;
 	}
 
-	public void setPhonemeTimestampEnabled(@Nullable Boolean phonemeTimestampEnabled) {
-		this.phonemeTimestampEnabled = phonemeTimestampEnabled;
-	}
-
 	public Map<String, String> getHttpHeaders() {
 		return this.httpHeaders;
 	}
 
-	public void setHttpHeaders(Map<String, String> httpHeaders) {
-		this.httpHeaders = httpHeaders;
+	public Builder mutate() {
+		return builder()
+			.model(this.model)
+			.voice(this.voice)
+			.format(this.format)
+			.speed(this.speed)
+			.textType(this.textType)
+			.sampleRate(this.sampleRate)
+			.volume(this.volume)
+			.rate(this.rate)
+			.pitch(this.pitch)
+			.wordTimestampEnabled(this.wordTimestampEnabled)
+			.phonemeTimestampEnabled(this.phonemeTimestampEnabled)
+			.httpHeaders(this.httpHeaders);
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public <T extends TextToSpeechOptions> T copy() {
-		return (T) Objects.requireNonNull(DashScopeSdkAudioSpeechOptions.fromOptions(this));
+	public DashScopeSdkAudioSpeechOptions copy() {
+		return mutate().build();
 	}
 
 	@Override
@@ -224,77 +193,173 @@ public class DashScopeSdkAudioSpeechOptions implements TextToSpeechOptions {
 				this.httpHeaders);
 	}
 
-	public static class DashScopeSdkAudioSpeechOptionsBuilder {
+	@Override
+	public String toString() {
+		return "DashScopeSdkAudioSpeechOptions{" + "model='" + this.model + '\'' + ", voice='" + this.voice + '\''
+				+ ", format='" + this.format + '\'' + ", speed=" + this.speed + ", textType='" + this.textType + '\''
+				+ ", sampleRate=" + this.sampleRate + ", volume=" + this.volume + ", rate=" + this.rate
+				+ ", pitch=" + this.pitch + ", wordTimestampEnabled=" + this.wordTimestampEnabled
+				+ ", phonemeTimestampEnabled=" + this.phonemeTimestampEnabled + ", httpHeaders=" + this.httpHeaders
+				+ '}';
+	}
 
-		private final DashScopeSdkAudioSpeechOptions options;
+	public static class Builder {
 
-		public DashScopeSdkAudioSpeechOptionsBuilder() {
-			this.options = new DashScopeSdkAudioSpeechOptions();
+		protected @Nullable String model;
+
+		protected @Nullable String voice;
+
+		protected @Nullable String format;
+
+		protected @Nullable Double speed;
+
+		protected @Nullable String textType;
+
+		protected @Nullable Integer sampleRate;
+
+		protected @Nullable Integer volume;
+
+		protected @Nullable Float rate;
+
+		protected @Nullable Float pitch;
+
+		protected @Nullable Boolean wordTimestampEnabled;
+
+		protected @Nullable Boolean phonemeTimestampEnabled;
+
+		protected Map<String, String> httpHeaders = new HashMap<>();
+
+		public Builder() {
 		}
 
-		public DashScopeSdkAudioSpeechOptionsBuilder model(String model) {
-			this.options.model = model;
+		public Builder model(@Nullable String model) {
+			this.model = model;
 			return this;
 		}
 
-		public DashScopeSdkAudioSpeechOptionsBuilder voice(String voice) {
-			this.options.voice = voice;
+		public Builder voice(@Nullable String voice) {
+			this.voice = voice;
 			return this;
 		}
 
-		public DashScopeSdkAudioSpeechOptionsBuilder format(String format) {
-			this.options.format = format;
+		public Builder format(@Nullable String format) {
+			this.format = format;
 			return this;
 		}
 
-		public DashScopeSdkAudioSpeechOptionsBuilder speed(Double speed) {
-			this.options.speed = speed;
+		public Builder speed(@Nullable Double speed) {
+			this.speed = speed;
 			return this;
 		}
 
-		public DashScopeSdkAudioSpeechOptionsBuilder textType(String textType) {
-			this.options.textType = textType;
+		public Builder textType(@Nullable String textType) {
+			this.textType = textType;
 			return this;
 		}
 
-		public DashScopeSdkAudioSpeechOptionsBuilder sampleRate(Integer sampleRate) {
-			this.options.sampleRate = sampleRate;
+		public Builder sampleRate(@Nullable Integer sampleRate) {
+			this.sampleRate = sampleRate;
 			return this;
 		}
 
-		public DashScopeSdkAudioSpeechOptionsBuilder volume(Integer volume) {
-			this.options.volume = volume;
+		public Builder volume(@Nullable Integer volume) {
+			this.volume = volume;
 			return this;
 		}
 
-		public DashScopeSdkAudioSpeechOptionsBuilder rate(Float rate) {
-			this.options.rate = rate;
+		public Builder rate(@Nullable Float rate) {
+			this.rate = rate;
 			return this;
 		}
 
-		public DashScopeSdkAudioSpeechOptionsBuilder pitch(Float pitch) {
-			this.options.pitch = pitch;
+		public Builder pitch(@Nullable Float pitch) {
+			this.pitch = pitch;
 			return this;
 		}
 
-		public DashScopeSdkAudioSpeechOptionsBuilder wordTimestampEnabled(Boolean wordTimestampEnabled) {
-			this.options.wordTimestampEnabled = wordTimestampEnabled;
+		public Builder wordTimestampEnabled(@Nullable Boolean wordTimestampEnabled) {
+			this.wordTimestampEnabled = wordTimestampEnabled;
 			return this;
 		}
 
-		public DashScopeSdkAudioSpeechOptionsBuilder phonemeTimestampEnabled(Boolean phonemeTimestampEnabled) {
-			this.options.phonemeTimestampEnabled = phonemeTimestampEnabled;
+		public Builder phonemeTimestampEnabled(@Nullable Boolean phonemeTimestampEnabled) {
+			this.phonemeTimestampEnabled = phonemeTimestampEnabled;
 			return this;
 		}
 
-		public DashScopeSdkAudioSpeechOptionsBuilder httpHeaders(Map<String, String> httpHeaders) {
-			this.options.httpHeaders = httpHeaders;
+		public Builder httpHeaders(@Nullable Map<String, String> httpHeaders) {
+			this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
 			return this;
 		}
 
+		public Builder from(DashScopeSdkAudioSpeechOptions fromOptions) {
+			this.model = fromOptions.getModel();
+			this.voice = fromOptions.getVoice();
+			this.format = fromOptions.getFormat();
+			this.speed = fromOptions.getSpeed();
+			this.textType = fromOptions.getTextType();
+			this.sampleRate = fromOptions.getSampleRate();
+			this.volume = fromOptions.getVolume();
+			this.rate = fromOptions.getRate();
+			this.pitch = fromOptions.getPitch();
+			this.wordTimestampEnabled = fromOptions.getWordTimestampEnabled();
+			this.phonemeTimestampEnabled = fromOptions.getPhonemeTimestampEnabled();
+			this.httpHeaders = fromOptions.getHttpHeaders();
+			return this;
+		}
+
+		public Builder merge(@Nullable TextToSpeechOptions from) {
+			if (from == null) {
+				return this;
+			}
+			if (from.getModel() != null) {
+				this.model = from.getModel();
+			}
+			if (from.getVoice() != null) {
+				this.voice = from.getVoice();
+			}
+			if (from instanceof DashScopeSdkAudioSpeechOptions castFrom) {
+				if (castFrom.getFormat() != null) {
+					this.format = castFrom.getFormat();
+				}
+				if (castFrom.getSpeed() != null) {
+					this.speed = castFrom.getSpeed();
+				}
+				if (castFrom.getTextType() != null) {
+					this.textType = castFrom.getTextType();
+				}
+				if (castFrom.getSampleRate() != null) {
+					this.sampleRate = castFrom.getSampleRate();
+				}
+				if (castFrom.getVolume() != null) {
+					this.volume = castFrom.getVolume();
+				}
+				if (castFrom.getRate() != null) {
+					this.rate = castFrom.getRate();
+				}
+				if (castFrom.getPitch() != null) {
+					this.pitch = castFrom.getPitch();
+				}
+				if (castFrom.getWordTimestampEnabled() != null) {
+					this.wordTimestampEnabled = castFrom.getWordTimestampEnabled();
+				}
+				if (castFrom.getPhonemeTimestampEnabled() != null) {
+					this.phonemeTimestampEnabled = castFrom.getPhonemeTimestampEnabled();
+				}
+				if (!castFrom.getHttpHeaders().isEmpty()) {
+					this.httpHeaders = castFrom.getHttpHeaders();
+				}
+			}
+			return this;
+		}
+
+        // @formatter:off
 		public DashScopeSdkAudioSpeechOptions build() {
-			return this.options;
+			return new DashScopeSdkAudioSpeechOptions(this.model, this.voice, this.format, this.speed, this.textType,
+					this.sampleRate, this.volume, this.rate, this.pitch, this.wordTimestampEnabled,
+					this.phonemeTimestampEnabled, this.httpHeaders);
 		}
+        // @formatter:on
 
 	}
 

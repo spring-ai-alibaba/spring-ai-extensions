@@ -21,107 +21,184 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.embedding.EmbeddingOptions;
 
+import java.util.Objects;
+
 /**
  * @author buvidk
+ * @author guanxu
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashScopeMultimodalEmbeddingOptions implements EmbeddingOptions {
 
-	// ID of the model to use.
-	private @Nullable @JsonProperty("model") String model;
+    /**
+     * ID of the model to use.
+     */
+    @JsonProperty("model")
+    private final @Nullable String model;
 
-	// The number of dimensions the resulting output embeddings should have.
-	private @Nullable @JsonProperty("dimension") Integer dimensions;
+    /**
+     * The number of dimensions the resulting output embeddings should have.
+     */
+    @JsonProperty("dimension")
+    private final @Nullable Integer dimensions;
 
-	// User-specified output vector format, currently only 'dense' is supported.
-	private @Nullable @JsonProperty("output_type") String outputType;
+    /**
+     * User-specified output vector format, currently only 'dense' is supported.
+     */
+    @JsonProperty("output_type")
+    private final @Nullable String outputType;
 
-	// Controls the frame rate of the video. The smaller the ratio, the fewer frames are actually extracted.
-	// Range [0,1]. Default is 1.0.
-	private @Nullable @JsonProperty("fps") Float fps;
+    /**
+     * Controls the frame rate of the video. The smaller the ratio, the fewer frames are actually extracted. Range [0,1]. Default is 1.0.
+     */
+    @JsonProperty("fps")
+    private final @Nullable Float fps;
 
-	// Add custom task instructions to guide the model's intent. Recommended in English.
-	private @Nullable @JsonProperty("instruct") String instruct;
+    /**
+     * Add custom task instructions to guide the model's intent. Recommended in English.
+     */
+    @JsonProperty("instruct")
+    private final @Nullable String instruct;
 
-	public static Builder builder() {
-		return new Builder();
-	}
+    protected DashScopeMultimodalEmbeddingOptions(
+            @Nullable String model,
+            @Nullable Integer dimensions,
+            @Nullable String outputType,
+            @Nullable Float fps,
+            @Nullable String instruct) {
+        this.model = model;
+        this.dimensions = dimensions;
+        this.outputType = outputType;
+        this.fps = fps;
+        this.instruct = instruct;
+    }
 
-	public static class Builder {
+    @Override
+    public @Nullable String getModel() {
+        return this.model;
+    }
 
-		private final DashScopeMultimodalEmbeddingOptions options = new DashScopeMultimodalEmbeddingOptions();
+    @Override
+    public @Nullable Integer getDimensions() {
+        return this.dimensions;
+    }
 
-		public Builder model(@Nullable String model) {
-			this.options.setModel(model);
-			return this;
-		}
+    public @Nullable String getOutputType() {
+        return this.outputType;
+    }
 
-		public Builder dimensions(@Nullable Integer dimensions) {
-			this.options.setDimensions(dimensions);
-			return this;
-		}
+    public @Nullable Float getFps() {
+        return this.fps;
+    }
 
-		public Builder outputType(@Nullable String outputType) {
-			this.options.setOutputType(outputType);
-			return this;
-		}
+    public @Nullable String getInstruct() {
+        return this.instruct;
+    }
 
-		public Builder fps(@Nullable Float fps) {
-			this.options.setFps(fps);
-			return this;
-		}
+    public static Builder builder() {
+        return new Builder();
+    }
 
-		public Builder instruct(@Nullable String instruct) {
-			this.options.setInstruct(instruct);
-			return this;
-		}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        DashScopeMultimodalEmbeddingOptions that = (DashScopeMultimodalEmbeddingOptions) o;
+        return Objects.equals(this.model, that.model) && Objects.equals(this.dimensions, that.dimensions)
+                && Objects.equals(this.outputType, that.outputType) && Objects.equals(this.fps, that.fps)
+                && Objects.equals(this.instruct, that.instruct);
+    }
 
-		public DashScopeMultimodalEmbeddingOptions build() {
-			return this.options;
-		}
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.model, this.dimensions, this.outputType, this.fps, this.instruct);
+    }
 
-	}
+    @Override
+    public String toString() {
+        return "DashScopeMultimodalEmbeddingOptions{" + "model='" + this.model + '\'' + ", dimensions="
+                + this.dimensions + ", outputType='" + this.outputType + '\'' + ", fps=" + this.fps + ", instruct='"
+                + this.instruct + '\'' + '}';
+    }
 
-	@Override
-	public @Nullable String getModel() {
-		return this.model;
-	}
+    public static class Builder {
 
-	public void setModel(@Nullable String model) {
-		this.model = model;
-	}
+        protected @Nullable String model;
 
-	@Override
-	public @Nullable Integer getDimensions() {
-		return this.dimensions;
-	}
+        protected @Nullable Integer dimensions;
 
-	public void setDimensions(@Nullable Integer dimensions) {
-		this.dimensions = dimensions;
-	}
+        protected @Nullable String outputType;
 
-	public @Nullable String getOutputType() {
-		return outputType;
-	}
+        protected @Nullable Float fps;
 
-	public void setOutputType(@Nullable String outputType) {
-		this.outputType = outputType;
-	}
+        protected @Nullable String instruct;
 
-	public @Nullable Float getFps() {
-		return fps;
-	}
+        public Builder model(@Nullable String model) {
+            this.model = model;
+            return this;
+        }
 
-	public void setFps(@Nullable Float fps) {
-		this.fps = fps;
-	}
+        public Builder dimensions(@Nullable Integer dimensions) {
+            this.dimensions = dimensions;
+            return this;
+        }
 
-	public @Nullable String getInstruct() {
-		return instruct;
-	}
+        public Builder outputType(@Nullable String outputType) {
+            this.outputType = outputType;
+            return this;
+        }
 
-	public void setInstruct(@Nullable String instruct) {
-		this.instruct = instruct;
-	}
+        public Builder fps(@Nullable Float fps) {
+            this.fps = fps;
+            return this;
+        }
+
+        public Builder instruct(@Nullable String instruct) {
+            this.instruct = instruct;
+            return this;
+        }
+
+        public Builder from(DashScopeMultimodalEmbeddingOptions fromOptions) {
+            this.model = fromOptions.getModel();
+            this.dimensions = fromOptions.getDimensions();
+            this.outputType = fromOptions.getOutputType();
+            this.fps = fromOptions.getFps();
+            this.instruct = fromOptions.getInstruct();
+            return this;
+        }
+
+        public Builder merge(@Nullable EmbeddingOptions from) {
+            if (from == null) {
+                return this;
+            }
+            if (from.getModel() != null) {
+                this.model = from.getModel();
+            }
+            if (from.getDimensions() != null) {
+                this.dimensions = from.getDimensions();
+            }
+            if (from instanceof DashScopeMultimodalEmbeddingOptions castFrom) {
+                if (castFrom.getOutputType() != null) {
+                    this.outputType = castFrom.getOutputType();
+                }
+                if (castFrom.getFps() != null) {
+                    this.fps = castFrom.getFps();
+                }
+                if (castFrom.getInstruct() != null) {
+                    this.instruct = castFrom.getInstruct();
+                }
+            }
+            return this;
+        }
+
+        public DashScopeMultimodalEmbeddingOptions build() {
+            return new DashScopeMultimodalEmbeddingOptions(this.model, this.dimensions, this.outputType, this.fps, this.instruct);
+        }
+
+    }
 
 }

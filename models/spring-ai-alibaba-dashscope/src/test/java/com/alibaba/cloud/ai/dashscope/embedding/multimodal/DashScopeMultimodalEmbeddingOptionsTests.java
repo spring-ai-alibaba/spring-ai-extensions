@@ -41,26 +41,90 @@ class DashScopeMultimodalEmbeddingOptionsTests {
 	}
 
 	@Test
-	void testSettersAndDefaultValues() {
-		DashScopeMultimodalEmbeddingOptions options = new DashScopeMultimodalEmbeddingOptions();
+	void testDefaultValues() {
+		DashScopeMultimodalEmbeddingOptions options = DashScopeMultimodalEmbeddingOptions.builder().build();
 		assertThat(options.getModel()).isNull();
 		assertThat(options.getDimensions()).isNull();
 		assertThat(options.getOutputType()).isNull();
 		assertThat(options.getFps()).isNull();
 		assertThat(options.getInstruct()).isNull();
 		assertThat(options).isInstanceOf(EmbeddingOptions.class);
+	}
 
-		options.setModel("m1");
-		options.setDimensions(512);
-		options.setOutputType("dense");
-		options.setFps(1.0f);
-		options.setInstruct("inst");
+	@Test
+	void testFromBuilder() {
+		DashScopeMultimodalEmbeddingOptions original = DashScopeMultimodalEmbeddingOptions.builder()
+			.model("m1")
+			.dimensions(512)
+			.outputType("dense")
+			.fps(1.0f)
+			.instruct("inst")
+			.build();
 
-		assertThat(options.getModel()).isEqualTo("m1");
-		assertThat(options.getDimensions()).isEqualTo(512);
-		assertThat(options.getOutputType()).isEqualTo("dense");
-		assertThat(options.getFps()).isEqualTo(1.0f);
-		assertThat(options.getInstruct()).isEqualTo("inst");
+		DashScopeMultimodalEmbeddingOptions copy = DashScopeMultimodalEmbeddingOptions.builder()
+			.from(original)
+			.build();
+
+		assertThat(copy).usingRecursiveComparison().isEqualTo(original);
+		assertThat(copy).isNotSameAs(original);
+	}
+
+	@Test
+	void testMergeWithEmbeddingOptions() {
+		DashScopeMultimodalEmbeddingOptions defaultOpts = DashScopeMultimodalEmbeddingOptions.builder()
+			.model("default-model")
+			.dimensions(1024)
+			.outputType("dense")
+			.fps(1.0f)
+			.instruct("default-instruct")
+			.build();
+
+		DashScopeMultimodalEmbeddingOptions runtimeOpts = DashScopeMultimodalEmbeddingOptions.builder()
+			.model("runtime-model")
+			.outputType("sparse")
+			.build();
+
+		DashScopeMultimodalEmbeddingOptions merged = DashScopeMultimodalEmbeddingOptions.builder()
+			.from(defaultOpts)
+			.merge(runtimeOpts)
+			.build();
+
+		assertThat(merged.getModel()).isEqualTo("runtime-model");
+		assertThat(merged.getDimensions()).isEqualTo(1024);
+		assertThat(merged.getOutputType()).isEqualTo("sparse");
+		assertThat(merged.getFps()).isEqualTo(1.0f);
+		assertThat(merged.getInstruct()).isEqualTo("default-instruct");
+	}
+
+	@Test
+	void testMergeWithNull() {
+		DashScopeMultimodalEmbeddingOptions defaultOpts = DashScopeMultimodalEmbeddingOptions.builder()
+			.model("default-model")
+			.dimensions(1024)
+			.build();
+
+		DashScopeMultimodalEmbeddingOptions merged = DashScopeMultimodalEmbeddingOptions.builder()
+			.from(defaultOpts)
+			.merge(null)
+			.build();
+
+		assertThat(merged.getModel()).isEqualTo("default-model");
+		assertThat(merged.getDimensions()).isEqualTo(1024);
+	}
+
+	@Test
+	void testEqualsAndHashCode() {
+		DashScopeMultimodalEmbeddingOptions options1 = DashScopeMultimodalEmbeddingOptions.builder()
+			.model("m1")
+			.dimensions(512)
+			.build();
+		DashScopeMultimodalEmbeddingOptions options2 = DashScopeMultimodalEmbeddingOptions.builder()
+			.model("m1")
+			.dimensions(512)
+			.build();
+
+		assertThat(options1).isEqualTo(options2);
+		assertThat(options1.hashCode()).isEqualTo(options2.hashCode());
 	}
 
 }

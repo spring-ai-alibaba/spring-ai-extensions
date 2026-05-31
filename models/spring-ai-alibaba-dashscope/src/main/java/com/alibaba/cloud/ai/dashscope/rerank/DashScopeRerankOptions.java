@@ -18,6 +18,10 @@ package com.alibaba.cloud.ai.dashscope.rerank;
 
 import com.alibaba.cloud.ai.model.RerankOptions;
 
+import java.util.Objects;
+
+import org.jspecify.annotations.Nullable;
+
 /**
  * Title DashScope rerank options.<br>
  * Description DashScope rerank options.<br>
@@ -30,17 +34,26 @@ public class DashScopeRerankOptions implements RerankOptions {
     /**
      * ID of the model to use.
      */
-    private String model = "gte-rerank";
+    private final String model;
 
     /**
      * return top n best relevant docs for query
      */
-    private Integer topN = 3;
+    private final Integer topN;
 
     /**
      * if need to return original document
      */
-    private Boolean returnDocuments = false;
+    private final Boolean returnDocuments;
+
+    protected DashScopeRerankOptions(
+            @Nullable String model,
+            @Nullable Integer topN,
+            @Nullable Boolean returnDocuments) {
+        this.model = model != null ? model : "gte-rerank";
+        this.topN = topN != null ? topN : 3;
+        this.returnDocuments = returnDocuments != null ? returnDocuments : Boolean.FALSE;
+    }
 
     @Override
     public String getModel() {
@@ -56,47 +69,97 @@ public class DashScopeRerankOptions implements RerankOptions {
         return returnDocuments;
     }
 
-    public void setModel(String model) {
-        this.model = model;
+    public Builder mutate() {
+        return builder().model(this.model).topN(this.topN).returnDocuments(this.returnDocuments);
     }
 
-    public void setTopN(Integer topN) {
-        this.topN = topN;
-    }
-
-    public void setReturnDocuments(Boolean returnDocuments) {
-        this.returnDocuments = returnDocuments;
+    public static DashScopeRerankOptions fromOptions(DashScopeRerankOptions options) {
+        return options.mutate().build();
     }
 
     public static Builder builder() {
         return new Builder();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        DashScopeRerankOptions that = (DashScopeRerankOptions) o;
+        return Objects.equals(this.model, that.model) && Objects.equals(this.topN, that.topN)
+                && Objects.equals(this.returnDocuments, that.returnDocuments);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.model, this.topN, this.returnDocuments);
+    }
+
+    @Override
+    public String toString() {
+        return "DashScopeRerankOptions{" + "model='" + this.model + '\'' + ", topN=" + this.topN + ", returnDocuments="
+                + this.returnDocuments + '}';
+    }
+
     public static class Builder {
 
-        private final DashScopeRerankOptions options;
+        protected @Nullable String model;
+
+        protected @Nullable Integer topN;
+
+        protected @Nullable Boolean returnDocuments;
 
         public Builder() {
-            this.options = new DashScopeRerankOptions();
         }
 
-        public Builder model(String model) {
-            this.options.setModel(model);
+        public Builder model(@Nullable String model) {
+            this.model = model;
             return this;
         }
 
-        public Builder topN(Integer topN) {
-            this.options.setTopN(topN);
+        public Builder topN(@Nullable Integer topN) {
+            this.topN = topN;
             return this;
         }
 
-        public Builder returnDocuments(Boolean returnDocuments) {
-            this.options.setReturnDocuments(returnDocuments);
+        public Builder returnDocuments(@Nullable Boolean returnDocuments) {
+            this.returnDocuments = returnDocuments;
+            return this;
+        }
+
+        public Builder from(DashScopeRerankOptions fromOptions) {
+            this.model = fromOptions.getModel();
+            this.topN = fromOptions.getTopN();
+            this.returnDocuments = fromOptions.getReturnDocuments();
+            return this;
+        }
+
+        public Builder merge(@Nullable RerankOptions from) {
+            if (from == null) {
+                return this;
+            }
+            if (from.getModel() != null) {
+                this.model = from.getModel();
+            }
+            if (from.getTopN() != null) {
+                this.topN = from.getTopN();
+            }
+            if (from instanceof DashScopeRerankOptions castFrom) {
+                if (castFrom.getReturnDocuments() != null) {
+                    this.returnDocuments = castFrom.getReturnDocuments();
+                }
+            }
             return this;
         }
 
         public DashScopeRerankOptions build() {
-            return this.options;
+            return new DashScopeRerankOptions(this.model, this.topN, this.returnDocuments);
         }
+
     }
+
 }

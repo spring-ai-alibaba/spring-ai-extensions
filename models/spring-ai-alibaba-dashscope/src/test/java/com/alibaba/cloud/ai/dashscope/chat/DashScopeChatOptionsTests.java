@@ -96,45 +96,6 @@ class DashScopeChatOptionsTests {
     }
 
     @Test
-    void testSettersAndGetters() {
-        // Test setters and getters
-        DashScopeChatOptions options = new DashScopeChatOptions();
-
-        options.setModel(TEST_MODEL);
-        options.setTemperature(TEST_TEMPERATURE);
-        options.setTopP(TEST_TOP_P);
-        options.setTopK(TEST_TOP_K);
-        options.setSeed(TEST_SEED);
-        options.setRepetitionPenalty(TEST_REPETITION_PENALTY);
-        options.setStream(true);
-        options.setEnableSearch(true);
-        options.setEnableCodeInterpreter(true);
-        options.setIncrementalOutput(true);
-        options.setVlHighResolutionImages(true);
-        options.setEnableThinking(true);
-        options.setThinkingBudget(TEST_THINKING_BUDGET);
-        options.setMultiModel(true);
-        options.setExtraBody(TEST_EXTRA_BODY);
-
-        // Verify all fields are set correctly
-        assertThat(options.getModel()).isEqualTo(TEST_MODEL);
-        assertThat(options.getTemperature()).isEqualTo(TEST_TEMPERATURE);
-        assertThat(options.getTopP()).isEqualTo(TEST_TOP_P);
-        assertThat(options.getTopK()).isEqualTo(TEST_TOP_K);
-        assertThat(options.getSeed()).isEqualTo(TEST_SEED);
-        assertThat(options.getRepetitionPenalty()).isEqualTo(TEST_REPETITION_PENALTY);
-        assertThat(options.getStream()).isTrue();
-        assertThat(options.getEnableSearch()).isTrue();
-        assertThat(options.getEnableCodeInterpreter()).isTrue();
-        assertThat(options.getIncrementalOutput()).isTrue();
-        assertThat(options.getVlHighResolutionImages()).isTrue();
-        assertThat(options.getEnableThinking()).isTrue();
-        assertThat(options.getThinkingBudget()).isEqualTo(TEST_THINKING_BUDGET);
-        assertThat(options.getMultiModel()).isTrue();
-        assertThat(options.getExtraBody()).isEqualTo(TEST_EXTRA_BODY);
-    }
-
-    @Test
     void testToolCallbacks() {
         // Test function callbacks related methods
         ToolCallback callback1 = Mockito.mock(ToolCallback.class);

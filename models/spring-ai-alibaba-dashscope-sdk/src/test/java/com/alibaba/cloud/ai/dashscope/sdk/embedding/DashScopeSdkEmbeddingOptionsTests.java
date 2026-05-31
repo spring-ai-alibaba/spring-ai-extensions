@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.entry;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DashScopeSdkEmbeddingOptionsTests {
 
@@ -64,19 +64,45 @@ class DashScopeSdkEmbeddingOptionsTests {
 
 		DashScopeSdkEmbeddingOptions copy = DashScopeSdkEmbeddingOptions.fromOptions(original);
 		headers.put("x-source-2", "s2");
-		copy.getHttpHeaders().put("x-copy", "c1");
 
-		assertThat(original.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-source-2", "s2"));
-		assertThat(copy.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-copy", "c1"));
+		assertThatThrownBy(() -> copy.getHttpHeaders().put("x-copy", "c1"))
+			.isInstanceOf(UnsupportedOperationException.class);
+
+		assertThat(original.getHttpHeaders()).containsOnly(org.assertj.core.api.Assertions.entry("x-source", "s1"), org.assertj.core.api.Assertions.entry("x-source-2", "s2"));
+		assertThat(copy.getHttpHeaders()).containsOnly(org.assertj.core.api.Assertions.entry("x-source", "s1"));
 	}
 
 	@Test
-	void testFromOptionsHandlesNullHttpHeaders() {
-		DashScopeSdkEmbeddingOptions original = new DashScopeSdkEmbeddingOptions();
-		original.setHttpHeaders(null);
+	void testFromOptionsHandlesEmptyHttpHeaders() {
+		DashScopeSdkEmbeddingOptions original = DashScopeSdkEmbeddingOptions.builder().build();
 
 		DashScopeSdkEmbeddingOptions copy = DashScopeSdkEmbeddingOptions.fromOptions(original);
 		assertThat(copy.getHttpHeaders()).isNotNull().isEmpty();
+	}
+
+	@Test
+	void testHttpHeadersReturnsUnmodifiableView() {
+		DashScopeSdkEmbeddingOptions options = DashScopeSdkEmbeddingOptions.builder()
+			.httpHeaders(Map.of("x-test", "v"))
+			.build();
+
+		assertThatThrownBy(() -> options.getHttpHeaders().put("x-new", "v2"))
+			.isInstanceOf(UnsupportedOperationException.class);
+	}
+
+	@Test
+	void testEqualsAndHashCode() {
+		DashScopeSdkEmbeddingOptions options1 = DashScopeSdkEmbeddingOptions.builder()
+			.model("text-embedding-v2")
+			.textType("query")
+			.build();
+		DashScopeSdkEmbeddingOptions options2 = DashScopeSdkEmbeddingOptions.builder()
+			.model("text-embedding-v2")
+			.textType("query")
+			.build();
+
+		assertThat(options1).isEqualTo(options2);
+		assertThat(options1.hashCode()).isEqualTo(options2.hashCode());
 	}
 
 }

@@ -16,14 +16,15 @@
 package com.alibaba.cloud.ai.dashscope.agent;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder;
 
 /**
  * @author yuluo
@@ -33,44 +34,71 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 public class DashScopeAgentOptions implements ChatOptions {
 
     @JsonProperty("app_id")
-    private @Nullable String appId;
+    private final @Nullable String appId;
 
     @JsonProperty("session_id")
-    private @Nullable String sessionId;
+    private final @Nullable String sessionId;
 
     @JsonProperty("memory_id")
-    private @Nullable String memoryId;
+    private final @Nullable String memoryId;
 
     @JsonProperty("model_id")
-    @Nullable String modelId;
+    private final @Nullable String modelId;
 
     @JsonProperty("incremental_output")
-    private @Nullable Boolean incrementalOutput;
+    private final @Nullable Boolean incrementalOutput;
 
     @JsonProperty("has_thoughts")
-    private @Nullable Boolean hasThoughts;
+    private final @Nullable Boolean hasThoughts;
 
     @JsonProperty("enable_thinking")
-    @Nullable Boolean enableThinking;
+    private final @Nullable Boolean enableThinking;
 
     @JsonProperty("images")
-    private @Nullable List<String> images;
+    private final @Nullable List<String> images;
 
     @JsonProperty("file_list")
-    @Nullable List<String> files;
+    private final @Nullable List<String> files;
 
     @JsonProperty("biz_params")
-    private @Nullable JsonNode bizParams;
+    private final @Nullable JsonNode bizParams;
 
     @JsonProperty("rag_options")
-    private @Nullable DashScopeAgentRagOptions ragOptions;
+    private final @Nullable DashScopeAgentRagOptions ragOptions;
 
     @JsonProperty("flow_stream_mode")
-    private @Nullable DashScopeAgentFlowStreamMode flowStreamMode;
+    private final @Nullable DashScopeAgentFlowStreamMode flowStreamMode;
+
+    protected DashScopeAgentOptions(
+            @Nullable String appId,
+            @Nullable String sessionId,
+            @Nullable String memoryId,
+            @Nullable String modelId,
+            @Nullable Boolean incrementalOutput,
+            @Nullable Boolean hasThoughts,
+            @Nullable Boolean enableThinking,
+            @Nullable List<String> images,
+            @Nullable List<String> files,
+            @Nullable JsonNode bizParams,
+            @Nullable DashScopeAgentRagOptions ragOptions,
+            @Nullable DashScopeAgentFlowStreamMode flowStreamMode) {
+        this.appId = appId;
+        this.sessionId = sessionId;
+        this.memoryId = memoryId;
+        this.modelId = modelId;
+        this.incrementalOutput = incrementalOutput;
+        this.hasThoughts = hasThoughts;
+        this.enableThinking = enableThinking;
+        this.images = images != null ? new ArrayList<>(images) : null;
+        this.files = files != null ? new ArrayList<>(files) : null;
+        this.bizParams = bizParams != null ? bizParams.deepCopy() : null;
+        this.ragOptions = ragOptions;
+        this.flowStreamMode = flowStreamMode;
+    }
 
     @Override
     public @Nullable String getModel() {
-        return modelId;
+        return this.modelId;
     }
 
     @Override
@@ -109,243 +137,277 @@ public class DashScopeAgentOptions implements ChatOptions {
     }
 
     public @Nullable String getAppId() {
-        return appId;
-    }
-
-    public void setAppId(@Nullable String appId) {
-        this.appId = appId;
+        return this.appId;
     }
 
     public @Nullable String getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(@Nullable String sessionId) {
-        this.sessionId = sessionId;
+        return this.sessionId;
     }
 
     public @Nullable String getMemoryId() {
-        return memoryId;
-    }
-
-    public void setMemoryId(@Nullable String memoryId) {
-        this.memoryId = memoryId;
+        return this.memoryId;
     }
 
     public @Nullable String getModelId() {
-        return modelId;
-    }
-
-    public void setModelId(@Nullable String modelId) {
-        this.modelId = modelId;
+        return this.modelId;
     }
 
     public @Nullable Boolean getIncrementalOutput() {
-        return incrementalOutput;
-    }
-
-    public void setIncrementalOutput(@Nullable Boolean incrementalOutput) {
-        this.incrementalOutput = incrementalOutput;
+        return this.incrementalOutput;
     }
 
     public @Nullable Boolean getHasThoughts() {
-        return hasThoughts;
-    }
-
-    public void setHasThoughts(@Nullable Boolean hasThoughts) {
-        this.hasThoughts = hasThoughts;
+        return this.hasThoughts;
     }
 
     public @Nullable Boolean getEnableThinking() {
-        return enableThinking;
-    }
-
-    public void setEnableThinking(@Nullable Boolean enableThinking) {
-        this.enableThinking = enableThinking;
+        return this.enableThinking;
     }
 
     public @Nullable List<String> getImages() {
-        return images;
-    }
-
-    public void setImages(@Nullable List<String> images) {
-        this.images = images;
+        return this.images;
     }
 
     public @Nullable List<String> getFiles() {
-        return files;
-    }
-
-    public void setFiles(@Nullable List<String> files) {
-        this.files = files;
+        return this.files;
     }
 
     public @Nullable JsonNode getBizParams() {
-        return bizParams;
-    }
-
-    public void setBizParams(@Nullable JsonNode bizParams) {
-        this.bizParams = bizParams;
+        return this.bizParams;
     }
 
     public @Nullable DashScopeAgentRagOptions getRagOptions() {
-        return ragOptions;
-    }
-
-    public void setRagOptions(@Nullable DashScopeAgentRagOptions ragOptions) {
-        this.ragOptions = ragOptions;
+        return this.ragOptions;
     }
 
     public @Nullable DashScopeAgentFlowStreamMode getFlowStreamMode() {
-        return flowStreamMode;
-    }
-
-    public void setFlowStreamMode(@Nullable DashScopeAgentFlowStreamMode flowStreamMode) {
-        this.flowStreamMode = flowStreamMode;
+        return this.flowStreamMode;
     }
 
     @Override
     public ChatOptions copy() {
-        return Objects.requireNonNull(DashScopeAgentOptions.fromOptions(this), "Copied options must not be null");
-    }
-
-    public static @Nullable DashScopeAgentOptions fromOptions(@Nullable DashScopeAgentOptions options) {
-        if (options == null) {
-            return null;
-        }
-        return DashScopeAgentOptions.builder()
-                .appId(options.getAppId())
-                .sessionId(options.getSessionId())
-                .memoryId(options.getMemoryId())
-                .modelId(options.getModelId())
-                .incrementalOutput(options.getIncrementalOutput())
-                .hasThoughts(options.getHasThoughts())
-                .enableThinking(options.getEnableThinking())
-                .images(options.getImages() == null ? null : new ArrayList<>(options.getImages()))
-                .files(options.getFiles() == null ? null : new ArrayList<>(options.getFiles()))
-                .bizParams(options.getBizParams() == null ? null : options.getBizParams().deepCopy())
-                .ragOptions(copyRagOptions(options.getRagOptions()))
-                .flowStreamMode(options.getFlowStreamMode())
-                .build();
-    }
-
-    private static @Nullable DashScopeAgentRagOptions copyRagOptions(@Nullable DashScopeAgentRagOptions source) {
-        if (source == null) {
-            return null;
-        }
-        return DashScopeAgentRagOptions.builder()
-                .pipelineIds(source.getPipelineIds() == null ? null : new ArrayList<>(source.getPipelineIds()))
-                .fileIds(source.getFileIds() == null ? null : new ArrayList<>(source.getFileIds()))
-                .tags(source.getTags() == null ? null : new ArrayList<>(source.getTags()))
-                .metadataFilter(source.getMetadataFilter() == null ? null : source.getMetadataFilter().deepCopy())
-                .structuredFilter(
-                        source.getStructuredFilter() == null ? null : source.getStructuredFilter().deepCopy())
-                .sessionFileIds(
-                        source.getSessionFileIds() == null ? null : new ArrayList<>(source.getSessionFileIds()))
-                .build();
-    }
-
-    public Builder mutate() {
-        return new Builder(this);
-    }
-
-    public static Builder builder() {
-
-        return new Builder();
-    }
-
-    public static class Builder {
-
-        private DashScopeAgentOptions options = new DashScopeAgentOptions();
-
-        private Builder() {
-        }
-
-        private Builder(DashScopeAgentOptions options) {
-            this.options = options;
-        }
-
-        public Builder appId(@Nullable String appId) {
-            this.options.setAppId(appId);
-            return this;
-        }
-
-        public Builder sessionId(@Nullable String sessionId) {
-            this.options.sessionId = sessionId;
-            return this;
-        }
-
-        public Builder memoryId(@Nullable String memoryId) {
-            this.options.memoryId = memoryId;
-            return this;
-        }
-
-        public Builder incrementalOutput(@Nullable Boolean incrementalOutput) {
-            this.options.incrementalOutput = incrementalOutput;
-            return this;
-        }
-
-        public Builder hasThoughts(@Nullable Boolean hasThoughts) {
-            this.options.hasThoughts = hasThoughts;
-            return this;
-        }
-
-        public Builder images(@Nullable List<String> images) {
-            this.options.images = images;
-            return this;
-        }
-
-        public Builder bizParams(@Nullable JsonNode bizParams) {
-            this.options.bizParams = bizParams;
-            return this;
-        }
-
-        public Builder ragOptions(@Nullable DashScopeAgentRagOptions ragOptions) {
-            this.options.ragOptions = ragOptions;
-            return this;
-        }
-
-        public Builder flowStreamMode(@Nullable DashScopeAgentFlowStreamMode flowStreamMode) {
-            this.options.flowStreamMode = flowStreamMode;
-            return this;
-        }
-
-        public Builder enableThinking(@Nullable Boolean enableThinking) {
-            this.options.enableThinking = enableThinking;
-            return this;
-        }
-
-        public Builder modelId(@Nullable String modelId) {
-            this.options.modelId = modelId;
-            return this;
-        }
-
-        public Builder files(@Nullable List<String> files) {
-            this.options.files = files;
-            return this;
-        }
-
-        public DashScopeAgentOptions build() {
-            return this.options;
-        }
+        return mutate().build();
     }
 
     @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("DashScopeAgentOptions{");
-        sb.append("appId='").append(appId).append('\'');
-        sb.append(", sessionId='").append(sessionId).append('\'');
-        sb.append(", memoryId='").append(memoryId).append('\'');
-        sb.append(", modelId='").append(modelId).append('\'');
-        sb.append(", incrementalOutput=").append(incrementalOutput);
-        sb.append(", hasThoughts=").append(hasThoughts);
-        sb.append(", enableThinking=").append(enableThinking);
-        sb.append(", images=").append(images);
-        sb.append(", files=").append(files);
-        sb.append(", bizParams=").append(bizParams);
-        sb.append(", ragOptions=").append(ragOptions);
-        sb.append(", flowStreamMode=").append(flowStreamMode);
-        sb.append('}');
-        return sb.toString();
+    public Builder mutate() {
+        return builder().appId(this.appId)
+                .sessionId(this.sessionId)
+                .memoryId(this.memoryId)
+                .modelId(this.modelId)
+                .incrementalOutput(this.incrementalOutput)
+                .hasThoughts(this.hasThoughts)
+                .enableThinking(this.enableThinking)
+                .images(this.images)
+                .files(this.files)
+                .bizParams(this.bizParams)
+                .ragOptions(this.ragOptions)
+                .flowStreamMode(this.flowStreamMode);
     }
+
+    public static DashScopeAgentOptions fromOptions(DashScopeAgentOptions options) {
+        return options.mutate().build();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        DashScopeAgentOptions that = (DashScopeAgentOptions) o;
+        return Objects.equals(this.appId, that.appId) && Objects.equals(this.sessionId, that.sessionId)
+                && Objects.equals(this.memoryId, that.memoryId) && Objects.equals(this.modelId, that.modelId)
+                && Objects.equals(this.incrementalOutput, that.incrementalOutput)
+                && Objects.equals(this.hasThoughts, that.hasThoughts)
+                && Objects.equals(this.enableThinking, that.enableThinking) && Objects.equals(this.images, that.images)
+                && Objects.equals(this.files, that.files) && Objects.equals(this.bizParams, that.bizParams)
+                && Objects.equals(this.ragOptions, that.ragOptions)
+                && Objects.equals(this.flowStreamMode, that.flowStreamMode);
+    }
+
+    // @formatter:off
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.appId, this.sessionId, this.memoryId, this.modelId, this.incrementalOutput,
+				this.hasThoughts, this.enableThinking, this.images, this.files, this.bizParams, this.ragOptions,
+				this.flowStreamMode);
+	}
+    // @formatter:on
+
+    @Override
+    public String toString() {
+        return "DashScopeAgentOptions{" + "appId='" + this.appId + '\'' + ", sessionId='" + this.sessionId + '\''
+                + ", memoryId='" + this.memoryId + '\'' + ", modelId='" + this.modelId + '\'' + ", incrementalOutput="
+                + this.incrementalOutput + ", hasThoughts=" + this.hasThoughts + ", enableThinking="
+                + this.enableThinking + ", images=" + this.images + ", files=" + this.files + ", bizParams="
+                + this.bizParams + ", ragOptions=" + this.ragOptions + ", flowStreamMode=" + this.flowStreamMode + '}';
+    }
+
+    public static class Builder extends AbstractBuilder<Builder> {
+
+    }
+
+    protected abstract static class AbstractBuilder<B extends AbstractBuilder<B>>
+            extends DefaultChatOptionsBuilder<B> {
+
+        protected @Nullable String appId;
+
+        protected @Nullable String sessionId;
+
+        protected @Nullable String memoryId;
+
+        protected @Nullable String modelId;
+
+        protected @Nullable Boolean incrementalOutput;
+
+        protected @Nullable Boolean hasThoughts;
+
+        protected @Nullable Boolean enableThinking;
+
+        protected @Nullable List<String> images;
+
+        protected @Nullable List<String> files;
+
+        protected @Nullable JsonNode bizParams;
+
+        protected @Nullable DashScopeAgentRagOptions ragOptions;
+
+        protected @Nullable DashScopeAgentFlowStreamMode flowStreamMode;
+
+        @Override
+        public B clone() {
+            B copy = super.clone();
+            copy.images = this.images != null ? new ArrayList<>(this.images) : null;
+            copy.files = this.files != null ? new ArrayList<>(this.files) : null;
+            return copy;
+        }
+
+        @Override
+        public B model(@Nullable String model) {
+            this.modelId = model;
+            return self();
+        }
+
+        public B appId(@Nullable String appId) {
+            this.appId = appId;
+            return self();
+        }
+
+        public B sessionId(@Nullable String sessionId) {
+            this.sessionId = sessionId;
+            return self();
+        }
+
+        public B memoryId(@Nullable String memoryId) {
+            this.memoryId = memoryId;
+            return self();
+        }
+
+        public B modelId(@Nullable String modelId) {
+            this.modelId = modelId;
+            return self();
+        }
+
+        public B incrementalOutput(@Nullable Boolean incrementalOutput) {
+            this.incrementalOutput = incrementalOutput;
+            return self();
+        }
+
+        public B hasThoughts(@Nullable Boolean hasThoughts) {
+            this.hasThoughts = hasThoughts;
+            return self();
+        }
+
+        public B enableThinking(@Nullable Boolean enableThinking) {
+            this.enableThinking = enableThinking;
+            return self();
+        }
+
+        public B images(@Nullable List<String> images) {
+            this.images = images;
+            return self();
+        }
+
+        public B files(@Nullable List<String> files) {
+            this.files = files;
+            return self();
+        }
+
+        public B bizParams(@Nullable JsonNode bizParams) {
+            this.bizParams = bizParams;
+            return self();
+        }
+
+        public B ragOptions(@Nullable DashScopeAgentRagOptions ragOptions) {
+            this.ragOptions = ragOptions;
+            return self();
+        }
+
+        public B flowStreamMode(@Nullable DashScopeAgentFlowStreamMode flowStreamMode) {
+            this.flowStreamMode = flowStreamMode;
+            return self();
+        }
+
+        @Override
+        public B combineWith(ChatOptions.Builder<?> other) {
+            super.combineWith(other);
+            if (other instanceof AbstractBuilder<?> that) {
+                if (that.appId != null) {
+                    this.appId = that.appId;
+                }
+                if (that.sessionId != null) {
+                    this.sessionId = that.sessionId;
+                }
+                if (that.memoryId != null) {
+                    this.memoryId = that.memoryId;
+                }
+                if (that.modelId != null) {
+                    this.modelId = that.modelId;
+                }
+                if (that.incrementalOutput != null) {
+                    this.incrementalOutput = that.incrementalOutput;
+                }
+                if (that.hasThoughts != null) {
+                    this.hasThoughts = that.hasThoughts;
+                }
+                if (that.enableThinking != null) {
+                    this.enableThinking = that.enableThinking;
+                }
+                if (that.images != null) {
+                    this.images = that.images;
+                }
+                if (that.files != null) {
+                    this.files = that.files;
+                }
+                if (that.bizParams != null) {
+                    this.bizParams = that.bizParams;
+                }
+                if (that.ragOptions != null) {
+                    this.ragOptions = that.ragOptions;
+                }
+                if (that.flowStreamMode != null) {
+                    this.flowStreamMode = that.flowStreamMode;
+                }
+            }
+            return self();
+        }
+
+        // @formatter:off
+		@Override
+		public DashScopeAgentOptions build() {
+			return new DashScopeAgentOptions(this.appId, this.sessionId, this.memoryId, this.modelId,
+					this.incrementalOutput, this.hasThoughts, this.enableThinking, this.images, this.files,
+					this.bizParams, this.ragOptions, this.flowStreamMode);
+		}
+        // @formatter:on
+
+    }
+
 }

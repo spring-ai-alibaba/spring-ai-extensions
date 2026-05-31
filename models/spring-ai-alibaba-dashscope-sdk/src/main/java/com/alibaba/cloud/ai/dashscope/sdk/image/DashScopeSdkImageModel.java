@@ -25,7 +25,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.ai.image.Image;
 import org.springframework.ai.image.ImageGeneration;
 import org.springframework.ai.image.ImageModel;
-import org.springframework.ai.image.ImageOptions;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
 import org.springframework.ai.image.ImageResponseMetadata;
@@ -33,7 +32,6 @@ import org.springframework.ai.image.observation.DefaultImageModelObservationConv
 import org.springframework.ai.image.observation.ImageModelObservationContext;
 import org.springframework.ai.image.observation.ImageModelObservationConvention;
 import org.springframework.ai.image.observation.ImageModelObservationDocumentation;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.Assert;
@@ -44,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * {@link ImageModel} implementation backed by DashScope Java SDK.
@@ -98,7 +97,11 @@ public class DashScopeSdkImageModel implements ImageModel {
 		Assert.notNull(request, "Prompt must not be null");
 		Assert.isTrue(!CollectionUtils.isEmpty(request.getInstructions()), "Prompt messages must not be empty");
 
-		DashScopeSdkImageOptions options = toImageOptions(request.getOptions());
+        // Merge request options with default options
+		DashScopeSdkImageOptions options = DashScopeSdkImageOptions.builder()
+                .from(this.defaultOptions)
+                .merge(request.getOptions())
+                .build();
 		ImageSynthesisParam sdkRequest = createRequest(request, options);
 
 		ImageModelObservationContext observationContext = ImageModelObservationContext.builder()
@@ -118,34 +121,8 @@ public class DashScopeSdkImageModel implements ImageModel {
 			});
 	}
 
-	private DashScopeSdkImageOptions toImageOptions(ImageOptions runtimeOptions) {
-		DashScopeSdkImageOptions options = java.util.Objects.requireNonNull(
-				DashScopeSdkImageOptions.fromOptions(this.defaultOptions));
-		if (runtimeOptions == null) {
-			return options;
-		}
-
-		DashScopeSdkImageOptions runtime = ModelOptionsUtils.copyToTarget(runtimeOptions, ImageOptions.class,
-				DashScopeSdkImageOptions.class);
-
-		DashScopeSdkImageOptions merged = ModelOptionsUtils.merge(runtime, options, DashScopeSdkImageOptions.class);
-		if (runtime != null && !CollectionUtils.isEmpty(runtime.getHttpHeaders())) {
-			merged.setHttpHeaders(runtime.getHttpHeaders());
-		}
-		else {
-			merged.setHttpHeaders(this.defaultOptions.getHttpHeaders());
-		}
-		if (runtime != null && runtime.getExtraBody() != null) {
-			merged.setExtraBody(runtime.getExtraBody());
-		}
-		else {
-			merged.setExtraBody(this.defaultOptions.getExtraBody());
-		}
-		return merged;
-	}
-
 	private ImageSynthesisParam createRequest(ImagePrompt request, DashScopeSdkImageOptions options) {
-		String model = java.util.Objects.requireNonNull(options.getModel(),
+		String model = Objects.requireNonNull(options.getModel(),
 				"DashScopeSdkImageOptions model cannot be null");
 		ImageSynthesisParam.ImageSynthesisParamBuilder<?, ?> builder = ImageSynthesisParam.builder()
 			.model(model)
@@ -275,7 +252,7 @@ public class DashScopeSdkImageModel implements ImageModel {
 	}
 
 	public DashScopeSdkImageOptions getDefaultOptions() {
-		return java.util.Objects.requireNonNull(DashScopeSdkImageOptions.fromOptions(this.defaultOptions));
+		return Objects.requireNonNull(DashScopeSdkImageOptions.fromOptions(this.defaultOptions));
 	}
 
 	public void setObservationConvention(ImageModelObservationConvention observationConvention) {

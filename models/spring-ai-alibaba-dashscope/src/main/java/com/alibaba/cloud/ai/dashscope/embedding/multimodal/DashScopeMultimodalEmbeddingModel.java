@@ -44,7 +44,6 @@ import org.springframework.ai.embedding.observation.DefaultEmbeddingModelObserva
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationContext;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationConvention;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationDocumentation;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
@@ -122,17 +121,11 @@ public class DashScopeMultimodalEmbeddingModel implements DocumentEmbeddingModel
 		Assert.notNull(request, "request must not be null");
 		Assert.notEmpty(request.getInstructions(), "request.getInstructions() must not be empty");
 
-		DashScopeMultimodalEmbeddingOptions mergedOptions = this.defaultOptions;
-		if (request.getOptions() != null) {
-			DashScopeMultimodalEmbeddingOptions defaultOptionsCopy = DashScopeMultimodalEmbeddingOptions.builder()
-					.model(this.defaultOptions.getModel())
-					.dimensions(this.defaultOptions.getDimensions())
-					.outputType(this.defaultOptions.getOutputType())
-					.fps(this.defaultOptions.getFps())
-					.instruct(this.defaultOptions.getInstruct())
-					.build();
-			mergedOptions = ModelOptionsUtils.merge(request.getOptions(), defaultOptionsCopy, DashScopeMultimodalEmbeddingOptions.class);
-		}
+        // Merge request options with default options
+		DashScopeMultimodalEmbeddingOptions mergedOptions = DashScopeMultimodalEmbeddingOptions.builder()
+				.from(this.defaultOptions)
+				.merge(request.getOptions())
+				.build();
 
 		List<Map<String, Object>> inputContents = new ArrayList<>();
 		// Keep track of metadata mapping

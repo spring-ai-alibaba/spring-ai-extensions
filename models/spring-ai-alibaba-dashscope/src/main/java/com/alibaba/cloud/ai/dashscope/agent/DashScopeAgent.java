@@ -37,12 +37,13 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 
 /**
@@ -52,7 +53,7 @@ import reactor.core.publisher.Flux;
  * @author yuanci.ytb
  * @since 1.0.0-M2
  */
-public final class DashScopeAgent extends Agent {
+public final class DashScopeAgent extends Agent implements ChatModel {
 
     private static final Logger logger = LoggerFactory.getLogger(DashScopeAgent.class);
 
@@ -67,7 +68,8 @@ public final class DashScopeAgent extends Agent {
 
     @Override
     public ChatResponse call(Prompt prompt) {
-        DashScopeAgentRequest request = toRequest(prompt, false);
+        Prompt requestPrompt = buildRequestPrompt(prompt);
+        DashScopeAgentRequest request = toRequest(requestPrompt, false);
 
         ResponseEntity<DashScopeAgentResponse> response = this.dashScopeAgentApi.call(request);
 
@@ -81,19 +83,25 @@ public final class DashScopeAgent extends Agent {
 
     @Override
     public Flux<ChatResponse> stream(Prompt prompt) {
-        DashScopeAgentRequest request = toRequest(prompt, true);
+        Prompt requestPrompt = buildRequestPrompt(prompt);
+        DashScopeAgentRequest request = toRequest(requestPrompt, true);
 
         Flux<DashScopeAgentResponse> response = this.dashScopeAgentApi.stream(request);
 
         return response.map(this::toChatResponse);
     }
 
-    private DashScopeAgentRequest toRequest(Prompt prompt, boolean stream) {
-        if (prompt == null) {
-            throw new IllegalArgumentException("option is null");
-        }
+    @Override
+    public ChatOptions getDefaultOptions() {
+        return this.defaultOptions.copy();
+    }
 
-        DashScopeAgentOptions runtimeOptions = mergeOptions(prompt.getOptions());
+    private DashScopeAgentRequest toRequest(Prompt prompt, boolean stream) {
+        Assert.notNull(prompt, "Prompt must not be null");
+        Assert.notNull(prompt.getOptions(), "DashScopeAgentOptions must not be null");
+        Assert.isInstanceOf(DashScopeAgentOptions.class, prompt.getOptions());
+
+        DashScopeAgentOptions runtimeOptions = (DashScopeAgentOptions)prompt.getOptions();
         String appId = runtimeOptions.getAppId();
 
         if (appId == null || appId.isEmpty()) {
@@ -162,12 +170,6 @@ public final class DashScopeAgent extends Agent {
         return new ChatResponse(List.of(generation));
     }
 
-    private DashScopeAgentOptions mergeOptions(@Nullable ChatOptions chatOptions) {
-        DashScopeAgentOptions agentOptions = chatOptions == null ? null
-                : ModelOptionsUtils.copyToTarget(chatOptions, ChatOptions.class, DashScopeAgentOptions.class);
-        return ModelOptionsUtils.merge(agentOptions, this.defaultOptions, DashScopeAgentOptions.class);
-    }
-
     @Override
     public DashScopeAgent clone() {
         return mutate().build();
@@ -208,9 +210,7 @@ public final class DashScopeAgent extends Agent {
         public DashScopeAgent build() {
             DashScopeAgentApi dashScopeAgentApi = Objects.requireNonNull(this.dashScopeAgentApi,
                     "dashScopeAgentApi cannot be null");
-            DashScopeAgentOptions defaultOptions = this.defaultOptions != null ? this.defaultOptions
-                    : DashScopeAgentOptions.builder().build();
-            return new DashScopeAgent(dashScopeAgentApi, defaultOptions);
+            return new DashScopeAgent(dashScopeAgentApi, this.defaultOptions);
         }
 
     }

@@ -18,7 +18,6 @@ package com.alibaba.cloud.ai.dashscope.audio.tts;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
 import com.alibaba.cloud.ai.dashscope.api.tts.DashScopeQwenTTSRealtimeApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +26,12 @@ import org.springframework.ai.audio.tts.TextToSpeechModel;
 import org.springframework.ai.audio.tts.TextToSpeechOptions;
 import org.springframework.ai.audio.tts.TextToSpeechPrompt;
 import org.springframework.ai.audio.tts.TextToSpeechResponse;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -77,10 +76,12 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel, StreamingIn
 
 	// ========================= TextToSpeechModel =========================
 
-	@NonNull
     @Override
 	public TextToSpeechResponse call(TextToSpeechPrompt prompt) {
-        DashScopeAudioSpeechOptions options = this.mergeOptions(prompt);
+        DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()
+                .from(this.defaultOptions)
+                .merge(prompt.getOptions())
+                .build();
         String model = options.getModel();
         Assert.notNull(model, "audio speech model must not be null");
         if (DashScopeAudioApiConstants.isQwenTTSModel(model)) {
@@ -96,7 +97,11 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel, StreamingIn
 
 	@Override
 	public Flux<TextToSpeechResponse> stream(TextToSpeechPrompt prompt) {
-        DashScopeAudioSpeechOptions options = this.mergeOptions(prompt);
+        // Merge request options with default options
+        DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()
+                .from(this.defaultOptions)
+                .merge(prompt.getOptions())
+                .build();
         String model = options.getModel();
         Assert.notNull(model, "audio speech model must not be null");
         if (DashScopeAudioApiConstants.isQwenTTSModel(model)) {
@@ -121,7 +126,11 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel, StreamingIn
 
 	@Override
 	public Flux<TextToSpeechResponse> stream(Flux<String> textStream, TextToSpeechOptions options) {
-		DashScopeAudioSpeechOptions dashScopeOptions = mergeOptions(options);
+        // Merge request options with default options
+		DashScopeAudioSpeechOptions dashScopeOptions = DashScopeAudioSpeechOptions.builder()
+                .from(this.defaultOptions)
+                .merge(options)
+                .build();
 		String model = dashScopeOptions.getModel();
 		Assert.notNull(model, "audio speech model must not be null");
 
@@ -143,28 +152,10 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel, StreamingIn
 
 	// ========================= Internal helpers =========================
 
-	private static TextToSpeechResponse toTextToSpeechResponse(java.nio.ByteBuffer byteBuffer) {
+	private static TextToSpeechResponse toTextToSpeechResponse(ByteBuffer byteBuffer) {
 		byte[] data = new byte[byteBuffer.remaining()];
 		byteBuffer.get(data);
 		return new TextToSpeechResponse(List.of(new Speech(data)));
-	}
-
-	private DashScopeAudioSpeechOptions mergeOptions(TextToSpeechPrompt prompt) {
-		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder().build();
-        DashScopeAudioSpeechOptions runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(),
-				TextToSpeechOptions.class, DashScopeAudioSpeechOptions.class);
-        options = ModelOptionsUtils.merge(runtimeOptions, options, DashScopeAudioSpeechOptions.class);
-        return ModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioSpeechOptions.class);
-	}
-
-	private DashScopeAudioSpeechOptions mergeOptions(TextToSpeechOptions options) {
-		DashScopeAudioSpeechOptions result = DashScopeAudioSpeechOptions.builder().build();
-		if (options != null) {
-			DashScopeAudioSpeechOptions runtime = ModelOptionsUtils.copyToTarget(options,
-					TextToSpeechOptions.class, DashScopeAudioSpeechOptions.class);
-			result = ModelOptionsUtils.merge(runtime, result, DashScopeAudioSpeechOptions.class);
-		}
-		return ModelOptionsUtils.merge(result, this.defaultOptions, DashScopeAudioSpeechOptions.class);
 	}
 
     /**

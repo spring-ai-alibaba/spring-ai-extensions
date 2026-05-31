@@ -34,249 +34,318 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscriptionOptions {
 
-	@JsonProperty("model")
-	private @Nullable String model;
+    @JsonProperty("model")
+    private final String model;
 
-	@JsonProperty("file_urls")
-	private @Nullable List<String> fileUrls;
+    @JsonProperty("file_urls")
+    private final @Nullable List<String> fileUrls;
 
-	@JsonProperty("phrase_id")
-	private @Nullable String phraseId;
+    @JsonProperty("phrase_id")
+    private final @Nullable String phraseId;
 
-	@JsonProperty("channel_id")
-	private @Nullable List<Integer> channelId;
+    @JsonProperty("channel_id")
+    private final @Nullable List<Integer> channelId;
 
-	@JsonProperty("diarization_enabled")
-	private @Nullable Boolean diarizationEnabled;
+    @JsonProperty("diarization_enabled")
+    private final @Nullable Boolean diarizationEnabled;
 
-	@JsonProperty("speaker_count")
-	private @Nullable Integer speakerCount;
+    @JsonProperty("speaker_count")
+    private final @Nullable Integer speakerCount;
 
-	@JsonProperty("disfluency_removal_enabled")
-	private @Nullable Boolean disfluencyRemovalEnabled;
+    @JsonProperty("disfluency_removal_enabled")
+    private final @Nullable Boolean disfluencyRemovalEnabled;
 
-	@JsonProperty("timestamp_alignment_enabled")
-	private @Nullable Boolean timestampAlignmentEnabled;
+    @JsonProperty("timestamp_alignment_enabled")
+    private final @Nullable Boolean timestampAlignmentEnabled;
 
-	@JsonProperty("special_word_filter")
-	private @Nullable String specialWordFilter;
+    @JsonProperty("special_word_filter")
+    private final @Nullable String specialWordFilter;
 
-	@JsonProperty("audio_event_detection_enabled")
-	private @Nullable Boolean audioEventDetectionEnabled;
+    @JsonProperty("audio_event_detection_enabled")
+    private final @Nullable Boolean audioEventDetectionEnabled;
 
-	@JsonIgnore
-	private Map<String, String> httpHeaders = new HashMap<>();
+    @JsonIgnore
+    private final Map<String, String> httpHeaders;
 
-	public static DashScopeSdkAudioTranscriptionOptionsBuilder builder() {
-		return new DashScopeSdkAudioTranscriptionOptionsBuilder();
-	}
+    protected DashScopeSdkAudioTranscriptionOptions(
+            @Nullable String model,
+            @Nullable List<String> fileUrls,
+            @Nullable String phraseId,
+            @Nullable List<Integer> channelId,
+            @Nullable Boolean diarizationEnabled,
+            @Nullable Integer speakerCount,
+            @Nullable Boolean disfluencyRemovalEnabled,
+            @Nullable Boolean timestampAlignmentEnabled,
+            @Nullable String specialWordFilter,
+            @Nullable Boolean audioEventDetectionEnabled,
+            @Nullable Map<String, String> httpHeaders) {
+        this.model = model != null ? model : "paraformer-v2";
+        this.fileUrls = fileUrls != null ? new ArrayList<>(fileUrls) : null;
+        this.phraseId = phraseId;
+        this.channelId = channelId != null ? new ArrayList<>(channelId) : null;
+        this.diarizationEnabled = diarizationEnabled;
+        this.speakerCount = speakerCount;
+        this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
+        this.timestampAlignmentEnabled = timestampAlignmentEnabled;
+        this.specialWordFilter = specialWordFilter;
+        this.audioEventDetectionEnabled = audioEventDetectionEnabled;
+        this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
+    }
 
-	public static @Nullable DashScopeSdkAudioTranscriptionOptions fromOptions(
-			@Nullable DashScopeSdkAudioTranscriptionOptions options) {
-		if (options == null) {
-			return null;
-		}
-		DashScopeSdkAudioTranscriptionOptions copy = new DashScopeSdkAudioTranscriptionOptions();
-		copy.setModel(options.getModel());
-		copy.setFileUrls(options.getFileUrls() == null ? null : new ArrayList<>(options.getFileUrls()));
-		copy.setPhraseId(options.getPhraseId());
-		copy.setChannelId(options.getChannelId() == null ? null : new ArrayList<>(options.getChannelId()));
-		copy.setDiarizationEnabled(options.getDiarizationEnabled());
-		copy.setSpeakerCount(options.getSpeakerCount());
-		copy.setDisfluencyRemovalEnabled(options.getDisfluencyRemovalEnabled());
-		copy.setTimestampAlignmentEnabled(options.getTimestampAlignmentEnabled());
-		copy.setSpecialWordFilter(options.getSpecialWordFilter());
-		copy.setAudioEventDetectionEnabled(options.getAudioEventDetectionEnabled());
-		copy.setHttpHeaders(options.getHttpHeaders() == null ? new HashMap<>() : new HashMap<>(options.getHttpHeaders()));
-		return copy;
-	}
+    public static Builder builder() {
+        return new Builder();
+    }
 
-	@Override
-	public @Nullable String getModel() {
-		return this.model;
-	}
+    public static DashScopeSdkAudioTranscriptionOptions fromOptions(DashScopeSdkAudioTranscriptionOptions options) {
+        return options.mutate().build();
+    }
 
-	public void setModel(@Nullable String model) {
-		this.model = model;
-	}
+    @Override
+    public String getModel() {
+        return this.model;
+    }
 
-	public @Nullable List<String> getFileUrls() {
-		return this.fileUrls;
-	}
+    public @Nullable List<String> getFileUrls() {
+        return this.fileUrls;
+    }
 
-	public void setFileUrls(@Nullable List<String> fileUrls) {
-		this.fileUrls = fileUrls;
-	}
+    public @Nullable String getPhraseId() {
+        return this.phraseId;
+    }
 
-	public @Nullable String getPhraseId() {
-		return this.phraseId;
-	}
+    public @Nullable List<Integer> getChannelId() {
+        return this.channelId;
+    }
 
-	public void setPhraseId(@Nullable String phraseId) {
-		this.phraseId = phraseId;
-	}
+    public @Nullable Boolean getDiarizationEnabled() {
+        return this.diarizationEnabled;
+    }
 
-	public @Nullable List<Integer> getChannelId() {
-		return this.channelId;
-	}
+    public @Nullable Integer getSpeakerCount() {
+        return this.speakerCount;
+    }
 
-	public void setChannelId(@Nullable List<Integer> channelId) {
-		this.channelId = channelId;
-	}
+    public @Nullable Boolean getDisfluencyRemovalEnabled() {
+        return this.disfluencyRemovalEnabled;
+    }
 
-	public @Nullable Boolean getDiarizationEnabled() {
-		return this.diarizationEnabled;
-	}
+    public @Nullable Boolean getTimestampAlignmentEnabled() {
+        return this.timestampAlignmentEnabled;
+    }
 
-	public void setDiarizationEnabled(@Nullable Boolean diarizationEnabled) {
-		this.diarizationEnabled = diarizationEnabled;
-	}
+    public @Nullable String getSpecialWordFilter() {
+        return this.specialWordFilter;
+    }
 
-	public @Nullable Integer getSpeakerCount() {
-		return this.speakerCount;
-	}
+    public @Nullable Boolean getAudioEventDetectionEnabled() {
+        return this.audioEventDetectionEnabled;
+    }
 
-	public void setSpeakerCount(@Nullable Integer speakerCount) {
-		this.speakerCount = speakerCount;
-	}
+    public Map<String, String> getHttpHeaders() {
+        return this.httpHeaders;
+    }
 
-	public @Nullable Boolean getDisfluencyRemovalEnabled() {
-		return this.disfluencyRemovalEnabled;
-	}
+    public Builder mutate() {
+        return builder().model(this.model)
+                .fileUrls(this.fileUrls)
+                .phraseId(this.phraseId)
+                .channelId(this.channelId)
+                .diarizationEnabled(this.diarizationEnabled)
+                .speakerCount(this.speakerCount)
+                .disfluencyRemovalEnabled(this.disfluencyRemovalEnabled)
+                .timestampAlignmentEnabled(this.timestampAlignmentEnabled)
+                .specialWordFilter(this.specialWordFilter)
+                .audioEventDetectionEnabled(this.audioEventDetectionEnabled)
+                .httpHeaders(this.httpHeaders);
+    }
 
-	public void setDisfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
-		this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        DashScopeSdkAudioTranscriptionOptions that = (DashScopeSdkAudioTranscriptionOptions) o;
+        return Objects.equals(this.model, that.model) && Objects.equals(this.fileUrls, that.fileUrls)
+                && Objects.equals(this.phraseId, that.phraseId) && Objects.equals(this.channelId, that.channelId)
+                && Objects.equals(this.diarizationEnabled, that.diarizationEnabled)
+                && Objects.equals(this.speakerCount, that.speakerCount)
+                && Objects.equals(this.disfluencyRemovalEnabled, that.disfluencyRemovalEnabled)
+                && Objects.equals(this.timestampAlignmentEnabled, that.timestampAlignmentEnabled)
+                && Objects.equals(this.specialWordFilter, that.specialWordFilter)
+                && Objects.equals(this.audioEventDetectionEnabled, that.audioEventDetectionEnabled)
+                && Objects.equals(this.httpHeaders, that.httpHeaders);
+    }
 
-	public @Nullable Boolean getTimestampAlignmentEnabled() {
-		return this.timestampAlignmentEnabled;
-	}
-
-	public void setTimestampAlignmentEnabled(@Nullable Boolean timestampAlignmentEnabled) {
-		this.timestampAlignmentEnabled = timestampAlignmentEnabled;
-	}
-
-	public @Nullable String getSpecialWordFilter() {
-		return this.specialWordFilter;
-	}
-
-	public void setSpecialWordFilter(@Nullable String specialWordFilter) {
-		this.specialWordFilter = specialWordFilter;
-	}
-
-	public @Nullable Boolean getAudioEventDetectionEnabled() {
-		return this.audioEventDetectionEnabled;
-	}
-
-	public void setAudioEventDetectionEnabled(@Nullable Boolean audioEventDetectionEnabled) {
-		this.audioEventDetectionEnabled = audioEventDetectionEnabled;
-	}
-
-	public Map<String, String> getHttpHeaders() {
-		return this.httpHeaders;
-	}
-
-	public void setHttpHeaders(Map<String, String> httpHeaders) {
-		this.httpHeaders = httpHeaders;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (o == null || getClass() != o.getClass()) {
-			return false;
-		}
-		DashScopeSdkAudioTranscriptionOptions that = (DashScopeSdkAudioTranscriptionOptions) o;
-		return Objects.equals(this.model, that.model) && Objects.equals(this.fileUrls, that.fileUrls)
-				&& Objects.equals(this.phraseId, that.phraseId) && Objects.equals(this.channelId, that.channelId)
-				&& Objects.equals(this.diarizationEnabled, that.diarizationEnabled)
-				&& Objects.equals(this.speakerCount, that.speakerCount)
-				&& Objects.equals(this.disfluencyRemovalEnabled, that.disfluencyRemovalEnabled)
-				&& Objects.equals(this.timestampAlignmentEnabled, that.timestampAlignmentEnabled)
-				&& Objects.equals(this.specialWordFilter, that.specialWordFilter)
-				&& Objects.equals(this.audioEventDetectionEnabled, that.audioEventDetectionEnabled)
-				&& Objects.equals(this.httpHeaders, that.httpHeaders);
-	}
-
+    // @formatter:off
 	@Override
 	public int hashCode() {
 		return Objects.hash(this.model, this.fileUrls, this.phraseId, this.channelId, this.diarizationEnabled,
 				this.speakerCount, this.disfluencyRemovalEnabled, this.timestampAlignmentEnabled,
 				this.specialWordFilter, this.audioEventDetectionEnabled, this.httpHeaders);
 	}
+    // @formatter:on
 
-	public static class DashScopeSdkAudioTranscriptionOptionsBuilder {
+    @Override
+    public String toString() {
+        return "DashScopeSdkAudioTranscriptionOptions{" + "model='" + this.model + '\'' + ", fileUrls=" + this.fileUrls
+                + ", phraseId='" + this.phraseId + '\'' + ", channelId=" + this.channelId + ", diarizationEnabled="
+                + this.diarizationEnabled + ", speakerCount=" + this.speakerCount + ", disfluencyRemovalEnabled="
+                + this.disfluencyRemovalEnabled + ", timestampAlignmentEnabled=" + this.timestampAlignmentEnabled
+                + ", specialWordFilter='" + this.specialWordFilter + '\'' + ", audioEventDetectionEnabled="
+                + this.audioEventDetectionEnabled + ", httpHeaders=" + this.httpHeaders + '}';
+    }
 
-		private final DashScopeSdkAudioTranscriptionOptions options;
+    public static class Builder {
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder() {
-			this.options = new DashScopeSdkAudioTranscriptionOptions();
-		}
+        protected @Nullable String model;
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder model(@Nullable String model) {
-			this.options.model = model;
-			return this;
-		}
+        protected @Nullable List<String> fileUrls;
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder fileUrls(@Nullable List<String> fileUrls) {
-			this.options.fileUrls = fileUrls;
-			return this;
-		}
+        protected @Nullable String phraseId;
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder phraseId(@Nullable String phraseId) {
-			this.options.phraseId = phraseId;
-			return this;
-		}
+        protected @Nullable List<Integer> channelId;
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder channelId(@Nullable List<Integer> channelId) {
-			this.options.channelId = channelId;
-			return this;
-		}
+        protected @Nullable Boolean diarizationEnabled;
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder diarizationEnabled(
-				@Nullable Boolean diarizationEnabled) {
-			this.options.diarizationEnabled = diarizationEnabled;
-			return this;
-		}
+        protected @Nullable Integer speakerCount;
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder speakerCount(@Nullable Integer speakerCount) {
-			this.options.speakerCount = speakerCount;
-			return this;
-		}
+        protected @Nullable Boolean disfluencyRemovalEnabled;
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder disfluencyRemovalEnabled(
-				@Nullable Boolean disfluencyRemovalEnabled) {
-			this.options.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
-			return this;
-		}
+        protected @Nullable Boolean timestampAlignmentEnabled;
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder timestampAlignmentEnabled(
-				@Nullable Boolean timestampAlignmentEnabled) {
-			this.options.timestampAlignmentEnabled = timestampAlignmentEnabled;
-			return this;
-		}
+        protected @Nullable String specialWordFilter;
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder specialWordFilter(@Nullable String specialWordFilter) {
-			this.options.specialWordFilter = specialWordFilter;
-			return this;
-		}
+        protected @Nullable Boolean audioEventDetectionEnabled;
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder audioEventDetectionEnabled(@Nullable Boolean enabled) {
-			this.options.audioEventDetectionEnabled = enabled;
-			return this;
-		}
+        protected Map<String, String> httpHeaders = new HashMap<>();
 
-		public DashScopeSdkAudioTranscriptionOptionsBuilder httpHeaders(Map<String, String> httpHeaders) {
-			this.options.httpHeaders = httpHeaders;
-			return this;
-		}
+        public Builder() {
+        }
 
+        public Builder model(@Nullable String model) {
+            this.model = model;
+            return this;
+        }
+
+        public Builder fileUrls(@Nullable List<String> fileUrls) {
+            this.fileUrls = fileUrls;
+            return this;
+        }
+
+        public Builder phraseId(@Nullable String phraseId) {
+            this.phraseId = phraseId;
+            return this;
+        }
+
+        public Builder channelId(@Nullable List<Integer> channelId) {
+            this.channelId = channelId;
+            return this;
+        }
+
+        public Builder diarizationEnabled(@Nullable Boolean diarizationEnabled) {
+            this.diarizationEnabled = diarizationEnabled;
+            return this;
+        }
+
+        public Builder speakerCount(@Nullable Integer speakerCount) {
+            this.speakerCount = speakerCount;
+            return this;
+        }
+
+        public Builder disfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
+            this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
+            return this;
+        }
+
+        public Builder timestampAlignmentEnabled(@Nullable Boolean timestampAlignmentEnabled) {
+            this.timestampAlignmentEnabled = timestampAlignmentEnabled;
+            return this;
+        }
+
+        public Builder specialWordFilter(@Nullable String specialWordFilter) {
+            this.specialWordFilter = specialWordFilter;
+            return this;
+        }
+
+        public Builder audioEventDetectionEnabled(@Nullable Boolean audioEventDetectionEnabled) {
+            this.audioEventDetectionEnabled = audioEventDetectionEnabled;
+            return this;
+        }
+
+        public Builder httpHeaders(Map<String, String> httpHeaders) {
+            this.httpHeaders = httpHeaders;
+            return this;
+        }
+
+        public Builder from(DashScopeSdkAudioTranscriptionOptions fromOptions) {
+            this.model = fromOptions.getModel();
+            this.fileUrls = fromOptions.getFileUrls();
+            this.phraseId = fromOptions.getPhraseId();
+            this.channelId = fromOptions.getChannelId();
+            this.diarizationEnabled = fromOptions.getDiarizationEnabled();
+            this.speakerCount = fromOptions.getSpeakerCount();
+            this.disfluencyRemovalEnabled = fromOptions.getDisfluencyRemovalEnabled();
+            this.timestampAlignmentEnabled = fromOptions.getTimestampAlignmentEnabled();
+            this.specialWordFilter = fromOptions.getSpecialWordFilter();
+            this.audioEventDetectionEnabled = fromOptions.getAudioEventDetectionEnabled();
+            this.httpHeaders = fromOptions.getHttpHeaders();
+            return this;
+        }
+
+        public Builder merge(@Nullable AudioTranscriptionOptions from) {
+            if (from == null) {
+                return this;
+            }
+            if (from.getModel() != null) {
+                this.model = from.getModel();
+            }
+            if (from instanceof DashScopeSdkAudioTranscriptionOptions castFrom) {
+                if (castFrom.getFileUrls() != null) {
+                    this.fileUrls = castFrom.getFileUrls();
+                }
+                if (castFrom.getPhraseId() != null) {
+                    this.phraseId = castFrom.getPhraseId();
+                }
+                if (castFrom.getChannelId() != null) {
+                    this.channelId = castFrom.getChannelId();
+                }
+                if (castFrom.getDiarizationEnabled() != null) {
+                    this.diarizationEnabled = castFrom.getDiarizationEnabled();
+                }
+                if (castFrom.getSpeakerCount() != null) {
+                    this.speakerCount = castFrom.getSpeakerCount();
+                }
+                if (castFrom.getDisfluencyRemovalEnabled() != null) {
+                    this.disfluencyRemovalEnabled = castFrom.getDisfluencyRemovalEnabled();
+                }
+                if (castFrom.getTimestampAlignmentEnabled() != null) {
+                    this.timestampAlignmentEnabled = castFrom.getTimestampAlignmentEnabled();
+                }
+                if (castFrom.getSpecialWordFilter() != null) {
+                    this.specialWordFilter = castFrom.getSpecialWordFilter();
+                }
+                if (castFrom.getAudioEventDetectionEnabled() != null) {
+                    this.audioEventDetectionEnabled = castFrom.getAudioEventDetectionEnabled();
+                }
+                if (castFrom.getHttpHeaders() != null && !castFrom.getHttpHeaders().isEmpty()) {
+                    this.httpHeaders = castFrom.getHttpHeaders();
+                }
+            }
+            return this;
+        }
+
+        // @formatter:off
 		public DashScopeSdkAudioTranscriptionOptions build() {
-			return this.options;
+			return new DashScopeSdkAudioTranscriptionOptions(this.model, this.fileUrls, this.phraseId, this.channelId,
+					this.diarizationEnabled, this.speakerCount, this.disfluencyRemovalEnabled,
+					this.timestampAlignmentEnabled, this.specialWordFilter, this.audioEventDetectionEnabled,
+					this.httpHeaders);
 		}
+        // @formatter:on
 
-	}
+    }
 
 }
