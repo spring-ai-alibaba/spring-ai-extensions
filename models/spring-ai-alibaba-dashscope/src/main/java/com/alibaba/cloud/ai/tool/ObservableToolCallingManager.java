@@ -158,23 +158,9 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 		if (prompt.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions
 				&& !CollectionUtils.isEmpty(toolCallingChatOptions.getToolContext())) {
 			toolContextMap = new HashMap<>(toolCallingChatOptions.getToolContext());
-
-			toolContextMap.put(ToolContext.TOOL_CALL_HISTORY,
-					buildConversationHistoryBeforeToolExecution(prompt, assistantMessage));
 		}
 
 		return new ToolContext(toolContextMap);
-	}
-
-	private static List<Message> buildConversationHistoryBeforeToolExecution(Prompt prompt,
-			AssistantMessage assistantMessage) {
-		List<Message> messageHistory = new ArrayList<>(prompt.copy().getInstructions());
-		messageHistory.add(AssistantMessage.builder()
-			.content(assistantMessage.getText())
-			.properties(assistantMessage.getMetadata())
-			.toolCalls(assistantMessage.getToolCalls())
-			.build());
-		return messageHistory;
 	}
 
 	/**
