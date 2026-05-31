@@ -16,6 +16,11 @@
 
 package com.alibaba.cloud.ai.rag.elasticsearch;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeChatAutoConfiguration;
@@ -47,11 +52,6 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Integration tests for Elasticsearch RAG components.
