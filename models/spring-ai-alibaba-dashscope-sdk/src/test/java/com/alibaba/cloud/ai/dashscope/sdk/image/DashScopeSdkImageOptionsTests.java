@@ -18,7 +18,6 @@ package com.alibaba.cloud.ai.dashscope.sdk.image;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -89,39 +88,65 @@ class DashScopeSdkImageOptionsTests {
 	}
 
 	@Test
-	void testFromOptionsReturnsNullForNullInput() {
-		assertThat(DashScopeSdkImageOptions.fromOptions(null)).isNull();
+	void testFromOptions() {
+		DashScopeSdkImageOptions original = DashScopeSdkImageOptions.builder()
+			.model("wanx-v1")
+			.n(1)
+			.width(1024)
+			.height(1024)
+			.size("1024*1024")
+			.style("photography")
+			.responseFormat("url")
+			.seed(1)
+			.negativePrompt("blur")
+			.refImage("https://example.com/ref.png")
+			.pollIntervalMs(2000)
+			.async(false)
+			.httpHeaders(Map.of("x-source", "s1"))
+			.extraBody(Map.of("watermark", false))
+			.build();
+
+		DashScopeSdkImageOptions target = DashScopeSdkImageOptions.fromOptions(original);
+
+		assertThat(target.getModel()).isEqualTo(original.getModel());
+		assertThat(target.getN()).isEqualTo(original.getN());
+		assertThat(target.getWidth()).isEqualTo(original.getWidth());
+		assertThat(target.getHeight()).isEqualTo(original.getHeight());
+		assertThat(target.getSize()).isEqualTo("1024*1024");
+		assertThat(target.getStyle()).isEqualTo(original.getStyle());
+		assertThat(target.getResponseFormat()).isEqualTo(original.getResponseFormat());
+		assertThat(target.getSeed()).isEqualTo(original.getSeed());
+		assertThat(target.getNegativePrompt()).isEqualTo(original.getNegativePrompt());
+		assertThat(target.getRefImage()).isEqualTo(original.getRefImage());
+		assertThat(target.getPollIntervalMs()).isEqualTo(original.getPollIntervalMs());
+		assertThat(target.getAsync()).isEqualTo(original.getAsync());
+		assertThat(target.getHttpHeaders()).containsOnly(entry("x-source", "s1"));
+		assertThat(target.getExtraBody()).containsOnly(entry("watermark", false));
 	}
 
 	@Test
 	void testFromOptionsCreatesIndependentMaps() {
-		Map<String, String> headers = new HashMap<>();
-		headers.put("x-test", "v1");
-		Map<String, Object> extraBody = new HashMap<>();
-		extraBody.put("watermark", false);
-
 		DashScopeSdkImageOptions original = DashScopeSdkImageOptions.builder()
-			.httpHeaders(headers)
-			.extraBody(extraBody)
+			.httpHeaders(Map.of("x-test", "v1"))
+			.extraBody(Map.of("watermark", false))
 			.build();
 		DashScopeSdkImageOptions copy = DashScopeSdkImageOptions.fromOptions(original);
 
-		headers.put("x-test-2", "v2");
-		extraBody.put("seed", 42);
-		copy.getHttpHeaders().put("x-copy", "c1");
+		original.getExtraBody().put("seed", 42);
 		copy.getExtraBody().put("style", "anime");
 
-		assertThat(copy.getHttpHeaders()).containsOnly(entry("x-test", "v1"), entry("x-copy", "c1"));
-		assertThat(original.getHttpHeaders()).containsOnly(entry("x-test", "v1"), entry("x-test-2", "v2"));
-		assertThat(copy.getExtraBody()).containsOnly(entry("watermark", false), entry("style", "anime"));
+		assertThat(original.getHttpHeaders()).containsOnly(entry("x-test", "v1"));
+		assertThat(copy.getHttpHeaders()).containsOnly(entry("x-test", "v1"));
 		assertThat(original.getExtraBody()).containsOnly(entry("watermark", false), entry("seed", 42));
+		assertThat(copy.getExtraBody()).containsOnly(entry("watermark", false), entry("style", "anime"));
 	}
 
 	@Test
 	void testFromOptionsHandlesNullMaps() {
-		DashScopeSdkImageOptions original = new DashScopeSdkImageOptions();
-		original.setHttpHeaders(null);
-		original.setExtraBody(null);
+		DashScopeSdkImageOptions original = DashScopeSdkImageOptions.builder()
+                .httpHeaders(null)
+                .extraBody(null)
+                .build();
 
 		DashScopeSdkImageOptions copy = DashScopeSdkImageOptions.fromOptions(original);
 

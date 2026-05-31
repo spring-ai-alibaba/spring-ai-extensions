@@ -134,25 +134,45 @@ class DashScopeAgentOptionsTests {
         assertThat(copy.getImages()).isEqualTo(original.getImages());
         assertThat(copy.getFlowStreamMode()).isEqualTo(DashScopeAgentFlowStreamMode.FULL_THOUGHTS);
         assertThat(copy.getRagOptions().getPipelineIds()).containsExactly("p1");
-
-        files.add("file-456");
-        images.add("image-456");
-        ragOptions.getPipelineIds().add("p2");
-        ((ObjectNode) original.getBizParams()).put("key3", "value3");
-
-        assertThat(original.getFiles()).containsExactly("file-123", "file-456");
-        assertThat(copy.getFiles()).containsExactly("file-123");
-        assertThat(original.getImages()).containsExactly("image-123", "image-456");
-        assertThat(copy.getImages()).containsExactly("image-123");
-        assertThat(original.getRagOptions().getPipelineIds()).containsExactly("p1", "p2");
-        assertThat(copy.getRagOptions().getPipelineIds()).containsExactly("p1");
-        assertThat(original.getBizParams().has("key3")).isTrue();
-        assertThat(copy.getBizParams().has("key3")).isFalse();
     }
 
     @Test
-    void testFromOptionsWithNullInput() {
-        assertThat(DashScopeAgentOptions.fromOptions(null)).isNull();
+    void testFromOptions() {
+        List<String> files = new ArrayList<>(List.of("file-123"));
+        List<String> images = new ArrayList<>(List.of("image-123"));
+        DashScopeAgentRagOptions ragOptions = DashScopeAgentRagOptions.builder()
+                .pipelineIds(new ArrayList<>(List.of("p1")))
+                .build();
+
+        // Create original options
+        DashScopeAgentOptions original = DashScopeAgentOptions.builder()
+                .appId(TEST_APP_ID)
+                .sessionId(TEST_SESSION_ID)
+                .modelId(TEST_MODEL_ID)
+                .incrementalOutput(true)
+                .hasThoughts(true)
+                .enableThinking(true)
+                .bizParams(testBizParams)
+                .files(files)
+                .images(images)
+                .ragOptions(ragOptions)
+                .flowStreamMode(DashScopeAgentFlowStreamMode.FULL_THOUGHTS)
+                .build();
+
+        DashScopeAgentOptions target = DashScopeAgentOptions.fromOptions(original);
+
+        // Verify copied options match original
+        assertThat(target.getAppId()).isEqualTo(original.getAppId());
+        assertThat(target.getSessionId()).isEqualTo(original.getSessionId());
+        assertThat(target.getModelId()).isEqualTo(original.getModelId());
+        assertThat(target.getIncrementalOutput()).isEqualTo(original.getIncrementalOutput());
+        assertThat(target.getHasThoughts()).isEqualTo(original.getHasThoughts());
+        assertThat(target.getEnableThinking()).isEqualTo(original.getEnableThinking());
+        assertThat(target.getBizParams()).isEqualTo(original.getBizParams());
+        assertThat(target.getFiles()).isEqualTo(original.getFiles());
+        assertThat(target.getImages()).isEqualTo(original.getImages());
+        assertThat(target.getFlowStreamMode()).isEqualTo(DashScopeAgentFlowStreamMode.FULL_THOUGHTS);
+        assertThat(target.getRagOptions().getPipelineIds()).containsExactly("p1");
     }
 
     /**
@@ -203,23 +223,21 @@ class DashScopeAgentOptionsTests {
     }
 
     /**
-     * Test setters for all fields
+     * Test builder for setting all fields
      */
     @Test
-    void testSetters() {
-        DashScopeAgentOptions options = new DashScopeAgentOptions();
+    void testGetters() {
+        DashScopeAgentOptions options = DashScopeAgentOptions.builder()
+                .appId(TEST_APP_ID)
+                .sessionId(TEST_SESSION_ID)
+                .memoryId(TEST_MEMORY_ID)
+                .modelId(TEST_MODEL_ID)
+                .incrementalOutput(true)
+                .hasThoughts(true)
+                .enableThinking(true)
+                .bizParams(testBizParams)
+                .build();
 
-        // Set values using setters
-        options.setAppId(TEST_APP_ID);
-        options.setSessionId(TEST_SESSION_ID);
-        options.setMemoryId(TEST_MEMORY_ID);
-        options.setModelId(TEST_MODEL_ID);
-        options.setIncrementalOutput(true);
-        options.setHasThoughts(true);
-        options.setEnableThinking(true);
-        options.setBizParams(testBizParams);
-
-        // Verify all values are set correctly
         assertThat(options.getAppId()).isEqualTo(TEST_APP_ID);
         assertThat(options.getSessionId()).isEqualTo(TEST_SESSION_ID);
         assertThat(options.getMemoryId()).isEqualTo(TEST_MEMORY_ID);

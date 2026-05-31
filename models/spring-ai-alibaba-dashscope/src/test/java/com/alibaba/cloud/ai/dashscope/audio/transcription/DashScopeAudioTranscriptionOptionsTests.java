@@ -25,9 +25,9 @@ class DashScopeAudioTranscriptionOptionsTests {
 
     @Test
     void testDefaultValues() {
-        DashScopeAudioTranscriptionOptions options = new DashScopeAudioTranscriptionOptions();
+        DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder().build();
 
-        assertThat(options.getModel()).isNull();
+        assertThat(options.getModel()).isEqualTo("gummy-realtime-v1");
         assertThat(options.getSampleRate()).isEqualTo(16000);
         assertThat(options.getFormat()).isEqualTo("pcm");
         assertThat(options.getTopK()).isNull();
@@ -41,12 +41,8 @@ class DashScopeAudioTranscriptionOptionsTests {
                 new DashScopeAudioTranscriptionOptions.StreamOptions(true);
         DashScopeAudioTranscriptionOptions.TranslationOptions translationOptions =
                 new DashScopeAudioTranscriptionOptions.TranslationOptions("zh", "en");
-        DashScopeAudioTranscriptionOptions.AsrOptions asrOptions = new DashScopeAudioTranscriptionOptions.AsrOptions();
-        asrOptions.setLanguage("zh");
-        asrOptions.setEnableItn(true);
-        DashScopeAudioTranscriptionOptions.Resource resource = new DashScopeAudioTranscriptionOptions.Resource();
-        resource.setResourceId("res-1");
-        resource.setResourceType("custom_words");
+        DashScopeAudioTranscriptionOptions.AsrOptions asrOptions = new DashScopeAudioTranscriptionOptions.AsrOptions("zh", true);
+        DashScopeAudioTranscriptionOptions.Resource resource = new DashScopeAudioTranscriptionOptions.Resource("res-1", "custom_words");
 
         DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
                 .model("gummy-realtime-v1")
@@ -108,22 +104,17 @@ class DashScopeAudioTranscriptionOptionsTests {
     }
 
     @Test
-    void testNestedClassSetters() {
-        DashScopeAudioTranscriptionOptions.Audio audio = new DashScopeAudioTranscriptionOptions.Audio();
-        audio.setVoice("voice-1");
-        audio.setFormat("mp3");
+    void testNestedClassConstruction() {
+        DashScopeAudioTranscriptionOptions.Audio audio = new DashScopeAudioTranscriptionOptions.Audio("voice-1", "mp3");
         assertThat(audio.getVoice()).isEqualTo("voice-1");
         assertThat(audio.getFormat()).isEqualTo("mp3");
 
         DashScopeAudioTranscriptionOptions.StreamOptions streamOptions =
-                new DashScopeAudioTranscriptionOptions.StreamOptions();
-        streamOptions.setIncludeUsage(false);
+                new DashScopeAudioTranscriptionOptions.StreamOptions(false);
         assertThat(streamOptions.getIncludeUsage()).isFalse();
 
         DashScopeAudioTranscriptionOptions.TranslationOptions translationOptions =
-                new DashScopeAudioTranscriptionOptions.TranslationOptions();
-        translationOptions.setSourceLang("en");
-        translationOptions.setTargetLang("zh");
+                new DashScopeAudioTranscriptionOptions.TranslationOptions("en", "zh");
         assertThat(translationOptions.getSourceLang()).isEqualTo("en");
         assertThat(translationOptions.getTargetLang()).isEqualTo("zh");
     }

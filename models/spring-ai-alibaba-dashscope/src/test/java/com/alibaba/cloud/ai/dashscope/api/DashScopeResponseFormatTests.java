@@ -90,7 +90,7 @@ class DashScopeResponseFormatTests {
 		assertEquals(DashScopeResponseFormat.Type.JSON_SCHEMA, format.getType(),
 				"Type should be JSON_SCHEMA");
         assertEquals(jsonSchemaConfig, format.getJsonScheme(), "JSON schema config should match");
-		assertTrue(format.toString().contains("{\"type\":\"json_schema\""), "String representation should match");
+		assertTrue(format.toString().contains("\"type\":\"json_schema\""), "String representation should match");
 	}
 
 	@Test

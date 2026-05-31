@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.evaluation;
 
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -202,8 +203,7 @@ class AnswerRelevancyEvaluatorTests {
 		EvaluationRequest request = createEvaluationRequest(TEST_QUESTION, TEST_STUDENT_ANSWER, TEST_CORRECT_ANSWER);
 
 		// Evaluate and verify exception is thrown
-		assertThatThrownBy(() -> evaluator.evaluate(request)).isInstanceOf(RuntimeException.class)
-			.hasRootCauseInstanceOf(Exception.class);
+		assertThatThrownBy(() -> evaluator.evaluate(request)).isInstanceOf(JacksonException.class);
 	}
 
 	/**

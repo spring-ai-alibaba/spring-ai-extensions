@@ -18,8 +18,6 @@ package com.alibaba.cloud.ai.dashscope.sdk.audio.transcription;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,27 +48,48 @@ class DashScopeSdkAudioTranscriptionOptionsTests {
 	}
 
 	@Test
-	void testFromOptionsReturnsNullForNullInput() {
-		assertThat(DashScopeSdkAudioTranscriptionOptions.fromOptions(null)).isNull();
+	void testFromOptions() {
+		DashScopeSdkAudioTranscriptionOptions original = DashScopeSdkAudioTranscriptionOptions.builder()
+			.model("paraformer-v2")
+			.fileUrls(List.of("https://example.com/a.wav"))
+			.phraseId("p1")
+			.channelId(List.of(0))
+			.diarizationEnabled(true)
+			.speakerCount(2)
+			.disfluencyRemovalEnabled(true)
+			.timestampAlignmentEnabled(true)
+			.specialWordFilter("*")
+			.audioEventDetectionEnabled(false)
+			.httpHeaders(Map.of("x-source", "s1"))
+			.build();
+
+		DashScopeSdkAudioTranscriptionOptions target = DashScopeSdkAudioTranscriptionOptions.fromOptions(original);
+
+		assertThat(target.getModel()).isEqualTo(original.getModel());
+		assertThat(target.getFileUrls()).isEqualTo(original.getFileUrls());
+		assertThat(target.getPhraseId()).isEqualTo(original.getPhraseId());
+		assertThat(target.getChannelId()).isEqualTo(original.getChannelId());
+		assertThat(target.getDiarizationEnabled()).isEqualTo(original.getDiarizationEnabled());
+		assertThat(target.getSpeakerCount()).isEqualTo(original.getSpeakerCount());
+		assertThat(target.getDisfluencyRemovalEnabled()).isEqualTo(original.getDisfluencyRemovalEnabled());
+		assertThat(target.getTimestampAlignmentEnabled()).isEqualTo(original.getTimestampAlignmentEnabled());
+		assertThat(target.getSpecialWordFilter()).isEqualTo(original.getSpecialWordFilter());
+		assertThat(target.getAudioEventDetectionEnabled()).isEqualTo(original.getAudioEventDetectionEnabled());
+		assertThat(target.getHttpHeaders()).containsOnly(entry("x-source", "s1"));
 	}
 
 	@Test
 	void testFromOptionsCreatesIndependentCollections() {
-		List<String> fileUrls = new ArrayList<>(List.of("https://example.com/a.wav"));
-		List<Integer> channelIds = new ArrayList<>(List.of(0));
-		Map<String, String> headers = new HashMap<>();
-		headers.put("x-source", "s1");
-
 		DashScopeSdkAudioTranscriptionOptions original = DashScopeSdkAudioTranscriptionOptions.builder()
-			.fileUrls(fileUrls)
-			.channelId(channelIds)
-			.httpHeaders(headers)
+			.fileUrls(List.of("https://example.com/a.wav"))
+			.channelId(List.of(0))
+			.httpHeaders(Map.of("x-source", "s1"))
 			.build();
 		DashScopeSdkAudioTranscriptionOptions copy = DashScopeSdkAudioTranscriptionOptions.fromOptions(original);
 
-		fileUrls.add("https://example.com/b.wav");
-		channelIds.add(1);
-		headers.put("x-source-2", "s2");
+		original.getFileUrls().add("https://example.com/b.wav");
+		original.getChannelId().add(1);
+		original.getHttpHeaders().put("x-source-2", "s2");
 		copy.getFileUrls().add("https://example.com/c.wav");
 		copy.getChannelId().add(2);
 		copy.getHttpHeaders().put("x-copy", "c1");
@@ -85,10 +104,9 @@ class DashScopeSdkAudioTranscriptionOptionsTests {
 
 	@Test
 	void testFromOptionsHandlesNullCollections() {
-		DashScopeSdkAudioTranscriptionOptions original = new DashScopeSdkAudioTranscriptionOptions();
-		original.setFileUrls(null);
-		original.setChannelId(null);
-		original.setHttpHeaders(null);
+		DashScopeSdkAudioTranscriptionOptions original = DashScopeSdkAudioTranscriptionOptions.builder()
+			.httpHeaders(null)
+			.build();
 
 		DashScopeSdkAudioTranscriptionOptions copy = DashScopeSdkAudioTranscriptionOptions.fromOptions(original);
 

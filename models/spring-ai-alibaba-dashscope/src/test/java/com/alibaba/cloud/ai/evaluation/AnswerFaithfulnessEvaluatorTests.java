@@ -22,6 +22,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.evaluation.EvaluationRequest;
 import org.springframework.ai.evaluation.EvaluationResponse;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Collections;
@@ -177,8 +178,7 @@ class AnswerFaithfulnessEvaluatorTests {
 		EvaluationRequest request = createEvaluationRequest(TEST_STUDENT_ANSWER, TEST_FACTS);
 
 		// Evaluate and verify exception is thrown
-		assertThatThrownBy(() -> evaluator.evaluate(request)).isInstanceOf(RuntimeException.class)
-			.hasRootCauseInstanceOf(Exception.class);
+		assertThatThrownBy(() -> evaluator.evaluate(request)).isInstanceOf(JacksonException.class);
 	}
 
 	/**

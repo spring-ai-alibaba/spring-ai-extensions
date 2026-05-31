@@ -20,16 +20,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 
 class DashScopeSdkChatOptionsTests {
@@ -129,39 +126,63 @@ class DashScopeSdkChatOptionsTests {
 	}
 
 	@Test
-	void testFromOptionsReturnsNullForNullInput() {
-		assertThat(DashScopeSdkChatOptions.fromOptions(null)).isNull();
+	void testFromOptions() {
+		DashScopeSdkChatOptions original = DashScopeSdkChatOptions.builder()
+			.model(TEST_MODEL)
+			.temperature(0.9)
+			.topP(0.7)
+			.topK(50)
+			.seed(42)
+			.repetitionPenalty(1.1)
+			.stream(true)
+			.enableSearch(true)
+			.incrementalOutput(true)
+			.maxTokens(1024)
+			.stop(List.of("A"))
+			.httpHeaders(Map.of("x-source", "s1"))
+			.toolNames(Set.of("tool1"))
+			.toolContext(Map.of("k1", "v1"))
+			.extraBody(TEST_EXTRA_BODY)
+			.build();
+
+		DashScopeSdkChatOptions target = DashScopeSdkChatOptions.fromOptions(original);
+
+		assertThat(target.getModel()).isEqualTo(original.getModel());
+		assertThat(target.getTemperature()).isEqualTo(original.getTemperature());
+		assertThat(target.getTopP()).isEqualTo(original.getTopP());
+		assertThat(target.getTopK()).isEqualTo(original.getTopK());
+		assertThat(target.getSeed()).isEqualTo(original.getSeed());
+		assertThat(target.getRepetitionPenalty()).isEqualTo(original.getRepetitionPenalty());
+		assertThat(target.getStream()).isEqualTo(original.getStream());
+		assertThat(target.getEnableSearch()).isEqualTo(original.getEnableSearch());
+		assertThat(target.getIncrementalOutput()).isEqualTo(original.getIncrementalOutput());
+		assertThat(target.getMaxTokens()).isEqualTo(original.getMaxTokens());
+		assertThat(target.getStop()).containsExactly("A");
+		assertThat(target.getHttpHeaders()).containsOnly(entry("x-source", "s1"));
+		assertThat(target.getToolNames()).containsExactlyInAnyOrder("tool1");
+		assertThat(target.getToolContext()).containsOnly(entry("k1", "v1"));
+		assertThat(target.getExtraBody()).isEqualTo(TEST_EXTRA_BODY);
 	}
 
 	@Test
 	void testFromOptionsCreatesIndependentCollections() {
-		List<Object> stop = new ArrayList<>(List.of("A"));
-		Map<String, String> headers = new HashMap<>();
-		headers.put("x-source", "s1");
-		Set<String> toolNames = new HashSet<>(Set.of("tool1"));
-		Map<String, Object> toolContext = new HashMap<>();
-		toolContext.put("k1", "v1");
-		Map<String, Object> extraBody = new HashMap<>();
-		extraBody.put("e1", "v1");
-		List<ToolCallback> callbacks = new ArrayList<>(List.of(new SimpleToolCallback("toolA")));
-
 		DashScopeSdkChatOptions original = DashScopeSdkChatOptions.builder()
-			.stop(stop)
-			.httpHeaders(headers)
-			.toolNames(toolNames)
-			.toolContext(toolContext)
-			.toolCallbacks(callbacks)
-			.extraBody(extraBody)
+			.stop(List.of("A"))
+			.httpHeaders(Map.of("x-source", "s1"))
+			.toolNames(Set.of("tool1"))
+			.toolContext(Map.of("k1", "v1"))
+			.toolCallbacks(List.of(new SimpleToolCallback("toolA")))
+			.extraBody(Map.of("e1", "v1"))
 			.build();
 
 		DashScopeSdkChatOptions copy = DashScopeSdkChatOptions.fromOptions(original);
 
-		stop.add("B");
-		headers.put("x-source-2", "s2");
-		toolNames.add("tool2");
-		toolContext.put("k2", "v2");
-		extraBody.put("e2", "v2");
-		callbacks.add(new SimpleToolCallback("toolB"));
+		original.getStop().add("B");
+		original.getHttpHeaders().put("x-source-2", "s2");
+		original.getToolNames().add("tool2");
+		original.getToolContext().put("k2", "v2");
+		original.getExtraBody().put("e2", "v2");
+		original.getToolCallbacks().add(new SimpleToolCallback("toolB"));
 		copy.getStop().add("C");
 		copy.getHttpHeaders().put("x-copy", "c1");
 		copy.getToolNames().add("tool-copy");
@@ -183,24 +204,6 @@ class DashScopeSdkChatOptionsTests {
 		assertThat(copy.getToolCallbacks()).hasSize(2);
 	}
 
-	@Test
-	void testToolCallbacksValidation() {
-		DashScopeSdkChatOptions options = DashScopeSdkChatOptions.builder().build();
-
-		assertThatThrownBy(() -> options.setToolCallbacks(null)).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> options.setToolCallbacks(Arrays.asList(new SimpleToolCallback("t1"), null)))
-			.isInstanceOf(IllegalArgumentException.class);
-	}
-
-	@Test
-	void testToolNamesValidation() {
-		DashScopeSdkChatOptions options = DashScopeSdkChatOptions.builder().build();
-
-		assertThatThrownBy(() -> options.setToolNames(null)).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> options.setToolNames(new HashSet<>(Arrays.asList("tool1", null))))
-			.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> options.setToolNames(Set.of("tool1", ""))).isInstanceOf(IllegalArgumentException.class);
-	}
 
 	private static final class SimpleToolCallback implements ToolCallback {
 

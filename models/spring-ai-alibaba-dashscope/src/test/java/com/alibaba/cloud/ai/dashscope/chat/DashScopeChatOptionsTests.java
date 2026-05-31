@@ -200,7 +200,7 @@ class DashScopeChatOptionsTests {
 
         assertThat(toString).contains("DashScopeChatOptions")
                 .contains(TEST_MODEL)
-                .contains("enable_code_interpreter")
+                .contains("enableCodeInterpreter")
                 .contains(TEST_TEMPERATURE.toString());
     }
 }

@@ -136,9 +136,9 @@ class DashScopeAgentTests {
   @Test
   void testCallWithNullPrompt() {
     // Execute test and verify exception
-    assertThatThrownBy(() -> agent.call(null))
+    assertThatThrownBy(() -> agent.call((String) null))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("option is null");
+        .hasMessage("Content must not be null for SYSTEM or USER messages");
   }
 
   /** Test call with null appId */
@@ -190,9 +190,9 @@ class DashScopeAgentTests {
   @Test
   void testStreamWithNullPrompt() {
     // Execute test and verify exception
-    assertThatThrownBy(() -> agent.stream(null))
+    assertThatThrownBy(() -> agent.stream((String) null))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("option is null");
+        .hasMessage("Content must not be null for SYSTEM or USER messages");
   }
 
   /** Test default constructor */

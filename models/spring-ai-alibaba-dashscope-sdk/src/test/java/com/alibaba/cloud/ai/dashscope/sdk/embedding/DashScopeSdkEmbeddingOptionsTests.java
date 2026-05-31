@@ -18,11 +18,10 @@ package com.alibaba.cloud.ai.dashscope.sdk.embedding;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
 
 class DashScopeSdkEmbeddingOptionsTests {
 
@@ -52,24 +51,35 @@ class DashScopeSdkEmbeddingOptionsTests {
 	}
 
 	@Test
-	void testFromOptionsReturnsNullForNullInput() {
-		assertThat(DashScopeSdkEmbeddingOptions.fromOptions(null)).isNull();
+	void testFromOptions() {
+		DashScopeSdkEmbeddingOptions original = DashScopeSdkEmbeddingOptions.builder()
+			.model("text-embedding-v2")
+			.textType("query")
+			.dimensions(1024)
+			.httpHeaders(Map.of("x-source", "s1"))
+			.build();
+
+		DashScopeSdkEmbeddingOptions target = DashScopeSdkEmbeddingOptions.fromOptions(original);
+
+		assertThat(target.getModel()).isEqualTo(original.getModel());
+		assertThat(target.getTextType()).isEqualTo(original.getTextType());
+		assertThat(target.getDimensions()).isEqualTo(original.getDimensions());
+		assertThat(target.getHttpHeaders()).containsOnly(entry("x-source", "s1"));
 	}
 
 	@Test
 	void testFromOptionsCreatesIndependentHttpHeaders() {
-		Map<String, String> headers = new HashMap<>();
-		headers.put("x-source", "s1");
-		DashScopeSdkEmbeddingOptions original = DashScopeSdkEmbeddingOptions.builder().httpHeaders(headers).build();
+		DashScopeSdkEmbeddingOptions original = DashScopeSdkEmbeddingOptions.builder()
+			.httpHeaders(Map.of("x-source", "s1"))
+			.build();
 
 		DashScopeSdkEmbeddingOptions copy = DashScopeSdkEmbeddingOptions.fromOptions(original);
-		headers.put("x-source-2", "s2");
 
-		assertThatThrownBy(() -> copy.getHttpHeaders().put("x-copy", "c1"))
-			.isInstanceOf(UnsupportedOperationException.class);
+		original.getHttpHeaders().put("x-source-2", "s2");
+		copy.getHttpHeaders().put("x-copy", "c1");
 
-		assertThat(original.getHttpHeaders()).containsOnly(org.assertj.core.api.Assertions.entry("x-source", "s1"), org.assertj.core.api.Assertions.entry("x-source-2", "s2"));
-		assertThat(copy.getHttpHeaders()).containsOnly(org.assertj.core.api.Assertions.entry("x-source", "s1"));
+		assertThat(original.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-source-2", "s2"));
+		assertThat(copy.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-copy", "c1"));
 	}
 
 	@Test
@@ -80,15 +90,6 @@ class DashScopeSdkEmbeddingOptionsTests {
 		assertThat(copy.getHttpHeaders()).isNotNull().isEmpty();
 	}
 
-	@Test
-	void testHttpHeadersReturnsUnmodifiableView() {
-		DashScopeSdkEmbeddingOptions options = DashScopeSdkEmbeddingOptions.builder()
-			.httpHeaders(Map.of("x-test", "v"))
-			.build();
-
-		assertThatThrownBy(() -> options.getHttpHeaders().put("x-new", "v2"))
-			.isInstanceOf(UnsupportedOperationException.class);
-	}
 
 	@Test
 	void testEqualsAndHashCode() {

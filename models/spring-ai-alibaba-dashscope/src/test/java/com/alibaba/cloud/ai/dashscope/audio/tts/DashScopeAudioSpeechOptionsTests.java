@@ -27,7 +27,7 @@ class DashScopeAudioSpeechOptionsTests {
 
     @Test
     void testDefaultValues() {
-        DashScopeAudioSpeechOptions options = new DashScopeAudioSpeechOptions();
+        DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder().build();
 
         assertThat(options.getModel()).isNull();
         assertThat(options.getTextType()).isEqualTo(TextType.PLAIN_TEXT.getValue());
@@ -87,9 +87,10 @@ class DashScopeAudioSpeechOptionsTests {
     }
 
     @Test
-    void testSetResponseFormatAlias() {
-        DashScopeAudioSpeechOptions options = new DashScopeAudioSpeechOptions();
-        options.setResponseFormat("wav");
+    void testFormatViaBuilder() {
+        DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()
+                .format("wav")
+                .build();
 
         assertThat(options.getFormat()).isEqualTo("wav");
     }
@@ -99,16 +100,17 @@ class DashScopeAudioSpeechOptionsTests {
         List<String> languageHints = new ArrayList<>(List.of("zh"));
         DashScopeAudioSpeechOptions original = DashScopeAudioSpeechOptions.builder()
                 .model("sambert-zhichu-v1")
-                .languageHints(languageHints)
+                .languageHints(new ArrayList<>(languageHints))
                 .build();
 
-        DashScopeAudioSpeechOptions copy = original.copy();
+        DashScopeAudioSpeechOptions copy = original.mutate()
+                .voice("longxiaoyun")
+                .build();
         languageHints.add("en");
         copy.getLanguageHints().add("ja");
-        copy.setVoice("longxiaoyun");
 
         assertThat(copy).isNotSameAs(original);
-        assertThat(original.getLanguageHints()).containsExactly("zh", "en");
+        assertThat(original.getLanguageHints()).containsExactly("zh");
         assertThat(copy.getLanguageHints()).containsExactly("zh", "ja");
         assertThat(original.getVoice()).isEqualTo("longanyang");
         assertThat(copy.getVoice()).isEqualTo("longxiaoyun");

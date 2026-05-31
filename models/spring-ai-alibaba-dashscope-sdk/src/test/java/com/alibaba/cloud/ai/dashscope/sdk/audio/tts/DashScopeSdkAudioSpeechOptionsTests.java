@@ -18,7 +18,6 @@ package com.alibaba.cloud.ai.dashscope.sdk.audio.tts;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,8 +49,36 @@ class DashScopeSdkAudioSpeechOptionsTests {
 	}
 
 	@Test
-	void testFromOptionsReturnsNullForNullInput() {
-		assertThat(DashScopeSdkAudioSpeechOptions.fromOptions(null)).isNull();
+	void testFromOptions() {
+		DashScopeSdkAudioSpeechOptions original = DashScopeSdkAudioSpeechOptions.builder()
+			.model("sambert-zhichu-v1")
+			.voice("longyuan")
+			.format("mp3")
+			.speed(1.1)
+			.textType("plain_text")
+			.sampleRate(16000)
+			.volume(50)
+			.rate(1.0f)
+			.pitch(0.0f)
+			.wordTimestampEnabled(true)
+			.phonemeTimestampEnabled(false)
+			.httpHeaders(Map.of("x-source", "s1"))
+			.build();
+
+		DashScopeSdkAudioSpeechOptions target = DashScopeSdkAudioSpeechOptions.fromOptions(original);
+
+		assertThat(target.getModel()).isEqualTo(original.getModel());
+		assertThat(target.getVoice()).isEqualTo(original.getVoice());
+		assertThat(target.getFormat()).isEqualTo(original.getFormat());
+		assertThat(target.getSpeed()).isEqualTo(original.getSpeed());
+		assertThat(target.getTextType()).isEqualTo(original.getTextType());
+		assertThat(target.getSampleRate()).isEqualTo(original.getSampleRate());
+		assertThat(target.getVolume()).isEqualTo(original.getVolume());
+		assertThat(target.getRate()).isEqualTo(original.getRate());
+		assertThat(target.getPitch()).isEqualTo(original.getPitch());
+		assertThat(target.getWordTimestampEnabled()).isEqualTo(original.getWordTimestampEnabled());
+		assertThat(target.getPhonemeTimestampEnabled()).isEqualTo(original.getPhonemeTimestampEnabled());
+		assertThat(target.getHttpHeaders()).containsOnly(entry("x-source", "s1"));
 	}
 
 	@Test
@@ -74,13 +101,12 @@ class DashScopeSdkAudioSpeechOptionsTests {
 
 	@Test
 	void testFromOptionsCreatesIndependentHttpHeaders() {
-		Map<String, String> headers = new HashMap<>();
-		headers.put("x-source", "s1");
-
-		DashScopeSdkAudioSpeechOptions original = DashScopeSdkAudioSpeechOptions.builder().httpHeaders(headers).build();
+		DashScopeSdkAudioSpeechOptions original = DashScopeSdkAudioSpeechOptions.builder()
+			.httpHeaders(Map.of("x-source", "s1"))
+			.build();
 		DashScopeSdkAudioSpeechOptions copy = original.copy();
 
-		headers.put("x-source-2", "s2");
+		original.getHttpHeaders().put("x-source-2", "s2");
 		copy.getHttpHeaders().put("x-copy", "c1");
 
 		assertThat(original.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-source-2", "s2"));
@@ -89,8 +115,9 @@ class DashScopeSdkAudioSpeechOptionsTests {
 
 	@Test
 	void testFromOptionsHandlesNullHttpHeaders() {
-		DashScopeSdkAudioSpeechOptions original = new DashScopeSdkAudioSpeechOptions();
-		original.setHttpHeaders(null);
+		DashScopeSdkAudioSpeechOptions original = DashScopeSdkAudioSpeechOptions.builder()
+			.httpHeaders(null)
+			.build();
 
 		DashScopeSdkAudioSpeechOptions copy = DashScopeSdkAudioSpeechOptions.fromOptions(original);
 
