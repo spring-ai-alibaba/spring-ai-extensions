@@ -36,15 +36,41 @@ public class DashScopeVideoApiConstants {
 
     static final Map<String, List<String>> videoGenerationSynthesis2Model = Map.of(VIDEO_GENERATION_SYNTHESIS, List.of(
             // 通义万相-图生视频-基于首帧
-            DashScopeModel.VideoModel.WANX21_I2V_TURBO.getName(), DashScopeModel.VideoModel.WANX21_I2V_PLUS.getName(), DashScopeModel.VideoModel.WANX22_I2V_PLUS.getName(), DashScopeModel.VideoModel.WAN22_I2V_FLASH.getName(), DashScopeModel.VideoModel.WAN25_I2V_PREVIEW.getName(), DashScopeModel.VideoModel.WAN26_I2V_FLASH.getName(), DashScopeModel.VideoModel.WAN26_I2V.getName(),
+            DashScopeModel.VideoModel.WANX21_I2V_TURBO.getName(), DashScopeModel.VideoModel.WANX21_I2V_PLUS.getName(),
+            DashScopeModel.VideoModel.WANX22_I2V_PLUS.getName(), DashScopeModel.VideoModel.WAN22_I2V_FLASH.getName(),
+            DashScopeModel.VideoModel.WAN25_I2V_PREVIEW.getName(), DashScopeModel.VideoModel.WAN26_I2V_FLASH.getName(),
+            DashScopeModel.VideoModel.WAN26_I2V.getName(),
             // 通义万相-参考生视频
             DashScopeModel.VideoModel.WAN26_R2V.getName(),
             // 通义万相-文生视频
-            DashScopeModel.VideoModel.WANX21_T2V_PLUS.getName(), DashScopeModel.VideoModel.WANX21_T2V_TURBO.getName(), DashScopeModel.VideoModel.WAN22_T2V_PLUS.getName(), DashScopeModel.VideoModel.WAN25_T2V_PREVIEW.getName(), DashScopeModel.VideoModel.WAN26_T2V.getName(),
+            DashScopeModel.VideoModel.WANX21_T2V_PLUS.getName(), DashScopeModel.VideoModel.WANX21_T2V_TURBO.getName(),
+            DashScopeModel.VideoModel.WAN22_T2V_PLUS.getName(), DashScopeModel.VideoModel.WAN25_T2V_PREVIEW.getName(),
+            DashScopeModel.VideoModel.WAN26_T2V.getName(),
             // 通义万相-通用视频编辑
             DashScopeModel.VideoModel.WANX21_VACE_PLUS.getName(),
             // 视频风格重绘
-            DashScopeModel.VideoModel.VIDEO_STYLE_TRANSFORM.getName()));
+            DashScopeModel.VideoModel.VIDEO_STYLE_TRANSFORM.getName(),
+            // HappyHorse
+            DashScopeModel.VideoModel.HAPPYHORSE_1_0_T2V.getName(),
+            DashScopeModel.VideoModel.HAPPYHORSE_1_0_I2V.getName(),
+            DashScopeModel.VideoModel.HAPPYHORSE_1_0_R2V.getName(),
+            DashScopeModel.VideoModel.HAPPYHORSE_1_0_VIDEO_EDIT.getName(),
+            // 爱诗
+            DashScopeModel.VideoModel.PIXVERSE_PIXVERSE_C1_T2V.getName(),
+            DashScopeModel.VideoModel.PIXVERSE_PIXVERSE_V6_T2V.getName(),
+            DashScopeModel.VideoModel.PIXVERSE_PIXVERSE_C1_IT2V.getName(),
+            DashScopeModel.VideoModel.PIXVERSE_PIXVERSE_V6_IT2V.getName(),
+            DashScopeModel.VideoModel.PIXVERSE_PIXVERSE_C1_KF2V.getName(),
+            DashScopeModel.VideoModel.PIXVERSE_PIXVERSE_C1_R2V.getName(),
+            // 可灵
+            DashScopeModel.VideoModel.KLING_V3_VIDEO_GENERATION.getName(),
+            DashScopeModel.VideoModel.KLING_V3_OMNI_VIDEO_GENERATION.getName(),
+            // Vidu
+            DashScopeModel.VideoModel.VIDUG3_TURBO_TEXT2VIDEO.getName(),
+            DashScopeModel.VideoModel.VIDUG3_PRO_IMG2VIDEO.getName(),
+            DashScopeModel.VideoModel.VIDUG3_TURBO_START_END2VIDEO.getName(),
+            DashScopeModel.VideoModel.VIDUG3_MIX_REFERENCE2VIDEO.getName(),
+            DashScopeModel.VideoModel.VIDUQ2_PRO_REFERENCE2VIDEO.getName()));
 
     // 通义万相-图生视频-基于首尾帧；通义万相-图生动作；通义万相数字人-图像检测-视频生成；图声舞蹈视频-舞动人像-AnimateAnyone-视频生成；图生唱视频-悦动人像EMO-视频生成；VideoRetalk-视频生成
     public static final String IMAGE_2_VIDEO_SYNTHESIS = "/api/v1/services/aigc/image2video/video-synthesis";

@@ -168,6 +168,21 @@ public class DashScopeVideoRequest {
         @JsonProperty("driven_id")
         private @Nullable String drivenId;
 
+        @JsonProperty("media")
+        private @Nullable List<VideoMedia> media;
+
+        @JsonProperty("multi_shot")
+        private @Nullable Boolean multiShot;
+
+        @JsonProperty("shot_type")
+        private @Nullable String shotType;
+
+        @JsonProperty("multi_prompt")
+        private @Nullable List<VideoMultiPrompt> multiPrompt;
+
+        @JsonProperty("element_list")
+        private @Nullable List<VideoElement> elementList;
+
         public VideoInput() {
         }
 
@@ -195,6 +210,11 @@ public class DashScopeVideoRequest {
                     .faceBbox(options.getFaceBbox())
                     .extBbox(options.getExtBbox())
                     .drivenId(options.getDrivenId())
+                    .media(VideoMedia.optionsConvertReq(options.getMedia()))
+                    .multiShot(options.getMultiShot())
+                    .shotType(options.getShotType())
+                    .multiPrompt(VideoMultiPrompt.optionsConvertReq(options.getMultiPrompt()))
+                    .elementList(VideoElement.optionsConvertReq(options.getElementList()))
                     .build();
         }
 
@@ -305,8 +325,130 @@ public class DashScopeVideoRequest {
                 return this;
             }
 
+            public Builder media(@Nullable List<VideoMedia> media) {
+                this.videoInput.media = media;
+                return this;
+            }
+
+            public Builder multiShot(@Nullable Boolean multiShot) {
+                this.videoInput.multiShot = multiShot;
+                return this;
+            }
+
+            public Builder shotType(@Nullable String shotType) {
+                this.videoInput.shotType = shotType;
+                return this;
+            }
+
+            public Builder multiPrompt(@Nullable List<VideoMultiPrompt> multiPrompt) {
+                this.videoInput.multiPrompt = multiPrompt;
+                return this;
+            }
+
+            public Builder elementList(@Nullable List<VideoElement> elementList) {
+                this.videoInput.elementList = elementList;
+                return this;
+            }
+
             public VideoInput build() {
                 return videoInput;
+            }
+
+        }
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public static class VideoMedia {
+
+            @JsonProperty("type")
+            private @Nullable String type;
+
+            @JsonProperty("url")
+            private @Nullable String url;
+
+            @JsonProperty("keep_original_sound")
+            private @Nullable String keepOriginalSound;
+
+            @JsonProperty("ref_name")
+            private @Nullable String refName;
+
+            public VideoMedia() {
+            }
+
+            public VideoMedia(@Nullable String type, @Nullable String url, @Nullable String keepOriginalSound,
+                    @Nullable String refName) {
+                this.type = type;
+                this.url = url;
+                this.keepOriginalSound = keepOriginalSound;
+                this.refName = refName;
+            }
+
+            private static @Nullable List<VideoMedia> optionsConvertReq(
+                    @Nullable List<InputOptions.Media> media) {
+                if (media == null) {
+                    return null;
+                }
+                return media.stream()
+                        .map(item -> new VideoMedia(item.getType(), item.getUrl(), item.getKeepOriginalSound(),
+                                item.getRefName()))
+                        .toList();
+            }
+
+        }
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public static class VideoMultiPrompt {
+
+            @JsonProperty("index")
+            private @Nullable Integer index;
+
+            @JsonProperty("prompt")
+            private @Nullable String prompt;
+
+            @JsonProperty("duration")
+            private @Nullable Integer duration;
+
+            public VideoMultiPrompt() {
+            }
+
+            public VideoMultiPrompt(@Nullable Integer index, @Nullable String prompt, @Nullable Integer duration) {
+                this.index = index;
+                this.prompt = prompt;
+                this.duration = duration;
+            }
+
+            private static @Nullable List<VideoMultiPrompt> optionsConvertReq(
+                    @Nullable List<InputOptions.MultiPrompt> multiPrompt) {
+                if (multiPrompt == null) {
+                    return null;
+                }
+                return multiPrompt.stream()
+                        .map(item -> new VideoMultiPrompt(item.getIndex(), item.getPrompt(), item.getDuration()))
+                        .toList();
+            }
+
+        }
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public static class VideoElement {
+
+            @JsonProperty("element_id")
+            private @Nullable Integer elementId;
+
+            public VideoElement() {
+            }
+
+            public VideoElement(@Nullable Integer elementId) {
+                this.elementId = elementId;
+            }
+
+            private static @Nullable List<VideoElement> optionsConvertReq(
+                    @Nullable List<InputOptions.Element> elementList) {
+                if (elementList == null) {
+                    return null;
+                }
+                return elementList.stream()
+                        .map(item -> new VideoElement(item.getElementId()))
+                        .toList();
             }
 
         }
@@ -333,6 +475,18 @@ public class DashScopeVideoRequest {
 
         @JsonProperty("duration")
         private @Nullable Integer duration;
+
+        @JsonProperty("watermark")
+        private @Nullable Boolean watermark;
+
+        @JsonProperty("audio")
+        private @Nullable Boolean audio;
+
+        @JsonProperty("audio_setting")
+        private @Nullable String audioSetting;
+
+        @JsonProperty("aspect_ratio")
+        private @Nullable String aspectRatio;
 
         @JsonProperty("shot_type")
         private @Nullable String shotType;
@@ -409,6 +563,10 @@ public class DashScopeVideoRequest {
                     .size(parameters.getSize())
                     .promptExtend(parameters.getPromptExtend())
                     .duration(parameters.getDuration())
+                    .watermark(parameters.getWatermark())
+                    .audio(parameters.getAudio())
+                    .audioSetting(parameters.getAudioSetting())
+                    .aspectRatio(parameters.getAspectRatio())
                     .shotType(parameters.getShotType())
                     .objOrBg(parameters.getObjOrBg())
                     .maskType(parameters.getMaskType())
@@ -467,6 +625,26 @@ public class DashScopeVideoRequest {
 
             public Builder duration(@Nullable Integer duration) {
                 this.videoParameters.duration = duration;
+                return this;
+            }
+
+            public Builder watermark(@Nullable Boolean watermark) {
+                this.videoParameters.watermark = watermark;
+                return this;
+            }
+
+            public Builder audio(@Nullable Boolean audio) {
+                this.videoParameters.audio = audio;
+                return this;
+            }
+
+            public Builder audioSetting(@Nullable String audioSetting) {
+                this.videoParameters.audioSetting = audioSetting;
+                return this;
+            }
+
+            public Builder aspectRatio(@Nullable String aspectRatio) {
+                this.videoParameters.aspectRatio = aspectRatio;
                 return this;
             }
 

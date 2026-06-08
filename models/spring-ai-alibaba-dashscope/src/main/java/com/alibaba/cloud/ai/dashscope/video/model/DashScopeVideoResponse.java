@@ -65,9 +65,9 @@ public record DashScopeVideoResponse(@JsonProperty("request_id") @Nullable Strin
                               @JsonProperty("bbox_face") @Nullable List<Integer> bboxFace,
                               @JsonProperty("ext_bbox_face") @Nullable List<Integer> extBboxFace) {}
 
-    public record VideoUsage(@JsonProperty("duration") @Nullable Integer duration,
-                             @JsonProperty("input_video_duration") @Nullable Integer inputVideoDuration,
-                             @JsonProperty("output_video_duration") @Nullable Integer outputVideoDuration,
+    public record VideoUsage(@JsonProperty("duration") @Nullable Double duration,
+                             @JsonProperty("input_video_duration") @Nullable Double inputVideoDuration,
+                             @JsonProperty("output_video_duration") @Nullable Double outputVideoDuration,
                              @JsonProperty("video_count") @Nullable Integer videoCount,
                              @JsonProperty("SR") @Nullable Integer sr,
                              @JsonProperty("size") @Nullable String size,

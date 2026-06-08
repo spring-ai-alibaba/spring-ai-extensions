@@ -236,6 +236,21 @@ public class DashScopeVideoOptions implements VideoOptions {
 		@JsonProperty("driven_id")
 		private @Nullable String drivenId;
 
+		@JsonProperty("media")
+		private @Nullable List<Media> media;
+
+		@JsonProperty("multi_shot")
+		private @Nullable Boolean multiShot;
+
+		@JsonProperty("shot_type")
+		private @Nullable String shotType;
+
+		@JsonProperty("multi_prompt")
+		private @Nullable List<MultiPrompt> multiPrompt;
+
+		@JsonProperty("element_list")
+		private @Nullable List<Element> elementList;
+
 		public InputOptions() {
 		}
 
@@ -391,6 +406,46 @@ public class DashScopeVideoOptions implements VideoOptions {
 			this.drivenId = drivenId;
 		}
 
+		public @Nullable List<Media> getMedia() {
+			return media;
+		}
+
+		public void setMedia(@Nullable List<Media> media) {
+			this.media = media;
+		}
+
+		public @Nullable Boolean getMultiShot() {
+			return multiShot;
+		}
+
+		public void setMultiShot(@Nullable Boolean multiShot) {
+			this.multiShot = multiShot;
+		}
+
+		public @Nullable String getShotType() {
+			return shotType;
+		}
+
+		public void setShotType(@Nullable String shotType) {
+			this.shotType = shotType;
+		}
+
+		public @Nullable List<MultiPrompt> getMultiPrompt() {
+			return multiPrompt;
+		}
+
+		public void setMultiPrompt(@Nullable List<MultiPrompt> multiPrompt) {
+			this.multiPrompt = multiPrompt;
+		}
+
+		public @Nullable List<Element> getElementList() {
+			return elementList;
+		}
+
+		public void setElementList(@Nullable List<Element> elementList) {
+			this.elementList = elementList;
+		}
+
 		public static Builder builder() {
 			return new Builder();
 		}
@@ -498,6 +553,31 @@ public class DashScopeVideoOptions implements VideoOptions {
 				return this;
 			}
 
+			public Builder media(@Nullable List<Media> media) {
+				this.options.setMedia(media);
+				return this;
+			}
+
+			public Builder multiShot(@Nullable Boolean multiShot) {
+				this.options.setMultiShot(multiShot);
+				return this;
+			}
+
+			public Builder shotType(@Nullable String shotType) {
+				this.options.setShotType(shotType);
+				return this;
+			}
+
+			public Builder multiPrompt(@Nullable List<MultiPrompt> multiPrompt) {
+				this.options.setMultiPrompt(multiPrompt);
+				return this;
+			}
+
+			public Builder elementList(@Nullable List<Element> elementList) {
+				this.options.setElementList(elementList);
+				return this;
+			}
+
 			public Builder from(InputOptions fromOptions) {
 				this.options.setPrompt(fromOptions.getPrompt());
 				this.options.setImgUrl(fromOptions.getImgUrl());
@@ -518,6 +598,11 @@ public class DashScopeVideoOptions implements VideoOptions {
 				this.options.setFaceBbox(fromOptions.getFaceBbox());
 				this.options.setExtBbox(fromOptions.getExtBbox());
 				this.options.setDrivenId(fromOptions.getDrivenId());
+				this.options.setMedia(fromOptions.getMedia());
+				this.options.setMultiShot(fromOptions.getMultiShot());
+				this.options.setShotType(fromOptions.getShotType());
+				this.options.setMultiPrompt(fromOptions.getMultiPrompt());
+				this.options.setElementList(fromOptions.getElementList());
 				return this;
 			}
 
@@ -582,11 +667,231 @@ public class DashScopeVideoOptions implements VideoOptions {
 				if (from.getDrivenId() != null) {
 					this.options.setDrivenId(from.getDrivenId());
 				}
+				if (from.getMedia() != null) {
+					this.options.setMedia(from.getMedia());
+				}
+				if (from.getMultiShot() != null) {
+					this.options.setMultiShot(from.getMultiShot());
+				}
+				if (from.getShotType() != null) {
+					this.options.setShotType(from.getShotType());
+				}
+				if (from.getMultiPrompt() != null) {
+					this.options.setMultiPrompt(from.getMultiPrompt());
+				}
+				if (from.getElementList() != null) {
+					this.options.setElementList(from.getElementList());
+				}
 				return this;
 			}
 
 			public InputOptions build() {
 				return this.options;
+			}
+		}
+
+		public static class Media {
+
+			@JsonProperty("type")
+			private @Nullable String type;
+
+			@JsonProperty("url")
+			private @Nullable String url;
+
+			@JsonProperty("keep_original_sound")
+			private @Nullable String keepOriginalSound;
+
+			@JsonProperty("ref_name")
+			private @Nullable String refName;
+
+			public Media() {
+			}
+
+			public @Nullable String getType() {
+				return type;
+			}
+
+			public void setType(@Nullable String type) {
+				this.type = type;
+			}
+
+			public @Nullable String getUrl() {
+				return url;
+			}
+
+			public void setUrl(@Nullable String url) {
+				this.url = url;
+			}
+
+			public @Nullable String getKeepOriginalSound() {
+				return keepOriginalSound;
+			}
+
+			public void setKeepOriginalSound(@Nullable String keepOriginalSound) {
+				validateKeepOriginalSound(keepOriginalSound);
+				this.keepOriginalSound = keepOriginalSound;
+			}
+
+			public @Nullable String getRefName() {
+				return refName;
+			}
+
+			public void setRefName(@Nullable String refName) {
+				this.refName = refName;
+			}
+
+			public static Builder builder() {
+				return new Builder();
+			}
+
+			private static void validateKeepOriginalSound(@Nullable String keepOriginalSound) {
+				if (keepOriginalSound != null && !"yes".equals(keepOriginalSound)
+						&& !"no".equals(keepOriginalSound)) {
+					throw new IllegalArgumentException("keep_original_sound must be \"yes\" or \"no\"");
+				}
+			}
+
+			public static class Builder {
+
+				private final Media media;
+
+				public Builder() {
+					this.media = new Media();
+				}
+
+				public Builder type(@Nullable String type) {
+					this.media.setType(type);
+					return this;
+				}
+
+				public Builder url(@Nullable String url) {
+					this.media.setUrl(url);
+					return this;
+				}
+
+				public Builder keepOriginalSound(@Nullable String keepOriginalSound) {
+					this.media.setKeepOriginalSound(keepOriginalSound);
+					return this;
+				}
+
+				public Builder refName(@Nullable String refName) {
+					this.media.setRefName(refName);
+					return this;
+				}
+
+				public Media build() {
+					return this.media;
+				}
+			}
+		}
+
+		public static class MultiPrompt {
+
+			@JsonProperty("index")
+			private @Nullable Integer index;
+
+			@JsonProperty("prompt")
+			private @Nullable String prompt;
+
+			@JsonProperty("duration")
+			private @Nullable Integer duration;
+
+			public MultiPrompt() {
+			}
+
+			public @Nullable Integer getIndex() {
+				return index;
+			}
+
+			public void setIndex(@Nullable Integer index) {
+				this.index = index;
+			}
+
+			public @Nullable String getPrompt() {
+				return prompt;
+			}
+
+			public void setPrompt(@Nullable String prompt) {
+				this.prompt = prompt;
+			}
+
+			public @Nullable Integer getDuration() {
+				return duration;
+			}
+
+			public void setDuration(@Nullable Integer duration) {
+				this.duration = duration;
+			}
+
+			public static Builder builder() {
+				return new Builder();
+			}
+
+			public static class Builder {
+
+				private final MultiPrompt multiPrompt;
+
+				public Builder() {
+					this.multiPrompt = new MultiPrompt();
+				}
+
+				public Builder index(@Nullable Integer index) {
+					this.multiPrompt.setIndex(index);
+					return this;
+				}
+
+				public Builder prompt(@Nullable String prompt) {
+					this.multiPrompt.setPrompt(prompt);
+					return this;
+				}
+
+				public Builder duration(@Nullable Integer duration) {
+					this.multiPrompt.setDuration(duration);
+					return this;
+				}
+
+				public MultiPrompt build() {
+					return this.multiPrompt;
+				}
+			}
+		}
+
+		public static class Element {
+
+			@JsonProperty("element_id")
+			private @Nullable Integer elementId;
+
+			public Element() {
+			}
+
+			public @Nullable Integer getElementId() {
+				return elementId;
+			}
+
+			public void setElementId(@Nullable Integer elementId) {
+				this.elementId = elementId;
+			}
+
+			public static Builder builder() {
+				return new Builder();
+			}
+
+			public static class Builder {
+
+				private final Element element;
+
+				public Builder() {
+					this.element = new Element();
+				}
+
+				public Builder elementId(@Nullable Integer elementId) {
+					this.element.setElementId(elementId);
+					return this;
+				}
+
+				public Element build() {
+					return this.element;
+				}
 			}
 		}
 	}
@@ -607,6 +912,18 @@ public class DashScopeVideoOptions implements VideoOptions {
 
 		@JsonProperty("duration")
 		private @Nullable Integer duration;
+
+		@JsonProperty("watermark")
+		private @Nullable Boolean watermark;
+
+		@JsonProperty("audio")
+		private @Nullable Boolean audio;
+
+		@JsonProperty("audio_setting")
+		private @Nullable String audioSetting;
+
+		@JsonProperty("aspect_ratio")
+		private @Nullable String aspectRatio;
 
 		@JsonProperty("shot_type")
 		private @Nullable String shotType;
@@ -712,6 +1029,38 @@ public class DashScopeVideoOptions implements VideoOptions {
 
 		public void setDuration(@Nullable Integer duration) {
 			this.duration = duration;
+		}
+
+		public @Nullable Boolean getWatermark() {
+			return watermark;
+		}
+
+		public void setWatermark(@Nullable Boolean watermark) {
+			this.watermark = watermark;
+		}
+
+		public @Nullable Boolean getAudio() {
+			return audio;
+		}
+
+		public void setAudio(@Nullable Boolean audio) {
+			this.audio = audio;
+		}
+
+		public @Nullable String getAudioSetting() {
+			return audioSetting;
+		}
+
+		public void setAudioSetting(@Nullable String audioSetting) {
+			this.audioSetting = audioSetting;
+		}
+
+		public @Nullable String getAspectRatio() {
+			return aspectRatio;
+		}
+
+		public void setAspectRatio(@Nullable String aspectRatio) {
+			this.aspectRatio = aspectRatio;
 		}
 
 		public @Nullable String getShotType() {
@@ -919,6 +1268,26 @@ public class DashScopeVideoOptions implements VideoOptions {
 				return this;
 			}
 
+			public Builder watermark(@Nullable Boolean watermark) {
+				this.options.setWatermark(watermark);
+				return this;
+			}
+
+			public Builder audio(@Nullable Boolean audio) {
+				this.options.setAudio(audio);
+				return this;
+			}
+
+			public Builder audioSetting(@Nullable String audioSetting) {
+				this.options.setAudioSetting(audioSetting);
+				return this;
+			}
+
+			public Builder aspectRatio(@Nullable String aspectRatio) {
+				this.options.setAspectRatio(aspectRatio);
+				return this;
+			}
+
 			public Builder shotType(@Nullable String shotType) {
 				this.options.setShotType(shotType);
 				return this;
@@ -1030,6 +1399,10 @@ public class DashScopeVideoOptions implements VideoOptions {
 				this.options.setPromptExtend(fromOptions.getPromptExtend());
 				this.options.setVideoExtension(fromOptions.getVideoExtension());
 				this.options.setDuration(fromOptions.getDuration());
+				this.options.setWatermark(fromOptions.getWatermark());
+				this.options.setAudio(fromOptions.getAudio());
+				this.options.setAudioSetting(fromOptions.getAudioSetting());
+				this.options.setAspectRatio(fromOptions.getAspectRatio());
 				this.options.setShotType(fromOptions.getShotType());
 				this.options.setObjOrBg(fromOptions.getObjOrBg());
 				this.options.setMaskType(fromOptions.getMaskType());
@@ -1072,6 +1445,18 @@ public class DashScopeVideoOptions implements VideoOptions {
 				}
 				if (from.getDuration() != null) {
 					this.options.setDuration(from.getDuration());
+				}
+				if (from.getWatermark() != null) {
+					this.options.setWatermark(from.getWatermark());
+				}
+				if (from.getAudio() != null) {
+					this.options.setAudio(from.getAudio());
+				}
+				if (from.getAudioSetting() != null) {
+					this.options.setAudioSetting(from.getAudioSetting());
+				}
+				if (from.getAspectRatio() != null) {
+					this.options.setAspectRatio(from.getAspectRatio());
 				}
 				if (from.getShotType() != null) {
 					this.options.setShotType(from.getShotType());
