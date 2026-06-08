@@ -15,7 +15,6 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.tts;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -120,7 +119,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 		this.seed = seed;
 		this.wordTimestampEnabled = wordTimestampEnabled;
 		this.phonemeTimestampEnabled = phonemeTimestampEnabled;
-		this.languageHints = languageHints != null ? new ArrayList<>(languageHints) : null;
+		this.languageHints = languageHints != null ? List.copyOf(languageHints) : null;
 		this.instruction = instruction;
 		this.optimizeInstructions = optimizeInstructions;
 		this.enableAigcTag = enableAigcTag;
@@ -247,10 +246,6 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
                 .languageType(this.languageType);
     }
 
-    public static DashScopeAudioSpeechOptions fromOptions(DashScopeAudioSpeechOptions options) {
-        return options.mutate().build();
-    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -308,7 +303,28 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 	/**
 	 * Builder for DashScopeAudioSpeechOptions.
 	 */
-	public static class Builder {
+	public static final class Builder extends AbstractBuilder<DashScopeAudioSpeechOptions, Builder> {
+
+		@Override
+		protected Builder self() {
+			return this;
+		}
+
+        // @formatter:off
+		@Override
+		public DashScopeAudioSpeechOptions build() {
+			return new DashScopeAudioSpeechOptions(this.model, this.textType, this.voice, this.format, this.sampleRate,
+					this.volume, this.rate, this.pitch, this.enableSsml, this.bitRate, this.speed, this.seed,
+					this.wordTimestampEnabled, this.phonemeTimestampEnabled, this.languageHints, this.instruction,
+					this.optimizeInstructions, this.enableAigcTag, this.aigcPropagator, this.aigcPropagateId,
+					this.languageType);
+		}
+        // @formatter:on
+
+	}
+
+	protected abstract static class AbstractBuilder<O extends DashScopeAudioSpeechOptions, B extends AbstractBuilder<O, B>>
+			implements TextToSpeechOptions.Builder {
 
 		protected @Nullable String model;
 
@@ -352,116 +368,122 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 
 		protected @Nullable String languageType;
 
-		public Builder() {
+		protected AbstractBuilder() {
 		}
 
-		public Builder model(@Nullable String model) {
+		protected abstract B self();
+
+		@Override
+		public B model(@Nullable String model) {
 			this.model = model;
-			return this;
+			return self();
 		}
 
-		public Builder textType(@Nullable String textType) {
+		public B textType(@Nullable String textType) {
 			this.textType = textType;
-			return this;
+			return self();
 		}
 
-		public Builder voice(@Nullable String voice) {
+		@Override
+		public B voice(@Nullable String voice) {
 			this.voice = voice;
-			return this;
+			return self();
 		}
 
-		public Builder format(@Nullable String format) {
+		@Override
+		public B format(@Nullable String format) {
 			this.format = format;
-			return this;
+			return self();
 		}
 
-		public Builder sampleRate(@Nullable Integer sampleRate) {
+		public B sampleRate(@Nullable Integer sampleRate) {
 			this.sampleRate = sampleRate;
-			return this;
+			return self();
 		}
 
-		public Builder volume(@Nullable Integer volume) {
+		public B volume(@Nullable Integer volume) {
 			this.volume = volume;
-			return this;
+			return self();
 		}
 
-		public Builder rate(@Nullable Float rate) {
+		public B rate(@Nullable Float rate) {
 			this.rate = rate;
-			return this;
+			return self();
 		}
 
-		public Builder pitch(@Nullable Float pitch) {
+		public B pitch(@Nullable Float pitch) {
 			this.pitch = pitch;
-			return this;
+			return self();
 		}
 
-		public Builder enableSsml(@Nullable Boolean enableSsml) {
+		public B enableSsml(@Nullable Boolean enableSsml) {
 			this.enableSsml = enableSsml;
-			return this;
+			return self();
 		}
 
-		public Builder bitRate(@Nullable Integer bitRate) {
+		public B bitRate(@Nullable Integer bitRate) {
 			this.bitRate = bitRate;
-			return this;
+			return self();
 		}
 
-		public Builder speed(@Nullable Double speed) {
+		@Override
+		public B speed(@Nullable Double speed) {
 			this.speed = speed;
-			return this;
+			return self();
 		}
 
-		public Builder seed(@Nullable Integer seed) {
+		public B seed(@Nullable Integer seed) {
 			this.seed = seed;
-			return this;
+			return self();
 		}
 
-		public Builder wordTimestampEnabled(@Nullable Boolean wordTimestampEnabled) {
+		public B wordTimestampEnabled(@Nullable Boolean wordTimestampEnabled) {
 			this.wordTimestampEnabled = wordTimestampEnabled;
-			return this;
+			return self();
 		}
 
-		public Builder phonemeTimestampEnabled(@Nullable Boolean phonemeTimestampEnabled) {
+		public B phonemeTimestampEnabled(@Nullable Boolean phonemeTimestampEnabled) {
 			this.phonemeTimestampEnabled = phonemeTimestampEnabled;
-			return this;
+			return self();
 		}
 
-		public Builder languageHints(@Nullable List<String> languageHints) {
+		public B languageHints(@Nullable List<String> languageHints) {
 			this.languageHints = languageHints;
-			return this;
+			return self();
 		}
 
-		public Builder instruction(@Nullable String instruction) {
+		public B instruction(@Nullable String instruction) {
 			this.instruction = instruction;
-			return this;
+			return self();
 		}
 
-		public Builder optimizeInstructions(@Nullable Boolean optimizeInstructions) {
+		public B optimizeInstructions(@Nullable Boolean optimizeInstructions) {
 			this.optimizeInstructions = optimizeInstructions;
-			return this;
+			return self();
 		}
 
-		public Builder enableAigcTag(@Nullable Boolean enableAigcTag) {
+		public B enableAigcTag(@Nullable Boolean enableAigcTag) {
 			this.enableAigcTag = enableAigcTag;
-			return this;
+			return self();
 		}
 
-		public Builder aigcPropagator(@Nullable String aigcPropagator) {
+		public B aigcPropagator(@Nullable String aigcPropagator) {
 			this.aigcPropagator = aigcPropagator;
-			return this;
+			return self();
 		}
 
-		public Builder aigcPropagateId(@Nullable String aigcPropagateId) {
+		public B aigcPropagateId(@Nullable String aigcPropagateId) {
 			this.aigcPropagateId = aigcPropagateId;
-			return this;
+			return self();
 		}
 
-		public Builder languageType(@Nullable String languageType) {
+		public B languageType(@Nullable String languageType) {
 			this.languageType = languageType;
-			return this;
+			return self();
 		}
 
         // @formatter:off
-		public Builder from(DashScopeAudioSpeechOptions fromOptions) {
+		public B from(DashScopeAudioSpeechOptions fromOptions) {
 			this.model = fromOptions.getModel();
 			this.textType = fromOptions.getTextType();
 			this.voice = fromOptions.getVoice();
@@ -483,13 +505,13 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 			this.aigcPropagator = fromOptions.getAigcPropagator();
 			this.aigcPropagateId = fromOptions.getAigcPropagateId();
 			this.languageType = fromOptions.getLanguageType();
-			return this;
+			return self();
 		}
         // @formatter:on
 
-		public Builder merge(@Nullable TextToSpeechOptions from) {
+		public B merge(@Nullable TextToSpeechOptions from) {
 			if (from == null) {
-				return this;
+				return self();
 			}
 			if (from.getModel() != null) {
 				this.model = from.getModel();
@@ -556,18 +578,8 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 					this.languageType = castFrom.getLanguageType();
 				}
 			}
-			return this;
+			return self();
 		}
-
-        // @formatter:off
-		public DashScopeAudioSpeechOptions build() {
-			return new DashScopeAudioSpeechOptions(this.model, this.textType, this.voice, this.format, this.sampleRate,
-					this.volume, this.rate, this.pitch, this.enableSsml, this.bitRate, this.speed, this.seed,
-					this.wordTimestampEnabled, this.phonemeTimestampEnabled, this.languageHints, this.instruction,
-					this.optimizeInstructions, this.enableAigcTag, this.aigcPropagator, this.aigcPropagateId,
-					this.languageType);
-		}
-        // @formatter:on
 
 	}
 

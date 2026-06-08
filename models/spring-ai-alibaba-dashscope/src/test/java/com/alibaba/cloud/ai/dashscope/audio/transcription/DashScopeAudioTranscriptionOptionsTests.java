@@ -17,9 +17,16 @@ package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 class DashScopeAudioTranscriptionOptionsTests {
 
@@ -117,6 +124,110 @@ class DashScopeAudioTranscriptionOptionsTests {
                 new DashScopeAudioTranscriptionOptions.TranslationOptions("en", "zh");
         assertThat(translationOptions.getSourceLang()).isEqualTo("en");
         assertThat(translationOptions.getTargetLang()).isEqualTo("zh");
+    }
+
+    @Test
+    void testBuilderUsesLocalAbstractBuilder() {
+        Class<?> builderClass = DashScopeAudioTranscriptionOptions.Builder.class;
+
+        assertThat(Modifier.isFinal(builderClass.getModifiers())).isTrue();
+        assertThat(builderClass.getSuperclass().getSimpleName()).isEqualTo("AbstractBuilder");
+        assertThat(builderClass.getGenericSuperclass()).isInstanceOf(ParameterizedType.class);
+
+        Type[] typeArguments = ((ParameterizedType) builderClass.getGenericSuperclass()).getActualTypeArguments();
+        assertThat(typeArguments).containsExactly(DashScopeAudioTranscriptionOptions.class, builderClass);
+    }
+
+    @Test
+    void testBuilderGenericChainingKeepsDashScopeSpecificSetters() {
+        DashScopeAudioTranscriptionOptions.Builder builder = DashScopeAudioTranscriptionOptions.builder()
+                .model("gummy-realtime-v1")
+                .vocabularyId("vocab-1");
+
+        assertThat(builder.build().getVocabularyId()).isEqualTo("vocab-1");
+    }
+
+    @Test
+    void testMergeGenericAudioTranscriptionOptionsAppliesModelOnly() {
+        DashScopeAudioTranscriptionOptions defaultOptions = DashScopeAudioTranscriptionOptions.builder()
+                .model("gummy-realtime-v1")
+                .vocabularyId("vocab-1")
+                .sampleRate(16000)
+                .format("pcm")
+                .languageHints(List.of("zh"))
+                .build();
+        AudioTranscriptionOptions requestOptions = new AudioTranscriptionOptions() {
+            @Override
+            public String getModel() {
+                return "paraformer-realtime-v2";
+            }
+        };
+
+        DashScopeAudioTranscriptionOptions merged = DashScopeAudioTranscriptionOptions.builder()
+                .from(defaultOptions)
+                .merge(requestOptions)
+                .build();
+
+        assertThat(merged.getModel()).isEqualTo("paraformer-realtime-v2");
+        assertThat(merged.getVocabularyId()).isEqualTo("vocab-1");
+        assertThat(merged.getSampleRate()).isEqualTo(16000);
+        assertThat(merged.getFormat()).isEqualTo("pcm");
+        assertThat(merged.getLanguageHints()).containsExactly("zh");
+    }
+
+    @Test
+    void testMergeDashScopeOptionsAppliesProviderSpecificFields() {
+        DashScopeAudioTranscriptionOptions defaultOptions = DashScopeAudioTranscriptionOptions.builder()
+                .model("gummy-realtime-v1")
+                .vocabularyId("vocab-1")
+                .sampleRate(16000)
+                .format("pcm")
+                .languageHints(List.of("zh"))
+                .build();
+        DashScopeAudioTranscriptionOptions requestOptions = DashScopeAudioTranscriptionOptions.builder()
+                .model("paraformer-realtime-v2")
+                .vocabularyId("vocab-2")
+                .sampleRate(8000)
+                .format("wav")
+                .languageHints(List.of("en"))
+                .build();
+
+        DashScopeAudioTranscriptionOptions merged = DashScopeAudioTranscriptionOptions.builder()
+                .from(defaultOptions)
+                .merge(requestOptions)
+                .build();
+
+        assertThat(merged.getModel()).isEqualTo("paraformer-realtime-v2");
+        assertThat(merged.getVocabularyId()).isEqualTo("vocab-2");
+        assertThat(merged.getSampleRate()).isEqualTo(8000);
+        assertThat(merged.getFormat()).isEqualTo("wav");
+        assertThat(merged.getLanguageHints()).containsExactly("en");
+    }
+
+    @Test
+    void testListFieldsAreDefensivelyCopiedAndImmutable() {
+        List<String> languageHints = new ArrayList<>(List.of("zh"));
+        List<String> modalities = new ArrayList<>(List.of("text"));
+        List<Integer> channelId = new ArrayList<>(List.of(0));
+
+        DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+                .languageHints(languageHints)
+                .modalities(modalities)
+                .channelId(channelId)
+                .build();
+        languageHints.add("en");
+        modalities.add("audio");
+        channelId.add(1);
+
+        assertThat(options.getLanguageHints()).containsExactly("zh");
+        assertThat(options.getModalities()).containsExactly("text");
+        assertThat(options.getChannelId()).containsExactly(0);
+        assertThatExceptionOfType(UnsupportedOperationException.class)
+                .isThrownBy(() -> options.getLanguageHints().add("ja"));
+        assertThatExceptionOfType(UnsupportedOperationException.class)
+                .isThrownBy(() -> options.getModalities().add("audio"));
+        assertThatExceptionOfType(UnsupportedOperationException.class)
+                .isThrownBy(() -> options.getChannelId().add(1));
     }
 
 }

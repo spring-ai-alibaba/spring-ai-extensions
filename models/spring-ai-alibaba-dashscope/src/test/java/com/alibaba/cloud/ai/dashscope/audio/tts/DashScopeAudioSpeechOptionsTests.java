@@ -18,10 +18,16 @@ package com.alibaba.cloud.ai.dashscope.audio.tts;
 import com.alibaba.cloud.ai.dashscope.audio.AudioCommonType.TextType;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.ai.audio.tts.TextToSpeechOptions;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 class DashScopeAudioSpeechOptionsTests {
 
@@ -100,20 +106,102 @@ class DashScopeAudioSpeechOptionsTests {
         List<String> languageHints = new ArrayList<>(List.of("zh"));
         DashScopeAudioSpeechOptions original = DashScopeAudioSpeechOptions.builder()
                 .model("sambert-zhichu-v1")
-                .languageHints(new ArrayList<>(languageHints))
+                .languageHints(languageHints)
                 .build();
 
         DashScopeAudioSpeechOptions copy = original.mutate()
                 .voice("longxiaoyun")
                 .build();
         languageHints.add("en");
-        copy.getLanguageHints().add("ja");
 
         assertThat(copy).isNotSameAs(original);
         assertThat(original.getLanguageHints()).containsExactly("zh");
-        assertThat(copy.getLanguageHints()).containsExactly("zh", "ja");
+        assertThat(copy.getLanguageHints()).containsExactly("zh");
         assertThat(original.getVoice()).isEqualTo("longanyang");
         assertThat(copy.getVoice()).isEqualTo("longxiaoyun");
+        assertThatExceptionOfType(UnsupportedOperationException.class)
+                .isThrownBy(() -> copy.getLanguageHints().add("ja"));
+    }
+
+    @Test
+    void testBuilderImplementsSpringAiTextToSpeechOptionsBuilder() {
+        assertThat(DashScopeAudioSpeechOptions.builder()).isInstanceOf(TextToSpeechOptions.Builder.class);
+    }
+
+    @Test
+    void testBuilderUsesLocalAbstractBuilder() {
+        Class<?> builderClass = DashScopeAudioSpeechOptions.Builder.class;
+
+        assertThat(Modifier.isFinal(builderClass.getModifiers())).isTrue();
+        assertThat(builderClass.getSuperclass().getSimpleName()).isEqualTo("AbstractBuilder");
+        assertThat(builderClass.getGenericSuperclass()).isInstanceOf(ParameterizedType.class);
+
+        Type[] typeArguments = ((ParameterizedType) builderClass.getGenericSuperclass()).getActualTypeArguments();
+        assertThat(typeArguments).containsExactly(DashScopeAudioSpeechOptions.class, builderClass);
+    }
+
+    @Test
+    void testBuilderGenericChainingKeepsDashScopeSpecificSetters() {
+        DashScopeAudioSpeechOptions.Builder builder = DashScopeAudioSpeechOptions.builder()
+                .model("sambert-zhichu-v1")
+                .sampleRate(24000);
+
+        assertThat(builder.build().getSampleRate()).isEqualTo(24000);
+    }
+
+    @Test
+    void testMergeTextToSpeechOptionsAppliesGenericFieldsOnly() {
+        DashScopeAudioSpeechOptions defaultOptions = DashScopeAudioSpeechOptions.builder()
+                .model("sambert-zhichu-v1")
+                .textType("ssml")
+                .voice("longxiaochun")
+                .format("wav")
+                .sampleRate(24000)
+                .speed(1.0)
+                .build();
+        TextToSpeechOptions requestOptions = TextToSpeechOptions.builder()
+                .model("qwen-tts")
+                .voice("Chelsie")
+                .format("mp3")
+                .speed(1.25)
+                .build();
+
+        DashScopeAudioSpeechOptions merged = DashScopeAudioSpeechOptions.builder()
+                .from(defaultOptions)
+                .merge(requestOptions)
+                .build();
+
+        assertThat(merged.getModel()).isEqualTo("qwen-tts");
+        assertThat(merged.getVoice()).isEqualTo("Chelsie");
+        assertThat(merged.getFormat()).isEqualTo("mp3");
+        assertThat(merged.getSpeed()).isEqualTo(1.25);
+        assertThat(merged.getTextType()).isEqualTo("ssml");
+        assertThat(merged.getSampleRate()).isEqualTo(24000);
+    }
+
+    @Test
+    void testMergeDashScopeOptionsAppliesProviderSpecificFields() {
+        DashScopeAudioSpeechOptions defaultOptions = DashScopeAudioSpeechOptions.builder()
+                .model("sambert-zhichu-v1")
+                .sampleRate(16000)
+                .languageHints(List.of("zh"))
+                .build();
+        DashScopeAudioSpeechOptions requestOptions = DashScopeAudioSpeechOptions.builder()
+                .model("cosyvoice-v1")
+                .sampleRate(24000)
+                .languageHints(List.of("en"))
+                .enableSsml(true)
+                .build();
+
+        DashScopeAudioSpeechOptions merged = DashScopeAudioSpeechOptions.builder()
+                .from(defaultOptions)
+                .merge(requestOptions)
+                .build();
+
+        assertThat(merged.getModel()).isEqualTo("cosyvoice-v1");
+        assertThat(merged.getSampleRate()).isEqualTo(24000);
+        assertThat(merged.getLanguageHints()).containsExactly("en");
+        assertThat(merged.getEnableSsml()).isTrue();
     }
 
 }
