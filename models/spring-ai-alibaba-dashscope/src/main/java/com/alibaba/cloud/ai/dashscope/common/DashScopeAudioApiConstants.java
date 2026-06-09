@@ -28,13 +28,13 @@ public class DashScopeAudioApiConstants {
 
     public static final String DEFAULT_WEBSOCKET_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference";
 
-    public static final String MULTIMODAL_GENERATION = "api/v1/services/aigc/multimodal-generation/generation";
+    public static final String MULTIMODAL_GENERATION = "/api/v1/services/aigc/multimodal-generation/generation";
 
     public static final String CHAT_COMPLETIONS = "/compatible-mode/v1/chat/completions";
 
-    public static final String ASR_TRANSCRIPTION = "api/v1/services/audio/asr/transcription";
+    public static final String ASR_TRANSCRIPTION = "/api/v1/services/audio/asr/transcription";
 
-    public static final String QWEN_ASR = "compatible-mode/v1/chat/completions";
+    public static final String QWEN_ASR = "/compatible-mode/v1/chat/completions";
 
     public static final String ASR_CUSTOMIZATION = "/api/v1/services/audio/asr/customization";
 

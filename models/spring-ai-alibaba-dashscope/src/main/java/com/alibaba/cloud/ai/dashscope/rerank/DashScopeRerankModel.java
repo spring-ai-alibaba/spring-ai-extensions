@@ -17,7 +17,6 @@
 package com.alibaba.cloud.ai.dashscope.rerank;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.document.DocumentWithScore;
 import com.alibaba.cloud.ai.model.RerankModel;
@@ -106,7 +105,7 @@ public class DashScopeRerankModel implements RerankModel {
 				.build())
 			.toList();
 
-		var metadata = new RerankResponseMetadata(DashScopeAiUsage.from(response.usage()));
+		var metadata = new RerankResponseMetadata();
 		return new RerankResponse(documentWithScores, metadata);
 	}
 

@@ -15,7 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.metadata;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.util.Assert;
 
@@ -26,40 +26,51 @@ import org.springframework.util.Assert;
  */
 public class DashScopeAiUsage implements Usage {
 
-	private final TokenUsage usage;
+	private final Object usage;
+
+	private final Integer inputTokens;
+
+	private final Integer outputTokens;
+
+	private final Integer totalTokens;
 
 	protected DashScopeAiUsage(TokenUsage usage) {
 		Assert.notNull(usage, "DashScope Usage must not be null");
 		this.usage = usage;
+		this.inputTokens = usage.inputTokens();
+		this.outputTokens = usage.outputTokens();
+		this.totalTokens = usage.totalTokens();
 	}
 
 	public static DashScopeAiUsage from(TokenUsage usage) {
 		return new DashScopeAiUsage(usage);
 	}
 
-	protected TokenUsage getUsage() {
+	protected Object getUsage() {
 		return this.usage;
 	}
 
 	@Override
 	public Integer getPromptTokens() {
-		return getUsage().inputTokens();
+		return this.inputTokens;
 	}
 
 	@Override
 	public Integer getCompletionTokens() {
-		return getUsage().outputTokens();
+		return this.outputTokens;
 	}
 
 	@Override
 	public Integer getTotalTokens() {
-		Integer totalTokens = getUsage().totalTokens();
-		if (totalTokens != null) {
-			return totalTokens;
+		if (this.totalTokens != null) {
+			return this.totalTokens;
 		}
-		else {
-			return getPromptTokens() + getCompletionTokens();
+		Integer promptTokens = getPromptTokens();
+		Integer completionTokens = getCompletionTokens();
+		if (promptTokens == null || completionTokens == null) {
+			return 0;
 		}
+		return promptTokens + completionTokens;
 	}
 
 	/**

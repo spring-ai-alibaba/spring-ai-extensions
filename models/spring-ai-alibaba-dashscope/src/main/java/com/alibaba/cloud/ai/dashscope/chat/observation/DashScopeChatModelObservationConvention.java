@@ -15,7 +15,6 @@
  */
 package com.alibaba.cloud.ai.dashscope.chat.observation;
 
-import java.util.List;
 import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
@@ -25,7 +24,6 @@ import io.micrometer.common.KeyValues;
 import org.springframework.ai.chat.observation.ChatModelObservationContext;
 import org.springframework.ai.chat.observation.ChatModelObservationDocumentation;
 import org.springframework.ai.chat.observation.DefaultChatModelObservationConvention;
-import org.springframework.util.CollectionUtils;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -44,8 +42,8 @@ public class DashScopeChatModelObservationConvention extends DefaultChatModelObs
 	@Override
 	protected KeyValues requestStopSequences(KeyValues keyValues, ChatModelObservationContext context) {
 		if (context.getRequest().getOptions() instanceof DashScopeChatOptions) {
-			List<Object> stop = ((DashScopeChatOptions) context.getRequest().getOptions()).getStop();
-			if (CollectionUtils.isEmpty(stop)) {
+			Object stop = ((DashScopeChatOptions) context.getRequest().getOptions()).getStop();
+			if (stop == null || (stop instanceof Iterable<?> iterable && !iterable.iterator().hasNext())) {
 				return keyValues;
 			}
 

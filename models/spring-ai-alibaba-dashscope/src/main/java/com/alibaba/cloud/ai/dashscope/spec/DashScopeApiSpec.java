@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeResponseFormat;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -627,7 +626,7 @@ public class DashScopeApiSpec {
             @JsonProperty("enable_search") @Nullable Boolean enableSearch,
             @JsonProperty("search_options") @Nullable SearchOptions searchOptions,
 
-            @JsonProperty("response_format") @Nullable DashScopeResponseFormat responseFormat,
+            @JsonProperty("response_format") @Nullable Object responseFormat,
             @JsonProperty("incremental_output") @Nullable Boolean incrementalOutput,
 
             @JsonProperty("tools") @Nullable List<FunctionTool> tools,

@@ -131,4 +131,28 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>compile-single-test</id>
+            <activation>
+                <property>
+                    <name>compile.single.test</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <testIncludes>
+                                <testInclude>**/${compile.single.test}</testInclude>
+                            </testIncludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>

@@ -15,25 +15,36 @@
  */
 package com.alibaba.cloud.ai.dashscope.chat;
 
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletion;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionChunk;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ChatCompletionFunction;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.MediaContent;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ToolCall;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput.Choice;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionRequest;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionRequestInput;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionRequestParameter;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.FunctionTool;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletion;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionChunk;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionFinishReason;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionFunction;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionMessage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionOutput;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionOutput.Choice;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Input;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.Function;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.Tool;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.MediaContent;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.Role;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ToolCall;
 import com.alibaba.cloud.ai.dashscope.chat.observation.DashScopeChatModelObservationConvention;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
-import com.alibaba.cloud.ai.tool.observation.inner.ToolCallReactiveContextHolder;
+import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
 import com.alibaba.cloud.ai.tool.validator.ToolCallValidator;
 import io.micrometer.observation.Observation;
@@ -42,6 +53,9 @@ import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccess
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
@@ -61,31 +75,20 @@ import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.chat.observation.ChatModelObservationDocumentation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate;
+import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
-import org.springframework.ai.model.tool.ToolExecutionEligibilityPredicate;
-import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.support.UsageCalculator;
 import org.springframework.ai.tool.definition.ToolDefinition;
+import org.springframework.ai.util.JsonHelper;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MimeType;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
-
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * {@link ChatModel} implementation for {@literal Alibaba DashScope} backed by
@@ -99,9 +102,21 @@ public class DashScopeChatModel implements ChatModel {
 
 	private static final Logger logger = LoggerFactory.getLogger(DashScopeChatModel.class);
 
-	public static final String DEFAULT_MODEL_NAME = DashScopeApi.DEFAULT_CHAT_MODEL;
+	public static final String DEFAULT_MODEL_NAME = DashScopeModel.ChatModel.QWEN_PLUS.getValue();
+
+	private static final String DEFAULT_RESULT_FORMAT = "message";
 
 	private static final ChatModelObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DashScopeChatModelObservationConvention();
+
+	private final DashScopeApi dashscopeApi;
+
+	public final RetryTemplate retryTemplate;
+
+	private final ObservationRegistry observationRegistry;
+
+	private final ToolCallingManager toolCallingManager;
+
+	private final ToolCallValidator toolCallingValidator;
 
 	/**
 	 * The default options used for the chat completion requests.
@@ -109,72 +124,31 @@ public class DashScopeChatModel implements ChatModel {
 	private DashScopeChatOptions defaultOptions;
 
 	/**
-	 * Low-level access to the DashScope API
-	 */
-	private final DashScopeApi dashscopeApi;
-
-	/**
-	 * The retry template used to retry the OpenAI API calls.
-	 */
-	public final RetryTemplate retryTemplate;
-
-	/**
-	 * Observation registry used for instrumentation.
-	 */
-	private final ObservationRegistry observationRegistry;
-
-	private final ToolCallingManager toolCallingManager;
-
-    /**
-     * The tool call validator used to filter out invalid tool calls.
-     */
-    private final ToolCallValidator toolCallingValidator;
-
-	/**
-	 * The tool execution eligibility predicate used to determine if a tool can be
-	 * executed.
-	 */
-	private final ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate;
-
-	/**
 	 * Conventions to use for generating observations.
 	 */
 	private ChatModelObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
 
-	public DashScopeChatModel(DashScopeApi dashscopeApi, DashScopeChatOptions defaultOptions,
-			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate,
-			ObservationRegistry observationRegistry) {
+	public DashScopeChatModel(DashScopeApi dashScopeApi, DashScopeChatOptions defaultOptions,
+			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry) {
 
-		this(dashscopeApi, defaultOptions, toolCallingManager, retryTemplate, observationRegistry,
-				new DefaultToolExecutionEligibilityPredicate(), new DefaultToolCallValidator());
+		this(dashScopeApi, defaultOptions, toolCallingManager, retryTemplate, observationRegistry, new DefaultToolCallValidator());
 	}
 
-	public DashScopeChatModel(DashScopeApi dashscopeApi, DashScopeChatOptions defaultOptions,
-			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
-			ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate) {
+	public DashScopeChatModel(DashScopeApi dashScopeApi, DashScopeChatOptions defaultOptions,
+			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry, ToolCallValidator toolCallingValidator) {
 
-		this(dashscopeApi, defaultOptions, toolCallingManager, retryTemplate, observationRegistry,
-				toolExecutionEligibilityPredicate, new DefaultToolCallValidator());
-	}
-
-	public DashScopeChatModel(DashScopeApi dashscopeApi, DashScopeChatOptions defaultOptions,
-			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
-			ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate, ToolCallValidator toolCallingValidator) {
-
-		Assert.notNull(dashscopeApi, "dashscopeApi cannot be null");
+		Assert.notNull(dashScopeApi, "dashscopeApi cannot be null");
 		Assert.notNull(defaultOptions, "defaultOptions cannot be null");
 		Assert.notNull(toolCallingManager, "toolCallingManager cannot be null");
 		Assert.notNull(retryTemplate, "retryTemplate cannot be null");
 		Assert.notNull(observationRegistry, "observationRegistry cannot be null");
-		Assert.notNull(toolExecutionEligibilityPredicate, "toolExecutionEligibilityPredicate cannot be null");
 		Assert.notNull(toolCallingValidator, "toolCallingValidator cannot be null");
 
-		this.dashscopeApi = dashscopeApi;
+		this.dashscopeApi = dashScopeApi;
 		this.defaultOptions = defaultOptions;
 		this.toolCallingManager = toolCallingManager;
 		this.retryTemplate = retryTemplate;
 		this.observationRegistry = observationRegistry;
-		this.toolExecutionEligibilityPredicate = toolExecutionEligibilityPredicate;
 		this.toolCallingValidator = toolCallingValidator;
 	}
 
@@ -186,15 +160,10 @@ public class DashScopeChatModel implements ChatModel {
 		return internalCall(requestPrompt, null);
 	}
 
-	@Override
-	public ChatOptions getDefaultOptions() {
-		return this.defaultOptions.copy();
-	}
-
 	public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
-		ChatCompletionRequest request = createRequest(prompt, false);
+		ChatCompletionRequest request = createRequest(prompt);
 
-		ChatModelObservationContext observationContext = ChatModelObservationContext.builder()
+        ChatModelObservationContext observationContext = ChatModelObservationContext.builder()
 			.prompt(prompt)
 			.provider(DashScopeApiConstants.PROVIDER_NAME)
 			.build();
@@ -203,64 +172,54 @@ public class DashScopeChatModel implements ChatModel {
 			.observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
 					this.observationRegistry)
 			.observe(() -> {
-
 				ResponseEntity<ChatCompletion> completionEntity = RetryUtils.execute(this.retryTemplate,
-                                () -> dashscopeApi.chatCompletionEntity(request, getAdditionalHttpHeaders(prompt)));
+						() -> this.dashscopeApi.chatCompletionEntity(request, getAdditionalHttpHeaders(prompt), isMultiModel(prompt.getOptions())));
 
-				var completionResponse = completionEntity.getBody();
-				ChatResponse chatResponse = toChatResponse(completionResponse, previousChatResponse, request, null);
-
+				ChatCompletion chatCompletion = completionEntity.getBody();
+				ChatResponse chatResponse = toChatResponse(chatCompletion, previousChatResponse, request, null);
 				observationContext.setResponse(chatResponse);
-
 				return chatResponse;
-			});
-
-        Assert.state(prompt.getOptions() != null, "options must not be null");
-		if (toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
-			var toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
-			if (toolExecutionResult.returnDirect()) {
-				// Return tool execution result directly to the client.
-				return ChatResponse.builder()
-					.from(response)
-					.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
-					.build();
-			}
-			else {
-				// Send the tool execution result back to the model.
-				return this.internalCall(new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions()),
-						response);
-			}
-		}
+				});
 
 		return response;
 	}
 
 	@Override
+	public ChatOptions getOptions() {
+		return this.defaultOptions.copy();
+	}
+
+	@Override
+	public Prompt buildRequestPrompt(Prompt prompt) {
+		DashScopeChatOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
+		ChatOptions runtimeOptions = prompt.getOptions();
+		if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {
+			requestOptionsBuilder.combineWith(runtimeOptions.mutate());
+		}
+		DashScopeChatOptions requestOptions = requestOptionsBuilder.build();
+		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
+		return new Prompt(prompt.getInstructions(), requestOptions);
+	}
+
+    private boolean isMultiModel(@Nullable ChatOptions options) {
+        return options instanceof DashScopeChatOptions && Boolean.TRUE.equals(((DashScopeChatOptions) options).getMultiModel());
+    }
+
+    @Override
 	public Flux<ChatResponse> stream(Prompt prompt) {
 		Assert.notNull(prompt, "Prompt must not be null");
 		Assert.isTrue(!CollectionUtils.isEmpty(prompt.getInstructions()), "Prompt messages must not be empty");
-
-		// Before moving any further, build the final request Prompt,
-		// merging runtime and default options.
 		Prompt requestPrompt = buildRequestPrompt(prompt);
 		return this.internalStream(requestPrompt, null);
 	}
 
-    // @formatter:off
 	public Flux<ChatResponse> internalStream(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
 
-        return Flux.deferContextual(contextView -> {
-			ChatCompletionRequest request = createRequest(prompt, true);
+		return Flux.deferContextual(contextView -> {
+			ChatCompletionRequest request = createRequest(prompt);
+			Flux<ChatCompletionChunk> completionChunks = RetryUtils.execute(this.retryTemplate,
+					() -> this.dashscopeApi.chatCompletionStream(request, getAdditionalHttpHeaders(prompt), isMultiModel(prompt.getOptions())));
 
-            Flux<ChatCompletionChunk> completionChunks = RetryUtils.execute(
-                    this.retryTemplate,
-                    () -> dashscopeApi.chatCompletionStream(
-                            request,
-                            getAdditionalHttpHeaders(prompt)
-            ));
-
-			// For chunked responses, only the first chunk contains the choice role.
-			// The rest of the chunks with same ID share the same role.
 			ConcurrentHashMap<String, String> roleMap = new ConcurrentHashMap<>();
 
 			ChatModelObservationContext observationContext = ChatModelObservationContext.builder()
@@ -268,322 +227,252 @@ public class DashScopeChatModel implements ChatModel {
 				.provider(DashScopeApiConstants.PROVIDER_NAME)
 				.build();
 
-			Observation observation = ChatModelObservationDocumentation.CHAT_MODEL_OPERATION.observation(
-					this.observationConvention,
-                    DEFAULT_OBSERVATION_CONVENTION,
-                    () -> observationContext,
-					this.observationRegistry
-            );
+			Observation observation = ChatModelObservationDocumentation.CHAT_MODEL_OPERATION
+				.observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
+						this.observationRegistry);
 
-			observation.parentObservation(contextView.getOrDefault(
-                    ObservationThreadLocalAccessor.KEY,
-                    null)
-            ).start();
+			observation.parentObservation(contextView.getOrDefault(ObservationThreadLocalAccessor.KEY, null)).start();
 
-			// Convert the ChatCompletionChunk into a ChatCompletion to be able to reuse
-			// the function call handling logic.
-			Flux<ChatResponse> chatResponse = completionChunks.map(this::chunkToChatCompletion).switchMap(
-                    chatCompletion -> Mono.just(chatCompletion)
-                            .map(chatCompletion2 -> toChatResponse(
-                                    chatCompletion2,
-                                    previousChatResponse,
-                                    request,
-                                    roleMap
-                            ))
-            );
+			Flux<ChatResponse> chatResponse = completionChunks.map(this::chunkToChatCompletion)
+				.switchMap(chatCompletion -> Mono.just(chatCompletion)
+					.map(chatCompletion2 -> toChatResponse(chatCompletion2, previousChatResponse, request, roleMap)));
 
-			Flux<ChatResponse> flux = chatResponse.flatMap(response -> {
-                Assert.state(prompt.getOptions() != null, "options must not be null");
-					if (toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
-
-						return Flux.deferContextual((ctx) -> {
-
-							ToolExecutionResult toolExecutionResult;
-
-							try {
-								ToolCallReactiveContextHolder.setContext(ctx);
-								toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
-							} finally {
-								ToolCallReactiveContextHolder.clearContext();
-							}
-
-							if (toolExecutionResult.returnDirect()) {
-
-								// Return tool execution result directly to the client.
-								return Flux.just(ChatResponse.builder().from(response)
-										.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
-										.build());
-							} else {
-								// Send the tool execution result back to the model.
-								return this.internalStream(
-                                        new Prompt(
-                                                toolExecutionResult.conversationHistory(),
-                                                prompt.getOptions()
-                                        ),
-										response
-                                );
-							}
-						}).subscribeOn(Schedulers.boundedElastic());
-					} else {
-						return Flux.just(response);
-					}
-				}).doOnError(observation::error)
-				.doFinally(s -> observation.stop())
+            Flux<ChatResponse> flux = chatResponse.doOnError(observation::error)
+					.doFinally(s -> observation.stop())
 				.contextWrite(ctx -> ctx.put(ObservationThreadLocalAccessor.KEY, observation));
 
 			return new MessageAggregator().aggregate(flux, observationContext::setResponse);
 		});
 	}
 
-	private static String finishReasonToMetadataValue(DashScopeApiSpec.@Nullable ChatCompletionFinishReason finishReason) {
-
-        if (finishReason == null || finishReason == DashScopeApiSpec.ChatCompletionFinishReason.NULL) {
+	private static String finishReasonToMetadataValue(@Nullable ChatCompletionFinishReason finishReason) {
+		if (finishReason == null || finishReason == ChatCompletionFinishReason.NULL) {
 			return "";
 		}
-
 		return finishReason.name();
 	}
 
-	private ChatResponse toChatResponse(
-            @Nullable ChatCompletion chatCompletion,
-            @Nullable ChatResponse previousChatResponse,
-				ChatCompletionRequest request,
-            @Nullable ConcurrentHashMap<String, String> roleMap
-    ) {
+	private ChatResponse toChatResponse(@Nullable ChatCompletion chatCompletion,
+			@Nullable ChatResponse previousChatResponse, ChatCompletionRequest request,
+			@Nullable ConcurrentHashMap<String, String> roleMap) {
 
 		if (chatCompletion == null) {
 			logger.warn("Null chat completion returned");
 			return new ChatResponse(List.of());
 		}
 
-			ChatCompletionOutput output = chatCompletion.output();
-			if (output == null) {
-				logger.warn("No output returned");
-				return new ChatResponse(List.of());
-			}
-
-			List<ChatCompletionOutput.Choice> choices = output.choices();
-			if (choices == null) {
-				logger.warn("No choices returned");
-				return new ChatResponse(List.of());
-			}
-
-			// Dashscope searchInfos
-	        DashScopeApiSpec.SearchInfo searchInfo = output.searchInfo();
-
-			ConcurrentHashMap<String, String> finalRoleMap = roleMap == null ? new ConcurrentHashMap<>() : roleMap;
-
-			List<Generation> generations = choices.stream().map(choice -> {
-				ChatCompletionMessage choiceMessage = choice.message();
-				String requestId = chatCompletion.requestId() != null ? chatCompletion.requestId() : "";
-
-				if (choiceMessage != null && choiceMessage.role() != null && chatCompletion.requestId() != null) {
-					finalRoleMap.putIfAbsent(chatCompletion.requestId(), choiceMessage.role().name());
-				}
-
-				// @formatter:off
-				Map<String, Object> metadata = Map.of(
-						"id", requestId,
-						"role", requestId.isEmpty() ? "" : finalRoleMap.getOrDefault(requestId, ""),
-						"finishReason", finishReasonToMetadataValue(choice.finishReason()),
-						"reasoningContent", choiceMessage != null && StringUtils.hasText(choiceMessage.reasoningContent()) ? choiceMessage.reasoningContent() : "",
-						"search_info", Objects.isNull(searchInfo) ? "" : searchInfo
-				);
-				// @formatter:on
-			return buildGeneration(choice, metadata, request);
-		}).toList();
-
-        DashScopeApiSpec.TokenUsage usage = chatCompletion.usage();
+		TokenUsage usage = chatCompletion.usage();
 		Usage currentChatResponseUsage = usage != null ? DashScopeAiUsage.from(usage) : new EmptyUsage();
-		// Keep cumulative calculation for backward compatibility, but don't let it overwrite native usage.
 		UsageCalculator.getCumulativeUsage(currentChatResponseUsage, previousChatResponse);
 
-		return new ChatResponse(generations, this.from(chatCompletion, currentChatResponseUsage));
-	}
-    // @formatter:on
+		ChatCompletionOutput output = chatCompletion.output();
+		if (output == null) {
+			logger.warn("No output returned");
+			return new ChatResponse(List.of(), from(chatCompletion, currentChatResponseUsage));
+		}
 
-	public DashScopeChatOptions getDashScopeChatOptions() {
-		return this.defaultOptions;
+		List<Choice> choices = output.choices();
+		if (choices == null || choices.isEmpty()) {
+			logger.warn("No choices returned");
+			return new ChatResponse(List.of(), from(chatCompletion, currentChatResponseUsage));
+		}
+
+		ConcurrentHashMap<String, String> finalRoleMap = roleMap == null ? new ConcurrentHashMap<>() : roleMap;
+
+		List<Generation> generations = choices.stream().map(choice -> {
+			ChatCompletionMessage choiceMessage = choice.message();
+			String requestId = chatCompletion.requestId() != null ? chatCompletion.requestId() : "";
+
+			if (choiceMessage != null && choiceMessage.role() != null && chatCompletion.requestId() != null) {
+				finalRoleMap.putIfAbsent(chatCompletion.requestId(), choiceMessage.role().name());
+			}
+
+			Map<String, Object> metadata = Map.of("id", requestId, "role",
+					requestId.isEmpty() ? "" : finalRoleMap.getOrDefault(requestId, ""), "finishReason",
+					finishReasonToMetadataValue(choice.finishReason()), "reasoningContent",
+					choiceMessage != null && StringUtils.hasText(choiceMessage.reasoningContent())
+							? choiceMessage.reasoningContent() : "",
+					"search_info", Objects.isNull(output.searchInfo()) ? "" : output.searchInfo());
+			return buildGeneration(choice, metadata);
+		}).toList();
+
+		return new ChatResponse(generations, from(chatCompletion, currentChatResponseUsage));
 	}
 
 	public void setDashScopeChatOptions(DashScopeChatOptions options) {
 		this.defaultOptions = options;
 	}
 
-	private Generation buildGeneration(Choice choice, Map<String, Object> metadata,
-			ChatCompletionRequest request) {
+	private Generation buildGeneration(Choice choice, Map<String, Object> metadata) {
 		ChatCompletionMessage choiceMessage = choice.message();
-		// Use the validator to filter and validate tool calls
-		List<DashScopeApiSpec.ChatCompletionMessage.ToolCall> validatedToolCalls =
-				toolCallingValidator.validate(choiceMessage != null ? choiceMessage.toolCalls() : null,
-						choice.finishReason());
 
-		List<AssistantMessage.ToolCall> toolCalls = validatedToolCalls.stream()
-				.map(toolCall -> new AssistantMessage.ToolCall(toolCall.id(), "function",
-						toolCall.function().name(), toolCall.function().arguments()))
+		List<ToolCall> validatedToolCalls = List.of();
+		if (choiceMessage != null && choice.finishReason() == ChatCompletionFinishReason.TOOL_CALLS
+				&& !CollectionUtils.isEmpty(choiceMessage.toolCalls())) {
+			validatedToolCalls = choiceMessage.toolCalls()
+				.stream()
+				.filter(toolCall -> toolCall != null && toolCall.function() != null
+						&& StringUtils.hasText(toolCall.function().name()))
 				.toList();
+		}
+		List<AssistantMessage.ToolCall> toolCalls = validatedToolCalls.stream()
+			.map(toolCall -> new AssistantMessage.ToolCall(toolCall.id(), "function", toolCall.function().name(),
+					toolCall.function().arguments()))
+			.toList();
 
 		String finishReason = finishReasonToMetadataValue(choice.finishReason());
-		var generationMetadataBuilder = ChatGenerationMetadata.builder().finishReason(finishReason);
+		ChatGenerationMetadata generationMetadata = ChatGenerationMetadata.builder().finishReason(finishReason).build();
 
-		var assistantMessage = AssistantMessage.builder()
+		AssistantMessage assistantMessage = AssistantMessage.builder()
 			.content(choiceMessage != null ? choiceMessage.content() : "")
 			.properties(metadata)
 			.toolCalls(toolCalls)
 			.build();
 
-		return new Generation(assistantMessage, generationMetadataBuilder.build());
+		return new Generation(assistantMessage, generationMetadata);
 	}
 
-	/**
-	 * Convert the ChatCompletionChunk into a ChatCompletion. The Usage is set to null.
-	 * @param chunk the ChatCompletionChunk to convert
-	 * @return the ChatCompletion
-	 */
 	private ChatCompletion chunkToChatCompletion(ChatCompletionChunk chunk) {
-
-		// check chunk
-		if (Objects.isNull(chunk) || Objects.isNull(chunk.output())) {
+		if (Objects.isNull(chunk.output())) {
 			throw new DashScopeException("LLM response chunk is null.");
 		}
-
-		// Directly use chunk.output() to preserve all fields including searchInfo
 		return new ChatCompletion(chunk.requestId(), chunk.output(), chunk.usage());
 	}
 
 	private ChatResponseMetadata from(ChatCompletion result, Usage usage) {
 		Assert.notNull(result, "DashScopeAi ChatCompletionResult must not be null");
-		return ChatResponseMetadata.builder().id(Objects.requireNonNullElse(result.requestId(), "")).usage(usage).model("").build();
+		return ChatResponseMetadata.builder()
+			.id(Objects.requireNonNullElse(result.requestId(), ""))
+			.usage(usage)
+			.model("")
+			.build();
 	}
 
 	/**
 	 * Accessible for testing.
 	 */
-	ChatCompletionRequest createRequest(Prompt prompt, boolean stream) {
+	ChatCompletionRequest createRequest(Prompt prompt) {
+		DashScopeChatOptions requestOptions = (DashScopeChatOptions) prompt.getOptions();
+        Assert.state(requestOptions != null, "requestOptions must not be null");
 
-		List<ChatCompletionMessage> chatCompletionMessages = prompt.getInstructions().stream().map(message -> {
-            Assert.notNull(message.getText(), "Text must not be null");
-			if (message.getMessageType() == MessageType.USER || message.getMessageType() == MessageType.SYSTEM) {
-				Object content = message.getText();
-				Map<String, String> cacheControl = extractCacheControl(message);
+        List<ToolDefinition> toolDefinitions = this.toolCallingManager.resolveToolDefinitions(requestOptions);
 
-				if (message instanceof UserMessage userMessage) {
-					if (!CollectionUtils.isEmpty(userMessage.getMedia())) {
-						content = convertMediaContent(userMessage, cacheControl);
-					}
-					else if (cacheControl != null) {
-                        Assert.notNull(message.getText(), "Text must not be null");
-						// Convert text to MediaContent with cache_control
-						content = List.of(new MediaContent(message.getText(), cacheControl));
-					}
+		return ChatCompletionRequest.builder()
+			.model(requestOptions.getModel())
+			.input(new Input(prompt.getInstructions()
+                    .stream()
+                    .map(this::toDashScopeMessage)
+                    .flatMap(List::stream)
+                    .toList()))
+			.parameters(toDashScopeChatRequestParameter(requestOptions, toolDefinitions))
+			.build();
+	}
+
+	private List<Input.ChatCompletionMessage> toDashScopeMessage(Message message) {
+		if (message.getMessageType() == MessageType.USER || message.getMessageType() == MessageType.SYSTEM) {
+			Object content = message.getText();
+			Map<String, String> cacheControl = extractCacheControl(message);
+
+			if (message instanceof UserMessage userMessage) {
+				if (!ObjectUtils.isEmpty(userMessage.getMedia())) {
+					content = convertMediaContent(userMessage, cacheControl);
 				}
-				else if (message instanceof SystemMessage && cacheControl != null) {
-                    Assert.notNull(message.getText(), "Text must not be null");
-					// Convert system message text to MediaContent with cache_control
+				else if (cacheControl != null) {
+					Assert.notNull(message.getText(), "Text must not be null");
 					content = List.of(new MediaContent(message.getText(), cacheControl));
 				}
-
-				return List.of(new ChatCompletionMessage(content,
-						ChatCompletionMessage.Role.valueOf(message.getMessageType().name())));
 			}
-			else if (message.getMessageType() == MessageType.ASSISTANT) {
-				var assistantMessage = (AssistantMessage) message;
-				List<ToolCall> toolCalls = null;
-				if (!CollectionUtils.isEmpty(assistantMessage.getToolCalls())) {
-					toolCalls = assistantMessage.getToolCalls().stream().map(toolCall -> {
-						var function = new ChatCompletionFunction(toolCall.name(), toolCall.arguments());
-                        // todo: set index null.
-						return new ToolCall(toolCall.id(), toolCall.type(), function, null);
-					}).toList();
-				}
-
-				Boolean partial = null;
-				if (assistantMessage.getMetadata() != null) {
-					Object partialValue = assistantMessage.getMetadata().get("partial");
-					if (partialValue instanceof Boolean) {
-						partial = (Boolean) partialValue;
-					}
-					else if (partialValue instanceof String) {
-						partial = Boolean.parseBoolean((String) partialValue);
-					}
-				}
-
-				return List.of(new DashScopeApiSpec.ChatCompletionMessage(assistantMessage.getText(),
-						ChatCompletionMessage.Role.ASSISTANT, null, null, toolCalls, null, partial, null, null, null));
+			else if (message instanceof SystemMessage && cacheControl != null) {
+				Assert.notNull(message.getText(), "Text must not be null");
+				content = List.of(new MediaContent(message.getText(), cacheControl));
 			}
-			else if (message.getMessageType() == MessageType.TOOL) {
-				ToolResponseMessage toolMessage = (ToolResponseMessage) message;
 
-				toolMessage.getResponses().forEach(response -> {
-					Assert.isTrue(response.id() != null, "ToolResponseMessage must have an id");
-					Assert.isTrue(response.name() != null, "ToolResponseMessage must have a name");
-				});
-
-				return toolMessage.getResponses()
-					.stream()
-					.map(tr -> new ChatCompletionMessage(tr.responseData(), ChatCompletionMessage.Role.TOOL, tr.name(),
-							tr.id(), null, null, null, null, null, null))
-					.toList();
+			return List.of(Input.ChatCompletionMessage.builder()
+				.role(Role.valueOf(message.getMessageType().name()))
+				.content(content)
+				.build());
+		}
+		if (message.getMessageType() == MessageType.TOOL) {
+			ToolResponseMessage toolMessage = (ToolResponseMessage) message;
+			toolMessage.getResponses().forEach(response -> {
+				Assert.isTrue(response.id() != null, "ToolResponseMessage must have an id");
+				Assert.isTrue(response.name() != null, "ToolResponseMessage must have a name");
+			});
+			return toolMessage.getResponses()
+				.stream()
+				.map(tr -> Input.ChatCompletionMessage.builder()
+					.content(tr.responseData())
+					.role(Role.TOOL)
+					.toolCallId(tr.id())
+					.build())
+				.toList();
+		}
+		if (message.getMessageType() == MessageType.ASSISTANT) {
+			AssistantMessage assistantMessage = (AssistantMessage) message;
+			List<ToolCall> toolCalls = null;
+			if (!CollectionUtils.isEmpty(assistantMessage.getToolCalls())) {
+				toolCalls = assistantMessage.getToolCalls().stream().map(toolCall -> {
+					ChatCompletionFunction function = new ChatCompletionFunction(toolCall.name(), toolCall.arguments());
+					return new ToolCall(toolCall.id(), toolCall.type(), function, null);
+				}).toList();
 			}
-			else {
-				throw new IllegalArgumentException("Unsupported message type: " + message.getMessageType());
-			}
-		}).flatMap(List::stream).toList();
+			Boolean partial = parsePartial(assistantMessage.getMetadata().get("partial"));
 
-		Assert.state(prompt.getOptions() instanceof DashScopeChatOptions,
-				"Prompt options must be DashScopeChatOptions");
-		DashScopeChatOptions requestOptions = (DashScopeChatOptions) Objects.requireNonNull(prompt.getOptions());
+			return List.of(Input.ChatCompletionMessage.builder()
+				.content(assistantMessage.getText())
+				.role(Role.ASSISTANT)
+				.toolCalls(toolCalls)
+				.partial(partial)
+				.build());
+		}
+		throw new IllegalArgumentException("Unsupported message type: " + message.getMessageType());
+	}
 
-        // Add the tool definitions to the request's tools parameter.
-        List<ToolDefinition> toolDefinitions = this.toolCallingManager.resolveToolDefinitions(requestOptions);
-        if (!CollectionUtils.isEmpty(toolDefinitions)) {
-            requestOptions = requestOptions.mutate().tools(getFunctionTools(toolDefinitions)).build();
-        }
-
-		Boolean multiModel = requestOptions.getMultiModel();
-		Assert.hasText(requestOptions.getModel(), "DashScope model must not be empty");
-
-		return new ChatCompletionRequest(requestOptions.getModel(),
-				new ChatCompletionRequestInput(chatCompletionMessages),
-				toDashScopeRequestParameter(requestOptions, stream), stream, Boolean.TRUE.equals(multiModel));
+	private static @Nullable Boolean parsePartial(@Nullable Object partial) {
+		if (partial == null) {
+			return null;
+		}
+		if (partial instanceof Boolean value) {
+			return value;
+		}
+		if (partial instanceof String value) {
+			return Boolean.valueOf(value);
+		}
+		throw new IllegalArgumentException("Unsupported partial metadata type: " + partial.getClass().getName());
 	}
 
 	private HttpHeaders getAdditionalHttpHeaders(Prompt prompt) {
-
 		Map<String, String> headers = new HashMap<>(this.defaultOptions.getHttpHeaders());
-		if (prompt.getOptions() != null && prompt.getOptions() instanceof DashScopeChatOptions chatOptions) {
+		if (prompt.getOptions() instanceof DashScopeChatOptions chatOptions) {
 			headers.putAll(chatOptions.getHttpHeaders());
+			if (StringUtils.hasText(chatOptions.getDataInspection())) {
+				headers.put(DashScopeApiConstants.HEADER_DATAINSPECTION, chatOptions.getDataInspection());
+			}
 		}
-        HttpHeaders httpHeaders = new HttpHeaders();
-        headers.forEach(httpHeaders::add);
-        return httpHeaders;
+		HttpHeaders httpHeaders = new HttpHeaders();
+		headers.forEach(httpHeaders::add);
+		return httpHeaders;
 	}
 
-	/**
-	 * Extract cache_control from message metadata.
-	 * @param message The message to extract cache_control from.
-	 * @return A Map containing cache control settings, or null if not present.
-	 */
 	@SuppressWarnings("unchecked")
 	private @Nullable Map<String, String> extractCacheControl(Message message) {
 		if (message.getMetadata() == null) {
 			return null;
 		}
 		Object cacheControlObj = message.getMetadata().get(DashScopeApiConstants.CACHE_CONTROL);
-		if (cacheControlObj instanceof Map) {
+		if (cacheControlObj instanceof Map<?, ?> rawMap) {
 			try {
-				Map<?, ?> rawMap = (Map<?, ?>) cacheControlObj;
 				Map<String, String> cacheControl = new HashMap<>();
 				for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
-					if (entry.getKey() instanceof String && entry.getValue() instanceof String) {
-						cacheControl.put((String) entry.getKey(), (String) entry.getValue());
+					if (entry.getKey() instanceof String key && entry.getValue() instanceof String value) {
+						cacheControl.put(key, value);
 					}
 				}
 				if (!cacheControl.isEmpty()) {
 					return cacheControl;
 				}
 			}
-			catch (ClassCastException e) {
+			catch (ClassCastException ex) {
 				logger.warn("DashScopeChatModel extractCacheControl Invalid cache_control format in message metadata");
 			}
 		}
@@ -591,7 +480,7 @@ public class DashScopeChatModel implements ChatModel {
 	}
 
 	private List<MediaContent> convertMediaContent(UserMessage message, @Nullable Map<String, String> cacheControl) {
-        Assert.hasText(message.getText(), "User message text must not be empty");
+		Assert.hasText(message.getText(), "User message text must not be empty");
 		MessageFormat format = MessageFormat.IMAGE;
 		if (message.getMetadata().get(DashScopeApiConstants.MESSAGE_FORMAT) instanceof MessageFormat messageFormat) {
 			format = messageFormat;
@@ -603,12 +492,8 @@ public class DashScopeChatModel implements ChatModel {
 				.stream()
 				.map(media -> this.fromMediaData(media.getMimeType(), media.getData()))
 				.toList();
-
 			contentList.add(new MediaContent("video", null, null, mediaList));
-
-			// Apply cache_control to the text content (last content part)
-			MediaContent mediaContent = new MediaContent(message.getText(), cacheControl);
-			contentList.add(mediaContent);
+			contentList.add(new MediaContent(message.getText(), cacheControl));
 		}
 		else if (format == MessageFormat.AUDIO) {
 			contentList.addAll(message.getMedia()
@@ -616,126 +501,103 @@ public class DashScopeChatModel implements ChatModel {
 				.map(media -> new MediaContent("audio", null, null, null,
 						this.fromMediaData(media.getMimeType(), media.getData())))
 				.toList());
-
-			// Apply cache_control to the text content (last content part)
-			MediaContent mediaContent = new MediaContent(message.getText(), cacheControl);
-			contentList.add(mediaContent);
+			contentList.add(new MediaContent(message.getText(), cacheControl));
 		}
 		else {
 			contentList.addAll(message.getMedia()
 				.stream()
-				.map(media -> new MediaContent("image", null, this.fromMediaData(media.getMimeType(), media.getData()),
-						null))
+				.map(media -> new MediaContent("image", null,
+						this.fromMediaData(media.getMimeType(), media.getData()), null))
 				.toList());
-
-			// Apply cache_control to the text content (last content part)
-			MediaContent mediaContent = new MediaContent(message.getText(), cacheControl);
-			contentList.add(mediaContent);
+			contentList.add(new MediaContent(message.getText(), cacheControl));
 		}
-
 		return contentList;
 	}
 
 	private String fromMediaData(MimeType mimeType, Object mediaContentData) {
 		if (mediaContentData instanceof byte[] bytes) {
-			// Assume the bytes are an image. So, convert the bytes to a base64 encoded
-			// following the prefix pattern.
-			return String.format("data:%s;base64,%s", mimeType.toString(), Base64.getEncoder().encodeToString(bytes));
+			return String.format("data:%s;base64,%s", mimeType, Base64.getEncoder().encodeToString(bytes));
 		}
-		else if (mediaContentData instanceof String text) {
-			// Assume the text is a URLs or a base64 encoded image prefixed by the user.
+		if (mediaContentData instanceof String text) {
 			return text;
 		}
-		else {
-			throw new IllegalArgumentException(
-					"Unsupported media data type: " + mediaContentData.getClass().getSimpleName());
+		throw new IllegalArgumentException(
+				"Unsupported media data type: " + mediaContentData.getClass().getSimpleName());
+	}
+
+	private Parameters toDashScopeChatRequestParameter(DashScopeChatOptions options, List<ToolDefinition> toolDefinitions) {
+
+		return Parameters.builder()
+			.temperature(toFloat(options.getTemperature()))
+			.topP(toFloat(options.getTopP()))
+			.topK(options.getTopK())
+			.enableThinking(options.getEnableThinking())
+			.preserveThinking(options.getPreserveThinking())
+			.thinkingBudget(options.getThinkingBudget())
+			.reasoningEffort(options.getReasoningEffort())
+			.toolStream(options.getToolStream())
+			.enableCodeInterpreter(options.getEnableCodeInterpreter())
+			.repetitionPenalty(toFloat(options.getRepetitionPenalty()))
+			.presencePenalty(toFloat(options.getPresencePenalty()))
+			.vlHighResolutionImages(options.getVlHighResolutionImages())
+			.vlEnableImageHwOutput(options.getVlEnableImageHwOutput())
+			.maxCompletionTokens(options.getMaxCompletionTokens())
+			.seed(options.getSeed())
+			.incrementalOutput(options.getIncrementalOutput())
+			.responseFormat(options.getResponseFormat())
+			.resultFormat(Objects.requireNonNullElse(options.getResultFormat(), DEFAULT_RESULT_FORMAT))
+			.logprobs(options.getLogprobs())
+			.topLogprobs(options.getTopLogprobs())
+			.n(options.getN())
+			.stop(options.getStop())
+			.tools(resolveTools(options, toolDefinitions))
+			.toolChoice(options.getToolChoice())
+			.parallelToolCalls(options.getParallelToolCalls())
+			.enableSearch(options.getEnableSearch())
+			.searchOptions(options.getSearchOptions())
+			.skill(options.getSkill())
+			.build();
+	}
+
+	private @Nullable Float toFloat(@Nullable Double value) {
+		return value != null ? value.floatValue() : null;
+	}
+
+	private @Nullable List<Tool> resolveTools(DashScopeChatOptions options, List<ToolDefinition> toolDefinitions) {
+		if (!CollectionUtils.isEmpty(toolDefinitions)) {
+			return toolDefinitions.stream().map(this::toTool).toList();
+		}
+		return options.getTools();
+	}
+
+	private Tool toTool(ToolDefinition toolDefinition) {
+		return new Tool("function", new Function(toolDefinition.name(), toolDefinition.description(),
+				toParameterMap(toolDefinition.inputSchema())));
+	}
+
+	private Map<String, Object> toParameterMap(@Nullable String inputSchema) {
+		if (!StringUtils.hasText(inputSchema)) {
+			return Map.of();
+		}
+		try {
+			return new JsonHelper().fromJsonToMap(inputSchema);
+		}
+		catch (RuntimeException ex) {
+			logger.warn("Invalid tool input schema for DashScope chat request. Use empty schema instead.", ex);
+			return Map.of();
 		}
 	}
 
-	private List<FunctionTool> getFunctionTools(List<ToolDefinition> toolDefinitions) {
-		return toolDefinitions.stream().map(toolDefinition -> {
-			var function = new FunctionTool.Function(toolDefinition.description(), toolDefinition.name(),
-					toolDefinition.inputSchema());
-			return new FunctionTool(function);
-		}).toList();
-	}
-
-	private ChatCompletionRequestParameter toDashScopeRequestParameter(@Nullable DashScopeChatOptions options, boolean stream) {
-
-		if (options == null) {
-			return new ChatCompletionRequestParameter();
-		}
-
-        // @formatter:off
-		// todo: sync modify by {@link ChatCompletionRequestParameter} new params.
-		Boolean incrementalOutput = stream && options.getIncrementalOutput();
-		Boolean parameterStream = stream ? Boolean.TRUE : null;
-		return new ChatCompletionRequestParameter(
-                "message",
-                options.getSeed(),
-
-                options.getTopP(),
-                options.getTopK(),
-
-                options.getRepetitionPenalty(),
-                options.getPresencePenalty(),
-                options.getTemperature(),
-                options.getStop(),
-
-                options.getEnableSearch(),
-                options.getSearchOptions(),
-
-                options.getResponseFormat(),
-				incrementalOutput,
-
-                options.getTools(),
-                options.getToolChoice(),
-                options.getParallelToolCalls(),
-
-                options.getEnableThinking(),
-                options.getThinkingBudget(),
-
-                options.getEnableCodeInterpreter(),
-
-                options.getVlHighResolutionImages(),
-                options.getVlEnableImageHwOutput(),
-
-                options.getOcrOptions(),
-
-                options.getLogprobs(),
-                options.getTopLogProbs(),
-
-                options.getTranslationOptions(),
-
-                parameterStream,
-                options.getStreamOptions(),
-
-                options.getModalities(),
-                options.getAudio(),
-
-                options.getMaxTokens(),
-                options.getMaxInputTokens(),
-
-                options.getAsrOptions(),
-                options.getOutputFormat(),
-
-                options.getExtraBody()
-        );
-        // @formatter:on
+    public void setObservationConvention(ChatModelObservationConvention observationConvention) {
+        Assert.notNull(observationConvention, "observationConvention cannot be null");
+        this.observationConvention = observationConvention;
     }
 
-	/**
-	 * Use the provided convention for reporting observation data
-	 * @param observationConvention The provided convention
-	 */
-	public void setObservationConvention(ChatModelObservationConvention observationConvention) {
-		Assert.notNull(observationConvention, "observationConvention cannot be null");
-		this.observationConvention = observationConvention;
-	}
+    @Override
+    public String toString() {
+        return "DashScopeChatModel [defaultOptions=" + this.defaultOptions + "]";
+    }
 
-	/**
-	 * Returns a builder pre-populated with the current configuration for mutation.
-	 */
 	public Builder mutate() {
 		return new Builder(this);
 	}
@@ -751,6 +613,18 @@ public class DashScopeChatModel implements ChatModel {
 
 	public static final class Builder {
 
+		private @Nullable DashScopeApi dashScopeApi;
+
+		private DashScopeChatOptions defaultOptions = DashScopeChatOptions.builder().model(DEFAULT_MODEL_NAME).build();
+
+		private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
+
+		private ToolCallingManager toolCallingManager = ToolCallingManager.builder().build();
+
+		private ToolCallValidator toolCallValidator = new DefaultToolCallValidator();
+
+		private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
+
 		private Builder() {
 		}
 
@@ -760,25 +634,8 @@ public class DashScopeChatModel implements ChatModel {
 			this.toolCallingManager = dashScopeChatModel.toolCallingManager;
 			this.retryTemplate = dashScopeChatModel.retryTemplate;
 			this.observationRegistry = dashScopeChatModel.observationRegistry;
-			this.toolExecutionEligibilityPredicate = dashScopeChatModel.toolExecutionEligibilityPredicate;
 			this.toolCallValidator = dashScopeChatModel.toolCallingValidator;
 		}
-
-		private @Nullable DashScopeApi dashScopeApi;
-
-		private DashScopeChatOptions defaultOptions = DashScopeChatOptions.builder()
-			.model(DEFAULT_MODEL_NAME)
-			.build();
-
-		private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
-
-		private ToolCallingManager toolCallingManager = ToolCallingManager.builder().build();
-
-		private ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate = new DefaultToolExecutionEligibilityPredicate();
-
-		private ToolCallValidator toolCallValidator = new DefaultToolCallValidator();
-
-		private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
 		public Builder dashScopeApi(@Nullable DashScopeApi dashScopeApi) {
 			this.dashScopeApi = dashScopeApi;
@@ -790,19 +647,14 @@ public class DashScopeChatModel implements ChatModel {
 			return this;
 		}
 
-		public Builder toolExecutionEligibilityPredicate(
-				ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate) {
-			this.toolExecutionEligibilityPredicate = toolExecutionEligibilityPredicate;
-			return this;
-		}
+        public Builder toolCallingManager(ToolCallingManager toolCallingManager) {
+            this.toolCallingManager = toolCallingManager;
+            return this;
+        }
 
-		public Builder retryTemplate(RetryTemplate retryTemplate) {
+
+        public Builder retryTemplate(RetryTemplate retryTemplate) {
 			this.retryTemplate = retryTemplate;
-			return this;
-		}
-
-		public Builder toolCallingManager(ToolCallingManager toolCallingManager) {
-			this.toolCallingManager = toolCallingManager;
 			return this;
 		}
 
@@ -811,18 +663,12 @@ public class DashScopeChatModel implements ChatModel {
 			return this;
 		}
 
-		public Builder toolCallValidator(ToolCallValidator toolCallValidator) {
-			this.toolCallValidator = toolCallValidator;
-			return this;
-		}
-
 		public DashScopeChatModel build() {
 			DashScopeApi dashScopeApi = this.dashScopeApi;
 			Assert.notNull(dashScopeApi, "dashScopeApi cannot be null");
 
             return new DashScopeChatModel(dashScopeApi, this.defaultOptions, this.toolCallingManager,
-                    this.retryTemplate, this.observationRegistry, this.toolExecutionEligibilityPredicate,
-                    this.toolCallValidator);
+                    this.retryTemplate, this.observationRegistry, this.toolCallValidator);
 
         }
 

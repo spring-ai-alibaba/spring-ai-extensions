@@ -185,11 +185,6 @@ public class DashScopeAgentOptions implements ChatOptions {
     }
 
     @Override
-    public ChatOptions copy() {
-        return mutate().build();
-    }
-
-    @Override
     public Builder mutate() {
         return builder().appId(this.appId)
                 .sessionId(this.sessionId)

@@ -104,10 +104,10 @@ public class ArmsToolCallingObservationIT {
         String response = ChatClient.create(this.chatModel)
                 .prompt()
                 .user("Turn the light on in the living room")
-                .tools(tool -> tool.callbacks(FunctionToolCallback.builder("turnsLightOnInTheLivingRoom", () -> state.put("Light", "ON"))
+                .tools(FunctionToolCallback.builder("turnsLightOnInTheLivingRoom", () -> state.put("Light", "ON"))
                         .description("Get the weather in location")
                         .inputType(MockWeatherService.Request.class)
-                        .build()))
+                        .build())
                 .call()
                 .content();
 

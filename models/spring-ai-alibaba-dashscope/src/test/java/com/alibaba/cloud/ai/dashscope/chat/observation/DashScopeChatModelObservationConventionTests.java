@@ -73,11 +73,6 @@ class DashScopeChatModelObservationConventionTests {
 	private static class TestChatOptions implements ChatOptions {
 
 		@Override
-		public ChatOptions copy() {
-			return new TestChatOptions();
-		}
-
-		@Override
 		public String getModel() {
 			return "";
 		}

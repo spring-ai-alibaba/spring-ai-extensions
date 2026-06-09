@@ -15,23 +15,26 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletion;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionChunk;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionFinishReason;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ChatCompletionFunction;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.Role;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ToolCall;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput.Choice;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
-import org.jspecify.annotations.Nullable;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletion;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionAnnotations;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionChunk;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionFinishReason;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionFunction;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionLogprobs;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionMessage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionOutput;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionOutput.Choice;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.Role;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.SearchInfo;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ToolCall;
+import org.jspecify.annotations.Nullable;
+
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Helper class to support Streaming function calling. It can merge the streamed
@@ -70,7 +73,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 				: CollectionUtils.isEmpty(current.output().choices()) ? null : current.output().choices().get(0);
 
 		// Preserve searchInfo from current or previous chunk
-		DashScopeApiSpec.SearchInfo searchInfo = (current.output() != null && current.output().searchInfo() != null)
+		SearchInfo searchInfo = (current.output() != null && current.output().searchInfo() != null)
 				? current.output().searchInfo()
 				: (previous.output() != null ? previous.output().searchInfo() : null);
 
@@ -101,8 +104,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		ChatCompletionFinishReason finishReason = (current.finishReason() != null ? current.finishReason()
 				: previous.finishReason());
 		ChatCompletionMessage message = merge(previous.message(), current.message());
-		DashScopeApiSpec.ChatCompletionLogprobs logprobs = (current.logprobs() != null ? current.logprobs()
-				: previous.logprobs());
+		ChatCompletionLogprobs logprobs = (current.logprobs() != null ? current.logprobs() : previous.logprobs());
 		Integer index= (current.index() != null ? current.index()
 				: previous.index());
 
@@ -128,7 +130,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		String reasoningContent = (current.reasoningContent() != null ? current.reasoningContent()
 				: previous.reasoningContent());
 		Boolean partial = (current.partial() != null ? current.partial() : previous.partial());
-        List<DashScopeApiSpec.ChatCompletionAnnotations> annotations = (current.annotations() != null ? current.annotations() : previous.annotations());
+        List<ChatCompletionAnnotations> annotations = (current.annotations() != null ? current.annotations() : previous.annotations());
         String status = (current.status() != null ? current.status() : previous.status());
         String phase = (current.phase() != null ? current.phase() : previous.phase());
 

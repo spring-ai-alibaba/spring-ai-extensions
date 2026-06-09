@@ -18,27 +18,35 @@ package com.alibaba.cloud.ai.dashscope.chat;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MESSAGE_FORMAT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletion;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionChunk;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionFinishReason;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput.Choice;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionRequest;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletion;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionChunk;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionFinishReason;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionMessage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionOutput;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionOutput.Choice;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.MediaContent;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.Role;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -79,6 +87,28 @@ public class DashScopeMultiModalChatTests {
 
   private static final String TEST_AUDIO_RESPONSE = "音频中是一个男性的声音，说的是...";
 
+  private static final String MULTIMODAL_IMAGE_MODEL = "qwen3-vl-plus";
+
+  private static final String MULTIMODAL_VIDEO_MODEL = "qwen-vl-max";
+
+  private static final String MULTIMODAL_IMAGE_URL =
+      "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241022/emyrja/dog_and_girl.jpeg";
+
+  private static final String MULTIMODAL_IMAGE_PROMPT = "图中描绘的是什么景象？";
+
+  private static final String MULTIMODAL_VIDEO_PROMPT = "描述这个视频的具体过程";
+
+  private static final List<String> MULTIMODAL_VIDEO_FRAME_URLS =
+      List.of(
+          "https://img.alicdn.com/imgextra/i3/O1CN01K3SgGo1eqmlUgeE9b_!!6000000003923-0-tps-3840-2160.jpg",
+          "https://img.alicdn.com/imgextra/i4/O1CN01BjZvwg1Y23CF5qIRB_!!6000000003000-0-tps-3840-2160.jpg",
+          "https://img.alicdn.com/imgextra/i4/O1CN01Ib0clU27vTgBdbVLQ_!!6000000007859-0-tps-3840-2160.jpg",
+          "https://img.alicdn.com/imgextra/i1/O1CN01aygPLW1s3EXCdSN4X_!!6000000005710-0-tps-3840-2160.jpg");
+
+  private static final String API_KEY_ENV = "DASHSCOPE_API_KEY";
+
+  private static final String LEGACY_API_KEY_ENV = "AI_DASHSCOPE_API_KEY";
+
   private DashScopeApi dashScopeApi;
 
   private DashScopeChatModel chatModel;
@@ -114,14 +144,14 @@ public class DashScopeMultiModalChatTests {
   void testImageWithUrl() throws Exception {
     // Setup mock response
     ChatCompletionMessage responseMessage =
-        new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
     Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
     ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
     TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
     ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
     ResponseEntity<ChatCompletion> responseEntity = ResponseEntity.ok(chatCompletion);
 
-    when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any()))
+    when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), anyBoolean()))
         .thenReturn(responseEntity);
 
     // Create media list with URL
@@ -153,14 +183,14 @@ public class DashScopeMultiModalChatTests {
   void testImageWithBinaryResource() {
     // Setup mock response
     ChatCompletionMessage responseMessage =
-        new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
     Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
     ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
     TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
     ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
     ResponseEntity<ChatCompletion> responseEntity = ResponseEntity.ok(chatCompletion);
 
-    when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any()))
+    when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), anyBoolean()))
         .thenReturn(responseEntity);
 
     // Create user message with resource media
@@ -192,7 +222,7 @@ public class DashScopeMultiModalChatTests {
   void testVideoWithMultipleFrames() {
     // Setup mock response
     ChatCompletionMessage responseMessage =
-        new ChatCompletionMessage(TEST_VIDEO_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        new ChatCompletionMessage(TEST_VIDEO_RESPONSE, Role.ASSISTANT);
     Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
     ChatCompletionOutput output =
         new ChatCompletionOutput(TEST_VIDEO_RESPONSE, List.of(choice), null);
@@ -200,7 +230,7 @@ public class DashScopeMultiModalChatTests {
     ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
     ResponseEntity<ChatCompletion> responseEntity = ResponseEntity.ok(chatCompletion);
 
-    when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any()))
+    when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), anyBoolean()))
         .thenReturn(responseEntity);
 
     // Create media list with multiple frames (simulating video frames)
@@ -233,7 +263,7 @@ public class DashScopeMultiModalChatTests {
   void testAudioWithMultipleFrames() {
     // Setup mock response
     ChatCompletionMessage responseMessage =
-        new ChatCompletionMessage(TEST_AUDIO_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        new ChatCompletionMessage(TEST_AUDIO_RESPONSE, Role.ASSISTANT);
     Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
     ChatCompletionOutput output =
         new ChatCompletionOutput(TEST_AUDIO_RESPONSE, List.of(choice), null);
@@ -241,7 +271,7 @@ public class DashScopeMultiModalChatTests {
     ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
     ResponseEntity<ChatCompletion> responseEntity = ResponseEntity.ok(chatCompletion);
 
-    when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any()))
+    when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), anyBoolean()))
         .thenReturn(responseEntity);
 
     // Create media list with multiple frames (simulating video frames)
@@ -275,9 +305,9 @@ public class DashScopeMultiModalChatTests {
   void testStreamImageResponse() {
     // Setup mock streaming response
     ChatCompletionMessage chunkMessage1 =
-        new ChatCompletionMessage("图片中是一个", ChatCompletionMessage.Role.ASSISTANT);
+        new ChatCompletionMessage("图片中是一个", Role.ASSISTANT);
     ChatCompletionMessage chunkMessage2 =
-        new ChatCompletionMessage("小女孩和一只狗在户外。", ChatCompletionMessage.Role.ASSISTANT);
+        new ChatCompletionMessage("小女孩和一只狗在户外。", Role.ASSISTANT);
 
     Choice choice1 = new Choice(null, chunkMessage1, null, 0);
     Choice choice2 = new Choice(ChatCompletionFinishReason.STOP, chunkMessage2, null, 0);
@@ -293,7 +323,7 @@ public class DashScopeMultiModalChatTests {
             new TokenUsage(10, 5, 15, null, null, null, null, null, null, null),
             null);
 
-    when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any()))
+    when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), anyBoolean()))
         .thenReturn(Flux.just(chunk1, chunk2));
 
     // Create user message with resource media
@@ -328,7 +358,191 @@ public class DashScopeMultiModalChatTests {
         .verifyComplete();
   }
 
+  @Test
+  void streamSendsDashScopeMultimodalImageRequestToStreamingEndpoint() {
+    ChatCompletionMessage chunkMessage1 = new ChatCompletionMessage("图中是一个", Role.ASSISTANT);
+    ChatCompletionMessage chunkMessage2 = new ChatCompletionMessage("女孩和一只狗。", Role.ASSISTANT);
+    Choice choice1 = new Choice(null, chunkMessage1, null, 0);
+    Choice choice2 = new Choice(ChatCompletionFinishReason.STOP, chunkMessage2, null, 0);
+    ChatCompletionOutput output1 = new ChatCompletionOutput("图中是一个", List.of(choice1), null);
+    ChatCompletionOutput output2 = new ChatCompletionOutput("女孩和一只狗。", List.of(choice2), null);
+    ChatCompletionChunk chunk1 = new ChatCompletionChunk(TEST_REQUEST_ID, output1, null, null);
+    ChatCompletionChunk chunk2 =
+        new ChatCompletionChunk(
+            TEST_REQUEST_ID,
+            output2,
+            new TokenUsage(10, 5, 15, null, null, null, null, null, null, null),
+            null);
+
+    when(dashScopeApi.chatCompletionStream(
+            any(ChatCompletionRequest.class), any(), eq(true)))
+        .thenReturn(Flux.just(chunk1, chunk2));
+
+    UserMessage message =
+        multimodalMessage(
+            MULTIMODAL_IMAGE_PROMPT,
+            MessageFormat.IMAGE,
+            List.of(new Media(MimeTypeUtils.IMAGE_JPEG, URI.create(MULTIMODAL_IMAGE_URL))));
+    DashScopeChatOptions options =
+        DashScopeChatOptions.builder()
+            .model(MULTIMODAL_IMAGE_MODEL)
+            .multiModel(true)
+            .incrementalOutput(true)
+            .build();
+    Prompt prompt = new Prompt(message, options);
+
+    StepVerifier.create(chatModel.stream(prompt))
+        .assertNext(
+            response -> assertThat(response.getResult().getOutput().getText()).isEqualTo("图中是一个"))
+        .assertNext(
+            response -> assertThat(response.getResult().getOutput().getText()).isEqualTo("女孩和一只狗。"))
+        .verifyComplete();
+
+    ArgumentCaptor<ChatCompletionRequest> requestCaptor =
+        ArgumentCaptor.forClass(ChatCompletionRequest.class);
+    verify(dashScopeApi).chatCompletionStream(requestCaptor.capture(), any(), eq(true));
+    verify(dashScopeApi, never())
+        .chatCompletionEntity(any(ChatCompletionRequest.class), any(), anyBoolean());
+
+    ChatCompletionRequest request = requestCaptor.getValue();
+    assertThat(request.model()).isEqualTo(MULTIMODAL_IMAGE_MODEL);
+    assertThat(request.parameters().incrementalOutput()).isTrue();
+    assertThat(request.input().messages()).hasSize(1);
+    assertThat(request.input().messages().get(0).role()).isEqualTo(Role.USER);
+
+    List<?> content = assertMediaContentList(request.input().messages().get(0).rawContent());
+    MediaContent imageContent = (MediaContent) content.get(0);
+    MediaContent textContent = (MediaContent) content.get(1);
+    assertThat(imageContent.type()).isEqualTo("image");
+    assertThat(imageContent.image()).isEqualTo(MULTIMODAL_IMAGE_URL);
+    assertThat(textContent.type()).isEqualTo("text");
+    assertThat(textContent.text()).isEqualTo(MULTIMODAL_IMAGE_PROMPT);
+  }
+
+  @Test
+  void callSendsDashScopeMultimodalVideoRequestToGenerationEndpoint() {
+    ChatCompletionMessage responseMessage =
+        new ChatCompletionMessage("视频展示了多个连续画面。", Role.ASSISTANT);
+    Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
+    ChatCompletionOutput output = new ChatCompletionOutput("视频展示了多个连续画面。", List.of(choice), null);
+    TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+    ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
+
+    when(dashScopeApi.chatCompletionEntity(
+            any(ChatCompletionRequest.class), any(), eq(true)))
+        .thenReturn(ResponseEntity.ok(chatCompletion));
+
+    UserMessage message =
+        multimodalMessage(
+            MULTIMODAL_VIDEO_PROMPT,
+            MessageFormat.VIDEO,
+            MULTIMODAL_VIDEO_FRAME_URLS.stream()
+                .map(url -> new Media(MimeTypeUtils.IMAGE_JPEG, URI.create(url)))
+                .toList());
+    DashScopeChatOptions options =
+        DashScopeChatOptions.builder()
+            .model(MULTIMODAL_VIDEO_MODEL)
+            .multiModel(true)
+            .incrementalOutput(false)
+            .build();
+    Prompt prompt = new Prompt(message, options);
+
+    ChatResponse response = chatModel.call(prompt);
+
+    assertThat(response.getResult().getOutput().getText()).isEqualTo("视频展示了多个连续画面。");
+
+    ArgumentCaptor<ChatCompletionRequest> requestCaptor =
+        ArgumentCaptor.forClass(ChatCompletionRequest.class);
+    verify(dashScopeApi).chatCompletionEntity(requestCaptor.capture(), any(), eq(true));
+    verify(dashScopeApi, never())
+        .chatCompletionStream(any(ChatCompletionRequest.class), any(), anyBoolean());
+
+    ChatCompletionRequest request = requestCaptor.getValue();
+    assertThat(request.model()).isEqualTo(MULTIMODAL_VIDEO_MODEL);
+    assertThat(request.input().messages()).hasSize(1);
+    assertThat(request.input().messages().get(0).role()).isEqualTo(Role.USER);
+
+    List<?> content = assertMediaContentList(request.input().messages().get(0).rawContent());
+    MediaContent videoContent = (MediaContent) content.get(0);
+    MediaContent textContent = (MediaContent) content.get(1);
+    assertThat(videoContent.type()).isEqualTo("video");
+    assertThat(videoContent.video()).containsExactlyElementsOf(MULTIMODAL_VIDEO_FRAME_URLS);
+    assertThat(textContent.type()).isEqualTo("text");
+    assertThat(textContent.text()).isEqualTo(MULTIMODAL_VIDEO_PROMPT);
+  }
+
   // =============== Integration Test Cases ===============
+
+  @Test
+  @Tag("integration")
+  void integrationTestStreamImageWithUrlQwen3VlPlus() {
+    DashScopeChatModel realChatModel = realChatModel();
+
+    UserMessage message =
+        multimodalMessage(
+            MULTIMODAL_IMAGE_PROMPT,
+            MessageFormat.IMAGE,
+            List.of(new Media(MimeTypeUtils.IMAGE_JPEG, URI.create(MULTIMODAL_IMAGE_URL))));
+    DashScopeChatOptions options =
+        DashScopeChatOptions.builder()
+            .model(MULTIMODAL_IMAGE_MODEL)
+            .multiModel(true)
+            .incrementalOutput(true)
+            .build();
+    Prompt prompt = new Prompt(message, options);
+
+    StringBuilder responseBuilder = new StringBuilder();
+    List<String> chunks =
+        realChatModel
+            .stream(prompt)
+            .map(response -> response.getResult().getOutput().getText())
+            .filter(DashScopeMultiModalChatTests::hasText)
+            .doOnNext(
+                content -> {
+                  System.out.println("Multimodal image streaming chunk: " + content);
+                  responseBuilder.append(content);
+                })
+            .collectList()
+            .block(Duration.ofSeconds(60));
+
+    assertThat(chunks).isNotNull().isNotEmpty();
+    assertThat(responseBuilder.toString()).isNotBlank();
+    System.out.println("Final multimodal image streaming response: " + responseBuilder);
+  }
+
+  @Test
+  @Tag("integration")
+  void integrationTestVideoWithUrlFramesQwenVlMax() {
+    DashScopeChatModel realChatModel = realChatModel();
+
+    UserMessage message =
+        multimodalMessage(
+            MULTIMODAL_VIDEO_PROMPT,
+            MessageFormat.VIDEO,
+            MULTIMODAL_VIDEO_FRAME_URLS.stream()
+                .map(url -> new Media(MimeTypeUtils.IMAGE_JPEG, URI.create(url)))
+                .toList());
+    DashScopeChatOptions options =
+        DashScopeChatOptions.builder()
+            .model(MULTIMODAL_VIDEO_MODEL)
+            .multiModel(true)
+            .incrementalOutput(false)
+            .build();
+    Prompt prompt = new Prompt(message, options);
+
+    ChatResponse chatResponse = realChatModel.call(prompt);
+
+    assertThat(chatResponse).isNotNull();
+    assertThat(chatResponse.getResult()).isNotNull();
+    assertThat(chatResponse.getResult().getOutput().getText()).isNotBlank();
+    String responseId = chatResponse.getMetadata().getId();
+    if (responseId != null) {
+      assertThat(responseId).isNotBlank();
+    }
+    System.out.println(
+        "Multimodal video frames response: "
+            + chatResponse.getResult().getOutput().getText());
+  }
 
   /**
    * Integration test for image processing with URL This test will only run if AI_DASHSCOPE_API_KEY
@@ -591,5 +805,44 @@ public class DashScopeMultiModalChatTests {
     assertThat(response).isNotNull();
     assertThat(response.getResult().getOutput().getText()).isNotEmpty();
     System.out.println("Image Analysis Response: " + response.getResult().getOutput().getText());
+  }
+
+  private static UserMessage multimodalMessage(
+      String text, MessageFormat messageFormat, List<Media> mediaList) {
+    UserMessage message = UserMessage.builder().text(text).media(mediaList).build();
+    message.getMetadata().put(MESSAGE_FORMAT, messageFormat);
+    return message;
+  }
+
+  private static List<?> assertMediaContentList(Object content) {
+    assertThat(content).isInstanceOf(List.class);
+    List<?> contentList = (List<?>) content;
+    assertThat(contentList).hasSize(2);
+    assertThat(contentList).allSatisfy(item -> assertThat(item).isInstanceOf(MediaContent.class));
+    return contentList;
+  }
+
+  private static DashScopeChatModel realChatModel() {
+    DashScopeApi realApi = DashScopeApi.builder().apiKey(apiKey()).build();
+    return DashScopeChatModel.builder().dashScopeApi(realApi).build();
+  }
+
+  private static String apiKey() {
+    String apiKey = System.getenv(API_KEY_ENV);
+    if (!hasText(apiKey)) {
+      apiKey = System.getenv(LEGACY_API_KEY_ENV);
+    }
+    Assumptions.assumeTrue(
+        hasText(apiKey),
+        "Skipping tests because neither "
+            + API_KEY_ENV
+            + " nor "
+            + LEGACY_API_KEY_ENV
+            + " is set");
+    return apiKey;
+  }
+
+  private static boolean hasText(String value) {
+    return value != null && !value.trim().isEmpty();
   }
 }
