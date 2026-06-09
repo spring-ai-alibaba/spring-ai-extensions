@@ -115,6 +115,28 @@ class DashScopeAgentTests {
     assertThat(result.getResults().get(0).getMetadata().getFinishReason()).isEqualTo("stop");
   }
 
+  /** Test call uses default options when prompt options are absent */
+  @Test
+  void testCallUsesDefaultOptionsWhenPromptHasNoOptions() {
+    // Prepare test data
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    Prompt prompt = new Prompt(List.of(message));
+
+    // Create mock response
+    DashScopeAgentResponse response = createMockResponse();
+
+    // Mock API behavior
+    when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class)))
+        .thenReturn(ResponseEntity.ok(response));
+
+    // Execute test
+    var result = agent.call(prompt);
+
+    // Verify response
+    assertThat(result).isNotNull();
+    assertThat(result.getResults()).hasSize(1);
+  }
+
   /** Test call with null response */
   @Test
   void testCallWithNullResponse() {

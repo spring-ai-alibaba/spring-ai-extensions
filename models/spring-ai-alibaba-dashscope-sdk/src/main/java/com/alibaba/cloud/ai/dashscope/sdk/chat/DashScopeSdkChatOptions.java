@@ -27,11 +27,9 @@ import org.springframework.ai.tool.ToolCallback;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Options for DashScope SDK chat model.
@@ -82,12 +80,6 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 	private final List<ToolCallback> toolCallbacks;
 
 	@JsonIgnore
-	private final Set<String> toolNames;
-
-	@JsonIgnore
-	private final @Nullable Boolean internalToolExecutionEnabled;
-
-	@JsonIgnore
 	private final Map<String, Object> toolContext;
 
 	@JsonProperty("extra_body")
@@ -97,8 +89,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			@Nullable Integer seed, @Nullable Double topP, @Nullable Integer topK, @Nullable List<Object> stop,
 			@Nullable Boolean enableSearch, @Nullable Integer maxTokens, @Nullable Boolean incrementalOutput,
 			@Nullable Double repetitionPenalty, @Nullable Object toolChoice, @Nullable Map<String, String> httpHeaders,
-			@Nullable List<ToolCallback> toolCallbacks, @Nullable Set<String> toolNames,
-			@Nullable Boolean internalToolExecutionEnabled, @Nullable Map<String, Object> toolContext,
+			@Nullable List<ToolCallback> toolCallbacks, @Nullable Map<String, Object> toolContext,
 			@Nullable Map<String, Object> extraBody) {
 		this.model = model;
 		this.stream = stream;
@@ -114,8 +105,6 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		this.toolChoice = toolChoice;
 		this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
 		this.toolCallbacks = toolCallbacks != null ? new ArrayList<>(toolCallbacks) : new ArrayList<>();
-		this.toolNames = toolNames != null ? new HashSet<>(toolNames) : new HashSet<>();
-		this.internalToolExecutionEnabled = internalToolExecutionEnabled;
 		this.toolContext = toolContext != null ? new HashMap<>(toolContext) : new HashMap<>();
 		this.extraBody = extraBody != null ? new HashMap<>(extraBody) : null;
 	}
@@ -184,18 +173,6 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 	}
 
 	@Override
-	@JsonIgnore
-	public Set<String> getToolNames() {
-		return this.toolNames;
-	}
-
-	@Override
-	@JsonIgnore
-	public @Nullable Boolean getInternalToolExecutionEnabled() {
-		return this.internalToolExecutionEnabled;
-	}
-
-	@Override
 	public Map<String, Object> getToolContext() {
 		return this.toolContext;
 	}
@@ -223,7 +200,6 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		return stopStrings.isEmpty() ? null : stopStrings;
 	}
 
-	@Override
 	public DashScopeSdkChatOptions copy() {
 		return mutate().build();
 	}
@@ -245,8 +221,6 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 				.toolChoice(this.toolChoice)
 				.httpHeaders(new HashMap<>(this.httpHeaders))
 				.toolCallbacks(new ArrayList<>(this.toolCallbacks))
-				.toolNames(new HashSet<>(this.toolNames))
-				.internalToolExecutionEnabled(this.internalToolExecutionEnabled)
 				.toolContext(new HashMap<>(this.toolContext))
 				.extraBody(this.extraBody);
 	}
@@ -277,8 +251,6 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 				&& Objects.equals(this.repetitionPenalty, that.repetitionPenalty)
 				&& Objects.equals(this.toolChoice, that.toolChoice) && Objects.equals(this.httpHeaders, that.httpHeaders)
 				&& Objects.equals(this.toolCallbacks, that.toolCallbacks)
-				&& Objects.equals(this.toolNames, that.toolNames)
-				&& Objects.equals(this.internalToolExecutionEnabled, that.internalToolExecutionEnabled)
 				&& Objects.equals(this.toolContext, that.toolContext) && Objects.equals(this.extraBody, that.extraBody);
 	}
 
@@ -286,8 +258,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 	public int hashCode() {
 		return Objects.hash(this.model, this.stream, this.temperature, this.seed, this.topP, this.topK, this.stop,
 				this.enableSearch, this.maxTokens, this.incrementalOutput, this.repetitionPenalty, this.toolChoice,
-				this.httpHeaders, this.toolCallbacks, this.toolNames, this.internalToolExecutionEnabled,
-				this.toolContext, this.extraBody);
+				this.httpHeaders, this.toolCallbacks, this.toolContext, this.extraBody);
 	}
 
 	@Override
@@ -297,7 +268,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 				+ this.topK + ", stop=" + this.stop + ", enableSearch=" + this.enableSearch + ", maxTokens="
 				+ this.maxTokens + ", incrementalOutput=" + this.incrementalOutput + ", repetitionPenalty="
 				+ this.repetitionPenalty + ", toolChoice=" + this.toolChoice + ", httpHeaders=" + this.httpHeaders
-				+ ", toolNames=" + this.toolNames + ", extraBody=" + this.extraBody + '}';
+				+ ", extraBody=" + this.extraBody + '}';
 	}
 
 	public static class Builder extends AbstractBuilder<Builder> {
@@ -402,27 +373,6 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		}
 
 		@Override
-		public B toolNames(@Nullable Set<String> toolNames) {
-			this.toolNames = toolNames != null ? new HashSet<>(toolNames) : new HashSet<>();
-			return self();
-		}
-
-		@Override
-		public B toolNames(String... toolNames) {
-			if (this.toolNames == null) {
-				this.toolNames = new HashSet<>();
-			}
-			this.toolNames.addAll(Set.of(toolNames));
-			return self();
-		}
-
-		@Override
-		public B internalToolExecutionEnabled(@Nullable Boolean internalToolExecutionEnabled) {
-			this.internalToolExecutionEnabled = internalToolExecutionEnabled;
-			return self();
-		}
-
-		@Override
 		public B toolContext(@Nullable Map<String, Object> context) {
 			if (context != null) {
 				if (this.toolContext == null) {
@@ -490,8 +440,8 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		public DashScopeSdkChatOptions build() {
 			return new DashScopeSdkChatOptions(this.model, this.stream, this.temperature, this.seed, this.topP,
 					this.topK, this.stop, this.enableSearch, this.maxTokens, this.incrementalOutput,
-					this.repetitionPenalty, this.toolChoice, this.httpHeaders, this.toolCallbacks, this.toolNames,
-					this.internalToolExecutionEnabled, this.toolContext, this.extraBody);
+					this.repetitionPenalty, this.toolChoice, this.httpHeaders, this.toolCallbacks, this.toolContext,
+					this.extraBody);
 		}
 
 	}

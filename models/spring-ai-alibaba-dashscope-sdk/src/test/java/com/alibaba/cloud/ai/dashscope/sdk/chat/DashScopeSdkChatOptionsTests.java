@@ -21,10 +21,8 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
@@ -69,15 +67,12 @@ class DashScopeSdkChatOptionsTests {
 		ToolCallback callback1 = new SimpleToolCallback("tool1");
 		ToolCallback callback2 = new SimpleToolCallback("tool2");
 		List<ToolCallback> callbacks = Arrays.asList(callback1, callback2);
-		Set<String> toolNames = new HashSet<>(Arrays.asList("test1", "test2"));
 
 		DashScopeSdkChatOptions options = DashScopeSdkChatOptions.builder()
 			.toolCallbacks(callbacks)
-			.toolNames(toolNames)
 			.build();
 
 		assertThat(options.getToolCallbacks()).containsExactlyElementsOf(callbacks);
-		assertThat(options.getToolNames()).containsExactlyInAnyOrderElementsOf(toolNames);
 	}
 
 	@Test
@@ -112,7 +107,6 @@ class DashScopeSdkChatOptionsTests {
 		assertThat(options.getStopSequences()).isNull();
 		assertThat(options.getHttpHeaders()).isNotNull().isEmpty();
 		assertThat(options.getToolCallbacks()).isNotNull().isEmpty();
-		assertThat(options.getToolNames()).isNotNull().isEmpty();
 		assertThat(options.getToolContext()).isNotNull().isEmpty();
 		assertThat(options.getFrequencyPenalty()).isNull();
 		assertThat(options.getPresencePenalty()).isNull();
@@ -140,7 +134,6 @@ class DashScopeSdkChatOptionsTests {
 			.maxTokens(1024)
 			.stop(List.of("A"))
 			.httpHeaders(Map.of("x-source", "s1"))
-			.toolNames(Set.of("tool1"))
 			.toolContext(Map.of("k1", "v1"))
 			.extraBody(TEST_EXTRA_BODY)
 			.build();
@@ -159,7 +152,6 @@ class DashScopeSdkChatOptionsTests {
 		assertThat(target.getMaxTokens()).isEqualTo(original.getMaxTokens());
 		assertThat(target.getStop()).containsExactly("A");
 		assertThat(target.getHttpHeaders()).containsOnly(entry("x-source", "s1"));
-		assertThat(target.getToolNames()).containsExactlyInAnyOrder("tool1");
 		assertThat(target.getToolContext()).containsOnly(entry("k1", "v1"));
 		assertThat(target.getExtraBody()).isEqualTo(TEST_EXTRA_BODY);
 	}
@@ -169,7 +161,6 @@ class DashScopeSdkChatOptionsTests {
 		DashScopeSdkChatOptions original = DashScopeSdkChatOptions.builder()
 			.stop(List.of("A"))
 			.httpHeaders(Map.of("x-source", "s1"))
-			.toolNames(Set.of("tool1"))
 			.toolContext(Map.of("k1", "v1"))
 			.toolCallbacks(List.of(new SimpleToolCallback("toolA")))
 			.extraBody(Map.of("e1", "v1"))
@@ -179,13 +170,11 @@ class DashScopeSdkChatOptionsTests {
 
 		original.getStop().add("B");
 		original.getHttpHeaders().put("x-source-2", "s2");
-		original.getToolNames().add("tool2");
 		original.getToolContext().put("k2", "v2");
 		original.getExtraBody().put("e2", "v2");
 		original.getToolCallbacks().add(new SimpleToolCallback("toolB"));
 		copy.getStop().add("C");
 		copy.getHttpHeaders().put("x-copy", "c1");
-		copy.getToolNames().add("tool-copy");
 		copy.getToolContext().put("k-copy", "v-copy");
 		copy.getExtraBody().put("e-copy", "v-copy");
 		copy.getToolCallbacks().add(new SimpleToolCallback("toolC"));
@@ -194,8 +183,6 @@ class DashScopeSdkChatOptionsTests {
 		assertThat(copy.getStop()).containsExactly("A", "C");
 		assertThat(original.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-source-2", "s2"));
 		assertThat(copy.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-copy", "c1"));
-		assertThat(original.getToolNames()).containsExactlyInAnyOrder("tool1", "tool2");
-		assertThat(copy.getToolNames()).containsExactlyInAnyOrder("tool1", "tool-copy");
 		assertThat(original.getToolContext()).containsOnly(entry("k1", "v1"), entry("k2", "v2"));
 		assertThat(copy.getToolContext()).containsOnly(entry("k1", "v1"), entry("k-copy", "v-copy"));
 		assertThat(original.getExtraBody()).containsOnly(entry("e1", "v1"), entry("e2", "v2"));

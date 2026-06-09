@@ -53,10 +53,8 @@ import org.springframework.ai.chat.observation.ChatModelObservationDocumentation
 import org.springframework.ai.chat.observation.DefaultChatModelObservationConvention;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate;
+import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
-import org.springframework.ai.model.tool.ToolExecutionEligibilityPredicate;
-import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.support.UsageCalculator;
 import org.springframework.ai.tool.definition.ToolDefinition;
@@ -65,7 +63,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -96,8 +93,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	private final ToolCallingManager toolCallingManager;
 
-	private final ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate;
-
 	private final @Nullable String apiKey;
 
 	private final @Nullable String workspaceId;
@@ -108,8 +103,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	public DashScopeSdkChatModel(DashScopeSdkGenerationClient generationClient, DashScopeSdkChatOptions defaultOptions,
                                  ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
-                                 ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate, @Nullable String apiKey,
-                                 @Nullable String workspaceId,
+                                 @Nullable String apiKey, @Nullable String workspaceId,
                                  Map<String, String> connectionHeaders) {
 
 		Assert.notNull(generationClient, "generationClient cannot be null");
@@ -117,7 +111,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 		Assert.notNull(toolCallingManager, "toolCallingManager cannot be null");
 		Assert.notNull(retryTemplate, "retryTemplate cannot be null");
 		Assert.notNull(observationRegistry, "observationRegistry cannot be null");
-		Assert.notNull(toolExecutionEligibilityPredicate, "toolExecutionEligibilityPredicate cannot be null");
 		Assert.notNull(connectionHeaders, "connectionHeaders cannot be null");
 
 		this.generationClient = generationClient;
@@ -125,7 +118,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 		this.toolCallingManager = toolCallingManager;
 		this.retryTemplate = retryTemplate;
 		this.observationRegistry = observationRegistry;
-		this.toolExecutionEligibilityPredicate = toolExecutionEligibilityPredicate;
 		this.apiKey = apiKey;
 		this.workspaceId = workspaceId;
 		this.connectionHeaders = connectionHeaders;
@@ -148,8 +140,21 @@ public class DashScopeSdkChatModel implements ChatModel {
 	}
 
 	@Override
-	public ChatOptions getDefaultOptions() {
+	public ChatOptions getOptions() {
 		return Objects.requireNonNull(DashScopeSdkChatOptions.fromOptions(this.defaultOptions));
+	}
+
+	@Override
+	public Prompt buildRequestPrompt(Prompt prompt) {
+		Assert.notNull(prompt, "Prompt must not be null");
+		DashScopeSdkChatOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
+		ChatOptions runtimeOptions = prompt.getOptions();
+		if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {
+			requestOptionsBuilder.combineWith(runtimeOptions.mutate());
+		}
+		DashScopeSdkChatOptions requestOptions = requestOptionsBuilder.build();
+		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
+		return new Prompt(prompt.getInstructions(), requestOptions);
 	}
 
 	public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
@@ -169,18 +174,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 				observationContext.setResponse(chatResponse);
 				return chatResponse;
 			});
-
-        Assert.state(prompt.getOptions() != null, "options must not be null");
-		if (this.toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
-			ToolExecutionResult toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
-			if (toolExecutionResult.returnDirect()) {
-				return ChatResponse.builder()
-					.from(response)
-					.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
-					.build();
-			}
-			return internalCall(new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions()), response);
-		}
 
 		return response;
 	}
@@ -207,23 +200,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 			Flux<ChatResponse> chatResponse = flowableToFlux(generationResults)
 				.map(result -> toChatResponse(result, previousChatResponse, request.getModel()));
 
-			Flux<ChatResponse> flux = chatResponse.flatMap(response -> {
-                        Assert.state(prompt.getOptions() != null, "options must not be null");
-				if (this.toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
-					return Flux.defer(() -> {
-						ToolExecutionResult toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
-						if (toolExecutionResult.returnDirect()) {
-							return Flux.just(ChatResponse.builder()
-								.from(response)
-								.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
-								.build());
-						}
-						return internalStream(new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions()),
-								response);
-					}).subscribeOn(Schedulers.boundedElastic());
-				}
-				return Flux.just(response);
-			}).doOnError(observation::error)
+			Flux<ChatResponse> flux = chatResponse.doOnError(observation::error)
 				.doFinally(s -> observation.stop())
 				.contextWrite(ctx -> ctx.put(ObservationThreadLocalAccessor.KEY, observation));
 
@@ -554,9 +531,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 		private ToolCallingManager toolCallingManager = ToolCallingManager.builder().build();
 
-		private ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate =
-				new DefaultToolExecutionEligibilityPredicate();
-
 		private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
 		private @Nullable String apiKey;
@@ -573,7 +547,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 			this.defaultOptions = dashScopeSdkChatModel.defaultOptions;
 			this.retryTemplate = dashScopeSdkChatModel.retryTemplate;
 			this.toolCallingManager = dashScopeSdkChatModel.toolCallingManager;
-			this.toolExecutionEligibilityPredicate = dashScopeSdkChatModel.toolExecutionEligibilityPredicate;
 			this.observationRegistry = dashScopeSdkChatModel.observationRegistry;
 			this.apiKey = dashScopeSdkChatModel.apiKey;
 			this.workspaceId = dashScopeSdkChatModel.workspaceId;
@@ -600,12 +573,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 			return this;
 		}
 
-		public Builder toolExecutionEligibilityPredicate(
-				ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate) {
-			this.toolExecutionEligibilityPredicate = toolExecutionEligibilityPredicate;
-			return this;
-		}
-
 		public Builder observationRegistry(ObservationRegistry observationRegistry) {
 			this.observationRegistry = observationRegistry;
 			return this;
@@ -628,8 +595,8 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 		public DashScopeSdkChatModel build() {
 			return new DashScopeSdkChatModel(this.generationClient, this.defaultOptions, this.toolCallingManager,
-					this.retryTemplate, this.observationRegistry, this.toolExecutionEligibilityPredicate, this.apiKey,
-					this.workspaceId, this.connectionHeaders);
+					this.retryTemplate, this.observationRegistry, this.apiKey, this.workspaceId,
+					this.connectionHeaders);
 		}
 
 	}

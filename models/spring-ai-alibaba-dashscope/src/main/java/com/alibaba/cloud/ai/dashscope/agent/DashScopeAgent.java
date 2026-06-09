@@ -92,8 +92,19 @@ public final class DashScopeAgent extends Agent implements ChatModel {
     }
 
     @Override
-    public ChatOptions getDefaultOptions() {
-        return this.defaultOptions.copy();
+    public ChatOptions getOptions() {
+        return DashScopeAgentOptions.fromOptions(this.defaultOptions);
+    }
+
+    @Override
+    public Prompt buildRequestPrompt(Prompt prompt) {
+        Assert.notNull(prompt, "Prompt must not be null");
+        DashScopeAgentOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
+        ChatOptions runtimeOptions = prompt.getOptions();
+        if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {
+            requestOptionsBuilder.combineWith(runtimeOptions.mutate());
+        }
+        return new Prompt(prompt.getInstructions(), requestOptionsBuilder.build());
     }
 
     private DashScopeAgentRequest toRequest(Prompt prompt, boolean stream) {

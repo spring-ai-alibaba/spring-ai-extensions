@@ -104,23 +104,24 @@ public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
     public List<ToolDefinition> resolveToolDefinitions(ToolCallingChatOptions chatOptions) {
         Assert.notNull(chatOptions, "chatOptions cannot be null");
 
-        List<ToolCallback> toolCallbacks = new ArrayList<>(chatOptions.getToolCallbacks());
-        for (String toolName : chatOptions.getToolNames()) {
-            // Skip the tool if it is already present in the request toolCallbacks.
-            // That might happen if a tool is defined in the options
-            // both as a ToolCallback and as a tool name.
-            if (chatOptions.getToolCallbacks()
-                    .stream()
-                    .anyMatch(tool -> tool.getToolDefinition().name().equals(toolName))) {
-                continue;
-            }
-            ToolCallback toolCallback = this.toolCallbackResolver.resolve(toolName);
-            if (toolCallback == null) {
-                logger.warn(POSSIBLE_LLM_TOOL_NAME_CHANGE_WARNING, toolName);
-                throw new IllegalStateException("No ToolCallback found for tool name: " + toolName);
-            }
-            toolCallbacks.add(toolCallback);
-        }
+        List<ToolCallback> toolCallbacks = new ArrayList<>(
+                !CollectionUtils.isEmpty(chatOptions.getToolCallbacks()) ? chatOptions.getToolCallbacks() : List.of());
+//        for (String toolName : chatOptions.getToolNames()) {
+//            // Skip the tool if it is already present in the request toolCallbacks.
+//            // That might happen if a tool is defined in the options
+//            // both as a ToolCallback and as a tool name.
+//            if (chatOptions.getToolCallbacks()
+//                    .stream()
+//                    .anyMatch(tool -> tool.getToolDefinition().name().equals(toolName))) {
+//                continue;
+//            }
+//            ToolCallback toolCallback = this.toolCallbackResolver.resolve(toolName);
+//            if (toolCallback == null) {
+//                logger.warn(POSSIBLE_LLM_TOOL_NAME_CHANGE_WARNING, toolName);
+//                throw new IllegalStateException("No ToolCallback found for tool name: " + toolName);
+//            }
+//            toolCallbacks.add(toolCallback);
+//        }
 
         return toolCallbacks.stream().map(ToolCallback::getToolDefinition).toList();
     }
@@ -172,8 +173,13 @@ public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
     private InternalToolExecutionResult executeToolCall(Prompt prompt, AssistantMessage assistantMessage,
                                                         ToolContext toolContext) {
 
-        final List<ToolCallback> toolCallbacks = (prompt.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions)
-                ? toolCallingChatOptions.getToolCallbacks() : List.of();
+        List<ToolCallback> promptToolCallbacks = List.of();
+        if (prompt.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions) {
+            if (!CollectionUtils.isEmpty(toolCallingChatOptions.getToolCallbacks())) {
+                promptToolCallbacks = toolCallingChatOptions.getToolCallbacks();
+            }
+        }
+        final List<ToolCallback> toolCallbacks = promptToolCallbacks;
 
         final Queue<Boolean> toolsReturnDirect = new ConcurrentLinkedDeque<>();
 

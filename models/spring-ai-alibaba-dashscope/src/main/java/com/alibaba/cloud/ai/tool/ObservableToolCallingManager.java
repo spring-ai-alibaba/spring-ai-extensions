@@ -103,23 +103,8 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 	public List<ToolDefinition> resolveToolDefinitions(ToolCallingChatOptions chatOptions) {
 		Assert.notNull(chatOptions, "chatOptions cannot be null");
 
-		List<ToolCallback> toolCallbacks = new ArrayList<>(chatOptions.getToolCallbacks());
-		for (String toolName : chatOptions.getToolNames()) {
-			// Skip the tool if it is already present in the request toolCallbacks.
-			// That might happen if a tool is defined in the options
-			// both as a ToolCallback and as a tool name.
-			if (chatOptions.getToolCallbacks()
-				.stream()
-				.anyMatch(tool -> tool.getToolDefinition().name().equals(toolName))) {
-				continue;
-			}
-			ToolCallback toolCallback = this.toolCallbackResolver.resolve(toolName);
-			if (toolCallback == null) {
-				throw new IllegalStateException("No ToolCallback found for tool name: " + toolName);
-			}
-			toolCallbacks.add(toolCallback);
-		}
-
+		List<ToolCallback> toolCallbacks = new ArrayList<>(
+				!CollectionUtils.isEmpty(chatOptions.getToolCallbacks()) ? chatOptions.getToolCallbacks() : List.of());
 		return toolCallbacks.stream().map(toolCallback -> toolCallback.getToolDefinition()).toList();
 	}
 
@@ -173,7 +158,9 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 
 		List<ToolCallback> toolCallbacks = List.of();
 		if (prompt.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions) {
-			toolCallbacks = toolCallingChatOptions.getToolCallbacks();
+			if (!CollectionUtils.isEmpty(toolCallingChatOptions.getToolCallbacks())) {
+				toolCallbacks = toolCallingChatOptions.getToolCallbacks();
+			}
 		}
 
 		List<ToolResponseMessage.ToolResponse> toolResponses = new ArrayList<>();

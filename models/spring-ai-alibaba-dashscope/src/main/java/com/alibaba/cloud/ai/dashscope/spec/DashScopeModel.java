@@ -33,178 +33,24 @@ public class DashScopeModel {
      */
     public enum ChatModel implements ChatModelDescription {
 
-		/**
-		 * The capabilities are balanced, with the reasoning effect, cost and speed falling
-		 * between that of Qwen Max and Qwen Flash. It is suitable for medium-complex tasks.
-		 */
-		QWEN_PLUS("qwen-plus"),
+        QWEN_PLUS("qwen-plus"),
+        QWEN_MAX("qwen-max"),
+        QWEN37_MAX("qwen3.7-max"),
+        QWEN36_PLUS("qwen3.6-plus"),
+        QWEN36_FLASH("qwen3.6-flash"),
+        DEEPSEEK_V4_PRO("deepseek-v4-pro"),
+        DEEPSEEK_V4_FLASH("deepseek-v4-flash"),
+        GLM_51("glm-5.1"),
+        KIMI_K26("kimi-k2.6"),
+        MINIMAX_M25("MinMax-M2.5"),
+        MIMO_V25_PRO("mimo-v2.5-pro"),
+        QWEN_DOC_TURBO("qwen-doc-turbo"),
 
-		/**
-		 * The model supports a context of 32k tokens. To ensure normal use and output,
-		 * the API limits user input to 30k tokens.
-		 */
-		QWEN_TURBO("qwen-turbo"),
-
-		/**
-		 * The model supports an 8k tokens context, and to ensure normal use and output,
-		 * the API limits user input to 6k tokens.
-		 */
-		QWEN_MAX("qwen-max"),
-
-		/**
-		 * The best-performing model in the Qwen series, suitable for complex and multi-step tasks.
-		 */
-		QWEN3_MAX("qwen3-max"),
-
-		/**
-		 * The Tongyi Qianwen series is a model with the longest context window,
-		 * balanced capabilities and low cost. It is suitable for tasks such as long text analysis,
-		 * information extraction, summary and abstract generation, and classification tagging.
-		 */
-		QWEN_LONG("qwen-long"),
-
-		/**
-		 * Tongyi Qianwen MT Plus is a multilingual language model that supports.
-		 * Belongs to Qwen3-MT.
-		 */
-		QWN_MT_PLUS("qwen-mt-plus"),
-
-		/**
-		 * The Tongyi Qianwen mathematical model is a language model specifically designed for solving mathematical problems.
-		 */
-		QWEN_MATH_PLUS("qwen-math-plus"),
-
-		/**
-		 * Tongyi Qianwen Code Model. The latest Qwen3-Coder-Plus series models are code generation models based on Qwen3,
-		 * featuring powerful Coding Agent capabilities. They excel at tool invocation and environment interaction,
-		 * enabling autonomous programming. Their code capabilities are outstanding while also possessing general capabilities.
-		 */
-		QWEN_CODER_PLUS("qwen3-coder-plus"),
-
-		/**
-		 * The model supports a context of 30k tokens. To ensure normal use and output,
-		 * the API limits user input to 28k tokens.
-		 */
-		QWEN_MAX_LONGCONTEXT("qwen-max-longcontext"),
-
-		/**
-		 * The QwQ inference model trained based on the Qwen2.5 model has significantly enhanced
-		 * the model's inference capabilities through reinforcement learning.
-		 * The core indicators of the model's mathematical code (AIME 24/25, LiveCodeBench) as well as
-		 * some general indicators (IFEval, LiveBench, etc.) have reached the full health level of DeepSeek-R1.
-		 * <a href="https://help.aliyun.com/zh/model-studio/deep-thinking">qwen3</a>
-		 */
-		QWQ_PLUS("qwq-plus"),
-
-		/**
-		 * The QwQ inference model trained based on the Qwen2.5-32B model greatly improves
-		 * the model inference ability through reinforcement learning. The core indicators
-		 * such as the mathematical code of the model (AIME 24/25, LiveCodeBench) and some
-		 * general indicators (IFEval, LiveBench, etc.) have reached the level of
-		 * DeepSeek-R1 full blood version, and all indicators significantly exceed the
-		 * DeepSeek-R1-Distill-Qwen-32B, which is also based on Qwen2.5-32B.
-		 * <a href="https://help.aliyun.com/zh/model-studio/deep-thinking">qwen3</a>
-		 */
-		QWEN_3_32B("qwq-32b"),
-
-		/**
-		 * The QWEN-OMNI series models support the input of multiple modalities of data,
-		 * including video, audio, image, text, and output audio and text
-		 * <a href="https://help.aliyun.com/zh/model-studio/qwen-omni">qwen-omni</a>
-		 */
-		QWEN_OMNI_TURBO("qwen-omni-turbo"),
-
-		/**
-		 * Compared to the Omniverse model, it supports audio-based streaming input and has a
-		 * built-in VAD (Voice Activity Detection) function, which can automatically detect
-		 * the start and end of the user's voice.
-		 */
-		QWEN_OMNI_FLASH_REALTIME("qwen3-omni-flash-realtime"),
-
-		/**
-		 * Tongyi Qianwen 3-Omni-Flash multimodal large model, based on Thinker-Talker Mixture of Experts (MoE) architecture,
-		 * supports efficient understanding of text, images, audio, video and speech generation capability,
-		 * and can perform text interaction in 119 languages and speech interaction in 20 languages to generate
-		 * human-like speech for accurate cross-language communication. The model has powerful command following
-		 * and system prompt customization functions, flexibly adapts dialogue style and role setting,
-		 * and is widely used in text creation, voice assistant, multimedia analysis and other scenes to provide a
-		 * natural and smooth multi-modal interaction experience.
-		 */
-		QWEN3_OMNI_FLASH("qwen3-omni-flash"),
-
-		/**
-		 * The Qwen-Omni model can receive combined inputs of various modalities such as text,
-		 * images, audio, and video, and generate responses in text or voice forms.
-		 * It offers multiple anthropomorphic voices and supports voice output in multiple languages and dialects.
-		 * It can be applied in scenarios such as text creation, visual recognition, and voice assistants.
-		 */
-		QWEN_OMNI_FLASH("qwen-omni-flash"),
-
-		/**
-		 * Tongyi Qianwen new multi-modal understanding generation model, supports text, image, voice, video input
-		 * understanding and mixed input understanding, with text and voice simultaneous streaming generation ability,
-		 * multi-modal content understanding speed significantly improved, provides 4 natural dialogue tones,
-		 * this version is a dynamic update version.
-		 */
-		QWEN_OMNI_TURBO_LATEST("qwen-omni-turbo-latest"),
-
-		/**
-		 * New multi-modal understanding generation large model trained based on Qwen2.5, supports text, image,
-		 * voice, and video input understanding as well as mixed input understanding, with text and voice simultaneous streaming
-		 * generation capabilities. Multi-modal content understanding speed is significantly improved,
-		 * providing 4 natural dialogue tones.
-		 */
-		QWEN2_5_OMNI_7B("qwen2.5-omni-7b"),
-
-		/**
-		 * The qwen-vl model can answer based on the pictures you pass in.
-		 * <a href="https://help.aliyun.com/zh/model-studio/vision">qwen-vl</a>
-		 */
-		QWEN_VL_MAX("qwen-vl-max"),
-
-		/**
-		 * Tongyi Qianwen VL is a text generation model with visual (image) comprehension capabilities.
-		 * It not only can perform OCR (image text recognition), but also can further summarize
-		 * and reason, such as extracting attributes from product photos and solving problems based on exercise diagrams, etc.
-		 */
-		QWEN3_VL_PLUS("qwen3-vl-plus"),
-
-		// The Qwen Flash model in the Qwen series is the fastest and most cost-effective,
-		// suitable for simple tasks. Qwen Flash adopts a flexible tiered pricing system,
-		// which is more reasonable than the Qwen Turbo billing model.
-		// Belongs to the Qwen3 series.
-		QWEN_FLASH("qwen-flash"),
-
-		/**
-		 * The Tongyi Qianwen OCR model is a model specifically designed for text extraction. Compared to the
-		 * Tongyi Qianwen VL model, it focuses more on the text extraction capabilities for types of images such as
-		 * documents, tables, test questions, and handwritten text. It can recognize multiple languages, including
-		 * English, French, Japanese, Korean, German, Russian, and Italian, etc.
-		 */
-		QWEN_VL_OCR("qwen-vl-ocr"),
-
-		/**
-		 * QVQ is a visual reasoning model that supports visual input and generates thought chains.
-		 * It demonstrates stronger capabilities in mathematics, programming,
-		 * visual analysis, creation, and general tasks.
-		 */
-		QVQ_MAX("qvq-max"),
-
-		// =================== DeepSeek Model =====================
-		// The third-party models of the Dashscope platform are currently only listed on
-		// Deepseek, refer: https://help.aliyun.com/zh/model-studio/models for
-		// more models
-
-		DEEPSEEK_R1("deepseek-r1"),
-
-		DEEPSEEK_V3("deepseek-v3"),
-
-		DEEPSEEK_V3_1("deepseek-v3.1"),
-
-		KIMI_K2("Moonshot-Kimi-K2-Instruct"),
-
-		GLM_4_6("glm-4.6");
-
+        QWEN_VL_PLUS("qwen-vl-plus"),
+        QWEN3_VL_PLUS("qwen3-vl-plus"),
+        QWEN_VL_MAX("qwen-vl-max"),
+        QWEN_AUDIO_TURBO("qwen-audio-turbo"),
+;
 		public final String value;
 
 		ChatModel(String value) {

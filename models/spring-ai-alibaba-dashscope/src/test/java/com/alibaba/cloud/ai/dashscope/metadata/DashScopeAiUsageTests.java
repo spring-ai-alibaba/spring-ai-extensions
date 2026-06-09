@@ -15,9 +15,9 @@
  */
 package com.alibaba.cloud.ai.dashscope.metadata;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.CacheCreation;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.PromptTokenDetailed;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.CacheCreation;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.PromptTokenDetailed;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -131,7 +131,7 @@ class DashScopeAiUsageTests {
 		assertThat(nativeUsage.promptTokenDetailed().cachedTokens()).isEqualTo(128);
 		assertThat(nativeUsage.promptTokenDetailed().cacheType()).isEqualTo("ephemeral_5m");
 		assertThat(nativeUsage.promptTokenDetailed().cacheCreationInputTokens()).isEqualTo(1024);
-		assertThat(nativeUsage.promptTokenDetailed().cacheCreation().ephemeral_5m_input_tokens()).isEqualTo(1024);
+		assertThat(nativeUsage.promptTokenDetailed().cacheCreation().ephemeral5mInputTokens()).isEqualTo(1024);
 	}
 
 	@Test

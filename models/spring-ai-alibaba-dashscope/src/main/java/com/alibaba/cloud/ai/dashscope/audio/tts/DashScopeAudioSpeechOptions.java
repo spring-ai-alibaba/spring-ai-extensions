@@ -216,11 +216,6 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 		return this.languageType;
 	}
 
-    @Override
-    public DashScopeAudioSpeechOptions copy() {
-        return mutate().build();
-    }
-
     public Builder mutate() {
         return builder()
                 .model(this.model)

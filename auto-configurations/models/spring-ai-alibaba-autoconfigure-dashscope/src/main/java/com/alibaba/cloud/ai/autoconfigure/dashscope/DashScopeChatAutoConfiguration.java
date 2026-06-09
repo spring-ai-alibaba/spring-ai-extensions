@@ -18,14 +18,10 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
-import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
-import com.alibaba.cloud.ai.tool.validator.ToolCallValidator;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.model.SpringAIModelProperties;
-import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate;
 import org.springframework.ai.model.tool.ToolCallingManager;
-import org.springframework.ai.model.tool.ToolExecutionEligibilityPredicate;
 import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
@@ -73,9 +69,7 @@ public class DashScopeChatAutoConfiguration {
 				ObjectProvider<ObservationRegistry> observationRegistry,
 				ObjectProvider<WebClient.Builder> webClientBuilderProvider,
 				ObjectProvider<RestClient.Builder> restClientBuilderProvider,
-				ObjectProvider<ChatModelObservationConvention> observationConvention,
-				ObjectProvider<ToolExecutionEligibilityPredicate> dashscopeToolExecutionEligibilityPredicate,
-				ObjectProvider<ToolCallValidator> toolCallValidatorProvider
+				ObjectProvider<ChatModelObservationConvention> observationConvention
 		) {
 
 			var dashscopeApi = dashscopeChatApi(
@@ -89,13 +83,10 @@ public class DashScopeChatAutoConfiguration {
 
 			var dashscopeModel = DashScopeChatModel.builder()
 					.dashScopeApi(dashscopeApi)
+                    .toolCallingManager(toolCallingManager)
 					.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
-					.toolCallingManager(toolCallingManager)
 					.defaultOptions(chatProperties.getOptions())
 					.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
-					.toolExecutionEligibilityPredicate(
-							dashscopeToolExecutionEligibilityPredicate.getIfUnique(DefaultToolExecutionEligibilityPredicate::new))
-                    .toolCallValidator(toolCallValidatorProvider.getIfUnique(DefaultToolCallValidator::new))
 					.build();
 
 			observationConvention.ifAvailable(dashscopeModel::setObservationConvention);

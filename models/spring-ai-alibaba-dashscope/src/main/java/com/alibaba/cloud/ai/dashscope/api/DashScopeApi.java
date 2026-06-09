@@ -28,6 +28,9 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletion;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeChatApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.common.ErrorCodeEnum;
 import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetrieverOptions;
@@ -75,7 +78,6 @@ import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ENABLE
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_SSE;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_WORK_SPACE_ID;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MANAGED_INGEST_PIPELINE_RESTFUL_URL;
-import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MULTIMODAL_GENERATION_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.PIPELINE_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.PIPELINE_SIMPLE_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.QUERY_CATEGORY_RESTFUL_URL;
@@ -86,10 +88,7 @@ import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.TEXT_R
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.UPLOAD_LEASE_CATEGORY_RESTFUL_URL;
 
 /**
- * @author nuocheng.lxm
- * @author yuluo
- * @author YunKui Lu
- * @since 1.0.0-M2
+ * @author SAA Team
  */
 public class DashScopeApi {
 
@@ -208,6 +207,115 @@ public class DashScopeApi {
 				.build();
 	}
 	// @formatter:on
+
+    /**
+     * Creates a model response for the given chat conversation.
+     * @param chatRequest The chat completion request.
+     * @param additionalHttpHeader Optional, additional HTTP headers to be added to the
+     * request.
+     * @return Entity response with {@link DashScopeApiSpec.ChatCompletion} as a body and HTTP status code
+     * and headers.
+     */
+    public ResponseEntity<ChatCompletion> chatCompletionEntity(DashScopeChatApiSpec.ChatCompletionRequest chatRequest,
+                                                               @Nullable HttpHeaders additionalHttpHeader, boolean isMultimodal) {
+
+        Assert.notNull(chatRequest, "The request body can not be null.");
+        Assert.notNull(additionalHttpHeader, "The additional HTTP headers can not be null.");
+        String chatCompletionUri;
+        if (isMultimodal) {
+            chatCompletionUri = DashScopeChatApiConstants.MULTIMODAL_GENERATION;
+        } else {
+            chatCompletionUri = this.completionsPath;
+        }
+
+        // @formatter:off
+        return this.restClient.post()
+                .uri(chatCompletionUri)
+                .headers(headers -> {
+                    headers.addAll(additionalHttpHeader);
+                    addDefaultHeadersIfMissing(headers);
+                })
+                .body(chatRequest)
+                .retrieve()
+                .toEntity(ChatCompletion.class);
+        // @formatter:on
+    }
+
+    /**
+     * Creates a streaming chat response for the given chat conversation.
+     * @param chatRequest The chat completion request.
+     * @param additionalHttpHeader Optional, additional HTTP headers to be added to the
+     * request.
+     * @param multiModel Whether to route the call to the multimodal generation endpoint.
+     * @return Returns a {@link Flux} stream from chat completion chunks.
+     */
+    public Flux<DashScopeChatApiSpec.ChatCompletionChunk> chatCompletionStream(
+            DashScopeChatApiSpec.ChatCompletionRequest chatRequest, @Nullable HttpHeaders additionalHttpHeader, boolean isMultimodal) {
+
+        Assert.notNull(chatRequest, "The request body can not be null.");
+
+        AtomicBoolean isInsideTool = new AtomicBoolean(false);
+        boolean incrementalOutput = chatRequest.parameters() != null
+                && chatRequest.parameters().incrementalOutput() != null && chatRequest.parameters().incrementalOutput();
+        DashScopeAiStreamFunctionCallingHelper chunkMerger = new DashScopeAiStreamFunctionCallingHelper(
+                incrementalOutput);
+
+        String chatCompletionUri;
+        if (isMultimodal) {
+            chatCompletionUri = DashScopeChatApiConstants.MULTIMODAL_GENERATION;
+        } else {
+            chatCompletionUri = this.completionsPath;
+        }
+        return this.webClient.post()
+                .uri(chatCompletionUri)
+                .headers(headers -> {
+                    if (additionalHttpHeader != null) {
+                        headers.addAll(additionalHttpHeader);
+                    }
+                    // For DashScope stream
+                    headers.add(HEADER_SSE, ENABLED);
+                    addDefaultHeadersIfMissing(headers);
+                })
+                .body(Mono.just(chatRequest), DashScopeChatApiSpec.ChatCompletionRequest.class)
+                .retrieve()
+                .bodyToFlux(String.class)
+                .takeUntil(SSE_DONE_PREDICATE)
+                .filter(SSE_DONE_PREDICATE.negate())
+                .map(content -> {
+                    DashScopeApiSpec.DashScopeErrorResponse error = jsonHelper.fromJson(content,
+                            DashScopeApiSpec.DashScopeErrorResponse.class);
+                    if (error != null && (StringUtils.hasText(error.code()) || StringUtils.hasText(error.message()))) {
+                        throw new DashScopeException(error.code(), String.format("[%s] %s (requestId: %s)",
+                                error.code(), error.message(), error.requestId()));
+                    }
+                    DashScopeChatApiSpec.ChatCompletionChunk chunk = jsonHelper.fromJson(content, DashScopeChatApiSpec.ChatCompletionChunk.class);
+                    if (chunk == null) {
+                        throw new DashScopeException("Failed to parse response content: " + content);
+                    }
+                    return chunk;
+                })
+                .map(chunk -> {
+                    if (chunkMerger.isStreamingToolFunctionCall(chunk)) {
+                        isInsideTool.set(true);
+                    }
+                    return chunk;
+                })
+                .windowUntil(chunk -> {
+                    if (isInsideTool.get() && chunkMerger.isStreamingToolFunctionCallFinish(chunk)) {
+                        isInsideTool.set(false);
+                        return true;
+                    }
+                    return !isInsideTool.get();
+                })
+                .concatMapIterable(window -> {
+                    Mono<DashScopeChatApiSpec.ChatCompletionChunk> monoChunk = window.reduce(
+                            new DashScopeChatApiSpec.ChatCompletionChunk(null, null, null, null),
+                            chunkMerger::merge
+                    );
+                    return List.of(monoChunk);
+                })
+                .flatMap(mono -> mono);
+    }
 
 	/*******************************************
 	 * Embedding
@@ -488,147 +596,11 @@ public class DashScopeApi {
 		return documents;
 	}
 
-
-	public static String getTextContent(List<DashScopeApiSpec.ChatCompletionMessage.MediaContent> content) {
-		return content.stream()
-			.filter(c -> "text".equals(c.type()))
-			.map(DashScopeApiSpec.ChatCompletionMessage.MediaContent::text)
-			.reduce("", (a, b) -> a + b);
-	}
-
-	/**
-	 * Creates a model response for the given chat conversation.
-	 * @param chatRequest The chat completion request.
-	 * @return Entity response with {@link DashScopeApiSpec.ChatCompletion} as a body and HTTP status code
-	 * and headers.
-	 */
-	public ResponseEntity<DashScopeApiSpec.ChatCompletion> chatCompletionEntity(DashScopeApiSpec.ChatCompletionRequest chatRequest) {
-
-        return chatCompletionEntity(chatRequest, new HttpHeaders());
-	}
-
-	/**
-	 * Creates a model response for the given chat conversation.
-	 * @param chatRequest The chat completion request.
-	 * @param additionalHttpHeader Optional, additional HTTP headers to be added to the
-	 * request.
-	 * @return Entity response with {@link DashScopeApiSpec.ChatCompletion} as a body and HTTP status code
-	 * and headers.
-	 */
-	public ResponseEntity<DashScopeApiSpec.ChatCompletion> chatCompletionEntity(DashScopeApiSpec.ChatCompletionRequest chatRequest,
-																				HttpHeaders additionalHttpHeader) {
-
-		Assert.notNull(chatRequest, "The request body can not be null.");
-		Assert.isTrue(!chatRequest.stream(), "Request must set the stream property to false.");
-		Assert.notNull(additionalHttpHeader, "The additional HTTP headers can not be null.");
-
-		var chatCompletionUri = this.completionsPath;
-		if (Boolean.TRUE.equals(chatRequest.multiModel())) {
-			chatCompletionUri = MULTIMODAL_GENERATION_RESTFUL_URL;
-		}
-
-		// @formatter:off
-		return this.restClient.post()
-				.uri(chatCompletionUri)
-				.headers(headers -> {
-					headers.addAll(additionalHttpHeader);
-					addDefaultHeadersIfMissing(headers);
-				})
-				.body(chatRequest)
-				.retrieve()
-				.toEntity(DashScopeApiSpec.ChatCompletion.class);
-		// @formatter:on
-	}
-
 	private void addDefaultHeadersIfMissing(HttpHeaders headers) {
 
 		if (!headers.containsHeader(HttpHeaders.AUTHORIZATION) && !(this.apiKey instanceof NoopApiKey)) {
 			headers.setBearerAuth(this.apiKey.getValue());
 		}
-	}
-
-	/**
-	 * Creates a streaming chat response for the given chat conversation.
-	 * @param chatRequest The chat completion request. Must have the stream property set
-	 * to true.
-	 * @return Returns a {@link Flux} stream from chat completion chunks.
-	 */
-	public Flux<DashScopeApiSpec.ChatCompletionChunk> chatCompletionStream(DashScopeApiSpec.ChatCompletionRequest chatRequest) {
-
-		return this.chatCompletionStream(chatRequest, null);
-	}
-
-	/**
-	 * Creates a streaming chat response for the given chat conversation.
-	 * @param chatRequest The chat completion request. Must have the stream property set
-	 * to true.
-	 * @param additionalHttpHeader Optional, additional HTTP headers to be added to the
-	 * request.
-	 * @return Returns a {@link Flux} stream from chat completion chunks.
-	 */
-	public Flux<DashScopeApiSpec.ChatCompletionChunk> chatCompletionStream(
-			DashScopeApiSpec.ChatCompletionRequest chatRequest, @Nullable HttpHeaders additionalHttpHeader) {
-
-		Assert.notNull(chatRequest, "The request body can not be null.");
-		Assert.isTrue(chatRequest.stream(), "Request must set the stream property to true.");
-
-		AtomicBoolean isInsideTool = new AtomicBoolean(false);
-		boolean incrementalOutput = chatRequest.parameters() != null
-				&& chatRequest.parameters().incrementalOutput() != null && chatRequest.parameters().incrementalOutput();
-		DashScopeAiStreamFunctionCallingHelper chunkMerger = new DashScopeAiStreamFunctionCallingHelper(
-				incrementalOutput);
-
-		var chatCompletionUri = this.completionsPath;
-		if (Boolean.TRUE.equals(chatRequest.multiModel())) {
-			chatCompletionUri = MULTIMODAL_GENERATION_RESTFUL_URL;
-		}
-
-			return this.webClient.post().uri(chatCompletionUri).headers(headers -> {
-				if (additionalHttpHeader != null) {
-					headers.addAll(additionalHttpHeader);
-				}
-				// For DashScope stream
-				headers.add(HEADER_SSE, ENABLED);
-				addDefaultHeadersIfMissing(headers);
-		})
-			.body(Mono.just(chatRequest), DashScopeApiSpec.ChatCompletionRequest.class)
-			.retrieve()
-			.bodyToFlux(String.class)
-			.takeUntil(SSE_DONE_PREDICATE)
-			.filter(SSE_DONE_PREDICATE.negate())
-			.map(content -> {
-				DashScopeApiSpec.DashScopeErrorResponse error = jsonHelper.fromJson(content, DashScopeApiSpec.DashScopeErrorResponse.class);
-				if (error != null && error.code() != null) {
-					throw new DashScopeException(error.code(),String.format("[%s] %s (requestId: %s)",
-						error.code(), error.message(), error.requestId()));
-				}
-				DashScopeApiSpec.ChatCompletionChunk chunk = jsonHelper.fromJson(content, DashScopeApiSpec.ChatCompletionChunk.class);
-				if (chunk == null) {
-					throw new DashScopeException("Failed to parse response content: " + content);
-				}
-				return chunk;
-			})
-			.map(chunk -> {
-				if (chunkMerger.isStreamingToolFunctionCall(chunk)) {
-					isInsideTool.set(true);
-				}
-				return chunk;
-			})
-			.windowUntil(chunk -> {
-				if (isInsideTool.get() && chunkMerger.isStreamingToolFunctionCallFinish(chunk)) {
-					isInsideTool.set(false);
-					return true;
-				}
-				return !isInsideTool.get();
-			})
-			.concatMapIterable(window -> {
-				Mono<DashScopeApiSpec.ChatCompletionChunk> monoChunk = window.reduce(
-                        new DashScopeApiSpec.ChatCompletionChunk(null, null, null, null),
-						chunkMerger::merge
-                );
-				return List.of(monoChunk);
-			})
-			.flatMap(mono -> mono);
 	}
 
 	/**

@@ -29,6 +29,8 @@ import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.model.tool.ToolCallingManager;
+import org.springframework.ai.tool.definition.DefaultToolDefinition;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -38,6 +40,11 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class DashScopeSdkChatModelTests {
 
@@ -59,7 +66,6 @@ class DashScopeSdkChatModelTests {
 			.apiKey("test-key")
 			.workspaceId("workspace-id")
 			.connectionHeaders(Map.of("x-test", "v"))
-			.toolExecutionEligibilityPredicate((options, response) -> false)
 			.build();
 	}
 
@@ -98,6 +104,32 @@ class DashScopeSdkChatModelTests {
 
 		assertThat(response.getResult().getOutput().getToolCalls()).hasSize(1);
 		assertThat(response.getResult().getOutput().getToolCalls().get(0).name()).isEqualTo("get_weather");
+	}
+
+	@Test
+	void testToolCallResponseIsReturnedWithoutExecutingToolCalls() {
+		ToolCallingManager toolCallingManager = mock(ToolCallingManager.class);
+		when(toolCallingManager.resolveToolDefinitions(any())).thenReturn(List.of(DefaultToolDefinition.builder()
+			.name("get_weather")
+			.description("Get weather information")
+			.inputSchema("{\"type\":\"object\",\"properties\":{}}")
+			.build()));
+		DashScopeSdkChatModel toolChatModel = DashScopeSdkChatModel.builder()
+			.generationClient(this.generationClient)
+			.defaultOptions(DashScopeSdkChatOptions.builder().model(TEST_MODEL).build())
+			.toolCallingManager(toolCallingManager)
+			.build();
+		this.generationClient.callResult = createResult("", "tool_calls", true);
+
+		ChatResponse response = toolChatModel.call(new Prompt(List.of(new UserMessage("call tool"))));
+
+		assertThat(response.hasToolCalls()).isTrue();
+		assertThat(response.getResult().getOutput().getToolCalls()).hasSize(1);
+		assertThat(response.getResult().getOutput().getToolCalls().get(0).name()).isEqualTo("get_weather");
+		assertThat(this.generationClient.callCount).isEqualTo(1);
+		assertThat(this.generationClient.lastCallParam.getTools()).hasSize(1);
+		verify(toolCallingManager).resolveToolDefinitions(any());
+		verify(toolCallingManager, never()).executeToolCalls(any(), any());
 	}
 
 	@Test
@@ -284,6 +316,8 @@ class DashScopeSdkChatModelTests {
 
 		private GenerationParam lastCallParam;
 
+		private int callCount;
+
 		private RuntimeException throwOnCall;
 
 		private RuntimeException throwOnStream;
@@ -293,6 +327,7 @@ class DashScopeSdkChatModelTests {
 			if (this.throwOnCall != null) {
 				throw this.throwOnCall;
 			}
+			this.callCount++;
 			this.lastCallParam = generationParam;
 			return this.callResult;
 		}

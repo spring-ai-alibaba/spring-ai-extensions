@@ -21,25 +21,29 @@ import java.util.Map;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel.Builder;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletion;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionChunk;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionFinishReason;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ChatCompletionFunction;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.MediaContent;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ToolCall;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput.Choice;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionRequest;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchOptions;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchInfo;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.SearchResult;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
-import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletion;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionChunk;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionFinishReason;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionMessage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionFunction;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ToolCall;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionOutput;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionOutput.Choice;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.SearchOptions;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.SearchInfo;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.SearchResult;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.CacheCreation;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.MediaContent;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.PromptTokenDetailed;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.Role;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import tools.jackson.databind.json.JsonMapper;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -53,6 +57,7 @@ import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -62,7 +67,10 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -109,20 +117,176 @@ class DashScopeChatModelTests {
     }
 
     @Test
+    void defaultOptionsUseMessageResultFormat() {
+        Prompt requestPrompt = chatModel.buildRequestPrompt(new Prompt(List.of(new UserMessage(TEST_PROMPT))));
+        ChatCompletionRequest request = chatModel.createRequest(requestPrompt);
+
+        assertThat(request.parameters().resultFormat()).isEqualTo("message");
+    }
+
+    @Test
+    void callSendsDataInspectionAsHeaderOnly() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model("qwen-plus")
+                .dataInspection(DashScopeApiConstants.ENABLED)
+                .build();
+        Prompt prompt = new Prompt(List.of(new UserMessage(TEST_PROMPT)), options);
+
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
+        ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+        ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, null);
+
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false)))
+                .thenReturn(ResponseEntity.ok(chatCompletion));
+
+        chatModel.call(prompt);
+
+        ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
+        ArgumentCaptor<HttpHeaders> headersCaptor = ArgumentCaptor.forClass(HttpHeaders.class);
+        verify(dashScopeApi).chatCompletionEntity(requestCaptor.capture(), headersCaptor.capture(), eq(false));
+
+        assertThat(headersCaptor.getValue().getFirst(DashScopeApiConstants.HEADER_DATAINSPECTION))
+                .isEqualTo(DashScopeApiConstants.ENABLED);
+        String jsonRequest = JsonMapper.builder().build().writeValueAsString(requestCaptor.getValue());
+        assertThat(jsonRequest).doesNotContain(DashScopeApiConstants.HEADER_DATAINSPECTION);
+        assertThat(jsonRequest).doesNotContain("dataInspection");
+    }
+
+    @Test
+    void streamSendsDataInspectionAsHeaderOnly() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model("qwen-plus")
+                .dataInspection(DashScopeApiConstants.ENABLED)
+                .build();
+        Prompt prompt = new Prompt(List.of(new UserMessage(TEST_PROMPT)), options);
+
+        ChatCompletionMessage chunkMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, chunkMessage, null, 0);
+        ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+        ChatCompletionChunk chunk = new ChatCompletionChunk(TEST_REQUEST_ID, output, null, null);
+
+        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false)))
+                .thenReturn(Flux.just(chunk));
+
+        StepVerifier.create(chatModel.stream(prompt))
+                .assertNext(response -> assertThat(response.getResult().getOutput().getText()).isEqualTo(TEST_RESPONSE))
+                .verifyComplete();
+
+        ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
+        ArgumentCaptor<HttpHeaders> headersCaptor = ArgumentCaptor.forClass(HttpHeaders.class);
+        verify(dashScopeApi).chatCompletionStream(requestCaptor.capture(), headersCaptor.capture(), eq(false));
+
+        assertThat(headersCaptor.getValue().getFirst(DashScopeApiConstants.HEADER_DATAINSPECTION))
+                .isEqualTo(DashScopeApiConstants.ENABLED);
+        String jsonRequest = JsonMapper.builder().build().writeValueAsString(requestCaptor.getValue());
+        assertThat(jsonRequest).doesNotContain(DashScopeApiConstants.HEADER_DATAINSPECTION);
+        assertThat(jsonRequest).doesNotContain("dataInspection");
+    }
+
+    @Test
+    void callSendsDashScopeMessageRequestToGenerationEndpoint() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model("qwen-plus")
+                .resultFormat("message")
+                .build();
+        Prompt prompt = new Prompt(List.of(
+                new SystemMessage("You are a helpful assistant."),
+                new UserMessage("你是谁？")
+        ), options);
+
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage("我是通义千问。", Role.ASSISTANT);
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
+        ChatCompletionOutput output = new ChatCompletionOutput("我是通义千问。", List.of(choice), null);
+        TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+        ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
+
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false)))
+                .thenReturn(ResponseEntity.ok(chatCompletion));
+
+        ChatResponse response = chatModel.call(prompt);
+
+        assertThat(response.getResult().getOutput().getText()).isEqualTo("我是通义千问。");
+
+        ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
+        verify(dashScopeApi).chatCompletionEntity(requestCaptor.capture(), any(), eq(false));
+        verify(dashScopeApi, never()).chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false));
+
+        ChatCompletionRequest request = requestCaptor.getValue();
+        assertThat(request.model()).isEqualTo("qwen-plus");
+        assertThat(request.input().messages()).hasSize(2);
+        assertThat(request.input().messages().get(0).role()).isEqualTo(Role.SYSTEM);
+        assertThat(request.input().messages().get(0).rawContent()).isEqualTo("You are a helpful assistant.");
+        assertThat(request.input().messages().get(1).role()).isEqualTo(Role.USER);
+        assertThat(request.input().messages().get(1).rawContent()).isEqualTo("你是谁？");
+        assertThat(request.parameters().resultFormat()).isEqualTo("message");
+
+        String jsonRequest = JsonMapper.builder().build().writeValueAsString(request);
+        assertThat(jsonRequest).doesNotContain("\"stream\"");
+        assertThat(jsonRequest).doesNotContain("\"multi_model\"");
+        assertThat(jsonRequest).doesNotContain("\"forced_search\"");
+    }
+
+    @Test
+    void streamSendsIncrementalDashScopeMessageRequestToStreamingEndpoint() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model("qwen-plus")
+                .resultFormat("message")
+                .incrementalOutput(true)
+                .build();
+        Prompt prompt = new Prompt(List.of(
+                new SystemMessage("You are a helpful assistant."),
+                new UserMessage("你是谁？")
+        ), options);
+
+        ChatCompletionMessage chunkMessage1 = new ChatCompletionMessage("我是", Role.ASSISTANT);
+        ChatCompletionMessage chunkMessage2 = new ChatCompletionMessage("通义千问。", Role.ASSISTANT);
+        Choice choice1 = new Choice(null, chunkMessage1, null, 0);
+        Choice choice2 = new Choice(ChatCompletionFinishReason.STOP, chunkMessage2, null, 0);
+        ChatCompletionOutput output1 = new ChatCompletionOutput("我是", List.of(choice1), null);
+        ChatCompletionOutput output2 = new ChatCompletionOutput("通义千问。", List.of(choice2), null);
+        ChatCompletionChunk chunk1 = new ChatCompletionChunk(TEST_REQUEST_ID, output1, null, null);
+        ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2,
+                new TokenUsage(10, 5, 15, null, null, null, null, null, null, null), null);
+
+        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false)))
+                .thenReturn(Flux.just(chunk1, chunk2));
+
+        StepVerifier.create(chatModel.stream(prompt))
+                .assertNext(response -> assertThat(response.getResult().getOutput().getText()).isEqualTo("我是"))
+                .assertNext(response -> assertThat(response.getResult().getOutput().getText()).isEqualTo("通义千问。"))
+                .verifyComplete();
+
+        ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
+        verify(dashScopeApi).chatCompletionStream(requestCaptor.capture(), any(), eq(false));
+        verify(dashScopeApi, never()).chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false));
+
+        ChatCompletionRequest request = requestCaptor.getValue();
+        assertThat(request.model()).isEqualTo("qwen-plus");
+        assertThat(request.input().messages()).hasSize(2);
+        assertThat(request.input().messages().get(0).role()).isEqualTo(Role.SYSTEM);
+        assertThat(request.input().messages().get(0).rawContent()).isEqualTo("You are a helpful assistant.");
+        assertThat(request.input().messages().get(1).role()).isEqualTo(Role.USER);
+        assertThat(request.input().messages().get(1).rawContent()).isEqualTo("你是谁？");
+        assertThat(request.parameters().resultFormat()).isEqualTo("message");
+        assertThat(request.parameters().incrementalOutput()).isTrue();
+    }
+
+    @Test
     void testBasicChatCompletion() {
         // Test basic chat completion with a simple user message
         Message message = new UserMessage(TEST_PROMPT);
         Prompt prompt = new Prompt(List.of(message));
 
         // Mock API response
-        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
         Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
         ResponseEntity<ChatCompletion> responseEntity = ResponseEntity.ok(chatCompletion);
 
-        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any())).thenReturn(responseEntity);
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false))).thenReturn(responseEntity);
 
         // Execute test
         ChatResponse response = chatModel.call(prompt);
@@ -142,9 +306,9 @@ class DashScopeChatModelTests {
         Prompt prompt = new Prompt(List.of(message));
 
         // Mock streaming responses
-        ChatCompletionMessage chunkMessage1 = new ChatCompletionMessage("I'm ", ChatCompletionMessage.Role.ASSISTANT);
-        ChatCompletionMessage chunkMessage2 = new ChatCompletionMessage("doing ", ChatCompletionMessage.Role.ASSISTANT);
-        ChatCompletionMessage chunkMessage3 = new ChatCompletionMessage("well!", ChatCompletionMessage.Role.ASSISTANT);
+        ChatCompletionMessage chunkMessage1 = new ChatCompletionMessage("I'm ", Role.ASSISTANT);
+        ChatCompletionMessage chunkMessage2 = new ChatCompletionMessage("doing ", Role.ASSISTANT);
+        ChatCompletionMessage chunkMessage3 = new ChatCompletionMessage("well!", Role.ASSISTANT);
 
         Choice choice1 = new Choice(null, chunkMessage1, null, 0);
         Choice choice2 = new Choice(null, chunkMessage2, null, 0);
@@ -158,7 +322,8 @@ class DashScopeChatModelTests {
         ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2, null, null);
         ChatCompletionChunk chunk3 = new ChatCompletionChunk(TEST_REQUEST_ID, output3, new TokenUsage(10, 5, 15, null, null, null, null, null, null, null), null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any())).thenReturn(Flux.just(chunk1, chunk2, chunk3));
+        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false)))
+                .thenReturn(Flux.just(chunk1, chunk2, chunk3));
 
         // Execute test
         Flux<ChatResponse> responseFlux = chatModel.stream(prompt);
@@ -182,7 +347,7 @@ class DashScopeChatModelTests {
 
         // Mock API response
         String response = "Hello! How can I help you today?";
-        ChatCompletionMessage responseMessage = new ChatCompletionMessage(response, ChatCompletionMessage.Role.ASSISTANT);
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(response, Role.ASSISTANT);
         Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         ChatCompletionOutput output = new ChatCompletionOutput(response, List.of(choice), null);
 
@@ -191,7 +356,7 @@ class DashScopeChatModelTests {
 
         ChatCompletion completion = new ChatCompletion("test-id", output, usage);
 
-        when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(ResponseEntity.ok(completion));
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenReturn(ResponseEntity.ok(completion));
 
         // Test with system message
         Prompt prompt = new Prompt(List.of(systemMessage, userMessage));
@@ -224,7 +389,7 @@ class DashScopeChatModelTests {
 
         // Mock API responses for tool call
         String toolCallResponse = "{\"name\": \"get_weather\", \"arguments\": \"{\\\"location\\\": \\\"Beijing\\\"}\"}";
-        ChatCompletionMessage toolMessage = new ChatCompletionMessage(toolCallResponse, ChatCompletionMessage.Role.ASSISTANT);
+        ChatCompletionMessage toolMessage = new ChatCompletionMessage(toolCallResponse, Role.ASSISTANT);
         Choice toolChoice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, toolMessage, null, 0);
 
         // Add non-null TokenUsage with zero values
@@ -233,7 +398,7 @@ class DashScopeChatModelTests {
         ChatCompletionOutput toolOutput = new ChatCompletionOutput(toolCallResponse, List.of(toolChoice), null);
         ChatCompletion toolCompletion = new ChatCompletion("test-id", toolOutput, usage);
 
-        when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(ResponseEntity.ok(toolCompletion));
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenReturn(ResponseEntity.ok(toolCompletion));
 
         // Test tool call
         Message message = new UserMessage("What's the weather like?");
@@ -242,6 +407,48 @@ class DashScopeChatModelTests {
 
         assertThat(response).isNotNull();
         assertThat(response.getResults().get(0).getOutput().getText()).contains("get_weather");
+    }
+
+    @Test
+    void callMapsToolCallResponseWithoutExecutingToolCallback() {
+        ToolCallback weatherCallback = mock(ToolCallback.class);
+        when(weatherCallback.getToolDefinition()).thenReturn(DefaultToolDefinition.builder()
+                .name("get_weather")
+                .description("Get weather information")
+                .inputSchema(EMPTY_INPUT_SCHEMA)
+                .build());
+
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model("qwen-turbo")
+                .toolCallbacks(List.of(weatherCallback))
+                .build();
+
+        DashScopeChatModel toolChatModel = DashScopeChatModel.builder()
+                .dashScopeApi(dashScopeApi)
+                .defaultOptions(options)
+                .build();
+
+        ToolCall toolCall = new ToolCall("tool-call-id-1", "function",
+                new ChatCompletionFunction("get_weather", "{\"location\":\"Beijing\"}"), null);
+        ChatCompletionMessage toolMessage = new ChatCompletionMessage("", Role.ASSISTANT, null, null,
+                List.of(toolCall), null, null, null, null, null);
+        Choice toolChoice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, toolMessage, null, 0);
+        ChatCompletionOutput toolOutput = new ChatCompletionOutput("", List.of(toolChoice), null);
+        TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+        ChatCompletion toolCompletion = new ChatCompletion("test-id", toolOutput, usage);
+
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenReturn(ResponseEntity.ok(toolCompletion));
+
+        ChatResponse response = toolChatModel.call(new Prompt(List.of(new UserMessage("What's the weather?")), options));
+
+        assertThat(response.hasToolCalls()).isTrue();
+        assertThat(response.getResult().getOutput().getToolCalls()).hasSize(1);
+        assertThat(response.getResult().getOutput().getToolCalls().get(0).name()).isEqualTo("get_weather");
+
+        ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
+        verify(dashScopeApi).chatCompletionEntity(requestCaptor.capture(), any(), eq(false));
+        assertThat(requestCaptor.getValue().parameters().tools()).hasSize(1);
+        verify(weatherCallback, never()).call(any(String.class));
     }
 
     @Test
@@ -270,9 +477,9 @@ class DashScopeChatModelTests {
         String chunk2 = "weather\", \"arguments\": \"{\\\"location\\\"";
         String chunk3 = ": \\\"Beijing\\\"}\"}";
 
-        ChatCompletionMessage message1 = new ChatCompletionMessage(chunk1, ChatCompletionMessage.Role.ASSISTANT);
-        ChatCompletionMessage message2 = new ChatCompletionMessage(chunk2, ChatCompletionMessage.Role.ASSISTANT);
-        ChatCompletionMessage message3 = new ChatCompletionMessage(chunk3, ChatCompletionMessage.Role.ASSISTANT);
+        ChatCompletionMessage message1 = new ChatCompletionMessage(chunk1, Role.ASSISTANT);
+        ChatCompletionMessage message2 = new ChatCompletionMessage(chunk2, Role.ASSISTANT);
+        ChatCompletionMessage message3 = new ChatCompletionMessage(chunk3, Role.ASSISTANT);
 
         Choice choice1 = new Choice(null, message1, null, 0);
         Choice choice2 = new Choice(null, message2, null, 0);
@@ -282,7 +489,8 @@ class DashScopeChatModelTests {
         ChatCompletionChunk chunk2Response = new ChatCompletionChunk("test-id", new ChatCompletionOutput(chunk2, List.of(choice2), null), null, null);
         ChatCompletionChunk chunk3Response = new ChatCompletionChunk("test-id", new ChatCompletionOutput(chunk3, List.of(choice3), null), new TokenUsage(10, 5, 15, null, null, null, null, null, null, null), null);
 
-        when(dashScopeApi.chatCompletionStream(any(), any())).thenReturn(Flux.just(chunk1Response, chunk2Response, chunk3Response));
+        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false)))
+                .thenReturn(Flux.just(chunk1Response, chunk2Response, chunk3Response));
 
         Message message = new UserMessage("What's the weather like?");
         Prompt prompt = new Prompt(List.of(message), options);
@@ -298,7 +506,7 @@ class DashScopeChatModelTests {
     @Test
     void testErrorHandling() {
         // Test error handling
-        when(dashScopeApi.chatCompletionEntity(any(), any())).thenThrow(new RuntimeException("API Error"));
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenThrow(new RuntimeException("API Error"));
 
         Message message = new UserMessage("Test message");
         Prompt prompt = new Prompt(List.of(message));
@@ -314,7 +522,7 @@ class DashScopeChatModelTests {
         TokenUsage usage = new TokenUsage(0, 0, 0, null, null, null, null, null, null, null);
         ChatCompletion completion = new ChatCompletion("test-id", output, usage);
 
-        when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(ResponseEntity.ok(completion));
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenReturn(ResponseEntity.ok(completion));
 
         Message message = new UserMessage("Test message");
         Prompt prompt = new Prompt(List.of(message));
@@ -352,14 +560,14 @@ class DashScopeChatModelTests {
         Message message = new UserMessage(TEST_PROMPT);
         Prompt prompt = new Prompt(List.of(message));
 
-        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
         Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
         ResponseEntity<ChatCompletion> responseEntity = ResponseEntity.ok(chatCompletion);
 
-        when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(responseEntity);
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenReturn(responseEntity);
 
         ChatResponse response = chatModel.call(prompt);
 
@@ -383,7 +591,7 @@ class DashScopeChatModelTests {
         Message message = new UserMessage(TEST_PROMPT);
         Prompt prompt = new Prompt(List.of(message));
 
-        when(dashScopeApi.chatCompletionEntity(any(), any())).thenThrow(new RuntimeException("Invalid model name"));
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenThrow(new RuntimeException("Invalid model name"));
 
         assertThatThrownBy(() -> invalidModel.call(prompt)).isInstanceOf(RuntimeException.class)
                 .hasMessage("Invalid model name");
@@ -397,14 +605,14 @@ class DashScopeChatModelTests {
         AssistantMessage assistantMessage = new AssistantMessage("Hi! How can I help you?");
         UserMessage userMessage2 = new UserMessage("What's the weather?");
 
-        ChatCompletionMessage responseMessage = new ChatCompletionMessage("It's sunny today!", ChatCompletionMessage.Role.ASSISTANT);
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage("It's sunny today!", Role.ASSISTANT);
         Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         ChatCompletionOutput output = new ChatCompletionOutput("It's sunny today!", List.of(choice), null);
         // Add non-null TokenUsage with zero values
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletion completion = new ChatCompletion("test-id", output, usage);
 
-        when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(ResponseEntity.ok(completion));
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenReturn(ResponseEntity.ok(completion));
 
         Prompt prompt = new Prompt(List.of(systemMessage, userMessage1, assistantMessage, userMessage2));
         ChatResponse response = chatModel.call(prompt);
@@ -413,59 +621,6 @@ class DashScopeChatModelTests {
         assertThat(response.getResult().getOutput().getText()).isEqualTo("It's sunny today!");
     }
 
-    // @Test
-    // @Tag("integration")
-    // @EnabledIfEnvironmentVariable(named = "AI_DASHSCOPE_API_KEY", matches = ".+")
-    // void testDeepseekR1Integration() {
-    // // Create real DashScope API instance with actual API key
-    // String apiKey = System.getenv("AI_DASHSCOPE_API_KEY");
-    // if (apiKey == null || apiKey.isEmpty()) {
-    // // Skip test if API key is not available
-    // return;
-    // }
-    //
-    // // Initialize real DashScope API and chat model
-    // DashScopeApi realApi = DashScopeApi.builder().apiKey(apiKey).build();
-    // DashScopeChatOptions deepseekOptions = DashScopeChatOptions.builder()
-    // .withModel("deepseek-r1") // Use deepseek-r1 model
-    // .withTemperature(0.7)
-    // .withTopP(0.8)
-    // .withTopK(50)
-    // .withSeed(1234)
-    // .build();
-    // DashScopeChatModel deepseekModel = DashScopeChatModel.builder()
-    // .dashScopeApi(realApi)
-    // .defaultOptions(deepseekOptions)
-    // .build();
-    //
-    // // Create a complex prompt with multiple messages
-    // SystemMessage systemMessage = new SystemMessage(
-    // "You are a helpful AI assistant who is knowledgeable about programming.");
-    // UserMessage userMessage = new UserMessage(
-    // "Write a simple Java function to calculate the factorial of a number.");
-    //
-    // Prompt prompt = new Prompt(List.of(systemMessage, userMessage));
-    //
-    // // Call the model and verify response
-    // ChatResponse response = deepseekModel.call(prompt);
-    //
-    // // Verify the response
-    // assertThat(response).isNotNull();
-    // assertThat(response.getResult()).isNotNull();
-    // assertThat(response.getResult().getOutput()).isInstanceOf(AssistantMessage.class);
-    // assertThat(response.getResult().getOutput().getText()).containsAnyOf("public",
-    // "factorial", "return", "int");
-    //
-    // // Verify metadata and usage information
-    // assertThat(response.getMetadata()).isNotNull();
-    // assertThat(response.getMetadata().getUsage()).isNotNull();
-    // DashScopeAiUsage aiUsage = (DashScopeAiUsage) response.getMetadata().getUsage();
-    // assertThat(aiUsage.getTotalTokens()).isPositive();
-    //
-    // // Verify reasoning content exists
-    // Object reasoningContent = response.getMetadata().get("reasoning_content");
-    // assertThat(reasoningContent).isNotNull();
-    // }
 
     @Test
     void testNullToolNameHandling() {
@@ -491,7 +646,7 @@ class DashScopeChatModelTests {
         ChatCompletionFunction nullNameFunction = new ChatCompletionFunction(null, "{\"location\": \"Beijing\"}");
         ToolCall nullNameToolCall = new ToolCall("tool-call-id", "function", nullNameFunction, null);
 
-        ChatCompletionMessage nullNameToolMessage = new ChatCompletionMessage("", ChatCompletionMessage.Role.ASSISTANT, null, null, List.of(nullNameToolCall), null, null, null, null, null);
+        ChatCompletionMessage nullNameToolMessage = new ChatCompletionMessage("", Role.ASSISTANT, null, null, List.of(nullNameToolCall), null, null, null, null, null);
         Choice nullNameChoice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, nullNameToolMessage, null, 0);
 
         // Add non-null TokenUsage with correct parameters - 9 parameters total
@@ -500,7 +655,7 @@ class DashScopeChatModelTests {
         ChatCompletionOutput nullNameOutput = new ChatCompletionOutput("", List.of(nullNameChoice), null);
         ChatCompletion nullNameCompletion = new ChatCompletion("test-id", nullNameOutput, usage);
 
-        when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(ResponseEntity.ok(nullNameCompletion));
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenReturn(ResponseEntity.ok(nullNameCompletion));
 
         // Test tool call with null name - should not throw NPE
         Message message = new UserMessage("What's the weather like?");
@@ -528,18 +683,18 @@ class DashScopeChatModelTests {
                 .properties(Map.of("partial", true))
                 .build());
 
-        Prompt prompt = new Prompt(messages, defaultOptions);
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        Prompt prompt = new Prompt(messages, DashScopeChatOptions.builder().build());
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
-        List<ChatCompletionMessage> requestMessages = request.input().messages();
+        var requestMessages = request.input().messages();
         assertThat(requestMessages).isNotEmpty();
         assertThat(requestMessages.size()).isEqualTo(2);
 
-        ChatCompletionMessage lastMessage = requestMessages.get(1);
-        assertThat(lastMessage.role()).isEqualTo(ChatCompletionMessage.Role.ASSISTANT);
+        var lastMessage = requestMessages.get(1);
+        assertThat(lastMessage.role()).isEqualTo(Role.ASSISTANT);
         assertThat(lastMessage.partial()).isNotNull();
         assertThat(lastMessage.partial()).isTrue();
-        assertThat(lastMessage.content()).contains("def calculate_fibonacci");
+        assertThat(lastMessage.content().toString()).contains("def calculate_fibonacci");
     }
 
     @Test
@@ -550,18 +705,37 @@ class DashScopeChatModelTests {
                 	if n <= 1:
                 		return n
                 	else:
-                """).properties(Map.of("partial", true)).build();
+                """).properties(Map.of("partial", "true")).build();
 
         List<Message> messages = List.of(new UserMessage("Please complete this function."), assistantMessage);
 
-        Prompt prompt = new Prompt(messages, defaultOptions);
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        Prompt prompt = new Prompt(messages, DashScopeChatOptions.builder().build());
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
-        List<ChatCompletionMessage> requestMessages = request.input().messages();
-        ChatCompletionMessage lastMessage = requestMessages.get(requestMessages.size() - 1);
+        var requestMessages = request.input().messages();
+        var lastMessage = requestMessages.get(requestMessages.size() - 1);
 
         assertThat(lastMessage.partial()).isNotNull();
         assertThat(lastMessage.partial()).isTrue();
+    }
+
+    @Test
+    void testPartialModeWithFalseStringValue() {
+        AssistantMessage assistantMessage = AssistantMessage.builder()
+                .content("The function is already complete.")
+                .properties(Map.of("partial", "false"))
+                .build();
+
+        List<Message> messages = List.of(new UserMessage("Please complete this function."), assistantMessage);
+
+        Prompt prompt = new Prompt(messages, DashScopeChatOptions.builder().build());
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
+
+        var requestMessages = request.input().messages();
+        var lastMessage = requestMessages.get(requestMessages.size() - 1);
+
+        assertThat(lastMessage.partial()).isNotNull();
+        assertThat(lastMessage.partial()).isFalse();
     }
 
     @Test
@@ -571,11 +745,11 @@ class DashScopeChatModelTests {
 
         List<Message> messages = List.of(new UserMessage("Hello"), assistantMessage);
 
-        Prompt prompt = new Prompt(messages, defaultOptions);
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        Prompt prompt = new Prompt(messages, DashScopeChatOptions.builder().build());
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
-        List<ChatCompletionMessage> requestMessages = request.input().messages();
-        ChatCompletionMessage lastMessage = requestMessages.get(requestMessages.size() - 1);
+        var requestMessages = request.input().messages();
+        var lastMessage = requestMessages.get(requestMessages.size() - 1);
 
         assertThat(lastMessage.partial()).isNull();
     }
@@ -584,18 +758,18 @@ class DashScopeChatModelTests {
     void testCallWithIncrementalOutput() {
         var message = UserMessage.builder().text(TEST_PROMPT).build();
         var prompt = Prompt.builder().messages(message).chatOptions(defaultOptions).build();
-        var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
         var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         var usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
         var responseEntity = ResponseEntity.ok(chatCompletion);
 
-        when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(responseEntity);
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenReturn(responseEntity);
 
-        var request = chatModel.createRequest(prompt, false);
-        assertThat(request.parameters().incrementalOutput()).isFalse();
-        assertThat(request.parameters().stream()).isNull();
+        var request = chatModel.createRequest(prompt);
+        assertThat(request.parameters().incrementalOutput()).isTrue();
+        assertThat(JsonMapper.builder().build().writeValueAsString(request)).doesNotContain("\"stream\"");
 
         var chatResponse = chatModel.call(prompt);
         assertThat(chatResponse).isNotNull();
@@ -605,42 +779,43 @@ class DashScopeChatModelTests {
     void testStreamWithIncrementalOutput() {
         var message = UserMessage.builder().text(TEST_PROMPT).build();
         var prompt = Prompt.builder().messages(message).chatOptions(defaultOptions).build();
-        var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
         var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         var usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
-        var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
-        var responseEntity = ResponseEntity.ok(chatCompletion);
+        var chunk = new ChatCompletionChunk(TEST_REQUEST_ID, output, usage, null);
 
-        when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(responseEntity);
+        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.just(chunk));
 
-        var request = chatModel.createRequest(prompt, true);
+        var request = chatModel.createRequest(prompt);
         assertThat(request.parameters().incrementalOutput()).isTrue();
-        assertThat(request.parameters().stream()).isTrue();
+        assertThat(JsonMapper.builder().build().writeValueAsString(request)).doesNotContain("\"stream\"");
 
-        var chatResponseFlux = chatModel.stream(prompt);
-        assertThat(chatResponseFlux).isNotNull();
+        StepVerifier.create(chatModel.stream(prompt))
+                .assertNext(chatResponse -> assertThat(chatResponse.getResult().getOutput().getText()).isEqualTo(TEST_RESPONSE))
+                .verifyComplete();
     }
 
     @Test
     void testStreamWithoutIncrementalOutput() {
         defaultOptions = defaultOptions.mutate().incrementalOutput(false).build();
+        chatModel.setDashScopeChatOptions(defaultOptions);
         var message = UserMessage.builder().text(TEST_PROMPT).build();
         var prompt = Prompt.builder().messages(message).chatOptions(defaultOptions).build();
-        var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
         var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         var usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
-        var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
-        var responseEntity = ResponseEntity.ok(chatCompletion);
+        var chunk = new ChatCompletionChunk(TEST_REQUEST_ID, output, usage, null);
 
-        when(dashScopeApi.chatCompletionEntity(any(), any())).thenReturn(responseEntity);
+        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.just(chunk));
 
-        var request = chatModel.createRequest(prompt, true);
+        var request = chatModel.createRequest(prompt);
         assertThat(request.parameters().incrementalOutput()).isFalse();
 
-        var chatResponseFlux = chatModel.stream(prompt);
-        assertThat(chatResponseFlux).isNotNull();
+        StepVerifier.create(chatModel.stream(prompt))
+                .assertNext(chatResponse -> assertThat(chatResponse.getResult().getOutput().getText()).isEqualTo(TEST_RESPONSE))
+                .verifyComplete();
     }
 
     @Test
@@ -648,7 +823,7 @@ class DashScopeChatModelTests {
         Message message = new UserMessage("Test error handling");
         Prompt prompt = new Prompt(List.of(message));
 
-        when(dashScopeApi.chatCompletionStream(any(), any())).thenReturn(Flux.error(new com.alibaba.cloud.ai.dashscope.common.DashScopeException("InvalidParameter  (requestId: error-request-123)")));
+        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.error(new com.alibaba.cloud.ai.dashscope.common.DashScopeException("InvalidParameter  (requestId: error-request-123)")));
 
         Flux<ChatResponse> responseFlux = chatModel.stream(prompt);
 
@@ -665,7 +840,7 @@ class DashScopeChatModelTests {
         Message message = new UserMessage("Test error handling");
         Prompt prompt = new Prompt(List.of(message));
 
-        when(dashScopeApi.chatCompletionStream(any(), any())).thenReturn(Flux.error(
+        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.error(
                 new com.alibaba.cloud.ai.dashscope.common.DashScopeException("InvalidParameter",
                         "[InvalidParameter] invalid input (requestId: error-request-123)")));
 
@@ -686,7 +861,7 @@ class DashScopeChatModelTests {
         DashScopeChatOptions runtimeOptions = DashScopeChatOptions.builder()
                 .model("qwen-plus")
                 .enableThinking(true)
-                .extraBody(Map.of("thinking_budget", 50))
+                .thinkingBudget(50)
                 .build();
         Prompt prompt = chatModel.buildRequestPrompt(Prompt.builder()
                 .content(TEST_PROMPT)
@@ -704,8 +879,8 @@ class DashScopeChatModelTests {
                 .extracting(DashScopeChatOptions::getEnableThinking)
                 .isEqualTo(true);
         assertThat(prompt.getOptions()).asInstanceOf(type(DashScopeChatOptions.class))
-                .extracting(DashScopeChatOptions::getExtraBody)
-                .isEqualTo(Map.of("thinking_budget", 50));
+                .extracting(DashScopeChatOptions::getThinkingBudget)
+                .isEqualTo(50);
     }
 
     @Test
@@ -726,7 +901,7 @@ class DashScopeChatModelTests {
                 .content(TEST_PROMPT)
                 .chatOptions(runtimeToolOptions)
                 .build());
-        ChatCompletionRequest request = multiModelChatModel.createRequest(requestPrompt, false);
+        ChatCompletionRequest request = multiModelChatModel.createRequest(requestPrompt);
 
         assertThat(requestPrompt.getOptions()).isInstanceOf(DashScopeChatOptions.class);
         assertThat(requestPrompt.getOptions()).asInstanceOf(type(DashScopeChatOptions.class))
@@ -735,7 +910,7 @@ class DashScopeChatModelTests {
         assertThat(requestPrompt.getOptions()).asInstanceOf(type(DashScopeChatOptions.class))
                 .extracting(DashScopeChatOptions::getToolContext)
                 .isEqualTo(Map.of("key1", "value1"));
-        assertThat(request.multiModel()).isTrue();
+        assertThat(JsonMapper.builder().build().writeValueAsString(request)).doesNotContain("\"multi_model\"");
     }
 
     @Test
@@ -743,21 +918,23 @@ class DashScopeChatModelTests {
         DashScopeChatOptions runtimeOptions = DashScopeChatOptions.builder()
                 .model(TEST_MODEL)
                 .enableThinking(true)
-                .extraBody(Map.of("thinking_budget", 50))
+                .thinkingBudget(50)
                 .build();
         ChatCompletionRequest request = chatModel.createRequest(Prompt.builder()
                 .content(TEST_PROMPT)
                 .chatOptions(runtimeOptions)
-                .build(), true);
+                .build());
 
         String jsonRequest = JsonMapper.builder().build().writeValueAsString(request);
 
         assertThat(request.model()).isEqualTo(TEST_MODEL);
         assertThat(request.parameters().enableThinking()).isEqualTo(true);
-        assertThat(request.stream()).isEqualTo(true);
         assertThat(jsonRequest).contains("\"model\":\"" + TEST_MODEL + "\"");
         assertThat(jsonRequest).contains("\"enable_thinking\":" + true);
         assertThat(jsonRequest).contains("\"thinking_budget\":" + 50);
+        assertThat(jsonRequest).doesNotContain("\"stream\"");
+        assertThat(jsonRequest).doesNotContain("\"multi_model\"");
+        assertThat(jsonRequest).doesNotContain("\"forced_search\"");
 
     }
 
@@ -781,7 +958,7 @@ class DashScopeChatModelTests {
 
         ChatCompletionMessage responseMessage = new ChatCompletionMessage(
                 TEST_RESPONSE,
-                ChatCompletionMessage.Role.ASSISTANT
+                Role.ASSISTANT
         );
         Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         // Include searchInfo in the output
@@ -790,7 +967,7 @@ class DashScopeChatModelTests {
         ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
         ResponseEntity<ChatCompletion> responseEntity = ResponseEntity.ok(chatCompletion);
 
-        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any()))
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false)))
                 .thenReturn(responseEntity);
 
         // Create prompt
@@ -828,7 +1005,7 @@ class DashScopeChatModelTests {
         // First chunk - partial response without searchInfo
         ChatCompletionMessage chunkMessage1 = new ChatCompletionMessage(
                 "Hello ",
-                ChatCompletionMessage.Role.ASSISTANT
+                Role.ASSISTANT
         );
         Choice choice1 = new Choice(null, chunkMessage1, null, 0);
         ChatCompletionOutput output1 = new ChatCompletionOutput("Hello ", List.of(choice1), null);
@@ -837,7 +1014,7 @@ class DashScopeChatModelTests {
         // Second chunk - final response WITH searchInfo
         ChatCompletionMessage chunkMessage2 = new ChatCompletionMessage(
                 "World!",
-                ChatCompletionMessage.Role.ASSISTANT
+                Role.ASSISTANT
         );
         Choice choice2 = new Choice(ChatCompletionFinishReason.STOP, chunkMessage2, null, 0);
         // Include searchInfo in the final chunk's output
@@ -845,7 +1022,7 @@ class DashScopeChatModelTests {
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2, usage, null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any()))
+        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false)))
                 .thenReturn(Flux.just(chunk1, chunk2));
 
         // Create prompt
@@ -885,14 +1062,14 @@ class DashScopeChatModelTests {
 
         ChatCompletionMessage message = new ChatCompletionMessage(
                 TEST_RESPONSE,
-                ChatCompletionMessage.Role.ASSISTANT
+                Role.ASSISTANT
         );
         Choice choice = new Choice(ChatCompletionFinishReason.STOP, message, null, 0);
         ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), searchInfo);
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletionChunk chunk = new ChatCompletionChunk(TEST_REQUEST_ID, output, usage, null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any()))
+        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false)))
                 .thenReturn(Flux.just(chunk));
 
         // Create prompt
@@ -925,15 +1102,7 @@ class DashScopeChatModelTests {
 
     @Test
     void testCreateRequestWithStreamOptions() {
-        SearchOptions searchOptions = SearchOptions.builder()
-                .enableSource(false)
-                .enableCitation(false)
-                .citationFormat("[<number>]")
-                .forcedSearch(true)
-                .searchStrategy("turbo")
-                .enableSearchExtension(true)
-                .prependSearchResult(true)
-                .build();
+        SearchOptions searchOptions = new SearchOptions(false, false, "[<number>]", "turbo", true, true);
         DashScopeChatOptions runtimeOptions = DashScopeChatOptions.builder()
                 .model(TEST_MODEL)
                 .searchOptions(searchOptions)
@@ -941,16 +1110,16 @@ class DashScopeChatModelTests {
         ChatCompletionRequest request = chatModel.createRequest(Prompt.builder()
                 .content(TEST_PROMPT)
                 .chatOptions(runtimeOptions)
-                .build(), true);
+                .build());
 
         assertThat(request.model()).isEqualTo(TEST_MODEL);
         assertThat(request.parameters().searchOptions().enableSource()).isFalse();
         assertThat(request.parameters().searchOptions().enableCitation()).isFalse();
         assertThat(request.parameters().searchOptions().citationFormat()).isEqualTo("[<number>]");
-        assertThat(request.parameters().searchOptions().forcedSearch()).isTrue();
         assertThat(request.parameters().searchOptions().searchStrategy()).isEqualTo("turbo");
         assertThat(request.parameters().searchOptions().enableSearchExtension()).isTrue();
         assertThat(request.parameters().searchOptions().prependSearchResult()).isTrue();
+        assertThat(JsonMapper.builder().build().writeValueAsString(request)).doesNotContain("\"forced_search\"");
     }
 
     @Test
@@ -967,7 +1136,6 @@ class DashScopeChatModelTests {
                 .toolCallingManager(ToolCallingManager.builder().build())
                 .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
                 .observationRegistry(ObservationRegistry.NOOP)
-                .toolCallValidator(new DefaultToolCallValidator())
                 .build();
 
         DashScopeChatModel clone1 = model1.clone();
@@ -991,8 +1159,8 @@ class DashScopeChatModelTests {
         Prompt prompt = new Prompt(List.of(message));
 
         // Build TokenUsage with prompt_tokens_details (explicit cache related fields)
-        var cacheCreation = new com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.CacheCreation(1024);
-        var promptTokenDetailed = new com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.PromptTokenDetailed(
+        var cacheCreation = new CacheCreation(1024);
+        var promptTokenDetailed = new PromptTokenDetailed(
                 128,           // cachedTokens
                 cacheCreation, // cacheCreation
                 1024,          // cacheCreationInputTokens
@@ -1000,12 +1168,12 @@ class DashScopeChatModelTests {
         );
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, promptTokenDetailed);
 
-        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
         Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
 
-        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any())).thenReturn(ResponseEntity.ok(chatCompletion));
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false))).thenReturn(ResponseEntity.ok(chatCompletion));
 
         ChatResponse response = chatModel.call(prompt);
 
@@ -1023,7 +1191,7 @@ class DashScopeChatModelTests {
         assertThat(nativeUsage.promptTokenDetailed().cachedTokens()).isEqualTo(128);
         assertThat(nativeUsage.promptTokenDetailed().cacheType()).isEqualTo("ephemeral_5m");
         assertThat(nativeUsage.promptTokenDetailed().cacheCreationInputTokens()).isEqualTo(1024);
-        assertThat(nativeUsage.promptTokenDetailed().cacheCreation().ephemeral_5m_input_tokens()).isEqualTo(1024);
+        assertThat(nativeUsage.promptTokenDetailed().cacheCreation().ephemeral5mInputTokens()).isEqualTo(1024);
     }
 
     @Test
@@ -1037,13 +1205,13 @@ class DashScopeChatModelTests {
         Prompt prompt = new Prompt(List.of(message));
 
         // Mock API response
-        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
         Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
 
-        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any())).thenReturn(ResponseEntity.ok(chatCompletion));
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false))).thenReturn(ResponseEntity.ok(chatCompletion));
 
         // Should not throw any exception
         ChatResponse response = chatModel.call(prompt);
@@ -1063,13 +1231,13 @@ class DashScopeChatModelTests {
         Message userMessage = new UserMessage("Hello!");
 
         // Mock API response
-        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
         Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
         ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
 
-        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any())).thenReturn(ResponseEntity.ok(chatCompletion));
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false))).thenReturn(ResponseEntity.ok(chatCompletion));
 
         Prompt prompt = new Prompt(List.of(systemMessage, userMessage));
         ChatResponse response = chatModel.call(prompt);
@@ -1089,7 +1257,7 @@ class DashScopeChatModelTests {
         Prompt prompt = new Prompt(List.of(message), defaultOptions);
 
         // Use createRequest directly for unit testing
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
         assertThat(request).isNotNull();
         assertThat(request.input()).isNotNull();
@@ -1100,8 +1268,7 @@ class DashScopeChatModelTests {
         assertThat(firstMessage.rawContent()).isInstanceOf(List.class);
 
         @SuppressWarnings("unchecked")
-        List<com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.MediaContent> contentList =
-                (List<com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.MediaContent>) firstMessage.rawContent();
+        List<MediaContent> contentList = (List<MediaContent>) firstMessage.rawContent();
 
         assertThat(contentList).hasSize(1);
         assertThat(contentList.get(0).text()).isEqualTo(TEST_PROMPT);
@@ -1120,7 +1287,7 @@ class DashScopeChatModelTests {
         Message userMessage = new UserMessage("Hello!");
         Prompt prompt = new Prompt(List.of(systemMessage, userMessage), defaultOptions);
 
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
         assertThat(request).isNotNull();
         assertThat(request.input().messages()).hasSize(2);
@@ -1130,8 +1297,7 @@ class DashScopeChatModelTests {
         assertThat(firstMessage.rawContent()).isInstanceOf(List.class);
 
         @SuppressWarnings("unchecked")
-        List<com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.MediaContent> contentList =
-                (List<com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.MediaContent>) firstMessage.rawContent();
+        List<MediaContent> contentList = (List<MediaContent>) firstMessage.rawContent();
 
         assertThat(contentList).hasSize(1);
         assertThat(contentList.get(0).cacheControl()).isNotNull();
@@ -1250,7 +1416,7 @@ class DashScopeChatModelTests {
         Message message = new UserMessage(TEST_PROMPT);
         Prompt prompt = new Prompt(List.of(message), defaultOptions);
 
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
         assertThat(request).isNotNull();
         var firstMessage = request.input().messages().get(0);
@@ -1283,12 +1449,11 @@ class DashScopeChatModelTests {
     void testCreateRequestWithEnableCodeInterpreter() {
         Message message = new UserMessage(TEST_PROMPT);
         DashScopeChatOptions options = DashScopeChatOptions.builder()
-                .model(TEST_MODEL)
                 .enableCodeInterpreter(true)
                 .build();
         Prompt prompt = new Prompt(List.of(message), options);
 
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
         assertThat(request).isNotNull();
         assertThat(request.parameters().enableCodeInterpreter()).isTrue();
@@ -1299,7 +1464,7 @@ class DashScopeChatModelTests {
         Message message = new UserMessage(TEST_PROMPT);
         Prompt prompt = new Prompt(List.of(message), defaultOptions);
 
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
         assertThat(request).isNotNull();
         assertThat(request.parameters().enableCodeInterpreter()).isNull();

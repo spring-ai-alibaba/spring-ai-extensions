@@ -119,8 +119,8 @@ class DashScopeAgentOptionsTests {
                 .flowStreamMode(DashScopeAgentFlowStreamMode.FULL_THOUGHTS)
                 .build();
 
-        // Create copy using copy() method
-        DashScopeAgentOptions copy = (DashScopeAgentOptions) original.copy();
+        // Create copy using the current DashScopeAgentOptions copy factory.
+        DashScopeAgentOptions copy = DashScopeAgentOptions.fromOptions(original);
 
         // Verify copied options match original
         assertThat(copy.getAppId()).isEqualTo(original.getAppId());
