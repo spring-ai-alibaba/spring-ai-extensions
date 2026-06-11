@@ -768,6 +768,11 @@ public class DashScopeApiSpec {
             public static final String NONE = "none";
 
             /**
+             * Model must call at least one function, but it can choose which one.
+             */
+            public static final String REQUIRED = "required";
+
+            /**
              * Specifying a particular function forces the model to call that function.
              */
             public static Object function(String functionName) {
