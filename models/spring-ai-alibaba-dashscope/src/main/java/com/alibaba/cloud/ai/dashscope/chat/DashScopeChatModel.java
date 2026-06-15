@@ -75,7 +75,6 @@ import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.chat.observation.ChatModelObservationDocumentation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.support.UsageCalculator;
@@ -186,19 +185,17 @@ public class DashScopeChatModel implements ChatModel {
 
 	@Override
 	public ChatOptions getOptions() {
-		return this.defaultOptions.copy();
+		return this.defaultOptions;
 	}
 
-	@Override
-	public Prompt buildRequestPrompt(Prompt prompt) {
-		DashScopeChatOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
-		ChatOptions runtimeOptions = prompt.getOptions();
-		if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {
-			requestOptionsBuilder.combineWith(runtimeOptions.mutate());
-		}
-		DashScopeChatOptions requestOptions = requestOptionsBuilder.build();
-		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
-		return new Prompt(prompt.getInstructions(), requestOptions);
+	private Prompt buildRequestPrompt(Prompt prompt) {
+        Assert.notNull(prompt, "Prompt must not be null");
+        if (prompt.getOptions() == null) {
+            return prompt.mutate().chatOptions(this.getOptions()).build();
+        }
+        else {
+            return prompt;
+        }
 	}
 
     private boolean isMultiModel(@Nullable ChatOptions options) {
@@ -442,9 +439,11 @@ public class DashScopeChatModel implements ChatModel {
 	}
 
 	private HttpHeaders getAdditionalHttpHeaders(Prompt prompt) {
-		Map<String, String> headers = new HashMap<>(this.defaultOptions.getHttpHeaders());
+        Map<String, String> headers = new HashMap<>();
 		if (prompt.getOptions() instanceof DashScopeChatOptions chatOptions) {
-			headers.putAll(chatOptions.getHttpHeaders());
+            if (!CollectionUtils.isEmpty(chatOptions.getHttpHeaders())) {
+                headers.putAll(chatOptions.getHttpHeaders());
+            }
 			if (StringUtils.hasText(chatOptions.getDataInspection())) {
 				headers.put(DashScopeApiConstants.HEADER_DATAINSPECTION, chatOptions.getDataInspection());
 			}

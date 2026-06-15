@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.tts;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -551,9 +552,16 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 				if (castFrom.getPhonemeTimestampEnabled() != null) {
 					this.phonemeTimestampEnabled = castFrom.getPhonemeTimestampEnabled();
 				}
-				if (castFrom.getLanguageHints() != null) {
-					this.languageHints = castFrom.getLanguageHints();
-				}
+                if (castFrom.getLanguageHints() != null) {
+                    if (this.languageHints == null) {
+                        this.languageHints = new ArrayList<>(castFrom.getLanguageHints());
+                    }
+                    else {
+                        List<String> merged = new ArrayList<>(this.languageHints);
+                        merged.addAll(castFrom.getLanguageHints());
+                        this.languageHints = merged;
+                    }
+                }
 				if (castFrom.getInstruction() != null) {
 					this.instruction = castFrom.getInstruction();
 				}

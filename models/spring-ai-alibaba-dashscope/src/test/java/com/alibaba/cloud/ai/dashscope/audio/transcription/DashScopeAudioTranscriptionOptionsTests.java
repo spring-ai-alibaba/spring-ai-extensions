@@ -201,7 +201,7 @@ class DashScopeAudioTranscriptionOptionsTests {
         assertThat(merged.getVocabularyId()).isEqualTo("vocab-2");
         assertThat(merged.getSampleRate()).isEqualTo(8000);
         assertThat(merged.getFormat()).isEqualTo("wav");
-        assertThat(merged.getLanguageHints()).containsExactly("en");
+        assertThat(merged.getLanguageHints()).containsExactly("zh", "en");
     }
 
     @Test

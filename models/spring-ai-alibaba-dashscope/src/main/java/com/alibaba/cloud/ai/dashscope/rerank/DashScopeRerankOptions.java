@@ -69,14 +69,6 @@ public class DashScopeRerankOptions implements RerankOptions {
         return returnDocuments;
     }
 
-    public Builder mutate() {
-        return builder().model(this.model).topN(this.topN).returnDocuments(this.returnDocuments);
-    }
-
-    public static DashScopeRerankOptions fromOptions(DashScopeRerankOptions options) {
-        return options.mutate().build();
-    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -105,30 +97,9 @@ public class DashScopeRerankOptions implements RerankOptions {
                 + this.returnDocuments + '}';
     }
 
-    public static class Builder {
+    public static final class Builder extends AbstractBuilder<DashScopeRerankOptions, Builder> {
 
-        protected @Nullable String model;
-
-        protected @Nullable Integer topN;
-
-        protected @Nullable Boolean returnDocuments;
-
-        public Builder() {
-        }
-
-        public Builder model(@Nullable String model) {
-            this.model = model;
-            return this;
-        }
-
-        public Builder topN(@Nullable Integer topN) {
-            this.topN = topN;
-            return this;
-        }
-
-        public Builder returnDocuments(@Nullable Boolean returnDocuments) {
-            this.returnDocuments = returnDocuments;
-            return this;
+        private Builder() {
         }
 
         public Builder from(DashScopeRerankOptions fromOptions) {
@@ -159,6 +130,38 @@ public class DashScopeRerankOptions implements RerankOptions {
         public DashScopeRerankOptions build() {
             return new DashScopeRerankOptions(this.model, this.topN, this.returnDocuments);
         }
+
+    }
+
+    protected abstract static class AbstractBuilder<O extends DashScopeRerankOptions, B extends AbstractBuilder<O, B>> {
+
+        protected @Nullable String model;
+
+        protected @Nullable Integer topN;
+
+        protected @Nullable Boolean returnDocuments;
+
+        @SuppressWarnings("unchecked")
+        protected B self() {
+            return (B) this;
+        }
+
+        public B model(@Nullable String model) {
+            this.model = model;
+            return self();
+        }
+
+        public B topN(@Nullable Integer topN) {
+            this.topN = topN;
+            return self();
+        }
+
+        public B returnDocuments(@Nullable Boolean returnDocuments) {
+            this.returnDocuments = returnDocuments;
+            return self();
+        }
+
+        public abstract O build();
 
     }
 

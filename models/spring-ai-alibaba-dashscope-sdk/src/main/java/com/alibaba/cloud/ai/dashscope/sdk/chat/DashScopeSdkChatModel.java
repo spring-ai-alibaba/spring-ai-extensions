@@ -53,7 +53,6 @@ import org.springframework.ai.chat.observation.ChatModelObservationDocumentation
 import org.springframework.ai.chat.observation.DefaultChatModelObservationConvention;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.support.UsageCalculator;
@@ -141,20 +140,17 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	@Override
 	public ChatOptions getOptions() {
-		return Objects.requireNonNull(DashScopeSdkChatOptions.fromOptions(this.defaultOptions));
+		return this.defaultOptions;
 	}
 
-	@Override
-	public Prompt buildRequestPrompt(Prompt prompt) {
-		Assert.notNull(prompt, "Prompt must not be null");
-		DashScopeSdkChatOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
-		ChatOptions runtimeOptions = prompt.getOptions();
-		if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {
-			requestOptionsBuilder.combineWith(runtimeOptions.mutate());
-		}
-		DashScopeSdkChatOptions requestOptions = requestOptionsBuilder.build();
-		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
-		return new Prompt(prompt.getInstructions(), requestOptions);
+	private Prompt buildRequestPrompt(Prompt prompt) {
+        Assert.notNull(prompt, "Prompt must not be null");
+        if (prompt.getOptions() == null) {
+            return prompt.mutate().chatOptions(this.getOptions()).build();
+        }
+        else {
+            return prompt;
+        }
 	}
 
 	public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
@@ -448,43 +444,39 @@ public class DashScopeSdkChatModel implements ChatModel {
 		}).map(ToolBase.class::cast).toList();
 	}
 
-	private void applyStop(GenerationParam.GenerationParamBuilder<?, ?> requestBuilder, @Nullable List<Object> stop) {
+	private void applyStop(GenerationParam.GenerationParamBuilder<?, ?> requestBuilder, @Nullable Object stop) {
 		if (stop == null) {
 			return;
 		}
-		if (CollectionUtils.isEmpty(stop)) {
-			return;
-		}
 
-		if (stop.stream().allMatch(String.class::isInstance)) {
-			List<String> stopStrings = stop.stream().map(String.class::cast).toList();
-			requestBuilder.stopStrings(stopStrings);
-			return;
-		}
+        if (stop instanceof String stopString) {
+            requestBuilder.stopString(stopString);
+            return;
+        }
 
-		if (stop.stream().allMatch(Number.class::isInstance)) {
-			List<Integer> stopTokens = stop.stream().map(Number.class::cast).map(Number::intValue).toList();
-			requestBuilder.stopToken(stopTokens);
-			return;
-		}
+        if (stop instanceof List<?> stopList) {
+            if (CollectionUtils.isEmpty(stopList)) {
+                return;
+            }
 
-		if (stop.stream().allMatch(List.class::isInstance)) {
-			for (Object tokenListObj : stop) {
-				@SuppressWarnings("unchecked")
-				List<Object> tokenList = (List<Object>) tokenListObj;
-				List<Integer> stopTokens = tokenList.stream()
-					.filter(Number.class::isInstance)
-					.map(Number.class::cast)
-					.map(Number::intValue)
-					.toList();
-				if (!CollectionUtils.isEmpty(stopTokens)) {
-					requestBuilder.stopToken(stopTokens);
-				}
-			}
-		}
+            if (stopList.stream().allMatch(String.class::isInstance)) {
+                List<String> stopStrings = stopList.stream().map(String.class::cast).toList();
+                requestBuilder.stopStrings(stopStrings);
+                return;
+            }
+
+            if (stopList.stream().allMatch(Number.class::isInstance)) {
+                List<Integer> stopTokens = stopList.stream().map(Number.class::cast).map(Number::intValue).toList();
+                requestBuilder.stopToken(stopTokens);
+                return;
+            }
+
+            throw new IllegalArgumentException("Invalid stop value");
+        }
+
 	}
 
-	private Map<String, Object> mergeHeaders(Map<String, String> runtimeHeaders) {
+	private Map<String, Object> mergeHeaders(@Nullable Map<String, String> runtimeHeaders) {
 		Map<String, Object> headers = new HashMap<>();
         if (!CollectionUtils.isEmpty(this.connectionHeaders)) {
             headers.putAll(this.connectionHeaders);
@@ -493,14 +485,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 			headers.putAll(runtimeHeaders);
 		}
 		return headers;
-	}
-
-	public DashScopeSdkChatOptions getDashScopeSdkChatOptions() {
-		return this.defaultOptions.copy();
-	}
-
-	public void setDashScopeSdkChatOptions(DashScopeSdkChatOptions options) {
-		this.defaultOptions = options;
 	}
 
 	public void setObservationConvention(ChatModelObservationConvention observationConvention) {

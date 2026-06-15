@@ -437,48 +437,6 @@ public class DashScopeImageOptions implements ImageOptions {
         return new Builder();
     }
 
-    public static DashScopeImageOptions fromOptions(DashScopeImageOptions options) {
-        return options.mutate().build();
-    }
-
-    public Builder mutate() {
-        return builder().model(this.model)
-                .n(this.n)
-                .width(this.width)
-                .height(this.height)
-                .size(this.size)
-                .style(this.style)
-                .seed(this.seed)
-                .refImg(this.refImg)
-                .refStrength(this.refStrength)
-                .responseFormat(this.responseFormat)
-                .refMode(this.refMode)
-                .negativePrompt(this.negativePrompt)
-                .promptExtend(this.promptExtend)
-                .watermark(this.watermark)
-                .function(this.function)
-                .baseImageUrl(this.baseImageUrl)
-                .maskImageUrl(this.maskImageUrl)
-                .sketchImageUrl(this.sketchImageUrl)
-                .sketchWeight(this.sketchWeight)
-                .sketchExtraction(this.sketchExtraction)
-                .sketchColor(this.sketchColor)
-                .maskColor(this.maskColor)
-                .maxImages(this.maxImages)
-                .enableInterleave(this.enableInterleave)
-                .invokeMode(this.invokeMode)
-                .outputRatio(this.outputRatio)
-                .xScale(this.xScale)
-                .yScale(this.yScale)
-                .angle(this.angle)
-                .leftOffset(this.leftOffset)
-                .rightOffset(this.rightOffset)
-                .topOffset(this.topOffset)
-                .bottomOffset(this.bottomOffset)
-                .bestQuality(this.bestQuality)
-                .limitImageSize(this.limitImageSize);
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -548,254 +506,9 @@ public class DashScopeImageOptions implements ImageOptions {
                 + ", limitImageSize=" + this.limitImageSize + '}';
     }
 
-    public static class Builder {
+    public static final class Builder extends AbstractBuilder<DashScopeImageOptions, Builder> {
 
-        protected @Nullable String model;
-
-        protected @Nullable Integer n;
-
-        protected @Nullable Integer width;
-
-        protected @Nullable Integer height;
-
-        protected @Nullable String size;
-
-        protected @Nullable String style;
-
-        protected @Nullable Integer seed;
-
-        protected @Nullable String refImg;
-
-        protected @Nullable Float refStrength;
-
-        protected @Nullable String responseFormat;
-
-        protected @Nullable String refMode;
-
-        protected @Nullable String negativePrompt;
-
-        protected @Nullable Boolean promptExtend;
-
-        protected @Nullable Boolean watermark;
-
-        protected @Nullable String function;
-
-        protected @Nullable String baseImageUrl;
-
-        protected @Nullable String maskImageUrl;
-
-        protected @Nullable String sketchImageUrl;
-
-        protected @Nullable Integer sketchWeight;
-
-        protected @Nullable Boolean sketchExtraction;
-
-        protected Integer @Nullable [][] sketchColor;
-
-        protected Integer @Nullable [][] maskColor;
-
-        protected @Nullable Integer maxImages;
-
-        protected @Nullable Boolean enableInterleave;
-
-        protected @Nullable InvokeMode invokeMode;
-
-        protected @Nullable String outputRatio;
-
-        protected @Nullable Float xScale;
-
-        protected @Nullable Float yScale;
-
-        protected @Nullable Integer angle;
-
-        protected @Nullable Integer leftOffset;
-
-        protected @Nullable Integer rightOffset;
-
-        protected @Nullable Integer topOffset;
-
-        protected @Nullable Integer bottomOffset;
-
-        protected @Nullable Boolean bestQuality;
-
-        protected @Nullable Boolean limitImageSize;
-
-        public Builder() {
-        }
-
-        public Builder model(@Nullable String model) {
-            this.model = model;
-            return this;
-        }
-
-        public Builder n(@Nullable Integer n) {
-            this.n = n;
-            return this;
-        }
-
-        public Builder width(@Nullable Integer width) {
-            this.width = width;
-            return this;
-        }
-
-        public Builder height(@Nullable Integer height) {
-            this.height = height;
-            return this;
-        }
-
-        public Builder size(@Nullable String size) {
-            this.size = size;
-            return this;
-        }
-
-        public Builder style(@Nullable String style) {
-            this.style = style;
-            return this;
-        }
-
-        public Builder seed(@Nullable Integer seed) {
-            this.seed = seed;
-            return this;
-        }
-
-        public Builder refImg(@Nullable String refImg) {
-            this.refImg = refImg;
-            return this;
-        }
-
-        public Builder refStrength(@Nullable Float refStrength) {
-            this.refStrength = refStrength;
-            return this;
-        }
-
-        public Builder responseFormat(@Nullable String responseFormat) {
-            this.responseFormat = responseFormat;
-            return this;
-        }
-
-        public Builder refMode(@Nullable String refMode) {
-            this.refMode = refMode;
-            return this;
-        }
-
-        public Builder negativePrompt(@Nullable String negativePrompt) {
-            this.negativePrompt = negativePrompt;
-            return this;
-        }
-
-        public Builder promptExtend(@Nullable Boolean promptExtend) {
-            this.promptExtend = promptExtend;
-            return this;
-        }
-
-        public Builder watermark(@Nullable Boolean watermark) {
-            this.watermark = watermark;
-            return this;
-        }
-
-        public Builder function(@Nullable String function) {
-            this.function = function;
-            return this;
-        }
-
-        public Builder baseImageUrl(@Nullable String baseImageUrl) {
-            this.baseImageUrl = baseImageUrl;
-            return this;
-        }
-
-        public Builder maskImageUrl(@Nullable String maskImageUrl) {
-            this.maskImageUrl = maskImageUrl;
-            return this;
-        }
-
-        public Builder sketchImageUrl(@Nullable String sketchImageUrl) {
-            this.sketchImageUrl = sketchImageUrl;
-            return this;
-        }
-
-        public Builder sketchWeight(@Nullable Integer sketchWeight) {
-            this.sketchWeight = sketchWeight;
-            return this;
-        }
-
-        public Builder sketchExtraction(@Nullable Boolean sketchExtraction) {
-            this.sketchExtraction = sketchExtraction;
-            return this;
-        }
-
-        public Builder sketchColor(Integer @Nullable [][] sketchColor) {
-            this.sketchColor = sketchColor;
-            return this;
-        }
-
-        public Builder maskColor(Integer @Nullable [][] maskColor) {
-            this.maskColor = maskColor;
-            return this;
-        }
-
-        public Builder maxImages(@Nullable Integer maxImages) {
-            this.maxImages = maxImages;
-            return this;
-        }
-
-        public Builder enableInterleave(@Nullable Boolean enableInterleave) {
-            this.enableInterleave = enableInterleave;
-            return this;
-        }
-
-        public Builder invokeMode(@Nullable InvokeMode invokeMode) {
-            this.invokeMode = invokeMode;
-            return this;
-        }
-
-        public Builder outputRatio(@Nullable String outputRatio) {
-            this.outputRatio = outputRatio;
-            return this;
-        }
-
-        public Builder xScale(@Nullable Float xScale) {
-            this.xScale = xScale;
-            return this;
-        }
-
-        public Builder yScale(@Nullable Float yScale) {
-            this.yScale = yScale;
-            return this;
-        }
-
-        public Builder angle(@Nullable Integer angle) {
-            this.angle = angle;
-            return this;
-        }
-
-        public Builder leftOffset(@Nullable Integer leftOffset) {
-            this.leftOffset = leftOffset;
-            return this;
-        }
-
-        public Builder rightOffset(@Nullable Integer rightOffset) {
-            this.rightOffset = rightOffset;
-            return this;
-        }
-
-        public Builder topOffset(@Nullable Integer topOffset) {
-            this.topOffset = topOffset;
-            return this;
-        }
-
-        public Builder bottomOffset(@Nullable Integer bottomOffset) {
-            this.bottomOffset = bottomOffset;
-            return this;
-        }
-
-        public Builder bestQuality(@Nullable Boolean bestQuality) {
-            this.bestQuality = bestQuality;
-            return this;
-        }
-
-        public Builder limitImageSize(@Nullable Boolean limitImageSize) {
-            this.limitImageSize = limitImageSize;
-            return this;
+        private Builder() {
         }
 
         public Builder from(DashScopeImageOptions fromOptions) {
@@ -805,10 +518,10 @@ public class DashScopeImageOptions implements ImageOptions {
             this.height = fromOptions.getHeight();
             this.size = fromOptions.getSize();
             this.style = fromOptions.getStyle();
+            this.responseFormat = fromOptions.getResponseFormat();
             this.seed = fromOptions.getSeed();
             this.refImg = fromOptions.getRefImg();
             this.refStrength = fromOptions.getRefStrength();
-            this.responseFormat = fromOptions.getResponseFormat();
             this.refMode = fromOptions.getRefMode();
             this.negativePrompt = fromOptions.getNegativePrompt();
             this.promptExtend = fromOptions.getPromptExtend();
@@ -962,6 +675,268 @@ public class DashScopeImageOptions implements ImageOptions {
                     this.limitImageSize);
         }
         // @formatter:on
+
+    }
+
+    protected abstract static class AbstractBuilder<O extends DashScopeImageOptions, B extends AbstractBuilder<O, B>> {
+
+        protected @Nullable String model;
+
+        protected @Nullable Integer n;
+
+        protected @Nullable Integer width;
+
+        protected @Nullable Integer height;
+
+        protected @Nullable String size;
+
+        protected @Nullable String style;
+
+        protected @Nullable String responseFormat;
+
+        protected @Nullable Integer seed;
+
+        protected @Nullable String refImg;
+
+        protected @Nullable Float refStrength;
+
+        protected @Nullable String refMode;
+
+        protected @Nullable String negativePrompt;
+
+        protected @Nullable Boolean promptExtend;
+
+        protected @Nullable Boolean watermark;
+
+        protected @Nullable String function;
+
+        protected @Nullable String baseImageUrl;
+
+        protected @Nullable String maskImageUrl;
+
+        protected @Nullable String sketchImageUrl;
+
+        protected @Nullable Integer sketchWeight;
+
+        protected @Nullable Boolean sketchExtraction;
+
+        protected Integer @Nullable [][] sketchColor;
+
+        protected Integer @Nullable [][] maskColor;
+
+        protected @Nullable Integer maxImages;
+
+        protected @Nullable Boolean enableInterleave;
+
+        protected @Nullable InvokeMode invokeMode;
+
+        protected @Nullable String outputRatio;
+
+        protected @Nullable Float xScale;
+
+        protected @Nullable Float yScale;
+
+        protected @Nullable Integer angle;
+
+        protected @Nullable Integer leftOffset;
+
+        protected @Nullable Integer rightOffset;
+
+        protected @Nullable Integer topOffset;
+
+        protected @Nullable Integer bottomOffset;
+
+        protected @Nullable Boolean bestQuality;
+
+        protected @Nullable Boolean limitImageSize;
+
+        @SuppressWarnings("unchecked")
+        protected B self() {
+            return (B) this;
+        }
+
+        public B model(@Nullable String model) {
+            this.model = model;
+            return self();
+        }
+
+        public B n(@Nullable Integer n) {
+            this.n = n;
+            return self();
+        }
+
+        public B width(@Nullable Integer width) {
+            this.width = width;
+            if (this.width != null && this.height != null) {
+                this.size = this.width + "*" + this.height;
+            }
+            return self();
+        }
+
+        public B height(@Nullable Integer height) {
+            this.height = height;
+            if (this.width != null && this.height != null) {
+                this.size = this.width + "*" + this.height;
+            }
+            return self();
+        }
+
+        public B size(@Nullable String size) {
+            this.size = size;
+            return self();
+        }
+
+        public B style(@Nullable String style) {
+            this.style = style;
+            return self();
+        }
+
+        public B responseFormat(@Nullable String responseFormat) {
+            this.responseFormat = responseFormat;
+            return self();
+        }
+
+        public B seed(@Nullable Integer seed) {
+            this.seed = seed;
+            return self();
+        }
+
+        public B refImg(@Nullable String refImg) {
+            this.refImg = refImg;
+            return self();
+        }
+
+        public B refStrength(@Nullable Float refStrength) {
+            this.refStrength = refStrength;
+            return self();
+        }
+
+        public B refMode(@Nullable String refMode) {
+            this.refMode = refMode;
+            return self();
+        }
+
+        public B negativePrompt(@Nullable String negativePrompt) {
+            this.negativePrompt = negativePrompt;
+            return self();
+        }
+
+        public B promptExtend(@Nullable Boolean promptExtend) {
+            this.promptExtend = promptExtend;
+            return self();
+        }
+
+        public B watermark(@Nullable Boolean watermark) {
+            this.watermark = watermark;
+            return self();
+        }
+
+        public B function(@Nullable String function) {
+            this.function = function;
+            return self();
+        }
+
+        public B baseImageUrl(@Nullable String baseImageUrl) {
+            this.baseImageUrl = baseImageUrl;
+            return self();
+        }
+
+        public B maskImageUrl(@Nullable String maskImageUrl) {
+            this.maskImageUrl = maskImageUrl;
+            return self();
+        }
+
+        public B sketchImageUrl(@Nullable String sketchImageUrl) {
+            this.sketchImageUrl = sketchImageUrl;
+            return self();
+        }
+
+        public B sketchWeight(@Nullable Integer sketchWeight) {
+            this.sketchWeight = sketchWeight;
+            return self();
+        }
+
+        public B sketchExtraction(@Nullable Boolean sketchExtraction) {
+            this.sketchExtraction = sketchExtraction;
+            return self();
+        }
+
+        public B sketchColor(Integer @Nullable [][] sketchColor) {
+            this.sketchColor = sketchColor;
+            return self();
+        }
+
+        public B maskColor(Integer @Nullable [][] maskColor) {
+            this.maskColor = maskColor;
+            return self();
+        }
+
+        public B maxImages(@Nullable Integer maxImages) {
+            this.maxImages = maxImages;
+            return self();
+        }
+
+        public B enableInterleave(@Nullable Boolean enableInterleave) {
+            this.enableInterleave = enableInterleave;
+            return self();
+        }
+
+        public B invokeMode(@Nullable InvokeMode invokeMode) {
+            this.invokeMode = invokeMode;
+            return self();
+        }
+
+        public B outputRatio(@Nullable String outputRatio) {
+            this.outputRatio = outputRatio;
+            return self();
+        }
+
+        public B xScale(@Nullable Float xScale) {
+            this.xScale = xScale;
+            return self();
+        }
+
+        public B yScale(@Nullable Float yScale) {
+            this.yScale = yScale;
+            return self();
+        }
+
+        public B angle(@Nullable Integer angle) {
+            this.angle = angle;
+            return self();
+        }
+
+        public B leftOffset(@Nullable Integer leftOffset) {
+            this.leftOffset = leftOffset;
+            return self();
+        }
+
+        public B rightOffset(@Nullable Integer rightOffset) {
+            this.rightOffset = rightOffset;
+            return self();
+        }
+
+        public B topOffset(@Nullable Integer topOffset) {
+            this.topOffset = topOffset;
+            return self();
+        }
+
+        public B bottomOffset(@Nullable Integer bottomOffset) {
+            this.bottomOffset = bottomOffset;
+            return self();
+        }
+
+        public B bestQuality(@Nullable Boolean bestQuality) {
+            this.bestQuality = bestQuality;
+            return self();
+        }
+
+        public B limitImageSize(@Nullable Boolean limitImageSize) {
+            this.limitImageSize = limitImageSize;
+            return self();
+        }
+
+        public abstract O build();
 
     }
 

@@ -112,6 +112,11 @@ class DashScopeChatModelObservationConventionTests {
 			return 0.0;
 		}
 
-	}
+        @Override
+        public Builder<?> mutate() {
+            return ChatOptions.builder();
+        }
+
+    }
 
 }

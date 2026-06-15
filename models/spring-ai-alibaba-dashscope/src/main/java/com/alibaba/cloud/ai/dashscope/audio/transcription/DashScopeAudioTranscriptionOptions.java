@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -810,13 +811,27 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 					this.translationEnabled = castFrom.getTranslationEnabled();
 				}
 				if (castFrom.getTranslationTargetLanguages() != null) {
-					this.translationTargetLanguages = castFrom.getTranslationTargetLanguages();
+                    if (this.translationTargetLanguages == null) {
+                        this.translationTargetLanguages = new ArrayList<>(castFrom.getTranslationTargetLanguages());
+                    }
+                    else {
+                        List<String> merged = new ArrayList<>(this.translationTargetLanguages);
+                        merged.addAll(castFrom.getTranslationTargetLanguages());
+                        this.translationTargetLanguages = merged;
+                    }
 				}
 				if (castFrom.getMaxEndSilence() != null) {
 					this.maxEndSilence = castFrom.getMaxEndSilence();
 				}
 				if (castFrom.getModalities() != null) {
-					this.modalities = castFrom.getModalities();
+                    if (this.modalities == null) {
+                        this.modalities = new ArrayList<>(castFrom.getModalities());
+                    }
+                    else {
+                        List<String> merged = new ArrayList<>(this.modalities);
+                        merged.addAll(castFrom.getModalities());
+                        this.modalities = merged;
+                    }
 				}
 				if (castFrom.getAudio() != null) {
 					this.audio = castFrom.getAudio();
@@ -855,7 +870,14 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 					this.disfluencyRemovalEnabled = castFrom.getDisfluencyRemovalEnabled();
 				}
 				if (castFrom.getLanguageHints() != null) {
-					this.languageHints = castFrom.getLanguageHints();
+                    if (this.languageHints == null) {
+                        this.languageHints = new ArrayList<>(castFrom.getLanguageHints());
+                    }
+                    else {
+                        List<String> merged = new ArrayList<>(this.languageHints);
+                        merged.addAll(castFrom.getLanguageHints());
+                        this.languageHints = merged;
+                    }
 				}
 				if (castFrom.getSemanticPunctuationEnabled() != null) {
 					this.semanticPunctuationEnabled = castFrom.getSemanticPunctuationEnabled();
@@ -876,7 +898,14 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 					this.inverseTextNormalizationEnabled = castFrom.getInverseTextNormalizationEnabled();
 				}
 				if (castFrom.getResources() != null) {
-					this.resources = castFrom.getResources();
+                    if (this.resources == null) {
+                        this.resources = new ArrayList<>(castFrom.getResources());
+                    }
+                    else {
+                        List<Resource> merged = new ArrayList<>(this.resources);
+                        merged.addAll(castFrom.getResources());
+                        this.resources = merged;
+                    }
 				}
 				if (castFrom.getTimestampAlignmentEnabled() != null) {
 					this.timestampAlignmentEnabled = castFrom.getTimestampAlignmentEnabled();
@@ -891,7 +920,14 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 					this.speakerCount = castFrom.getSpeakerCount();
 				}
 				if (castFrom.getChannelId() != null) {
-					this.channelId = castFrom.getChannelId();
+                    if (this.channelId == null) {
+                        this.channelId = new ArrayList<>(castFrom.getChannelId());
+                    }
+                    else {
+                        List<Integer> merged = new ArrayList<>(this.channelId);
+                        merged.addAll(castFrom.getChannelId());
+                        this.channelId = merged;
+                    }
 				}
 				if (castFrom.getAsrOptions() != null) {
 					this.asrOptions = castFrom.getAsrOptions();

@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.image.ImageOptions;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -70,7 +69,7 @@ public class DashScopeSdkImageOptions implements ImageOptions {
 	private final Boolean async;
 
 	@JsonIgnore
-	private final Map<String, String> httpHeaders;
+	private final @Nullable Map<String, String> httpHeaders;
 
 	@JsonProperty("extra_body")
 	private final @Nullable Map<String, Object> extraBody;
@@ -92,16 +91,12 @@ public class DashScopeSdkImageOptions implements ImageOptions {
 		this.refImage = refImage;
 		this.pollIntervalMs = pollIntervalMs != null ? pollIntervalMs : 1000;
 		this.async = async != null ? async : true;
-		this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
-		this.extraBody = extraBody != null ? new HashMap<>(extraBody) : null;
+		this.httpHeaders = httpHeaders != null ? Map.copyOf(httpHeaders) : null;
+		this.extraBody = extraBody != null ? Map.copyOf(extraBody) : null;
 	}
 
 	public static Builder builder() {
 		return new Builder();
-	}
-
-	public static DashScopeSdkImageOptions fromOptions(DashScopeSdkImageOptions options) {
-		return options.mutate().build();
 	}
 
 	@Override
@@ -161,30 +156,12 @@ public class DashScopeSdkImageOptions implements ImageOptions {
 		return this.async;
 	}
 
-	public Map<String, String> getHttpHeaders() {
-		return Collections.unmodifiableMap(this.httpHeaders);
+	public @Nullable Map<String, String> getHttpHeaders() {
+		return this.httpHeaders;
 	}
 
 	public @Nullable Map<String, Object> getExtraBody() {
 		return this.extraBody;
-	}
-
-	public Builder mutate() {
-		return builder()
-			.model(this.model)
-			.n(this.n)
-			.width(this.width)
-			.height(this.height)
-			.size(this.size)
-			.style(this.style)
-			.responseFormat(this.responseFormat)
-			.seed(this.seed)
-			.negativePrompt(this.negativePrompt)
-			.refImage(this.refImage)
-			.pollIntervalMs(this.pollIntervalMs)
-			.async(this.async)
-			.httpHeaders(new HashMap<>(this.httpHeaders))
-			.extraBody(this.extraBody);
 	}
 
 	@Override
@@ -225,7 +202,106 @@ public class DashScopeSdkImageOptions implements ImageOptions {
 				+ this.httpHeaders + ", extraBody=" + this.extraBody + '}';
 	}
 
-	public static class Builder {
+	public static final class Builder extends AbstractBuilder<DashScopeSdkImageOptions, Builder> {
+
+		private Builder() {
+		}
+
+		public Builder from(DashScopeSdkImageOptions fromOptions) {
+			this.model = fromOptions.getModel();
+			this.n = fromOptions.getN();
+			this.width = fromOptions.getWidth();
+			this.height = fromOptions.getHeight();
+			this.size = fromOptions.getSize();
+			this.style = fromOptions.getStyle();
+			this.responseFormat = fromOptions.getResponseFormat();
+			this.seed = fromOptions.getSeed();
+			this.negativePrompt = fromOptions.getNegativePrompt();
+			this.refImage = fromOptions.getRefImage();
+			this.pollIntervalMs = fromOptions.getPollIntervalMs();
+			this.async = fromOptions.getAsync();
+			this.httpHeaders = fromOptions.getHttpHeaders();
+			this.extraBody = fromOptions.getExtraBody();
+			return this;
+		}
+
+		public Builder merge(@Nullable ImageOptions from) {
+			if (from == null) {
+				return this;
+			}
+			if (from.getModel() != null) {
+				this.model = from.getModel();
+			}
+			if (from.getN() != null) {
+				this.n = from.getN();
+			}
+			if (from.getWidth() != null) {
+				this.width = from.getWidth();
+			}
+			if (from.getHeight() != null) {
+				this.height = from.getHeight();
+			}
+			if (from.getResponseFormat() != null) {
+				this.responseFormat = from.getResponseFormat();
+			}
+			if (from.getStyle() != null) {
+				this.style = from.getStyle();
+			}
+			if (from instanceof DashScopeSdkImageOptions castFrom) {
+				if (castFrom.getSize() != null) {
+					this.size = castFrom.getSize();
+				}
+				if (castFrom.getSeed() != null) {
+					this.seed = castFrom.getSeed();
+				}
+				if (castFrom.getNegativePrompt() != null) {
+					this.negativePrompt = castFrom.getNegativePrompt();
+				}
+				if (castFrom.getRefImage() != null) {
+					this.refImage = castFrom.getRefImage();
+				}
+				if (castFrom.getPollIntervalMs() != null) {
+					this.pollIntervalMs = castFrom.getPollIntervalMs();
+				}
+				if (castFrom.getAsync() != null) {
+					this.async = castFrom.getAsync();
+				}
+				if (castFrom.getHttpHeaders() != null) {
+                    if (this.httpHeaders == null) {
+                        this.httpHeaders = new HashMap<>(castFrom.getHttpHeaders());
+                    }
+                    else {
+                        Map<String, String> merged = new HashMap<>(this.httpHeaders);
+                        merged.putAll(castFrom.getHttpHeaders());
+                        this.httpHeaders = merged;
+                    }
+				}
+
+				if (castFrom.getExtraBody() != null) {
+                    if (this.extraBody == null) {
+                        this.extraBody = new HashMap<>(castFrom.getExtraBody());
+                    }
+                    else {
+                        Map<String, Object> merged = new HashMap<>(this.extraBody);
+                        merged.putAll(castFrom.getExtraBody());
+                        this.extraBody = merged;
+                    }
+				}
+			}
+			return this;
+		}
+
+        // @formatter:off
+		public DashScopeSdkImageOptions build() {
+			return new DashScopeSdkImageOptions(this.model, this.n, this.width, this.height, this.size, this.style,
+					this.responseFormat, this.seed, this.negativePrompt, this.refImage, this.pollIntervalMs,
+					this.async, this.httpHeaders, this.extraBody);
+		}
+        // @formatter:on
+
+	}
+
+	protected abstract static class AbstractBuilder<O extends DashScopeSdkImageOptions, B extends AbstractBuilder<O, B>> {
 
 		protected @Nullable String model;
 
@@ -251,159 +327,92 @@ public class DashScopeSdkImageOptions implements ImageOptions {
 
 		protected @Nullable Boolean async;
 
-		protected Map<String, String> httpHeaders = new HashMap<>();
+		protected @Nullable Map<String, String> httpHeaders;
 
 		protected @Nullable Map<String, Object> extraBody;
 
-		public Builder() {
+		@SuppressWarnings("unchecked")
+		protected B self() {
+			return (B) this;
 		}
 
-		public Builder model(@Nullable String model) {
+		public B model(@Nullable String model) {
 			this.model = model;
-			return this;
+			return self();
 		}
 
-		public Builder n(@Nullable Integer n) {
+		public B n(@Nullable Integer n) {
 			this.n = n;
-			return this;
+			return self();
 		}
 
-		public Builder width(@Nullable Integer width) {
+		public B width(@Nullable Integer width) {
 			this.width = width;
-			return this;
+			if (this.width != null && this.height != null) {
+				this.size = this.width + "*" + this.height;
+			}
+			return self();
 		}
 
-		public Builder height(@Nullable Integer height) {
+		public B height(@Nullable Integer height) {
 			this.height = height;
-			return this;
+			if (this.width != null && this.height != null) {
+				this.size = this.width + "*" + this.height;
+			}
+			return self();
 		}
 
-		public Builder size(@Nullable String size) {
+		public B size(@Nullable String size) {
 			this.size = size;
-			return this;
+			return self();
 		}
 
-		public Builder style(@Nullable String style) {
+		public B style(@Nullable String style) {
 			this.style = style;
-			return this;
+			return self();
 		}
 
-		public Builder responseFormat(@Nullable String responseFormat) {
+		public B responseFormat(@Nullable String responseFormat) {
 			this.responseFormat = responseFormat;
-			return this;
+			return self();
 		}
 
-		public Builder seed(@Nullable Integer seed) {
+		public B seed(@Nullable Integer seed) {
 			this.seed = seed;
-			return this;
+			return self();
 		}
 
-		public Builder negativePrompt(@Nullable String negativePrompt) {
+		public B negativePrompt(@Nullable String negativePrompt) {
 			this.negativePrompt = negativePrompt;
-			return this;
+			return self();
 		}
 
-		public Builder refImage(@Nullable String refImage) {
+		public B refImage(@Nullable String refImage) {
 			this.refImage = refImage;
-			return this;
+			return self();
 		}
 
-		public Builder pollIntervalMs(@Nullable Integer pollIntervalMs) {
+		public B pollIntervalMs(@Nullable Integer pollIntervalMs) {
 			this.pollIntervalMs = pollIntervalMs;
-			return this;
+			return self();
 		}
 
-		public Builder async(@Nullable Boolean async) {
+		public B async(@Nullable Boolean async) {
 			this.async = async;
-			return this;
+			return self();
 		}
 
-		public Builder httpHeaders(@Nullable Map<String, String> httpHeaders) {
-			this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
-			return this;
-		}
+		public B httpHeaders(@Nullable Map<String, String> httpHeaders) {
+            this.httpHeaders = httpHeaders;
+            return self();
+        }
 
-		public Builder extraBody(@Nullable Map<String, Object> extraBody) {
+		public B extraBody(@Nullable Map<String, Object> extraBody) {
 			this.extraBody = extraBody;
-			return this;
+			return self();
 		}
 
-		public Builder from(DashScopeSdkImageOptions fromOptions) {
-			this.model = fromOptions.getModel();
-			this.n = fromOptions.getN();
-			this.width = fromOptions.getWidth();
-			this.height = fromOptions.getHeight();
-			this.size = fromOptions.getSize();
-			this.style = fromOptions.getStyle();
-			this.responseFormat = fromOptions.getResponseFormat();
-			this.seed = fromOptions.getSeed();
-			this.negativePrompt = fromOptions.getNegativePrompt();
-			this.refImage = fromOptions.getRefImage();
-			this.pollIntervalMs = fromOptions.getPollIntervalMs();
-			this.async = fromOptions.getAsync();
-			this.httpHeaders = new HashMap<>(fromOptions.getHttpHeaders());
-			this.extraBody = fromOptions.getExtraBody();
-			return this;
-		}
-
-		public Builder merge(@Nullable ImageOptions from) {
-			if (from == null) {
-				return this;
-			}
-			if (from.getModel() != null) {
-				this.model = from.getModel();
-			}
-			if (from.getN() != null) {
-				this.n = from.getN();
-			}
-			if (from.getWidth() != null) {
-				this.width = from.getWidth();
-			}
-			if (from.getHeight() != null) {
-				this.height = from.getHeight();
-			}
-			if (from.getStyle() != null) {
-				this.style = from.getStyle();
-			}
-			if (from.getResponseFormat() != null) {
-				this.responseFormat = from.getResponseFormat();
-			}
-			if (from instanceof DashScopeSdkImageOptions castFrom) {
-				if (castFrom.getSize() != null) {
-					this.size = castFrom.getSize();
-				}
-				if (castFrom.getSeed() != null) {
-					this.seed = castFrom.getSeed();
-				}
-				if (castFrom.getNegativePrompt() != null) {
-					this.negativePrompt = castFrom.getNegativePrompt();
-				}
-				if (castFrom.getRefImage() != null) {
-					this.refImage = castFrom.getRefImage();
-				}
-				if (castFrom.getPollIntervalMs() != null) {
-					this.pollIntervalMs = castFrom.getPollIntervalMs();
-				}
-				if (castFrom.getAsync() != null) {
-					this.async = castFrom.getAsync();
-				}
-				if (castFrom.getHttpHeaders() != null && !castFrom.getHttpHeaders().isEmpty()) {
-					this.httpHeaders = new HashMap<>(castFrom.getHttpHeaders());
-				}
-				if (castFrom.getExtraBody() != null) {
-					this.extraBody = castFrom.getExtraBody();
-				}
-			}
-			return this;
-		}
-
-        // @formatter:off
-		public DashScopeSdkImageOptions build() {
-			return new DashScopeSdkImageOptions(this.model, this.n, this.width, this.height, this.size, this.style,
-					this.responseFormat, this.seed, this.negativePrompt, this.refImage, this.pollIntervalMs,
-					this.async, this.httpHeaders, this.extraBody);
-		}
-        // @formatter:on
+		public abstract O build();
 
 	}
 

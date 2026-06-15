@@ -67,20 +67,9 @@ public class DashScopeVideoOptions implements VideoOptions {
 		return parameters;
 	}
 
-	public Builder mutate() {
-		return builder()
-				.model(this.model)
-				.input(this.input)
-				.parameters(this.parameters);
+	public static Builder builder() {
+		return new Builder();
 	}
-
-    public static DashScopeVideoOptions fromOptions(DashScopeVideoOptions options) {
-        return options.mutate().build();
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
 
 	@Override
 	public boolean equals(Object o) {
@@ -104,77 +93,6 @@ public class DashScopeVideoOptions implements VideoOptions {
 	public String toString() {
 		return "DashScopeVideoOptions{" + "model='" + this.model + '\'' + ", input=" + this.input
 				+ ", parameters=" + this.parameters + '}';
-	}
-
-	public static class Builder {
-
-		protected @Nullable String model;
-
-		protected @Nullable InputOptions input;
-
-		protected @Nullable ParametersOptions parameters;
-
-		public Builder() {
-		}
-
-		public Builder model(@Nullable String model) {
-			this.model = model;
-			return this;
-		}
-
-		public Builder input(@Nullable InputOptions input) {
-			this.input = input;
-			return this;
-		}
-
-		public Builder parameters(@Nullable ParametersOptions parameters) {
-			this.parameters = parameters;
-			return this;
-		}
-
-		public Builder from(DashScopeVideoOptions fromOptions) {
-			this.model = fromOptions.getModel();
-			this.input = fromOptions.getInput();
-			this.parameters = fromOptions.getParameters();
-			return this;
-		}
-
-		public Builder merge(@Nullable VideoOptions from) {
-			if (from == null) {
-				return this;
-			}
-			if (from.getModel() != null) {
-				this.model = from.getModel();
-			}
-			if (from instanceof DashScopeVideoOptions castFrom) {
-				if (castFrom.getInput() != null) {
-					this.input = mergeInput(this.input, castFrom.getInput());
-				}
-				if (castFrom.getParameters() != null) {
-					this.parameters = mergeParameters(this.parameters, castFrom.getParameters());
-				}
-			}
-			return this;
-		}
-
-		private @Nullable InputOptions mergeInput(@Nullable InputOptions base, InputOptions override) {
-			if (base == null) {
-				return override;
-			}
-			return InputOptions.builder().from(base).merge(override).build();
-		}
-
-		private @Nullable ParametersOptions mergeParameters(@Nullable ParametersOptions base, ParametersOptions override) {
-			if (base == null) {
-				return override;
-			}
-			return ParametersOptions.builder().from(base).merge(override).build();
-		}
-
-		public DashScopeVideoOptions build() {
-			return new DashScopeVideoOptions(this.model, this.input, this.parameters);
-		}
-
 	}
 
 	public static class InputOptions {
@@ -1529,5 +1447,73 @@ public class DashScopeVideoOptions implements VideoOptions {
 			}
 		}
 	}
+
+    public static final class Builder extends AbstractBuilder<DashScopeVideoOptions, Builder> {
+
+        private Builder() {
+        }
+
+        public Builder from(DashScopeVideoOptions fromOptions) {
+            this.model = fromOptions.getModel();
+            this.input = fromOptions.getInput();
+            this.parameters = fromOptions.getParameters();
+            return this;
+        }
+
+        public Builder merge(@Nullable VideoOptions from) {
+            if (from == null) {
+                return this;
+            }
+            if (from.getModel() != null) {
+                this.model = from.getModel();
+            }
+            if (from instanceof DashScopeVideoOptions castFrom) {
+                if (castFrom.getInput() != null) {
+                    this.input = castFrom.getInput();
+                }
+                if (castFrom.getParameters() != null) {
+                    this.parameters = castFrom.getParameters();
+                }
+            }
+            return this;
+        }
+
+        public DashScopeVideoOptions build() {
+            return new DashScopeVideoOptions(this.model, this.input, this.parameters);
+        }
+
+    }
+
+    protected abstract static class AbstractBuilder<O extends DashScopeVideoOptions, B extends AbstractBuilder<O, B>> {
+
+        protected @Nullable String model;
+
+        protected @Nullable InputOptions input;
+
+        protected @Nullable ParametersOptions parameters;
+
+        @SuppressWarnings("unchecked")
+        protected B self() {
+            return (B) this;
+        }
+
+        public B model(@Nullable String model) {
+            this.model = model;
+            return self();
+        }
+
+        public B input(@Nullable InputOptions input) {
+            this.input = input;
+            return self();
+        }
+
+        public B parameters(@Nullable ParametersOptions parameters) {
+            this.parameters = parameters;
+            return self();
+        }
+
+        public abstract O build();
+
+    }
 
 }

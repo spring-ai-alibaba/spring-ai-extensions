@@ -213,7 +213,7 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 		return SpeechSynthesisAudioFormat.valueOf(normalized);
 	}
 
-	private Map<String, Object> mergeHeaders(Map<String, String> runtimeHeaders) {
+	private Map<String, Object> mergeHeaders(@Nullable Map<String, String> runtimeHeaders) {
 		Map<String, Object> headers = new HashMap<>();
 		headers.putAll(this.connectionHeaders);
 		if (!CollectionUtils.isEmpty(runtimeHeaders)) {
@@ -223,8 +223,8 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 	}
 
 	@Override
-	public DashScopeSdkAudioSpeechOptions getDefaultOptions() {
-		return Objects.requireNonNull(DashScopeSdkAudioSpeechOptions.fromOptions(this.defaultOptions));
+	public DashScopeSdkAudioSpeechOptions getOptions() {
+		return this.defaultOptions;
 	}
 
 	public Builder mutate() {
