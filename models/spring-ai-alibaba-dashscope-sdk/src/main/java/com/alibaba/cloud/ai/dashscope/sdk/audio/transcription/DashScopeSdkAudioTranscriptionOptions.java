@@ -65,7 +65,7 @@ public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscription
     private final @Nullable Boolean audioEventDetectionEnabled;
 
     @JsonIgnore
-    private final Map<String, String> httpHeaders;
+    private final @Nullable Map<String, String> httpHeaders;
 
     protected DashScopeSdkAudioTranscriptionOptions(
             @Nullable String model,
@@ -80,24 +80,20 @@ public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscription
             @Nullable Boolean audioEventDetectionEnabled,
             @Nullable Map<String, String> httpHeaders) {
         this.model = model != null ? model : "paraformer-v2";
-        this.fileUrls = fileUrls != null ? new ArrayList<>(fileUrls) : null;
+        this.fileUrls = fileUrls != null ? List.copyOf(fileUrls) : null;
         this.phraseId = phraseId;
-        this.channelId = channelId != null ? new ArrayList<>(channelId) : null;
+        this.channelId = channelId != null ? List.copyOf(channelId) : null;
         this.diarizationEnabled = diarizationEnabled;
         this.speakerCount = speakerCount;
         this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
         this.timestampAlignmentEnabled = timestampAlignmentEnabled;
         this.specialWordFilter = specialWordFilter;
         this.audioEventDetectionEnabled = audioEventDetectionEnabled;
-        this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
+        this.httpHeaders = httpHeaders != null ? Map.copyOf(httpHeaders) : null;
     }
 
     public static Builder builder() {
         return new Builder();
-    }
-
-    public static DashScopeSdkAudioTranscriptionOptions fromOptions(DashScopeSdkAudioTranscriptionOptions options) {
-        return options.mutate().build();
     }
 
     @Override
@@ -141,22 +137,8 @@ public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscription
         return this.audioEventDetectionEnabled;
     }
 
-    public Map<String, String> getHttpHeaders() {
+    public @Nullable Map<String, String> getHttpHeaders() {
         return this.httpHeaders;
-    }
-
-    public Builder mutate() {
-        return builder().model(this.model)
-                .fileUrls(this.fileUrls)
-                .phraseId(this.phraseId)
-                .channelId(this.channelId)
-                .diarizationEnabled(this.diarizationEnabled)
-                .speakerCount(this.speakerCount)
-                .disfluencyRemovalEnabled(this.disfluencyRemovalEnabled)
-                .timestampAlignmentEnabled(this.timestampAlignmentEnabled)
-                .specialWordFilter(this.specialWordFilter)
-                .audioEventDetectionEnabled(this.audioEventDetectionEnabled)
-                .httpHeaders(this.httpHeaders);
     }
 
     @Override
@@ -198,86 +180,9 @@ public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscription
                 + this.audioEventDetectionEnabled + ", httpHeaders=" + this.httpHeaders + '}';
     }
 
-    public static class Builder {
+    public static final class Builder extends AbstractBuilder<DashScopeSdkAudioTranscriptionOptions, Builder> {
 
-        protected @Nullable String model;
-
-        protected @Nullable List<String> fileUrls;
-
-        protected @Nullable String phraseId;
-
-        protected @Nullable List<Integer> channelId;
-
-        protected @Nullable Boolean diarizationEnabled;
-
-        protected @Nullable Integer speakerCount;
-
-        protected @Nullable Boolean disfluencyRemovalEnabled;
-
-        protected @Nullable Boolean timestampAlignmentEnabled;
-
-        protected @Nullable String specialWordFilter;
-
-        protected @Nullable Boolean audioEventDetectionEnabled;
-
-        protected Map<String, String> httpHeaders = new HashMap<>();
-
-        public Builder() {
-        }
-
-        public Builder model(@Nullable String model) {
-            this.model = model;
-            return this;
-        }
-
-        public Builder fileUrls(@Nullable List<String> fileUrls) {
-            this.fileUrls = fileUrls;
-            return this;
-        }
-
-        public Builder phraseId(@Nullable String phraseId) {
-            this.phraseId = phraseId;
-            return this;
-        }
-
-        public Builder channelId(@Nullable List<Integer> channelId) {
-            this.channelId = channelId;
-            return this;
-        }
-
-        public Builder diarizationEnabled(@Nullable Boolean diarizationEnabled) {
-            this.diarizationEnabled = diarizationEnabled;
-            return this;
-        }
-
-        public Builder speakerCount(@Nullable Integer speakerCount) {
-            this.speakerCount = speakerCount;
-            return this;
-        }
-
-        public Builder disfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
-            this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
-            return this;
-        }
-
-        public Builder timestampAlignmentEnabled(@Nullable Boolean timestampAlignmentEnabled) {
-            this.timestampAlignmentEnabled = timestampAlignmentEnabled;
-            return this;
-        }
-
-        public Builder specialWordFilter(@Nullable String specialWordFilter) {
-            this.specialWordFilter = specialWordFilter;
-            return this;
-        }
-
-        public Builder audioEventDetectionEnabled(@Nullable Boolean audioEventDetectionEnabled) {
-            this.audioEventDetectionEnabled = audioEventDetectionEnabled;
-            return this;
-        }
-
-        public Builder httpHeaders(Map<String, String> httpHeaders) {
-            this.httpHeaders = httpHeaders;
-            return this;
+        private Builder() {
         }
 
         public Builder from(DashScopeSdkAudioTranscriptionOptions fromOptions) {
@@ -304,13 +209,27 @@ public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscription
             }
             if (from instanceof DashScopeSdkAudioTranscriptionOptions castFrom) {
                 if (castFrom.getFileUrls() != null) {
-                    this.fileUrls = castFrom.getFileUrls();
+                    if (this.fileUrls == null) {
+                        this.fileUrls = new ArrayList<>(castFrom.getFileUrls());
+                    }
+                    else {
+                        List<String> merged = new ArrayList<>(this.fileUrls);
+                        merged.addAll(castFrom.getFileUrls());
+                        this.fileUrls = merged;
+                    }
                 }
                 if (castFrom.getPhraseId() != null) {
                     this.phraseId = castFrom.getPhraseId();
                 }
                 if (castFrom.getChannelId() != null) {
-                    this.channelId = castFrom.getChannelId();
+                    if (this.channelId == null) {
+                        this.channelId = new ArrayList<>(castFrom.getChannelId());
+                    }
+                    else {
+                        List<Integer> merged = new ArrayList<>(this.channelId);
+                        merged.addAll(castFrom.getChannelId());
+                        this.channelId = merged;
+                    }
                 }
                 if (castFrom.getDiarizationEnabled() != null) {
                     this.diarizationEnabled = castFrom.getDiarizationEnabled();
@@ -330,8 +249,15 @@ public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscription
                 if (castFrom.getAudioEventDetectionEnabled() != null) {
                     this.audioEventDetectionEnabled = castFrom.getAudioEventDetectionEnabled();
                 }
-                if (castFrom.getHttpHeaders() != null && !castFrom.getHttpHeaders().isEmpty()) {
-                    this.httpHeaders = castFrom.getHttpHeaders();
+                if (castFrom.getHttpHeaders() != null) {
+                    if (this.httpHeaders == null) {
+                        this.httpHeaders = new HashMap<>(castFrom.getHttpHeaders());
+                    }
+                    else {
+                        Map<String, String> merged = new HashMap<>(this.httpHeaders);
+                        merged.putAll(castFrom.getHttpHeaders());
+                        this.httpHeaders = merged;
+                    }
                 }
             }
             return this;
@@ -345,6 +271,94 @@ public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscription
 					this.httpHeaders);
 		}
         // @formatter:on
+
+    }
+
+    protected abstract static class AbstractBuilder<O extends DashScopeSdkAudioTranscriptionOptions, B extends AbstractBuilder<O, B>> {
+
+        protected @Nullable String model;
+
+        protected @Nullable List<String> fileUrls;
+
+        protected @Nullable String phraseId;
+
+        protected @Nullable List<Integer> channelId;
+
+        protected @Nullable Boolean diarizationEnabled;
+
+        protected @Nullable Integer speakerCount;
+
+        protected @Nullable Boolean disfluencyRemovalEnabled;
+
+        protected @Nullable Boolean timestampAlignmentEnabled;
+
+        protected @Nullable String specialWordFilter;
+
+        protected @Nullable Boolean audioEventDetectionEnabled;
+
+        protected @Nullable Map<String, String> httpHeaders;
+
+        @SuppressWarnings("unchecked")
+        protected B self() {
+            return (B) this;
+        }
+
+        public B model(@Nullable String model) {
+            this.model = model;
+            return self();
+        }
+
+        public B fileUrls(@Nullable List<String> fileUrls) {
+            this.fileUrls = fileUrls;
+            return self();
+        }
+
+        public B phraseId(@Nullable String phraseId) {
+            this.phraseId = phraseId;
+            return self();
+        }
+
+        public B channelId(@Nullable List<Integer> channelId) {
+            this.channelId = channelId;
+            return self();
+        }
+
+        public B diarizationEnabled(@Nullable Boolean diarizationEnabled) {
+            this.diarizationEnabled = diarizationEnabled;
+            return self();
+        }
+
+        public B speakerCount(@Nullable Integer speakerCount) {
+            this.speakerCount = speakerCount;
+            return self();
+        }
+
+        public B disfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
+            this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
+            return self();
+        }
+
+        public B timestampAlignmentEnabled(@Nullable Boolean timestampAlignmentEnabled) {
+            this.timestampAlignmentEnabled = timestampAlignmentEnabled;
+            return self();
+        }
+
+        public B specialWordFilter(@Nullable String specialWordFilter) {
+            this.specialWordFilter = specialWordFilter;
+            return self();
+        }
+
+        public B audioEventDetectionEnabled(@Nullable Boolean audioEventDetectionEnabled) {
+            this.audioEventDetectionEnabled = audioEventDetectionEnabled;
+            return self();
+        }
+
+        public B httpHeaders(@Nullable Map<String, String> httpHeaders) {
+            this.httpHeaders = httpHeaders;
+            return self();
+        }
+
+        public abstract O build();
 
     }
 

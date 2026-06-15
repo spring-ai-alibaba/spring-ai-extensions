@@ -107,18 +107,15 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 	private final @Nullable List<Skill> skill;
 
 	@JsonIgnore
-	private final Map<String, String> httpHeaders;
+	private final @Nullable Map<String, String> httpHeaders;
 
 	@JsonIgnore
-	private final List<ToolCallback> toolCallbacks;
+	private final @Nullable List<ToolCallback> toolCallbacks;
 
-    /**
-     * Whether to use the DashScope multimodal generation endpoint.
-     */
 	private final @Nullable Boolean multiModel;
 
 	@JsonIgnore
-	private final Map<String, Object> toolContext;
+	private final @Nullable Map<String, Object> toolContext;
 
 	protected DashScopeChatOptions(@Nullable String model, @Nullable Boolean stream, @Nullable Double temperature,
 			@Nullable Double topP, @Nullable Integer topK, @Nullable Boolean enableThinking,
@@ -158,23 +155,23 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		this.topLogprobs = topLogprobs;
 		this.n = n;
 		this.stop = copyStop(stop);
-		this.tools = tools != null ? new ArrayList<>(tools) : null;
+		this.tools = tools != null ? List.copyOf(tools) : null;
 		this.toolChoice = toolChoice;
 		this.parallelToolCalls = parallelToolCalls;
 		this.enableSearch = enableSearch;
 		this.searchOptions = searchOptions;
 		this.dataInspection = dataInspection;
-		this.skill = skill != null ? new ArrayList<>(skill) : null;
-		this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
-		this.toolCallbacks = toolCallbacks != null ? new ArrayList<>(toolCallbacks) : new ArrayList<>();
+		this.skill = skill != null ? List.copyOf(skill) : null;
+		this.httpHeaders = httpHeaders != null ? Map.copyOf(httpHeaders) : null;
+		this.toolCallbacks = toolCallbacks != null ? List.copyOf(toolCallbacks) : null;
 		this.multiModel = multiModel;
-		this.toolContext = toolContext != null ? new HashMap<>(toolContext) : new HashMap<>();
+		this.toolContext = toolContext != null ? Map.copyOf(toolContext) : null;
 	}
 
 	@SuppressWarnings("unchecked")
 	private static @Nullable Object copyStop(@Nullable Object stop) {
 		if (stop instanceof List<?> list) {
-			return new ArrayList<>((List<Object>) list);
+			return List.copyOf((List<Object>) list);
 		}
 		return stop;
 	}
@@ -326,13 +323,13 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		return this.skill;
 	}
 
-	public Map<String, String> getHttpHeaders() {
+	public @Nullable Map<String, String> getHttpHeaders() {
 		return this.httpHeaders;
 	}
 
 	@Override
 	@JsonIgnore
-	public List<ToolCallback> getToolCallbacks() {
+	public @Nullable List<ToolCallback> getToolCallbacks() {
 		return this.toolCallbacks;
 	}
 
@@ -343,7 +340,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
 	@Override
 	@JsonIgnore
-	public Map<String, Object> getToolContext() {
+	public @Nullable Map<String, Object> getToolContext() {
 		return this.toolContext;
 	}
 
@@ -529,17 +526,17 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
 		protected @Nullable List<Skill> skill;
 
-		protected Map<String, String> httpHeaders = new HashMap<>();
+		protected @Nullable Map<String, String> httpHeaders;
 
 		protected @Nullable Boolean multiModel;
 
 		@Override
 		public B clone() {
 			B copy = super.clone();
-			copy.stop = copyStop(this.stop);
-			copy.tools = this.tools != null ? new ArrayList<>(this.tools) : null;
-			copy.skill = this.skill != null ? new ArrayList<>(this.skill) : null;
-			copy.httpHeaders = this.httpHeaders != null ? new HashMap<>(this.httpHeaders) : new HashMap<>();
+			copy.stop = this.stop;
+			copy.tools = this.tools;
+			copy.skill = this.skill;
+			copy.httpHeaders = this.httpHeaders;
 			return copy;
 		}
 
@@ -634,22 +631,18 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 			return self();
 		}
 
-		public B topLogProbs(@Nullable Integer topLogprobs) {
-			return topLogprobs(topLogprobs);
-		}
-
 		public B n(@Nullable Integer n) {
 			this.n = n;
 			return self();
 		}
 
 		public B stop(@Nullable Object stop) {
-			this.stop = copyStop(stop);
+			this.stop = stop;
 			return self();
 		}
 
 		public B tools(@Nullable List<Tool> tools) {
-			this.tools = tools != null ? new ArrayList<>(tools) : null;
+			this.tools = tools;
 			return self();
 		}
 
@@ -679,56 +672,17 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		}
 
 		public B skill(@Nullable List<Skill> skill) {
-			this.skill = skill != null ? new ArrayList<>(skill) : null;
+			this.skill = skill;
 			return self();
 		}
 
 		public B httpHeaders(@Nullable Map<String, String> httpHeaders) {
-			this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
+			this.httpHeaders = httpHeaders;
 			return self();
 		}
 
 		public B multiModel(@Nullable Boolean multiModel) {
 			this.multiModel = multiModel;
-			return self();
-		}
-
-		@Override
-		public B toolCallbacks(@Nullable List<ToolCallback> toolCallbacks) {
-			this.toolCallbacks = toolCallbacks;
-			return self();
-		}
-
-		@Override
-		public B toolCallbacks(ToolCallback... toolCallbacks) {
-			if (this.toolCallbacks == null) {
-				this.toolCallbacks = new ArrayList<>();
-			}
-			this.toolCallbacks.addAll(List.of(toolCallbacks));
-			return self();
-		}
-
-
-		@Override
-		public B toolContext(@Nullable Map<String, Object> context) {
-			if (context != null) {
-				if (this.toolContext == null) {
-					this.toolContext = new HashMap<>();
-				}
-				this.toolContext.putAll(context);
-			}
-			else {
-				this.toolContext = null;
-			}
-			return self();
-		}
-
-		@Override
-		public B toolContext(String key, Object value) {
-			if (this.toolContext == null) {
-				this.toolContext = new HashMap<>();
-			}
-			this.toolContext.put(key, value);
 			return self();
 		}
 
@@ -795,10 +749,17 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 					this.n = that.n;
 				}
 				if (that.stop != null) {
-					this.stop = copyStop(that.stop);
+					this.stop = that.stop;
 				}
 				if (that.tools != null) {
-					this.tools = new ArrayList<>(that.tools);
+                    if (this.tools == null) {
+                        this.tools = new ArrayList<>(that.tools);
+                    }
+                    else {
+                        List<Tool> merged = new ArrayList<>(this.tools);
+                        merged.addAll(that.tools);
+                        this.tools = merged;
+                    }
 				}
 				if (that.toolChoice != null) {
 					this.toolChoice = that.toolChoice;
@@ -816,10 +777,24 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 					this.dataInspection = that.dataInspection;
 				}
 				if (that.skill != null) {
-					this.skill = new ArrayList<>(that.skill);
+                    if (this.skill == null) {
+                        this.skill = new ArrayList<>(that.skill);
+                    }
+                    else {
+                        List<Skill> merged = new ArrayList<>(this.skill);
+                        merged.addAll(that.skill);
+                        this.skill = merged;
+                    }
 				}
-				if (that.httpHeaders != null && !that.httpHeaders.isEmpty()) {
-					this.httpHeaders = new HashMap<>(that.httpHeaders);
+				if (that.httpHeaders != null) {
+                    if (this.httpHeaders == null) {
+                        this.httpHeaders = new HashMap<>(that.httpHeaders);
+                    }
+                    else {
+                        Map<String, String> merged = new HashMap<>(this.httpHeaders);
+                        merged.putAll(that.httpHeaders);
+                        this.httpHeaders = merged;
+                    }
 				}
 				if (that.multiModel != null) {
 					this.multiModel = that.multiModel;

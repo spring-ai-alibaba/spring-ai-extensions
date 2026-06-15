@@ -139,20 +139,14 @@ class DashScopeSdkChatModelTests {
 			.extraBody(Map.of("custom_field", "custom_value"))
 			.build();
 
-		Prompt requestPrompt = this.chatModel.buildRequestPrompt(new Prompt(List.of(new UserMessage("Hello")), runtimeOptions));
+		Prompt requestPrompt = new Prompt(List.of(new UserMessage("Hello")), runtimeOptions);
 		GenerationParam generationParam = this.chatModel.createRequest(requestPrompt, false);
 
 		assertThat(generationParam.getParameters()).containsEntry("custom_field", "custom_value");
 	}
 
 	@Test
-	void testCreateRequestMergesHeadersAndExtraBodyWithOverride() {
-		this.chatModel.setDashScopeSdkChatOptions(DashScopeSdkChatOptions.builder()
-			.model(TEST_MODEL)
-			.httpHeaders(Map.of("x-default", "d", "x-override", "default"))
-			.extraBody(Map.of("defaultKey", "defaultValue", "overridden", "from-default"))
-			.build());
-
+	void testCreateRequestContainsHeadersAndExtraBody() {
 		DashScopeSdkChatOptions runtimeOptions = DashScopeSdkChatOptions.builder()
 			.model(TEST_MODEL)
 			.httpHeaders(Map.of("x-runtime", "r", "x-override", "runtime"))
@@ -160,40 +154,29 @@ class DashScopeSdkChatModelTests {
 			.build();
 
 		GenerationParam generationParam = this.chatModel
-			.createRequest(this.chatModel.buildRequestPrompt(new Prompt(List.of(new UserMessage("Hello")), runtimeOptions)),
+			.createRequest(new Prompt(List.of(new UserMessage("Hello")), runtimeOptions),
 					false);
 
 		assertThat(generationParam.getHeaders()).containsEntry("x-test", "v")
 			.containsEntry("x-runtime", "r")
 			.containsEntry("x-override", "runtime");
-		assertThat(generationParam.getParameters()).containsEntry("defaultKey", "defaultValue")
+		assertThat(generationParam.getParameters())
 			.containsEntry("runtimeKey", "runtimeValue")
 			.containsEntry("overridden", "from-runtime");
 	}
 
 	@Test
-	void testStopMappingForNumbersAndNestedNumbers() {
+	void testStopMappingForNumbers() {
 		DashScopeSdkChatOptions numericStopOptions = DashScopeSdkChatOptions.builder()
 			.model(TEST_MODEL)
 			.stop(List.of(10, 20))
 			.build();
 
 		GenerationParam numericStopRequest = this.chatModel.createRequest(
-				this.chatModel.buildRequestPrompt(new Prompt(List.of(new UserMessage("Hello")), numericStopOptions)),
+                new Prompt(List.of(new UserMessage("Hello")), numericStopOptions),
 				false);
 
 		assertThat(numericStopRequest.getStopTokens()).contains(List.of(10, 20));
-
-		DashScopeSdkChatOptions nestedStopOptions = DashScopeSdkChatOptions.builder()
-			.model(TEST_MODEL)
-			.stop(List.of(List.of(1, 2, 3)))
-			.build();
-
-		GenerationParam nestedStopRequest = this.chatModel.createRequest(
-				this.chatModel.buildRequestPrompt(new Prompt(List.of(new UserMessage("Hello")), nestedStopOptions)),
-				false);
-
-		assertThat(nestedStopRequest.getStopTokens()).contains(List.of(1, 2, 3));
 	}
 
 	@Test
@@ -204,8 +187,7 @@ class DashScopeSdkChatModelTests {
 			.build();
 
 		GenerationParam request = this.chatModel.createRequest(
-				this.chatModel.buildRequestPrompt(new Prompt(List.of(toolResponseMessage),
-						DashScopeSdkChatOptions.builder().model(TEST_MODEL).build())),
+                new Prompt(List.of(toolResponseMessage), DashScopeSdkChatOptions.builder().model(TEST_MODEL).build()),
 				false);
 
 		assertThat(request.getMessages()).hasSize(1);

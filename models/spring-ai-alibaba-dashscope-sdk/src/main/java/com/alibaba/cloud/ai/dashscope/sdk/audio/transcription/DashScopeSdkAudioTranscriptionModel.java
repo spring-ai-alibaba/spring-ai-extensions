@@ -305,7 +305,7 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 		}
 	}
 
-	private Map<String, Object> mergeHeaders(Map<String, String> runtimeHeaders) {
+	private Map<String, Object> mergeHeaders(@Nullable Map<String, String> runtimeHeaders) {
 		Map<String, Object> headers = new HashMap<>();
 		headers.putAll(this.connectionHeaders);
 		if (!CollectionUtils.isEmpty(runtimeHeaders)) {
@@ -314,8 +314,8 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 		return headers;
 	}
 
-	public DashScopeSdkAudioTranscriptionOptions getDefaultOptions() {
-		return Objects.requireNonNull(DashScopeSdkAudioTranscriptionOptions.fromOptions(this.defaultOptions));
+	public DashScopeSdkAudioTranscriptionOptions getOptions() {
+		return this.defaultOptions;
 	}
 
 	public Builder mutate() {

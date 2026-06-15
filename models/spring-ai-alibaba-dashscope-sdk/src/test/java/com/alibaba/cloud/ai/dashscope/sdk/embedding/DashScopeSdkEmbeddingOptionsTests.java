@@ -34,7 +34,7 @@ class DashScopeSdkEmbeddingOptionsTests {
 			.httpHeaders(Map.of("x-test", "v"))
 			.build();
 
-		DashScopeSdkEmbeddingOptions copy = DashScopeSdkEmbeddingOptions.fromOptions(options);
+		DashScopeSdkEmbeddingOptions copy = DashScopeSdkEmbeddingOptions.builder().from(options).build();
 
 		assertThat(copy).usingRecursiveComparison().isEqualTo(options);
 		assertThat(copy).isNotSameAs(options);
@@ -47,7 +47,7 @@ class DashScopeSdkEmbeddingOptionsTests {
 		assertThat(options.getModel()).isNull();
 		assertThat(options.getTextType()).isNull();
 		assertThat(options.getDimensions()).isNull();
-		assertThat(options.getHttpHeaders()).isNotNull().isEmpty();
+		assertThat(options.getHttpHeaders()).isNull();
 	}
 
 	@Test
@@ -59,7 +59,7 @@ class DashScopeSdkEmbeddingOptionsTests {
 			.httpHeaders(Map.of("x-source", "s1"))
 			.build();
 
-		DashScopeSdkEmbeddingOptions target = DashScopeSdkEmbeddingOptions.fromOptions(original);
+		DashScopeSdkEmbeddingOptions target = DashScopeSdkEmbeddingOptions.builder().from(original).build();
 
 		assertThat(target.getModel()).isEqualTo(original.getModel());
 		assertThat(target.getTextType()).isEqualTo(original.getTextType());
@@ -68,26 +68,11 @@ class DashScopeSdkEmbeddingOptionsTests {
 	}
 
 	@Test
-	void testFromOptionsCreatesIndependentHttpHeaders() {
-		DashScopeSdkEmbeddingOptions original = DashScopeSdkEmbeddingOptions.builder()
-			.httpHeaders(Map.of("x-source", "s1"))
-			.build();
-
-		DashScopeSdkEmbeddingOptions copy = DashScopeSdkEmbeddingOptions.fromOptions(original);
-
-		original.getHttpHeaders().put("x-source-2", "s2");
-		copy.getHttpHeaders().put("x-copy", "c1");
-
-		assertThat(original.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-source-2", "s2"));
-		assertThat(copy.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-copy", "c1"));
-	}
-
-	@Test
 	void testFromOptionsHandlesEmptyHttpHeaders() {
 		DashScopeSdkEmbeddingOptions original = DashScopeSdkEmbeddingOptions.builder().build();
 
-		DashScopeSdkEmbeddingOptions copy = DashScopeSdkEmbeddingOptions.fromOptions(original);
-		assertThat(copy.getHttpHeaders()).isNotNull().isEmpty();
+		DashScopeSdkEmbeddingOptions copy = DashScopeSdkEmbeddingOptions.builder().from(original).build();
+		assertThat(copy.getHttpHeaders()).isNull();
 	}
 
 

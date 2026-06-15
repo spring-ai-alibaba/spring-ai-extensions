@@ -80,9 +80,10 @@ class DashScopeRerankOptionsTests {
 			.returnDocuments(TEST_RETURN_DOCUMENTS)
 			.build();
 
-		DashScopeRerankOptions modified = original.mutate()
-			.model("modified-model")
-			.build();
+		DashScopeRerankOptions modified = DashScopeRerankOptions.builder()
+            .from(original)
+            .model("modified-model")
+            .build();
 
 		assertThat(modified).isNotSameAs(original);
 		assertThat(modified.getModel()).isEqualTo("modified-model");
@@ -98,7 +99,7 @@ class DashScopeRerankOptionsTests {
 			.topN(TEST_TOP_N)
 			.build();
 
-		DashScopeRerankOptions copy = DashScopeRerankOptions.fromOptions(original);
+		DashScopeRerankOptions copy = DashScopeRerankOptions.builder().from(original).build();
 
 		assertThat(copy).isNotSameAs(original);
 		assertThat(copy.getModel()).isEqualTo(TEST_MODEL);

@@ -246,7 +246,7 @@ public class DashScopeApi {
      * @param chatRequest The chat completion request.
      * @param additionalHttpHeader Optional, additional HTTP headers to be added to the
      * request.
-     * @param multiModel Whether to route the call to the multimodal generation endpoint.
+     * @param isMultimodal Whether to route the call to the multimodal generation endpoint.
      * @return Returns a {@link Flux} stream from chat completion chunks.
      */
     public Flux<DashScopeChatApiSpec.ChatCompletionChunk> chatCompletionStream(

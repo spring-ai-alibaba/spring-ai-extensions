@@ -42,27 +42,18 @@ public class DashScopeSdkEmbeddingOptions implements EmbeddingOptions {
 	private final @Nullable Integer dimensions;
 
 	@JsonIgnore
-	private final Map<String, String> httpHeaders;
+	private final @Nullable Map<String, String> httpHeaders;
 
 	protected DashScopeSdkEmbeddingOptions(@Nullable String model, @Nullable String textType,
 			@Nullable Integer dimensions, @Nullable Map<String, String> httpHeaders) {
 		this.model = model;
 		this.textType = textType;
 		this.dimensions = dimensions;
-		this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
+		this.httpHeaders = httpHeaders != null ? Map.copyOf(httpHeaders) : null;
 	}
 
-    public static DashScopeSdkEmbeddingOptions fromOptions(DashScopeSdkEmbeddingOptions options) {
-        return builder()
-                .model(options.getModel())
-                .textType(options.getTextType())
-                .dimensions(options.getDimensions())
-                .httpHeaders(options.getHttpHeaders())
-                .build();
-    }
-
-	public static DashScopeSdkEmbeddingOptionsBuilder builder() {
-		return new DashScopeSdkEmbeddingOptionsBuilder();
+	public static Builder builder() {
+		return new Builder();
 	}
 
 	@Override
@@ -79,7 +70,7 @@ public class DashScopeSdkEmbeddingOptions implements EmbeddingOptions {
 		return this.dimensions;
 	}
 
-	public Map<String, String> getHttpHeaders() {
+	public @Nullable Map<String, String> getHttpHeaders() {
 		return this.httpHeaders;
 	}
 
@@ -107,37 +98,12 @@ public class DashScopeSdkEmbeddingOptions implements EmbeddingOptions {
 				+ ", dimensions=" + this.dimensions + ", httpHeaders=" + this.httpHeaders + '}';
 	}
 
-	public static class DashScopeSdkEmbeddingOptionsBuilder {
+	public static final class Builder extends AbstractBuilder<DashScopeSdkEmbeddingOptions, Builder> {
 
-		protected @Nullable String model;
-
-		protected @Nullable String textType;
-
-		protected @Nullable Integer dimensions;
-
-		protected Map<String, String> httpHeaders = new HashMap<>();
-
-		public DashScopeSdkEmbeddingOptionsBuilder model(@Nullable String model) {
-			this.model = model;
-			return this;
+		private Builder() {
 		}
 
-		public DashScopeSdkEmbeddingOptionsBuilder textType(@Nullable String textType) {
-			this.textType = textType;
-			return this;
-		}
-
-		public DashScopeSdkEmbeddingOptionsBuilder dimensions(@Nullable Integer dimensions) {
-			this.dimensions = dimensions;
-			return this;
-		}
-
-		public DashScopeSdkEmbeddingOptionsBuilder httpHeaders(@Nullable Map<String, String> httpHeaders) {
-			this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
-			return this;
-		}
-
-		public DashScopeSdkEmbeddingOptionsBuilder from(DashScopeSdkEmbeddingOptions fromOptions) {
+		public Builder from(DashScopeSdkEmbeddingOptions fromOptions) {
 			this.model = fromOptions.getModel();
 			this.textType = fromOptions.getTextType();
 			this.dimensions = fromOptions.getDimensions();
@@ -145,7 +111,7 @@ public class DashScopeSdkEmbeddingOptions implements EmbeddingOptions {
 			return this;
 		}
 
-		public DashScopeSdkEmbeddingOptionsBuilder merge(@Nullable EmbeddingOptions from) {
+		public Builder merge(@Nullable EmbeddingOptions from) {
 			if (from == null) {
 				return this;
 			}
@@ -159,8 +125,15 @@ public class DashScopeSdkEmbeddingOptions implements EmbeddingOptions {
 				if (castFrom.getTextType() != null) {
 					this.textType = castFrom.getTextType();
 				}
-				if (castFrom.getHttpHeaders() != null && !castFrom.getHttpHeaders().isEmpty()) {
-					this.httpHeaders = castFrom.getHttpHeaders();
+			if (castFrom.getHttpHeaders() != null) {
+                    if (this.httpHeaders == null) {
+                        this.httpHeaders = new HashMap<>(castFrom.getHttpHeaders());
+                    }
+                    else {
+                        Map<String, String> merged = new HashMap<>(this.httpHeaders);
+                        merged.putAll(castFrom.getHttpHeaders());
+                        this.httpHeaders = merged;
+                    }
 				}
 			}
 			return this;
@@ -169,6 +142,45 @@ public class DashScopeSdkEmbeddingOptions implements EmbeddingOptions {
 		public DashScopeSdkEmbeddingOptions build() {
 			return new DashScopeSdkEmbeddingOptions(this.model, this.textType, this.dimensions, this.httpHeaders);
 		}
+
+	}
+
+	protected abstract static class AbstractBuilder<O extends DashScopeSdkEmbeddingOptions, B extends AbstractBuilder<O, B>> {
+
+		protected @Nullable String model;
+
+		protected @Nullable String textType;
+
+		protected @Nullable Integer dimensions;
+
+		protected @Nullable Map<String, String> httpHeaders;
+
+		@SuppressWarnings("unchecked")
+		protected B self() {
+			return (B) this;
+		}
+
+		public B model(@Nullable String model) {
+			this.model = model;
+			return self();
+		}
+
+		public B textType(@Nullable String textType) {
+			this.textType = textType;
+			return self();
+		}
+
+		public B dimensions(@Nullable Integer dimensions) {
+			this.dimensions = dimensions;
+			return self();
+		}
+
+		public B httpHeaders(@Nullable Map<String, String> httpHeaders) {
+			this.httpHeaders = httpHeaders;
+			return self();
+		}
+
+		public abstract O build();
 
 	}
 

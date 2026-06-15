@@ -25,7 +25,6 @@ import org.springframework.ai.model.tool.DefaultToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +55,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 	private final @Nullable Integer topK;
 
 	@JsonProperty("stop")
-	private final @Nullable List<Object> stop;
+	private final @Nullable Object stop;
 
 	@JsonProperty("enable_search")
 	private final Boolean enableSearch;
@@ -74,19 +73,19 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 	private final @Nullable Object toolChoice;
 
 	@JsonIgnore
-	private final Map<String, String> httpHeaders;
+	private final @Nullable Map<String, String> httpHeaders;
 
 	@JsonIgnore
-	private final List<ToolCallback> toolCallbacks;
+	private final @Nullable List<ToolCallback> toolCallbacks;
 
 	@JsonIgnore
-	private final Map<String, Object> toolContext;
+	private final @Nullable Map<String, Object> toolContext;
 
 	@JsonProperty("extra_body")
 	private final @Nullable Map<String, Object> extraBody;
 
 	protected DashScopeSdkChatOptions(@Nullable String model, @Nullable Boolean stream, @Nullable Double temperature,
-			@Nullable Integer seed, @Nullable Double topP, @Nullable Integer topK, @Nullable List<Object> stop,
+			@Nullable Integer seed, @Nullable Double topP, @Nullable Integer topK, @Nullable Object stop,
 			@Nullable Boolean enableSearch, @Nullable Integer maxTokens, @Nullable Boolean incrementalOutput,
 			@Nullable Double repetitionPenalty, @Nullable Object toolChoice, @Nullable Map<String, String> httpHeaders,
 			@Nullable List<ToolCallback> toolCallbacks, @Nullable Map<String, Object> toolContext,
@@ -97,17 +96,25 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		this.seed = seed;
 		this.topP = topP;
 		this.topK = topK;
-		this.stop = stop != null ? new ArrayList<>(stop) : null;
+		this.stop = stop != null ? copyStop(stop) : null;
 		this.enableSearch = enableSearch != null ? enableSearch : false;
 		this.maxTokens = maxTokens;
 		this.incrementalOutput = incrementalOutput != null ? incrementalOutput : true;
 		this.repetitionPenalty = repetitionPenalty;
 		this.toolChoice = toolChoice;
-		this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
-		this.toolCallbacks = toolCallbacks != null ? new ArrayList<>(toolCallbacks) : new ArrayList<>();
-		this.toolContext = toolContext != null ? new HashMap<>(toolContext) : new HashMap<>();
-		this.extraBody = extraBody != null ? new HashMap<>(extraBody) : null;
+		this.httpHeaders = httpHeaders != null ? Map.copyOf(httpHeaders) : null;
+		this.toolCallbacks = toolCallbacks != null ? List.copyOf(toolCallbacks) : null;
+		this.toolContext = toolContext != null ? Map.copyOf(toolContext) : null;
+		this.extraBody = extraBody != null ? Map.copyOf(extraBody) : null;
 	}
+
+    @SuppressWarnings("unchecked")
+    private static @Nullable Object copyStop(@Nullable Object stop) {
+        if (stop instanceof List<?> list) {
+            return List.copyOf((List<Object>) list);
+        }
+        return stop;
+    }
 
 	@Override
 	public @Nullable String getModel() {
@@ -137,7 +144,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		return this.topK;
 	}
 
-	public @Nullable List<Object> getStop() {
+	public @Nullable Object getStop() {
 		return this.stop;
 	}
 
@@ -162,18 +169,18 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		return this.toolChoice;
 	}
 
-	public Map<String, String> getHttpHeaders() {
+	public @Nullable Map<String, String> getHttpHeaders() {
 		return this.httpHeaders;
 	}
 
 	@Override
 	@JsonIgnore
-	public List<ToolCallback> getToolCallbacks() {
+	public @Nullable List<ToolCallback> getToolCallbacks() {
 		return this.toolCallbacks;
 	}
 
 	@Override
-	public Map<String, Object> getToolContext() {
+	public @Nullable Map<String, Object> getToolContext() {
 		return this.toolContext;
 	}
 
@@ -193,11 +200,10 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 
 	@Override
 	public @Nullable List<String> getStopSequences() {
-		if (this.stop == null) {
-			return null;
-		}
-		List<String> stopStrings = this.stop.stream().filter(String.class::isInstance).map(String.class::cast).toList();
-		return stopStrings.isEmpty() ? null : stopStrings;
+        if (this.stop instanceof List<?> list && list.stream().allMatch(String.class::isInstance)) {
+            return (List<String>) list;
+        }
+        return null;
 	}
 
 	public DashScopeSdkChatOptions copy() {
@@ -219,15 +225,11 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 				.incrementalOutput(this.incrementalOutput)
 				.repetitionPenalty(this.repetitionPenalty)
 				.toolChoice(this.toolChoice)
-				.httpHeaders(new HashMap<>(this.httpHeaders))
-				.toolCallbacks(new ArrayList<>(this.toolCallbacks))
-				.toolContext(new HashMap<>(this.toolContext))
+				.httpHeaders(this.httpHeaders)
+				.toolCallbacks(this.toolCallbacks)
+				.toolContext(this.toolContext)
 				.extraBody(this.extraBody);
 	}
-
-    public static DashScopeSdkChatOptions fromOptions(DashScopeSdkChatOptions options) {
-        return options.mutate().build();
-    }
 
 	public static Builder builder() {
 		return new Builder();
@@ -282,7 +284,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 
 		protected @Nullable Integer seed;
 
-		protected @Nullable List<Object> stop;
+		protected @Nullable Object stop;
 
 		protected @Nullable Boolean enableSearch;
 
@@ -292,18 +294,16 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 
 		protected @Nullable Object toolChoice;
 
-		protected Map<String, String> httpHeaders = new HashMap<>();
+		protected @Nullable Map<String, String> httpHeaders;
 
 		protected @Nullable Map<String, Object> extraBody;
 
 		@Override
 		public B clone() {
 			B copy = super.clone();
-			copy.stop = this.stop != null ? new ArrayList<>(this.stop) : null;
-			if (this.httpHeaders != null && !this.httpHeaders.isEmpty()) {
-				copy.httpHeaders = new HashMap<>(this.httpHeaders);
-			}
-			copy.extraBody = this.extraBody != null ? new HashMap<>(this.extraBody) : null;
+			copy.stop = this.stop;
+            copy.httpHeaders = this.httpHeaders;
+			copy.extraBody = this.extraBody;
 			return copy;
 		}
 
@@ -317,7 +317,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			return self();
 		}
 
-		public B stop(@Nullable List<Object> stop) {
+		public B stop(@Nullable Object stop) {
 			this.stop = stop;
 			return self();
 		}
@@ -348,50 +348,12 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		}
 
 		public B httpHeaders(@Nullable Map<String, String> httpHeaders) {
-			this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
+			this.httpHeaders = httpHeaders;
 			return self();
 		}
 
 		public B extraBody(@Nullable Map<String, Object> extraBody) {
 			this.extraBody = extraBody;
-			return self();
-		}
-
-		@Override
-		public B toolCallbacks(@Nullable List<ToolCallback> toolCallbacks) {
-			this.toolCallbacks = toolCallbacks != null ? new ArrayList<>(toolCallbacks) : new ArrayList<>();
-			return self();
-		}
-
-		@Override
-		public B toolCallbacks(ToolCallback... toolCallbacks) {
-			if (this.toolCallbacks == null) {
-				this.toolCallbacks = new ArrayList<>();
-			}
-			this.toolCallbacks.addAll(List.of(toolCallbacks));
-			return self();
-		}
-
-		@Override
-		public B toolContext(@Nullable Map<String, Object> context) {
-			if (context != null) {
-				if (this.toolContext == null) {
-					this.toolContext = new HashMap<>();
-				}
-				this.toolContext.putAll(context);
-			}
-			else {
-				this.toolContext = null;
-			}
-			return self();
-		}
-
-		@Override
-		public B toolContext(String key, Object value) {
-			if (this.toolContext == null) {
-				this.toolContext = new HashMap<>();
-			}
-			this.toolContext.put(key, value);
 			return self();
 		}
 
@@ -420,17 +382,25 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 				if (that.toolChoice != null) {
 					this.toolChoice = that.toolChoice;
 				}
-				if (that.httpHeaders != null && !that.httpHeaders.isEmpty()) {
+				if (that.httpHeaders != null) {
                     if (this.httpHeaders == null) {
-                        this.httpHeaders = new HashMap<>();
+                        this.httpHeaders = new HashMap<>(that.httpHeaders);
                     }
-                    this.httpHeaders.putAll(that.httpHeaders);
+                    else {
+                        Map<String, String> merged = new HashMap<>(this.httpHeaders);
+                        merged.putAll(that.httpHeaders);
+                        this.httpHeaders = merged;
+                    }
 				}
 				if (that.extraBody != null) {
                     if (this.extraBody == null) {
-                        this.extraBody = new HashMap<>();
+                        this.extraBody = new HashMap<>(that.extraBody);
                     }
-                    this.extraBody.putAll(that.extraBody);
+                    else {
+                        Map<String, Object> merged = new HashMap<>(this.extraBody);
+                        merged.putAll(that.extraBody);
+                        this.extraBody = merged;
+                    }
 				}
 			}
 			return self();

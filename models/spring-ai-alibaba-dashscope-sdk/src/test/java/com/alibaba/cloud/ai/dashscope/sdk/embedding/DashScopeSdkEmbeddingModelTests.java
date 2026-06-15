@@ -129,22 +129,6 @@ class DashScopeSdkEmbeddingModelTests {
 		assertThat(model.dimensions()).isEqualTo(1536);
 	}
 
-	@Test
-	void testGetDefaultOptionsReturnsCopy() {
-		DashScopeSdkEmbeddingModel model = DashScopeSdkEmbeddingModel.builder()
-			.embeddingClient(new FakeEmbeddingClient())
-			.defaultOptions(DashScopeSdkEmbeddingOptions.builder()
-				.model("text-embedding-v2")
-				.httpHeaders(Map.of("x-default", "d"))
-				.build())
-			.build();
-
-		DashScopeSdkEmbeddingOptions copied = model.getDefaultOptions();
-		copied.getHttpHeaders().put("x-new", "n");
-
-		assertThat(model.getDefaultOptions().getHttpHeaders()).containsOnlyKeys("x-default");
-	}
-
 	private static TextEmbeddingResult embeddingResultWithNullAndValidItem() {
 		TextEmbeddingResult result = instantiateTextEmbeddingResult();
 		result.setRequestId("req-2");

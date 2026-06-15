@@ -137,7 +137,7 @@ class DashScopeEmbeddingOptionsTests {
 			.embeddingsPath("/tmp/embeddings")
 			.build();
 
-		DashScopeEmbeddingOptions copy = DashScopeEmbeddingOptions.fromOptions(original);
+		DashScopeEmbeddingOptions copy = DashScopeEmbeddingOptions.builder().from(original).build();
 
 		assertThat(copy).usingRecursiveComparison().isEqualTo(original);
 		assertThat(copy).isNotSameAs(original);

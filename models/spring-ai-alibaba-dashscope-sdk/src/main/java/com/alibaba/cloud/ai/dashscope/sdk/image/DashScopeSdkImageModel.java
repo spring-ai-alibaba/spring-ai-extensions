@@ -242,7 +242,7 @@ public class DashScopeSdkImageModel implements ImageModel {
 		return new ImageResponse(generations, metadata);
 	}
 
-	private Map<String, Object> mergeHeaders(Map<String, String> runtimeHeaders) {
+	private Map<String, Object> mergeHeaders(@Nullable Map<String, String> runtimeHeaders) {
 		Map<String, Object> headers = new HashMap<>();
 		headers.putAll(this.connectionHeaders);
 		if (!CollectionUtils.isEmpty(runtimeHeaders)) {
@@ -251,8 +251,12 @@ public class DashScopeSdkImageModel implements ImageModel {
 		return headers;
 	}
 
-	public DashScopeSdkImageOptions getDefaultOptions() {
-		return Objects.requireNonNull(DashScopeSdkImageOptions.fromOptions(this.defaultOptions));
+    /**
+     * Gets the image options for this model.
+     * @return the image options
+     */
+	public DashScopeSdkImageOptions getOptions() {
+		return this.defaultOptions;
 	}
 
 	public void setObservationConvention(ImageModelObservationConvention observationConvention) {

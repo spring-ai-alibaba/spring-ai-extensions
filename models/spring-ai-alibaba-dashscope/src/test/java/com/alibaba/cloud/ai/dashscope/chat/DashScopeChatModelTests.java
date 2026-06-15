@@ -52,7 +52,6 @@ import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.tool.ToolCallback;
@@ -65,7 +64,6 @@ import reactor.test.StepVerifier;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -114,14 +112,6 @@ class DashScopeChatModelTests {
                 .seed(1234)
                 .build();
         chatModel = DashScopeChatModel.builder().dashScopeApi(dashScopeApi).defaultOptions(defaultOptions).build();
-    }
-
-    @Test
-    void defaultOptionsUseMessageResultFormat() {
-        Prompt requestPrompt = chatModel.buildRequestPrompt(new Prompt(List.of(new UserMessage(TEST_PROMPT))));
-        ChatCompletionRequest request = chatModel.createRequest(requestPrompt);
-
-        assertThat(request.parameters().resultFormat()).isEqualTo("message");
     }
 
     @Test
@@ -854,63 +844,6 @@ class DashScopeChatModelTests {
                                 && throwable.getMessage().contains("InvalidParameter")
                                 && throwable.getMessage().contains("error-request-123"))
                 .verify();
-    }
-
-    @Test
-    void testBuildRequestPrompt() {
-        DashScopeChatOptions runtimeOptions = DashScopeChatOptions.builder()
-                .model("qwen-plus")
-                .enableThinking(true)
-                .thinkingBudget(50)
-                .build();
-        Prompt prompt = chatModel.buildRequestPrompt(Prompt.builder()
-                .content(TEST_PROMPT)
-                .chatOptions(runtimeOptions)
-                .build());
-        assertThat(prompt.getOptions().getModel()).isEqualTo("qwen-plus");
-        assertThat(prompt.getOptions().getTemperature()).isEqualTo(0.7);
-        assertThat(prompt.getOptions().getTopP()).isEqualTo(0.8);
-        assertThat(prompt.getOptions().getTopK()).isEqualTo(50);
-        assertThat(prompt.getOptions()).isInstanceOf(DashScopeChatOptions.class);
-        assertThat(prompt.getOptions()).asInstanceOf(type(DashScopeChatOptions.class))
-                .extracting(DashScopeChatOptions::getSeed)
-                .isEqualTo(1234);
-        assertThat(prompt.getOptions()).asInstanceOf(type(DashScopeChatOptions.class))
-                .extracting(DashScopeChatOptions::getEnableThinking)
-                .isEqualTo(true);
-        assertThat(prompt.getOptions()).asInstanceOf(type(DashScopeChatOptions.class))
-                .extracting(DashScopeChatOptions::getThinkingBudget)
-                .isEqualTo(50);
-    }
-
-    @Test
-    void testBuildRequestPromptKeepsDefaultMultiModelWhenRuntimeUsesToolCallingOptions() {
-        DashScopeChatOptions multiModelOptions = DashScopeChatOptions.builder()
-                .model("qwen3.6-plus")
-                .multiModel(true)
-                .build();
-        DashScopeChatModel multiModelChatModel = DashScopeChatModel.builder()
-                .dashScopeApi(dashScopeApi)
-                .defaultOptions(multiModelOptions)
-                .build();
-        ToolCallingChatOptions runtimeToolOptions = ToolCallingChatOptions.builder()
-                .toolContext(Map.of("key1", "value1"))
-                .build();
-
-        Prompt requestPrompt = multiModelChatModel.buildRequestPrompt(Prompt.builder()
-                .content(TEST_PROMPT)
-                .chatOptions(runtimeToolOptions)
-                .build());
-        ChatCompletionRequest request = multiModelChatModel.createRequest(requestPrompt);
-
-        assertThat(requestPrompt.getOptions()).isInstanceOf(DashScopeChatOptions.class);
-        assertThat(requestPrompt.getOptions()).asInstanceOf(type(DashScopeChatOptions.class))
-                .extracting(DashScopeChatOptions::getMultiModel)
-                .isEqualTo(true);
-        assertThat(requestPrompt.getOptions()).asInstanceOf(type(DashScopeChatOptions.class))
-                .extracting(DashScopeChatOptions::getToolContext)
-                .isEqualTo(Map.of("key1", "value1"));
-        assertThat(JsonMapper.builder().build().writeValueAsString(request)).doesNotContain("\"multi_model\"");
     }
 
     @Test
