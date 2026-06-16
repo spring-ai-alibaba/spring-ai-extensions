@@ -176,18 +176,6 @@ public class DashScopeImageApi {
 		return new ImageApiPath(this.imagesPath, RequestBodyType.STANDARD);
 	}
 
-	/**
-	 * Check if model only supports async calls.
-	 * Models that only support async will return 403 if async header is not sent.
-	 */
-	private boolean isAsyncOnlyModel(String model) {
-		return model.equals("qwen-image") ||
-			   model.equals("qwen-image-plus") ||
-			   model.equals("qwen-mt-image") ||
-			   model.equals("wanx-v1") ||
-			   model.equals("wanx2.1-imageedit");
-	}
-
 	enum RequestBodyType { STANDARD, IMAGE_GENERATION, OUT_PAINTING }
 
 	private static final class ImageApiPath {

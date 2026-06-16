@@ -19,10 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel.Builder;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.InvokeMode;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult;
@@ -32,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
@@ -144,6 +147,44 @@ class DashScopeImageModelTests {
 		assertThatThrownBy(() -> imageModel.call(new ImagePrompt(new ArrayList<>())))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("Prompt");
+	}
+
+	@Test
+	void qwenImageDefaultsToSync() {
+		// qwen-image uses the synchronous multimodal-generation endpoint; it must not
+		// send the async header (which would cause HTTP 403). See #228.
+		assertUseAsyncForModel("qwen-image", null, false);
+	}
+
+	@Test
+	void qwenImagePlusDefaultsToSync() {
+		assertUseAsyncForModel("qwen-image-plus", null, false);
+	}
+
+	@Test
+	void qwenImageStaysSyncWhenSyncRequested() {
+		// Explicit SYNC must not be force-upgraded to async for qwen-image.
+		assertUseAsyncForModel("qwen-image", InvokeMode.SYNC, false);
+	}
+
+	@Test
+	void qwenMtImageRemainsAsyncOnly() {
+		// qwen-mt-image is genuinely async-only and stays async even when SYNC is requested.
+		assertUseAsyncForModel("qwen-mt-image", InvokeMode.SYNC, true);
+	}
+
+	private void assertUseAsyncForModel(String model, InvokeMode invokeMode, boolean expectedAsync) {
+		mockSuccessfulImageGeneration();
+
+		DashScopeImageOptions.Builder optionsBuilder = DashScopeImageOptions.builder().model(model).n(1);
+		if (invokeMode != null) {
+			optionsBuilder.invokeMode(invokeMode);
+		}
+		imageModel.call(new ImagePrompt(TEST_PROMPT, optionsBuilder.build()));
+
+		ArgumentCaptor<Boolean> asyncCaptor = ArgumentCaptor.forClass(Boolean.class);
+		verify(dashScopeImageApi).submitImageGenTask(any(), asyncCaptor.capture());
+		assertThat(asyncCaptor.getValue()).isEqualTo(expectedAsync);
 	}
 
 	private void mockSuccessfulImageGeneration() {

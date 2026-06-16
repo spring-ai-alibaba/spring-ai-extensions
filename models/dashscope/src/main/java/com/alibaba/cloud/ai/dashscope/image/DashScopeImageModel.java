@@ -317,12 +317,9 @@ public class DashScopeImageModel implements ImageModel {
     /**
      * Check if model only supports async calls.
      * Models that only support async will return 403 if async header is not sent.
-     * This logic must be consistent with DashScopeImageApi.isAsyncOnlyModel().
      */
     private boolean isAsyncOnlyModelForModel(String model) {
-        return "qwen-image".equals(model) ||
-                "qwen-image-plus".equals(model) ||
-                "qwen-mt-image".equals(model) ||
+        return "qwen-mt-image".equals(model) ||
                 "wanx-v1".equals(model) ||
                 "wanx2.1-imageedit".equals(model);
     }
@@ -365,7 +362,8 @@ public class DashScopeImageModel implements ImageModel {
         if (model == null) {
             return false;
         }
-        return model.equals("qwen-image-edit") ||
+        return model.startsWith("qwen-image") ||
+               model.startsWith("z-image") ||
                model.startsWith("wan2.2-t2i") ||
                model.startsWith("wan2.5") ||
                model.startsWith("wan2.6");
