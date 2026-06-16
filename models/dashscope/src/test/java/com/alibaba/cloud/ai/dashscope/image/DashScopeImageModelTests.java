@@ -18,15 +18,13 @@ package com.alibaba.cloud.ai.dashscope.image;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.when;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.ImageResponse.Output;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.ImageResponse.Result;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.ImageResponse.Usage;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel.Builder;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage;
 import io.micrometer.observation.ObservationRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,7 +121,7 @@ class DashScopeImageModelTests {
 	@Test
 	void testNullResponse() {
 		// Test handling of null API response
-		when(dashScopeImageApi.submitImageGenTask(any(), anyBoolean())).thenReturn(null);
+		when(dashScopeImageApi.submitImageGenTask(any(), any())).thenReturn(null);
 
 		ImagePrompt prompt = new ImagePrompt(TEST_PROMPT);
 		ImageResponse response = imageModel.call(prompt);
@@ -147,33 +145,44 @@ class DashScopeImageModelTests {
 	}
 
 	private void mockSuccessfulImageGeneration() {
-		// Mock successful task submission
-        DashScopeImageAsyncResponse submitResponse = new DashScopeImageAsyncResponse(TEST_REQUEST_ID,
-                new DashScopeImageAsyncResponseOutput(TEST_TASK_ID, "PENDING", null, null, null, null, null, null, null, null, null),
-                new DashScopeImageAsyncResponseUsage(1));
-        when(dashScopeImageApi.submitImageGenTask(any(), anyBoolean())).thenReturn(ResponseEntity.ok(submitResponse));
+		// Mock successful task submission (PENDING)
+		Output pendingOutput = Output.builder()
+				.taskId(TEST_TASK_ID).taskStatus("PENDING").build();
+		DashScopeImageApiSpec.ImageResponse submitResponse =
+				new DashScopeImageApiSpec.ImageResponse(TEST_REQUEST_ID, pendingOutput, new Usage(1));
+		when(dashScopeImageApi.submitImageGenTask(any(), any())).thenReturn(ResponseEntity.ok(submitResponse));
 
-
-		// Mock successful task completion
-        DashScopeImageAsyncResponse completedResponse = new DashScopeImageAsyncResponse(TEST_REQUEST_ID,
-                new DashScopeImageAsyncResponseOutput(TEST_TASK_ID, "SUCCEEDED",
-                        null, null, null, List.of(new DashScopeImageAsyncResponseResult(TEST_IMAGE_URL)), null, null, null, null, null),
-                new DashScopeImageAsyncResponseUsage(1));
-        when(dashScopeImageApi.getImageGenTaskResult(TEST_TASK_ID)).thenReturn(ResponseEntity.ok(completedResponse));
-    }
+		// Mock successful task completion (SUCCEEDED)
+		Output completedOutput = Output.builder()
+				.taskId(TEST_TASK_ID)
+				.taskStatus("SUCCEEDED")
+				.results(List.of(new Result(TEST_IMAGE_URL, null, null)))
+				.build();
+		DashScopeImageApiSpec.ImageResponse completedResponse =
+				new DashScopeImageApiSpec.ImageResponse(TEST_REQUEST_ID, completedOutput, new Usage(1));
+		when(dashScopeImageApi.getImageGenTaskResult(any(), any()))
+				.thenReturn(ResponseEntity.ok(completedResponse));
+	}
 
 	private void mockFailedImageGeneration() {
 		// Mock successful task submission but failed completion
-		DashScopeImageAsyncResponse submitResponse = new DashScopeImageAsyncResponse(TEST_REQUEST_ID,
-                new DashScopeImageAsyncResponseOutput(TEST_TASK_ID, "PENDING", null, null, null, null, null, null, null, null, null),
-                new DashScopeImageAsyncResponseUsage(1));
-		when(dashScopeImageApi.submitImageGenTask(any(), anyBoolean())).thenReturn(ResponseEntity.ok(submitResponse));
+		Output pendingOutput = Output.builder()
+				.taskId(TEST_TASK_ID).taskStatus("PENDING").build();
+		DashScopeImageApiSpec.ImageResponse submitResponse =
+				new DashScopeImageApiSpec.ImageResponse(TEST_REQUEST_ID, pendingOutput, new Usage(1));
+		when(dashScopeImageApi.submitImageGenTask(any(), any())).thenReturn(ResponseEntity.ok(submitResponse));
 
 		// Mock failed task completion
-		DashScopeImageAsyncResponse failedResponse = new DashScopeImageAsyncResponse(TEST_REQUEST_ID,
-                new DashScopeImageAsyncResponseOutput(TEST_TASK_ID, "FAILED", null, null, null, null, null, null, null, "ERROR_CODE", "Error message"),
-                new DashScopeImageAsyncResponseUsage(1));
-		when(dashScopeImageApi.getImageGenTaskResult(TEST_TASK_ID)).thenReturn(ResponseEntity.ok(failedResponse));
+		Output failedOutput = Output.builder()
+				.taskId(TEST_TASK_ID)
+				.taskStatus("FAILED")
+				.code("ERROR_CODE")
+				.message("Error message")
+				.build();
+		DashScopeImageApiSpec.ImageResponse failedResponse =
+				new DashScopeImageApiSpec.ImageResponse(TEST_REQUEST_ID, failedOutput, new Usage(1));
+		when(dashScopeImageApi.getImageGenTaskResult(any(), any()))
+				.thenReturn(ResponseEntity.ok(failedResponse));
 	}
 
 	@Test
@@ -200,102 +209,104 @@ class DashScopeImageModelTests {
 
 	private void mockTimeoutImageGeneration() {
 		// Mock successful task submission but pending status until timeout
-		DashScopeImageAsyncResponse submitResponse = new DashScopeImageAsyncResponse(TEST_REQUEST_ID,
-                new DashScopeImageAsyncResponseOutput(TEST_TASK_ID, "PENDING", null, null, null, null, null, null, null, null, null),
-                new DashScopeImageAsyncResponseUsage(1));
-		when(dashScopeImageApi.submitImageGenTask(any(), anyBoolean())).thenReturn(ResponseEntity.ok(submitResponse));
+		Output pendingOutput = Output.builder()
+				.taskId(TEST_TASK_ID).taskStatus("PENDING").build();
+		DashScopeImageApiSpec.ImageResponse submitResponse =
+				new DashScopeImageApiSpec.ImageResponse(TEST_REQUEST_ID, pendingOutput, new Usage(1));
+		when(dashScopeImageApi.submitImageGenTask(any(), any())).thenReturn(ResponseEntity.ok(submitResponse));
 
 		// Mock pending status for all status checks
-		DashScopeImageAsyncResponse pendingResponse = new DashScopeImageAsyncResponse(TEST_REQUEST_ID,
-                new DashScopeImageAsyncResponseOutput(TEST_TASK_ID, "PENDING", null, null, null, null, null, null, null, null, null),
-                new DashScopeImageAsyncResponseUsage(1));
-		when(dashScopeImageApi.getImageGenTaskResult(TEST_TASK_ID)).thenReturn(ResponseEntity.ok(pendingResponse));
+		DashScopeImageApiSpec.ImageResponse pendingResponse =
+				new DashScopeImageApiSpec.ImageResponse(TEST_REQUEST_ID, pendingOutput, new Usage(1));
+		when(dashScopeImageApi.getImageGenTaskResult(any(), any()))
+				.thenReturn(ResponseEntity.ok(pendingResponse));
 	}
 
-    @Test
-    void testBuilder() {
-        DashScopeImageModel model1 = DashScopeImageModel.builder()
-                .dashScopeApi(dashScopeImageApi)
-                .build();
-        DashScopeImageModel model2 = DashScopeImageModel.builder()
-            .dashScopeApi(dashScopeImageApi)
-            .defaultOptions(defaultOptions)
-            .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
-            .observationRegistry(ObservationRegistry.NOOP)
-            .build();
+	@Test
+	void testBuilder() {
+		DashScopeImageModel model1 = DashScopeImageModel.builder()
+				.dashScopeApi(dashScopeImageApi)
+				.build();
+		DashScopeImageModel model2 = DashScopeImageModel.builder()
+			.dashScopeApi(dashScopeImageApi)
+			.defaultOptions(defaultOptions)
+			.retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
+			.observationRegistry(ObservationRegistry.NOOP)
+			.build();
 
-        DashScopeImageModel clone1 = model1.clone();
-        DashScopeImageModel clone2 = model2.clone();
+		DashScopeImageModel clone1 = model1.clone();
+		DashScopeImageModel clone2 = model2.clone();
 
-        Builder mutate1 = model1.mutate();
-        Builder mutate2 = model2.mutate();
+		Builder mutate1 = model1.mutate();
+		Builder mutate2 = model2.mutate();
 
-        assertThat(model1).isNotNull();
-        assertThat(model2).isNotNull();
-        assertThat(clone1).isNotNull();
-        assertThat(clone2).isNotNull();
-        assertThat(mutate1).isNotNull();
-        assertThat(mutate2).isNotNull();
-    }
+		assertThat(model1).isNotNull();
+		assertThat(model2).isNotNull();
+		assertThat(clone1).isNotNull();
+		assertThat(clone2).isNotNull();
+		assertThat(mutate1).isNotNull();
+		assertThat(mutate2).isNotNull();
+	}
 
-    @Test
-    void testOutPaintingImageGeneration() {
-        // Test out-painting with ratio-based expansion
-        DashScopeImageOptions outPaintingOptions = DashScopeImageOptions.builder()
-                .model("image-out-painting")
-                .baseImageUrl("https://example.com/original.jpg")
-                .outputRatio("4:3")
-                .bestQuality(false)
-                .limitImageSize(true)
-                .build();
+	@Test
+	void testOutPaintingImageGeneration() {
+		// Test out-painting with ratio-based expansion
+		DashScopeImageOptions outPaintingOptions = DashScopeImageOptions.builder()
+				.model("image-out-painting")
+				.baseImageUrl("https://example.com/original.jpg")
+				.outputRatio("4:3")
+				.bestQuality(false)
+				.limitImageSize(true)
+				.build();
 
-        mockSuccessfulImageGeneration();
+		mockSuccessfulImageGeneration();
 
-        ImagePrompt prompt = new ImagePrompt("expand this image", outPaintingOptions);
-        ImageResponse response = imageModel.call(prompt);
+		ImagePrompt prompt = new ImagePrompt("expand this image", outPaintingOptions);
+		ImageResponse response = imageModel.call(prompt);
 
-        assertThat(response.getResults()).hasSize(1);
-        assertThat(response.getResult().getOutput().getUrl()).isEqualTo(TEST_IMAGE_URL);
-    }
+		assertThat(response.getResults()).hasSize(1);
+		assertThat(response.getResult().getOutput().getUrl()).isEqualTo(TEST_IMAGE_URL);
+	}
 
-    @Test
-    void testOutPaintingWithScaleParameters() {
-        // Test out-painting with scale-based expansion
-        DashScopeImageOptions outPaintingOptions = DashScopeImageOptions.builder()
-                .model("image-out-painting")
-                .baseImageUrl("https://example.com/original.jpg")
-                .xScale(1.5f)
-                .yScale(1.5f)
-                .angle(90)
-                .build();
+	@Test
+	void testOutPaintingWithScaleParameters() {
+		// Test out-painting with scale-based expansion
+		DashScopeImageOptions outPaintingOptions = DashScopeImageOptions.builder()
+				.model("image-out-painting")
+				.baseImageUrl("https://example.com/original.jpg")
+				.xScale(1.5f)
+				.yScale(1.5f)
+				.angle(90)
+				.build();
 
-        mockSuccessfulImageGeneration();
+		mockSuccessfulImageGeneration();
 
-        ImagePrompt prompt = new ImagePrompt("expand this image", outPaintingOptions);
-        ImageResponse response = imageModel.call(prompt);
+		ImagePrompt prompt = new ImagePrompt("expand this image", outPaintingOptions);
+		ImageResponse response = imageModel.call(prompt);
 
-        assertThat(response.getResults()).hasSize(1);
-        assertThat(response.getResult().getOutput().getUrl()).isEqualTo(TEST_IMAGE_URL);
-    }
+		assertThat(response.getResults()).hasSize(1);
+		assertThat(response.getResult().getOutput().getUrl()).isEqualTo(TEST_IMAGE_URL);
+	}
 
-    @Test
-    void testOutPaintingWithOffsetParameters() {
-        // Test out-painting with pixel-based expansion
-        DashScopeImageOptions outPaintingOptions = DashScopeImageOptions.builder()
-                .model("image-out-painting")
-                .baseImageUrl("https://example.com/original.jpg")
-                .leftOffset(546)
-                .rightOffset(960)
-                .topOffset(158)
-                .bottomOffset(939)
-                .build();
+	@Test
+	void testOutPaintingWithOffsetParameters() {
+		// Test out-painting with pixel-based expansion
+		DashScopeImageOptions outPaintingOptions = DashScopeImageOptions.builder()
+				.model("image-out-painting")
+				.baseImageUrl("https://example.com/original.jpg")
+				.leftOffset(546)
+				.rightOffset(960)
+				.topOffset(158)
+				.bottomOffset(939)
+				.build();
 
-        mockSuccessfulImageGeneration();
+		mockSuccessfulImageGeneration();
 
-        ImagePrompt prompt = new ImagePrompt("expand this image", outPaintingOptions);
-        ImageResponse response = imageModel.call(prompt);
+		ImagePrompt prompt = new ImagePrompt("expand this image", outPaintingOptions);
+		ImageResponse response = imageModel.call(prompt);
 
-        assertThat(response.getResults()).hasSize(1);
-        assertThat(response.getResult().getOutput().getUrl()).isEqualTo(TEST_IMAGE_URL);
-    }
+		assertThat(response.getResults()).hasSize(1);
+		assertThat(response.getResult().getOutput().getUrl()).isEqualTo(TEST_IMAGE_URL);
+	}
+
 }

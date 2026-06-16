@@ -78,6 +78,8 @@ public class DashScopeImageAutoConfiguration {
 		var dashScopeImageModel = DashScopeImageModel.builder()
                 .dashScopeApi(dashScopeImageApi)
                 .defaultOptions(imageProperties.getOptions())
+                .pollIntervalMs(imageProperties.getPollIntervalMs())
+                .pollTimeoutMs(imageProperties.getPollTimeoutMs())
                 .retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
                 .observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
                 .build();

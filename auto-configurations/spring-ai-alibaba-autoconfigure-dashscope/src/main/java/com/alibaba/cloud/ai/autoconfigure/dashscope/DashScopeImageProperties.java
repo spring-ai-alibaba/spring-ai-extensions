@@ -21,6 +21,7 @@ import com.alibaba.cloud.ai.dashscope.image.DashScopeImageOptions;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.springframework.lang.Nullable;
 
 /**
  * TongYi Image API properties.
@@ -45,16 +46,20 @@ public class DashScopeImageProperties extends DashScopeParentProperties {
     /**
      * DashScope ai images restful url path.
      */
-    private String imagesPath = DashScopeApiConstants.TEXT2IMAGE_RESTFUL_URL;
+    private @Nullable String imagesPath;
 
     /**
      * DashScope ai images query task result restful url path.
      */
-    private String queryTaskPath = DashScopeApiConstants.QUERY_TASK_RESTFUL_URL;
+    private @Nullable String queryTaskPath;
+
+    private long pollIntervalMs = DashScopeApiConstants.DEFAULT_POLL_INTERVAL_MS;
+
+    private long pollTimeoutMs = DashScopeApiConstants.DEFAULT_POLL_TIMEOUT_MS;
 
     @NestedConfigurationProperty
     private DashScopeImageOptions options = DashScopeImageOptions.builder()
-            .model(DashScopeModel.ImageModel.WANX_V1.getValue())
+            .model(DashScopeModel.ImageModel.WAN_2_2_T2I_FLASH.getValue())
             .n(1)
             .build();
 
@@ -66,20 +71,36 @@ public class DashScopeImageProperties extends DashScopeParentProperties {
         this.enabled = enabled;
     }
 
-    public String getImagesPath() {
+    public @Nullable String getImagesPath() {
         return this.imagesPath;
     }
 
-    public void setImagesPath(String imagesPath) {
+    public void setImagesPath(@Nullable String imagesPath) {
         this.imagesPath = imagesPath;
     }
 
-    public String getQueryTaskPath() {
+    public @Nullable String getQueryTaskPath() {
         return this.queryTaskPath;
     }
 
-    public void setQueryTaskPath(String queryTaskPath) {
+    public void setQueryTaskPath(@Nullable String queryTaskPath) {
         this.queryTaskPath = queryTaskPath;
+    }
+
+    public long getPollIntervalMs() {
+        return this.pollIntervalMs;
+    }
+
+    public void setPollIntervalMs(long pollIntervalMs) {
+        this.pollIntervalMs = pollIntervalMs;
+    }
+
+    public long getPollTimeoutMs() {
+        return this.pollTimeoutMs;
+    }
+
+    public void setPollTimeoutMs(long pollTimeoutMs) {
+        this.pollTimeoutMs = pollTimeoutMs;
     }
 
     public DashScopeImageOptions getOptions() {

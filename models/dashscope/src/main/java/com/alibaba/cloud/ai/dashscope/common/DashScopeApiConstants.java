@@ -122,4 +122,10 @@ public final class DashScopeApiConstants {
 
     public static String REFERENCED_DOCUMENTS = "question_answer_referenced";
 
+    /** Default poll interval (10s), per Aliyun doc: use polling with a reasonable query interval (e.g. 10 seconds). */
+    public static final long DEFAULT_POLL_INTERVAL_MS = 10_000L;
+
+    /** Default poll timeout (5 min). Task completion time is unpredictable. */
+    public static final long DEFAULT_POLL_TIMEOUT_MS = 300_000L;
+
 }

@@ -15,22 +15,18 @@
  */
 package com.alibaba.cloud.ai.dashscope.image.observation;
 
-import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_BASE_URL;
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
+import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.ImageResponse.Output;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.ImageResponse.Result;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.InvokeMode;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageOptions;
 import com.alibaba.cloud.ai.dashscope.observation.conventions.AiProvider;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseOutput;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageRequest;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
-import java.util.List;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -45,6 +41,10 @@ import org.springframework.ai.observation.conventions.AiOperationType;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
+
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DEFAULT_BASE_URL;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 
 /**
  * @author Polaris
@@ -128,20 +128,24 @@ class DashScopeImageModelObservationTests {
     DashScopeImageApi mockApi = Mockito.mock(DashScopeImageApi.class);
 
     // mock
-    var fakeResult = new DashScopeImageAsyncResponseResult("https://example-image.url/image.png");
+    var fakeResult = new Result("https://example-image.url/image.png", null, null);
 
     var output =
-            new DashScopeImageAsyncResponseOutput(
-            "00001", "SUCCEEDED", null, null, null, List.of(fakeResult), null, null, null, "code", "msg");
+        Output.builder()
+            .taskId("00001")
+            .taskStatus("SUCCEEDED")
+            .results(List.of(fakeResult))
+            .code("code")
+            .message("msg")
+            .build();
 
+    var response = new DashScopeImageApiSpec.ImageResponse("req-test", output, null);
 
-    var response = new DashScopeImageAsyncResponse("req-test", output, null);
-
-    Mockito.when(mockApi.submitImageGenTask(any(DashScopeImageRequest.class), anyBoolean()))
+    Mockito.when(mockApi.submitImageGenTask(any(DashScopeImageApiSpec.ImageRequest.class), any(InvokeMode.class)))
         .thenReturn(
-            ResponseEntity.ok(new DashScopeImageAsyncResponse(output.taskId(), output, null)));
+            ResponseEntity.ok(new DashScopeImageApiSpec.ImageResponse(output.taskId(), output, null)));
 
-    Mockito.when(mockApi.getImageGenTaskResult(any(String.class)))
+    Mockito.when(mockApi.getImageGenTaskResult(any(String.class), any(String.class)))
         .thenReturn(ResponseEntity.ok(response));
 
     DashScopeImageModel model =

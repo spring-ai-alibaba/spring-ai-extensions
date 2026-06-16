@@ -418,27 +418,78 @@ public class DashScopeModel {
 
     public enum ImageModel {
 
+        // =============== Qwen Image Model ===============
+        QWEN_IMAGE_2_0_PRO("qwen-image-2.0-pro"),
+        QWEN_IMAGE_2_0("qwen-image-2.0"),
+        QWEN_IMAGE_MAX("qwen-image-max"),
         QWEN_IMAGE_PLUS("qwen-image-plus"),
-
         QWEN_IMAGE("qwen-image"),
-
+        QWEN_IMAGE_EDIT_MAX("qwen-image-edit-max"),
+        QWEN_IMAGE_EDIT_PLUS("qwen-image-edit-plus"),
         QWEN_IMAGE_EDIT("qwen-image-edit"),
-
         QWEN_MT_IMAGE("qwen-mt-image"),
 
-        WANX_V1("wanx-v1"),
-
-        WAN_2_2_T_2_I_PLUS("wan2.2-t2i-plus"),
-
-        WAN_2_2_T_2_I_FLASH("wan2.2-t2i-flash"),
-
-        WANX_2_1_IMAGEEDIT("wanx2.1-imageedit"),
-
-        WAN_2_5_I_2_I_PREVIEW("wan2.2-t2i-preview"),
-
+        // =============== Wan Image Model ===============
+        WAN_2_6_T2I("wan2.6-t2i"),
+        WAN_2_5_T2I_PREVIEW("wan2.5-t2i-preview"),
+        WAN_2_2_T2I_PLUS("wan2.2-t2i-plus"),
+        WAN_2_2_T2I_FLASH("wan2.2-t2i-flash"),
+        WANX_2_1_T2I_TURBO("wanx2.1-t2i-turbo"),
+        WANX_2_1_T2I_PLUS("wanx2.1-t2i-plus"),
+        WANX_2_0_T2I_TURBO("wanx2.0-t2i-turbo"),
+        WAN_2_7_IMAGE_PRO("wan2.7-image-pro"),
+        WAN_2_7_IMAGE("wan2.7-image"),
         WAN_2_6_IMAGE("wan2.6-image"),
+        WAN_2_5_I2I_PREVIEW("wan2.5-i2i-preview"),
+        WANX_2_1_IMAGEEDIT("wanx2.1-imageedit"),
+        WANX_V1("wanx-v1"),
+        WANX_SKETCH_TO_IMAGE_LITE("wanx-sketch-to-image-lite"),
+        WANX_X_PAINTING("wanx-x-painting"),
 
-        IMAGE_OUT_PAINTING("image-out-painting");
+        // =============== Z-Image Image Generation ===============
+        Z_IMAGE_TURBO("z-image-turbo"),
+
+        // =============== KLing Image Generation ===============
+        KLING_V3_IMAGE_GENERATION("kling/kling-v3-image-generation"),
+        KLING_V3_OMNI_IMAGE_GENERATION("kling/kling-v3-omni-image-generation"),
+
+        // =============== Style Repaint ===============
+        WANX_STYLE_REPAINT_V1("wanx-style-repaint-v1"),
+
+        // =============== Image Expansion ===============
+        IMAGE_OUT_PAINTING("image-out-painting"),
+
+        // =============== Virtual Model ===============
+        WANX_VIRTUALMODEL("wanx-virtualmodel"),
+        VIRTUALMODEL_V2("virtualmodel-v2"),
+        SHOEMODEL_V1("shoemodel-v1"),
+
+        // =============== Poster Generation ===============
+        WANX_POSTER_GENERATION_V1("wanx-poster-generation-v1"),
+
+        // =============== Instance Segmentation ===============
+        IMAGE_INSTANCE_SEGMENTATION("image-instance-segmentation"),
+
+        // =============== Background Generation ===============
+        WANX_BACKGROUND_GENERATION_V2("wanx-background-generation-v2"),
+
+        // =============== Image Erase Completion ===============
+        IMAGE_ERASE_COMPLETION("image-erase-completion"),
+
+        // =============== AI TryOn ===============
+        AITRYON("aitryon"),
+        AITRYON_PLUS("aitryon-plus"),
+        AITRYON_REFINER("aitryon-refiner"),
+        AITRYON_PARSING_V1("aitryon-parsing-v1"),
+
+        // =============== FaceChain ===============
+        FACECHAIN_FACEDETECT("facechain-facedetect"),
+        FACECHAIN_FINETUNE("facechain-finetune"),
+        FACECHAIN_GENERATION("facechain-generation"),
+
+        // =============== WordArt ===============
+        WORDART_SEMANTIC("wordart-semantic"),
+        WORDART_TEXTURE("wordart-texture");
 
         public final String value;
 
