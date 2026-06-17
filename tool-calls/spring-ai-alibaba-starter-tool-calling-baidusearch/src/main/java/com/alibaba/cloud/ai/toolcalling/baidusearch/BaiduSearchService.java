@@ -81,7 +81,9 @@ public class BaiduSearchService
 			List<SearchResult> results = CommonToolCallUtils.handleResponse(html, this::parseHtml, logger);
 
 			if (CollectionUtils.isEmpty(results)) {
-				return null;
+				// Return an empty response rather than null so callers can safely
+				// call getSearchResult() without a NullPointerException.
+				return new Response(List.of());
 			}
 
 			logger.info("baidu search: {},result number:{}", request.query, results.size());
@@ -92,10 +94,14 @@ public class BaiduSearchService
 		}, logger);
 	}
 
-	private List<SearchResult> parseHtml(String htmlContent) {
+	List<SearchResult> parseHtml(String htmlContent) {
 		try {
 			Document doc = Jsoup.parse(htmlContent);
 			Element contentLeft = doc.selectFirst("div#content_left");
+			if (contentLeft == null) {
+				logger.warn("Baidu response did not contain the expected 'div#content_left' element");
+				return new ArrayList<>();
+			}
 			Elements divContents = contentLeft.children();
 			List<SearchResult> listData = new ArrayList<>();
 
