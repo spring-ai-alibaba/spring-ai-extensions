@@ -48,6 +48,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -138,6 +139,31 @@ public class DashScopeMultiModalChatTests {
             .dashScopeApi(dashScopeApi)
             .defaultOptions(defaultOptions)
             .build();
+  }
+
+  @Test
+  void createRequestKeepsSystemContentAsTextForMultimodalPrompt() throws Exception {
+    UserMessage userMessage =
+        multimodalMessage(
+            TEST_PROMPT,
+            MessageFormat.IMAGE,
+            List.of(
+                new Media(
+                    MimeTypeUtils.IMAGE_PNG,
+                    new URI("https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg"))));
+    Prompt prompt =
+        new Prompt(
+            List.of(new SystemMessage("You are a helpful assistant."), userMessage),
+            DashScopeChatOptions.builder().model(TEST_MODEL).multiModel(true).build());
+
+    ChatCompletionRequest request = chatModel.createRequest(prompt);
+
+    assertThat(request.input().messages()).hasSize(2);
+    assertThat(request.input().messages().get(0).role()).isEqualTo(Role.SYSTEM);
+    assertThat(request.input().messages().get(0).rawContent())
+        .isEqualTo("You are a helpful assistant.");
+    assertThat(request.input().messages().get(1).role()).isEqualTo(Role.USER);
+    assertMediaContentList(request.input().messages().get(1).rawContent());
   }
 
   /** Test image processing with URL-based media */

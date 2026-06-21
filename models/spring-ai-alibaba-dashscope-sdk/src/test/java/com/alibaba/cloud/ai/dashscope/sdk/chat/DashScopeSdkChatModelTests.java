@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
@@ -210,6 +211,16 @@ class DashScopeSdkChatModelTests {
 				false);
 
 		assertThat(numericStopRequest.getStopTokens()).contains(List.of(10, 20));
+	}
+
+	@Test
+	void testGenericStopSequencesMapToSdkRequestStopStrings() {
+		Prompt requestPrompt = this.chatModel.buildRequestPrompt(new Prompt(List.of(new UserMessage("Hello")),
+				ChatOptions.builder().stopSequences(List.of("END", "STOP")).build()));
+
+		GenerationParam generationParam = this.chatModel.createRequest(requestPrompt, false);
+
+		assertThat(generationParam.getStopStrings()).containsExactly("END", "STOP");
 	}
 
 	@Test

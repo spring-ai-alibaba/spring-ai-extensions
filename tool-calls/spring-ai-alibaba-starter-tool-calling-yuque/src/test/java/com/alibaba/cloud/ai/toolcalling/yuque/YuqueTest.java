@@ -25,6 +25,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.lang.reflect.Modifier;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * @author hiriki
  */
@@ -57,6 +61,14 @@ public class YuqueTest {
 	private YuqueCreateBookService yuqueCreateBookService;
 
 	private static final Logger log = LoggerFactory.getLogger(YuqueTest.class);
+
+	@Test
+	@DisplayName("Query Book Tool Types Are Public")
+	public void testQueryBookToolTypesArePublic() {
+		assertTrue(Modifier.isPublic(YuqueQueryBookService.QueryBookRequest.class.getModifiers()));
+		assertTrue(Modifier.isPublic(YuqueQueryBookService.QueryBookResponse.class.getModifiers()));
+		assertTrue(Modifier.isPublic(YuqueQueryBookService.Meta.class.getModifiers()));
+	}
 
 	@Test
 	@EnabledIfEnvironmentVariable(named = YuqueConstants.TOKEN_ENV, matches = CommonToolCallConstants.NOT_BLANK_REGEX)

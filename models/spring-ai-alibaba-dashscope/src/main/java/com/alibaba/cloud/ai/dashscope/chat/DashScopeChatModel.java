@@ -381,7 +381,7 @@ public final class DashScopeChatModel implements ChatModel {
 					content = List.of(textMediaContent(message.getText(), cacheControl));
 				}
 			}
-			else if (message instanceof SystemMessage && (multiModel || cacheControl != null)) {
+			else if (message instanceof SystemMessage && cacheControl != null) {
 				Assert.notNull(message.getText(), "Text must not be null");
 				content = List.of(textMediaContent(message.getText(), cacheControl));
 			}

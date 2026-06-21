@@ -25,6 +25,7 @@ import org.springframework.ai.model.tool.DefaultToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -407,10 +408,23 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			return self();
 		}
 
+		@SuppressWarnings("unchecked")
+		private @Nullable Object effectiveStop() {
+			if (this.stopSequences == null) {
+				return this.stop;
+			}
+			if (this.stop instanceof List<?> stopList && stopList.stream().allMatch(String.class::isInstance)) {
+				List<String> merged = new ArrayList<>((List<String>) stopList);
+				merged.addAll(this.stopSequences);
+				return merged;
+			}
+			return new ArrayList<>(this.stopSequences);
+		}
+
 		@Override
 		public DashScopeSdkChatOptions build() {
 			return new DashScopeSdkChatOptions(this.model, this.stream, this.temperature, this.seed, this.topP,
-					this.topK, this.stop, this.enableSearch, this.maxTokens, this.incrementalOutput,
+					this.topK, effectiveStop(), this.enableSearch, this.maxTokens, this.incrementalOutput,
 					this.repetitionPenalty, this.toolChoice, this.httpHeaders, this.toolCallbacks, this.toolContext,
 					this.extraBody);
 		}

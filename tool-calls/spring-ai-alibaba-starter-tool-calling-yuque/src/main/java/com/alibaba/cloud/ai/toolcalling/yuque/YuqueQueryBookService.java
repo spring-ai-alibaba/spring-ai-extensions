@@ -60,14 +60,14 @@ public class YuqueQueryBookService
 		}
 	}
 
-	protected record QueryBookRequest(String bookId) {
+	public record QueryBookRequest(String bookId) {
 	}
 
-	protected record QueryBookResponse(@JsonProperty("meta") Meta meta,
+	public record QueryBookResponse(@JsonProperty("meta") Meta meta,
 			@JsonProperty("data") List<YuqueConstants.DocSerializer> data) {
 	}
 
-	protected record Meta(@JsonProperty("total") String total) {
+	public record Meta(@JsonProperty("total") String total) {
 	}
 
 }
