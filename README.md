@@ -12,6 +12,7 @@ Based on these components, developers can use Spring AI [ChatClient](https://jav
 
 1. Requires JDK 17+.
 2. If there are any `spring-ai` dependency issue, please lean how to configure the `spring-milestones` Maven repository on [FAQ page](https://java2ai.com/docs/1.0.0.2/faq).
+3. The current release uses `spring-ai-extensions-bom` `2.0.0.1`, Spring AI `2.0.0`, and Spring Boot `4.1.0`.
 
 ### Use `ChatClient` to Develop a Chatbot
 
@@ -24,7 +25,7 @@ To quickly get started with Spring AI Alibaba, add 'spring-ai-alibaba-starter-da
     <dependency>
       <groupId>com.alibaba.cloud.ai</groupId>
       <artifactId>spring-ai-extensions-bom</artifactId>
-      <version>1.1.2.0</version>
+      <version>2.0.0.1</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -169,7 +170,7 @@ MCP provides a standardized protocol for managing and routing AI model contexts.
 - **MCP Registry**: Service registry for discovering and managing MCP services
 - **MCP Router**: Intelligent routing capabilities for distributing requests across multiple model contexts
 
-**MCP SDK Version**: 0.14.0
+**MCP SDK Version**: 2.0.0
 
 **Available Starters:**
 - `spring-ai-alibaba-starter-mcp-registry`

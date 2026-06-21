@@ -26,6 +26,16 @@ public class MemcachedConstants {
 
 	public static final String TOOL_NAME = "memcached";
 
+	public static final String TOOL_NAME_SET = "memcached_set";
+
+	public static final String TOOL_NAME_GET = "memcached_get";
+
+	public static final String TOOL_NAME_DELETE = "memcached_delete";
+
+	public static final String TOOL_NAME_REPLACE = "memcached_replace";
+
+	public static final String TOOL_NAME_APPEND = "memcached_append";
+
 	public static final String IP = "MEMCACHED-IP";
 
 	public static final String PORT = "MEMCACHED-PORT";

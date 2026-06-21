@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.opentripmap;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -43,6 +45,15 @@ public class OpenTripMapAutoConfiguration {
 	public OpenTripMapService openTripMapService(OpenTripMapProperties properties, JsonParseTool jsonParseTool) {
 		return new OpenTripMapService(WebClientTool.builder(jsonParseTool, properties).build(), jsonParseTool,
 				properties);
+	}
+
+	@Bean(name = "openTripMapServiceToolCallback")
+	@ConditionalOnMissingBean(name = "openTripMapServiceToolCallback")
+	public ToolCallback openTripMapServiceToolCallback(OpenTripMapService openTripMapService) {
+		return FunctionToolCallback.builder(OpenTripMapConstants.TOOL_NAME, openTripMapService)
+			.description("Search places, get place details, and find coordinates using OpenTripMap API.")
+			.inputType(OpenTripMapService.Request.class)
+			.build();
 	}
 
 }

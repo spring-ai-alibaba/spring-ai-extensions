@@ -144,19 +144,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 		return Objects.requireNonNull(DashScopeSdkChatOptions.fromOptions(this.defaultOptions));
 	}
 
-	@Override
-	public Prompt buildRequestPrompt(Prompt prompt) {
-		Assert.notNull(prompt, "Prompt must not be null");
-		DashScopeSdkChatOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
-		ChatOptions runtimeOptions = prompt.getOptions();
-		if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {
-			requestOptionsBuilder.combineWith(runtimeOptions.mutate());
-		}
-		DashScopeSdkChatOptions requestOptions = requestOptionsBuilder.build();
-		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
-		return new Prompt(prompt.getInstructions(), requestOptions);
-	}
-
 	public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
 		GenerationParam request = createRequest(prompt, false);
 
@@ -512,9 +499,28 @@ public class DashScopeSdkChatModel implements ChatModel {
 		return new Builder(this);
 	}
 
+	/**
+	 * Accessible for testing.
+	 */
+	Prompt buildRequestPrompt(Prompt prompt) {
+		Assert.notNull(prompt, "Prompt must not be null");
+		DashScopeSdkChatOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
+		ChatOptions runtimeOptions = prompt.getOptions();
+		if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {
+			requestOptionsBuilder.combineWith(runtimeOptions.mutate());
+		}
+		DashScopeSdkChatOptions requestOptions = requestOptionsBuilder.build();
+		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
+		return new Prompt(prompt.getInstructions(), requestOptions);
+	}
+
 	@Override
 	public DashScopeSdkChatModel clone() {
 		return this.mutate().build();
+	}
+
+    public ChatOptions getChatOptions() {
+		return this.defaultOptions;
 	}
 
 	public static Builder builder() {

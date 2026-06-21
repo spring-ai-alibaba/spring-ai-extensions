@@ -60,6 +60,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.MimeTypeUtils;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Tests for DashScope multi-modal chat functionality.
@@ -417,6 +418,12 @@ public class DashScopeMultiModalChatTests {
     assertThat(imageContent.image()).isEqualTo(MULTIMODAL_IMAGE_URL);
     assertThat(textContent.type()).isEqualTo("text");
     assertThat(textContent.text()).isEqualTo(MULTIMODAL_IMAGE_PROMPT);
+
+    String jsonRequest = JsonMapper.builder().build().writeValueAsString(request);
+    assertThat(jsonRequest).contains("\"image\":\"" + MULTIMODAL_IMAGE_URL + "\"");
+    assertThat(jsonRequest).contains("\"text\":\"" + MULTIMODAL_IMAGE_PROMPT + "\"");
+    assertThat(jsonRequest).doesNotContain("\"type\"");
+    assertThat(jsonRequest).doesNotContain("\"multi_model\"");
   }
 
   @Test
@@ -443,7 +450,6 @@ public class DashScopeMultiModalChatTests {
         DashScopeChatOptions.builder()
             .model(MULTIMODAL_VIDEO_MODEL)
             .multiModel(true)
-            .incrementalOutput(false)
             .build();
     Prompt prompt = new Prompt(message, options);
 
@@ -469,6 +475,14 @@ public class DashScopeMultiModalChatTests {
     assertThat(videoContent.video()).containsExactlyElementsOf(MULTIMODAL_VIDEO_FRAME_URLS);
     assertThat(textContent.type()).isEqualTo("text");
     assertThat(textContent.text()).isEqualTo(MULTIMODAL_VIDEO_PROMPT);
+
+    String jsonRequest = JsonMapper.builder().build().writeValueAsString(request);
+    assertThat(jsonRequest).contains("\"video\":[");
+    assertThat(jsonRequest).contains("\"text\":\"" + MULTIMODAL_VIDEO_PROMPT + "\"");
+    assertThat(jsonRequest).doesNotContain("\"type\"");
+    assertThat(jsonRequest).doesNotContain("\"multi_model\"");
+    assertThat(jsonRequest).doesNotContain("\"incremental_output\"");
+    assertThat(jsonRequest).doesNotContain("\"result_format\"");
   }
 
   // =============== Integration Test Cases ===============
@@ -526,7 +540,6 @@ public class DashScopeMultiModalChatTests {
         DashScopeChatOptions.builder()
             .model(MULTIMODAL_VIDEO_MODEL)
             .multiModel(true)
-            .incrementalOutput(false)
             .build();
     Prompt prompt = new Prompt(message, options);
 

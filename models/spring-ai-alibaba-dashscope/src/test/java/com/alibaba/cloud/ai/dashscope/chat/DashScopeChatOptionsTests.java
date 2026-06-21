@@ -163,6 +163,50 @@ class DashScopeChatOptionsTests {
     }
 
     @Test
+    void testExtraBodyBuilderAndGetter() {
+        Map<String, Object> extraBody = Map.of("custom_parameter", "custom-value", "custom_flag", true);
+
+        DashScopeChatOptions options = DashScopeChatOptions.builder().extraBody(extraBody).build();
+
+        assertThat(options.getExtraBody()).containsAllEntriesOf(extraBody);
+    }
+
+    @Test
+    void testCopyCreatesIndependentExtraBody() {
+        DashScopeChatOptions original = DashScopeChatOptions.builder()
+                .extraBody(Map.of("custom_parameter", "custom-value"))
+                .build();
+
+        DashScopeChatOptions copy = original.copy();
+
+        original.getExtraBody().put("original_only", "original");
+        copy.getExtraBody().put("copy_only", "copy");
+
+        assertThat(original.getExtraBody())
+                .containsEntry("custom_parameter", "custom-value")
+                .containsEntry("original_only", "original")
+                .doesNotContainKey("copy_only");
+        assertThat(copy.getExtraBody())
+                .containsEntry("custom_parameter", "custom-value")
+                .containsEntry("copy_only", "copy")
+                .doesNotContainKey("original_only");
+    }
+
+    @Test
+    void testCombineWithMergesExtraBodyWithRuntimeOverride() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .extraBody(Map.of("default_key", "default-value", "overridden", "from-default"))
+                .combineWith(DashScopeChatOptions.builder()
+                        .extraBody(Map.of("runtime_key", "runtime-value", "overridden", "from-runtime")))
+                .build();
+
+        assertThat(options.getExtraBody())
+                .containsEntry("default_key", "default-value")
+                .containsEntry("runtime_key", "runtime-value")
+                .containsEntry("overridden", "from-runtime");
+    }
+
+    @Test
     void testCopy() {
         // Test copy method
         DashScopeChatOptions original = DashScopeChatOptions.builder()

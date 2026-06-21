@@ -18,12 +18,16 @@ package com.alibaba.cloud.ai.toolcalling.baidutranslate;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.RestClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Description;
+
+import java.util.function.Function;
 
 /**
  * @author SCMRCORE
@@ -42,6 +46,17 @@ public class BaiduTranslateAutoConfiguration {
 
 		return new BaiduTranslateService(properties, RestClientTool.builder(jsonParseTool, properties).build(),
 				jsonParseTool);
+	}
+
+	@Bean(name = "baiduTranslateToolCallback")
+	@ConditionalOnMissingBean(name = "baiduTranslateToolCallback")
+	public ToolCallback baiduTranslateToolCallback(BaiduTranslateService baiduTranslate) {
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		Function<BaiduTranslateService.Request, Object> baiduTranslateFunction = (Function) baiduTranslate;
+		return FunctionToolCallback.builder(BaiduTranslateConstants.TOOL_NAME, baiduTranslateFunction)
+			.description("Baidu translation function for general text translation")
+			.inputType(BaiduTranslateService.Request.class)
+			.build();
 	}
 
 }

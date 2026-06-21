@@ -39,6 +39,7 @@ import org.springframework.ai.tool.ToolCallback;
  *
  * @author nottyjay
  * @author guanxu
+ * @author yingzi
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashScopeChatOptions implements ToolCallingChatOptions {
@@ -78,7 +79,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
 	private final @Nullable Integer seed;
 
-	private final Boolean incrementalOutput;
+	private final @Nullable Boolean incrementalOutput;
 
 	private final @Nullable ResponseFormat responseFormat;
 
@@ -106,12 +107,13 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
 	private final @Nullable List<Skill> skill;
 
+	private final @Nullable Map<String, Object> extraBody;
+
 	@JsonIgnore
 	private final Map<String, String> httpHeaders;
 
 	@JsonIgnore
 	private final List<ToolCallback> toolCallbacks;
-
 
 	private final @Nullable Boolean multiModel;
 
@@ -129,8 +131,9 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 			@Nullable Integer topLogprobs, @Nullable Integer n, @Nullable Object stop, @Nullable List<Tool> tools,
 			@Nullable Object toolChoice, @Nullable Boolean parallelToolCalls, @Nullable Boolean enableSearch,
 			@Nullable SearchOptions searchOptions, @Nullable String dataInspection, @Nullable List<Skill> skill,
-			@Nullable Map<String, String> httpHeaders, @Nullable List<ToolCallback> toolCallbacks,
-			@Nullable Boolean multiModel, @Nullable Map<String, Object> toolContext) {
+			@Nullable Map<String, Object> extraBody, @Nullable Map<String, String> httpHeaders,
+			@Nullable List<ToolCallback> toolCallbacks, @Nullable Boolean multiModel,
+			@Nullable Map<String, Object> toolContext) {
 
 		this.model = model;
 		this.stream = stream;
@@ -149,7 +152,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		this.vlEnableImageHwOutput = vlEnableImageHwOutput;
 		this.maxCompletionTokens = maxCompletionTokens;
 		this.seed = seed;
-		this.incrementalOutput = incrementalOutput != null ? incrementalOutput : Boolean.TRUE;
+		this.incrementalOutput = incrementalOutput;
 		this.responseFormat = responseFormat;
 		this.resultFormat = resultFormat;
 		this.logprobs = logprobs;
@@ -163,6 +166,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		this.searchOptions = searchOptions;
 		this.dataInspection = dataInspection;
 		this.skill = skill != null ? new ArrayList<>(skill) : null;
+		this.extraBody = extraBody != null ? new HashMap<>(extraBody) : null;
 		this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
 		this.toolCallbacks = toolCallbacks != null ? new ArrayList<>(toolCallbacks) : new ArrayList<>();
 		this.multiModel = multiModel;
@@ -255,7 +259,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		return this.seed;
 	}
 
-	public Boolean getIncrementalOutput() {
+	public @Nullable Boolean getIncrementalOutput() {
 		return this.incrementalOutput;
 	}
 
@@ -322,6 +326,10 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
 	public @Nullable List<Skill> getSkill() {
 		return this.skill;
+	}
+
+	public @Nullable Map<String, Object> getExtraBody() {
+		return this.extraBody;
 	}
 
 	public Map<String, String> getHttpHeaders() {
@@ -391,6 +399,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 			.searchOptions(this.searchOptions)
 			.dataInspection(this.dataInspection)
 			.skill(this.skill)
+			.extraBody(this.extraBody)
 			.httpHeaders(this.httpHeaders)
 			.toolCallbacks(this.toolCallbacks)
 			.multiModel(this.multiModel)
@@ -430,7 +439,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 				&& Objects.equals(this.enableSearch, that.enableSearch)
 				&& Objects.equals(this.searchOptions, that.searchOptions)
 				&& Objects.equals(this.dataInspection, that.dataInspection) && Objects.equals(this.skill, that.skill)
-				&& Objects.equals(this.httpHeaders, that.httpHeaders)
+				&& Objects.equals(this.extraBody, that.extraBody) && Objects.equals(this.httpHeaders, that.httpHeaders)
 				&& Objects.equals(this.toolCallbacks, that.toolCallbacks)
 				&& Objects.equals(this.multiModel, that.multiModel)
 				&& Objects.equals(this.toolContext, that.toolContext);
@@ -444,7 +453,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 				this.vlHighResolutionImages, this.vlEnableImageHwOutput, this.maxCompletionTokens, this.seed,
 				this.incrementalOutput, this.responseFormat, this.resultFormat, this.logprobs, this.topLogprobs,
 				this.n, this.stop, this.tools, this.toolChoice, this.parallelToolCalls, this.enableSearch,
-				this.searchOptions, this.dataInspection, this.skill, this.httpHeaders,
+				this.searchOptions, this.dataInspection, this.skill, this.extraBody, this.httpHeaders,
 				this.toolCallbacks, this.multiModel, this.toolContext);
 	}
 
@@ -465,7 +474,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 				+ ", toolChoice=" + this.toolChoice + ", parallelToolCalls=" + this.parallelToolCalls
 				+ ", enableSearch=" + this.enableSearch + ", searchOptions=" + this.searchOptions
 				+ ", dataInspection='" + this.dataInspection + '\'' + ", skill=" + this.skill
-				+ ", httpHeaders=" + this.httpHeaders + ", toolCallbacks=" + this.toolCallbacks
+				+ ", extraBody=" + this.extraBody + ", httpHeaders=" + this.httpHeaders + ", toolCallbacks=" + this.toolCallbacks
 				+ ", multiModel=" + this.multiModel + ", toolContext=" + this.toolContext + '}';
 	}
 
@@ -527,6 +536,8 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
 		protected @Nullable List<Skill> skill;
 
+		protected @Nullable Map<String, Object> extraBody;
+
 		protected Map<String, String> httpHeaders = new HashMap<>();
 
 		protected @Nullable Boolean multiModel;
@@ -537,6 +548,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 			copy.stop = copyStop(this.stop);
 			copy.tools = this.tools != null ? new ArrayList<>(this.tools) : null;
 			copy.skill = this.skill != null ? new ArrayList<>(this.skill) : null;
+			copy.extraBody = this.extraBody != null ? new HashMap<>(this.extraBody) : null;
 			copy.httpHeaders = this.httpHeaders != null ? new HashMap<>(this.httpHeaders) : new HashMap<>();
 			return copy;
 		}
@@ -681,6 +693,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 			return self();
 		}
 
+		public B extraBody(@Nullable Map<String, Object> extraBody) {
+			this.extraBody = extraBody != null ? new HashMap<>(extraBody) : null;
+			return self();
+		}
+
 		public B httpHeaders(@Nullable Map<String, String> httpHeaders) {
 			this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : new HashMap<>();
 			return self();
@@ -816,6 +833,12 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 				if (that.skill != null) {
 					this.skill = new ArrayList<>(that.skill);
 				}
+				if (that.extraBody != null) {
+					if (this.extraBody == null) {
+						this.extraBody = new HashMap<>();
+					}
+					this.extraBody.putAll(that.extraBody);
+				}
 				if (that.httpHeaders != null && !that.httpHeaders.isEmpty()) {
 					this.httpHeaders = new HashMap<>(that.httpHeaders);
 				}
@@ -834,8 +857,8 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 					this.vlHighResolutionImages, this.vlEnableImageHwOutput, this.maxCompletionTokens, this.seed,
 					this.incrementalOutput, this.responseFormat, this.resultFormat, this.logprobs, this.topLogprobs,
 					this.n, this.stop, this.tools, this.toolChoice, this.parallelToolCalls, this.enableSearch,
-					this.searchOptions, this.dataInspection, this.skill, this.httpHeaders, this.toolCallbacks,
-					this.multiModel, this.toolContext);
+					this.searchOptions, this.dataInspection, this.skill, this.extraBody, this.httpHeaders,
+					this.toolCallbacks, this.multiModel, this.toolContext);
 		}
 
 	}

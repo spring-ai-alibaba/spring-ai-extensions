@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.SearchOptions;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.Skill;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -37,6 +39,7 @@ import org.springframework.ai.content.Media;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.util.MimeTypeUtils;
 
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MESSAGE_FORMAT;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -137,11 +140,12 @@ class DashScopeChatIT {
 
 	@Test
 	void testImageUnderstanding() {
-		DashScopeChatOptions options = DashScopeChatOptions.builder().model("qwen-vl-max").build();
+		DashScopeChatOptions options = DashScopeChatOptions.builder().model("qwen-vl-plus").multiModel(true).build();
 		Media media = new Media(MimeTypeUtils.IMAGE_JPEG,
 				URI.create("https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg"));
-		Prompt prompt = new Prompt(List.of(new SystemMessage(TEST_SYSTEM_PROMPT),
-				UserMessage.builder().text("这是什么？").media(media).build()));
+		UserMessage message = UserMessage.builder().text("这是什么？").media(media).build();
+		message.getMetadata().put(MESSAGE_FORMAT, MessageFormat.IMAGE);
+		Prompt prompt = new Prompt(message, options);
 
 		ChatResponse chatResponse = callOrSkipQuota(chatModel(options), prompt);
 
@@ -152,17 +156,19 @@ class DashScopeChatIT {
 
 	@Test
 	void testMultiImageUnderstanding() throws Exception {
-		DashScopeChatOptions options = DashScopeChatOptions.builder().model("qwen-vl-max").build();
+		DashScopeChatOptions options = DashScopeChatOptions.builder().model("qwen-vl-plus").multiModel(true).build();
 		Media media1 = new Media(MimeTypeUtils.IMAGE_JPEG, new URI(
-				"https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241115/bxsngf/zhangsan.png"));
+				"https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg"));
 		Media media2 = new Media(MimeTypeUtils.IMAGE_JPEG, new URI(
-				"https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241115/ctdzex/tongyixing.png"));
+				"https://dashscope.oss-cn-beijing.aliyuncs.com/images/tiger.png"));
 		Media media3 = new Media(MimeTypeUtils.IMAGE_JPEG, new URI(
-				"https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241115/ukvbpq/lisi.png"));
-		Prompt prompt = new Prompt(List.of(new SystemMessage(TEST_SYSTEM_PROMPT), UserMessage.builder()
-			.text("告诉我三张图片有什么相同之处")
+				"https://dashscope.oss-cn-beijing.aliyuncs.com/images/rabbit.png"));
+		UserMessage message = UserMessage.builder()
+			.text("这些是什么?")
 			.media(List.of(media1, media2, media3))
-			.build()));
+			.build();
+		message.getMetadata().put(MESSAGE_FORMAT, MessageFormat.IMAGE);
+		Prompt prompt = new Prompt(message, options);
 
 		ChatResponse chatResponse = callOrSkipQuota(chatModel(options), prompt);
 
@@ -173,11 +179,19 @@ class DashScopeChatIT {
 
 	@Test
 	void testVideoUnderstanding() throws Exception {
-		DashScopeChatOptions options = DashScopeChatOptions.builder().model("qwen-vl-max").build();
-		Media media = new Media(MimeTypeUtils.parseMimeType("video/mp4"),
-				new URI("https://dashscope.oss-cn-beijing.aliyuncs.com/videos/dog_and_girl.mp4"));
-		Prompt prompt = new Prompt(List.of(new SystemMessage(TEST_SYSTEM_PROMPT),
-				UserMessage.builder().text("描述这个视频的具体过程").media(media).build()));
+		DashScopeChatOptions options = DashScopeChatOptions.builder().model("qwen-vl-max").multiModel(true).build();
+		List<Media> media = List.of(
+				new Media(MimeTypeUtils.IMAGE_JPEG, new URI(
+						"https://img.alicdn.com/imgextra/i3/O1CN01K3SgGo1eqmlUgeE9b_!!6000000003923-0-tps-3840-2160.jpg")),
+				new Media(MimeTypeUtils.IMAGE_JPEG, new URI(
+						"https://img.alicdn.com/imgextra/i4/O1CN01BjZvwg1Y23CF5qIRB_!!6000000003000-0-tps-3840-2160.jpg")),
+				new Media(MimeTypeUtils.IMAGE_JPEG, new URI(
+						"https://img.alicdn.com/imgextra/i4/O1CN01Ib0clU27vTgBdbVLQ_!!6000000007859-0-tps-3840-2160.jpg")),
+				new Media(MimeTypeUtils.IMAGE_JPEG, new URI(
+						"https://img.alicdn.com/imgextra/i1/O1CN01aygPLW1s3EXCdSN4X_!!6000000005710-0-tps-3840-2160.jpg")));
+		UserMessage message = UserMessage.builder().text("描述这个视频的具体过程").media(media).build();
+		message.getMetadata().put(MESSAGE_FORMAT, MessageFormat.VIDEO);
+		Prompt prompt = new Prompt(message, options);
 
 		ChatResponse chatResponse = callOrSkipQuota(chatModel(options), prompt);
 
@@ -188,11 +202,12 @@ class DashScopeChatIT {
 
 	@Test
 	void testAudioUnderstanding() throws Exception {
-		DashScopeChatOptions options = DashScopeChatOptions.builder().model("qwen-audio-turbo-latest").build();
+		DashScopeChatOptions options = DashScopeChatOptions.builder().model("qwen-audio-turbo").multiModel(true).build();
 		Media media = new Media(MimeTypeUtils.parseMimeType("audio/mpeg"),
-				new URI("https://dashscope.oss-cn-beijing.aliyuncs.com/audios/2channel_16K.mp3"));
-		Prompt prompt = new Prompt(List.of(new SystemMessage(TEST_SYSTEM_PROMPT),
-				UserMessage.builder().text("这段音频在说什么？").media(media).build()));
+				new URI("https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3"));
+		UserMessage message = UserMessage.builder().text("这段音频在说什么?").media(media).build();
+		message.getMetadata().put(MESSAGE_FORMAT, MessageFormat.AUDIO);
+		Prompt prompt = new Prompt(List.of(new SystemMessage(TEST_SYSTEM_PROMPT), message), options);
 
 		ChatResponse chatResponse = callOrSkipQuota(chatModel(options), prompt);
 
@@ -206,23 +221,34 @@ class DashScopeChatIT {
 		DashScopeChatOptions options = DashScopeChatOptions.builder()
 			.model(TEST_MODEL)
 			.enableSearch(true)
-			.build();
+                .searchOptions(
+                        SearchOptions.builder()
+                                .enableSource(true)
+                                .enableCitation(true)
+                                .citationFormat("<number>")
+                                .searchStrategy("turbo")
+                                .enableSearchExtension(true)
+                                .prependSearchResult(true)
+                                .build())
+                .build();
 
 		ChatResponse chatResponse = callOrSkipQuota(chatModel(options), textPrompt("今天杭州天气怎么样？"));
 
 		assertThat(chatResponse).isNotNull();
 		assertThat(chatResponse.getResult().getOutput().getText()).isNotEmpty();
-		System.out.println(format("\n>>> RESPONSE: %s", chatResponse.getResult().getOutput().getText()));
+        ChatGenerationMetadata metadata = chatResponse.getResult().getMetadata();
+        Object searchInfo = metadata.get("search_info");
+        System.out.println(format("\n>>> RESPONSE: %s", chatResponse.getResult().getOutput().getText()));
+        System.out.println(format("\n>>> SEARCH INFO: %s", searchInfo));
 	}
 
 	@Test
 	@EnabledIfEnvironmentVariable(named = "DASHSCOPE_TEST_FILE_ID", matches = ".+")
 	void testDocUnderstanding() {
-		DashScopeChatOptions options = DashScopeChatOptions.builder().model("qwen-long").build();
+		DashScopeChatOptions options = DashScopeChatOptions.builder().model("qwen-long").resultFormat("message").build();
 		String fileId = System.getenv("DASHSCOPE_TEST_FILE_ID");
-		Media media = Media.builder().id(fileId).mimeType(MimeTypeUtils.parseMimeType("application/pdf")).build();
 		Prompt prompt = new Prompt(List.of(new SystemMessage(TEST_SYSTEM_PROMPT),
-				UserMessage.builder().text("总结一下文档内容").media(media).build()));
+				new SystemMessage("fileid://" + fileId), new UserMessage("这篇文章讲了什么？")), options);
 
 		ChatResponse chatResponse = callOrSkipQuota(chatModel(options), prompt);
 
@@ -241,7 +267,9 @@ class DashScopeChatIT {
 			.build();
 
 		StringBuilder finalResponse = new StringBuilder();
-		chatModel(options).stream(textPrompt("请以最近的AI新闻为主题，帮我生成一个PPT大纲。"))
+		Prompt prompt = new Prompt(List.of(new SystemMessage("you are a helpful assistant."),
+				new SystemMessage("您的文档内容"), new UserMessage("生成一个10到20页的ppt")), options);
+		chatModel(options).stream(prompt)
 			.map(response -> response.getResult().getOutput().getText())
 			.filter(DashScopeChatIT::hasText)
 			.doOnNext(content -> {

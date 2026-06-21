@@ -12,6 +12,7 @@
 
 1. 需要 JDK 17+
 2. 如果遇到任何 `spring-ai` 依赖问题，请查看 [FAQ 页面](https://java2ai.com/docs/1.0.0.2/faq) 了解如何配置 `spring-milestones` Maven 仓库
+3. 当前版本使用 `spring-ai-extensions-bom` `2.0.0.1`、Spring AI `2.0.0` 和 Spring Boot `4.1.0`
 
 ### 使用 `ChatClient` 开发聊天机器人
 
@@ -24,7 +25,7 @@
     <dependency>
       <groupId>com.alibaba.cloud.ai</groupId>
       <artifactId>spring-ai-extensions-bom</artifactId>
-      <version>1.1.2.0</version>
+      <version>2.0.0.1</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -169,7 +170,7 @@ MCP 提供了一个标准化协议，用于管理和路由 AI 模型上下文。
 - **MCP Registry**: 用于发现和管理 MCP 服务的注册中心
 - **MCP Router**: 智能路由功能，用于在多个模型上下文之间分发请求
 
-**MCP SDK 版本**: 0.14.0
+**MCP SDK 版本**: 2.0.0
 
 **可用的 Starter：**
 - `spring-ai-alibaba-starter-mcp-registry`

@@ -53,6 +53,7 @@ import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccess
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -75,7 +76,6 @@ import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.chat.observation.ChatModelObservationDocumentation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.support.UsageCalculator;
@@ -95,10 +95,9 @@ import org.springframework.util.StringUtils;
  * {@link Generation}.
  *
  * @author yuluo
- * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
- * @see ChatModel
+ * @author yingzi
  */
-public class DashScopeChatModel implements ChatModel {
+public final class DashScopeChatModel implements ChatModel {
 
 	private static final Logger logger = LoggerFactory.getLogger(DashScopeChatModel.class);
 
@@ -189,18 +188,6 @@ public class DashScopeChatModel implements ChatModel {
 		return this.defaultOptions.copy();
 	}
 
-	@Override
-	public Prompt buildRequestPrompt(Prompt prompt) {
-		DashScopeChatOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
-		ChatOptions runtimeOptions = prompt.getOptions();
-		if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {
-			requestOptionsBuilder.combineWith(runtimeOptions.mutate());
-		}
-		DashScopeChatOptions requestOptions = requestOptionsBuilder.build();
-		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
-		return new Prompt(prompt.getInstructions(), requestOptions);
-	}
-
     private boolean isMultiModel(@Nullable ChatOptions options) {
         return options instanceof DashScopeChatOptions && Boolean.TRUE.equals(((DashScopeChatOptions) options).getMultiModel());
     }
@@ -216,14 +203,16 @@ public class DashScopeChatModel implements ChatModel {
 	public Flux<ChatResponse> internalStream(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
 
 		return Flux.deferContextual(contextView -> {
-			ChatCompletionRequest request = createRequest(prompt);
+			Prompt streamPrompt = withStreamDefaults(prompt);
+			ChatCompletionRequest request = createRequest(streamPrompt);
 			Flux<ChatCompletionChunk> completionChunks = RetryUtils.execute(this.retryTemplate,
-					() -> this.dashscopeApi.chatCompletionStream(request, getAdditionalHttpHeaders(prompt), isMultiModel(prompt.getOptions())));
+					() -> this.dashscopeApi.chatCompletionStream(request, getAdditionalHttpHeaders(streamPrompt),
+							isMultiModel(streamPrompt.getOptions())));
 
 			ConcurrentHashMap<String, String> roleMap = new ConcurrentHashMap<>();
 
 			ChatModelObservationContext observationContext = ChatModelObservationContext.builder()
-				.prompt(prompt)
+				.prompt(streamPrompt)
 				.provider(DashScopeApiConstants.PROVIDER_NAME)
 				.build();
 
@@ -237,12 +226,19 @@ public class DashScopeChatModel implements ChatModel {
 				.switchMap(chatCompletion -> Mono.just(chatCompletion)
 					.map(chatCompletion2 -> toChatResponse(chatCompletion2, previousChatResponse, request, roleMap)));
 
-            Flux<ChatResponse> flux = chatResponse.doOnError(observation::error)
-					.doFinally(s -> observation.stop())
+			Flux<ChatResponse> flux = chatResponse.doOnError(observation::error)
+				.doFinally(s -> observation.stop())
 				.contextWrite(ctx -> ctx.put(ObservationThreadLocalAccessor.KEY, observation));
 
 			return new MessageAggregator().aggregate(flux, observationContext::setResponse);
 		});
+	}
+
+	private Prompt withStreamDefaults(Prompt prompt) {
+		if (prompt.getOptions() instanceof DashScopeChatOptions options && options.getIncrementalOutput() == null) {
+			return new Prompt(prompt.getInstructions(), options.mutate().incrementalOutput(true).build());
+		}
+		return prompt;
 	}
 
 	private static String finishReasonToMetadataValue(@Nullable ChatCompletionFinishReason finishReason) {
@@ -321,11 +317,12 @@ public class DashScopeChatModel implements ChatModel {
 			.toList();
 
 		String finishReason = finishReasonToMetadataValue(choice.finishReason());
-		ChatGenerationMetadata generationMetadata = ChatGenerationMetadata.builder().finishReason(finishReason).build();
+		ChatGenerationMetadata generationMetadata = ChatGenerationMetadata.builder().finishReason(finishReason)
+                .metadata(metadata)
+                .build();
 
 		AssistantMessage assistantMessage = AssistantMessage.builder()
 			.content(choiceMessage != null ? choiceMessage.content() : "")
-			.properties(metadata)
 			.toolCalls(toolCalls)
 			.build();
 
@@ -353,22 +350,23 @@ public class DashScopeChatModel implements ChatModel {
 	 */
 	ChatCompletionRequest createRequest(Prompt prompt) {
 		DashScopeChatOptions requestOptions = (DashScopeChatOptions) prompt.getOptions();
-        Assert.state(requestOptions != null, "requestOptions must not be null");
+		Assert.state(requestOptions != null, "requestOptions must not be null");
 
-        List<ToolDefinition> toolDefinitions = this.toolCallingManager.resolveToolDefinitions(requestOptions);
+		List<ToolDefinition> toolDefinitions = this.toolCallingManager.resolveToolDefinitions(requestOptions);
+		boolean multiModel = isMultiModel(requestOptions);
 
 		return ChatCompletionRequest.builder()
 			.model(requestOptions.getModel())
 			.input(new Input(prompt.getInstructions()
-                    .stream()
-                    .map(this::toDashScopeMessage)
-                    .flatMap(List::stream)
-                    .toList()))
+				.stream()
+				.map(message -> toDashScopeMessage(message, multiModel))
+				.flatMap(List::stream)
+				.toList()))
 			.parameters(toDashScopeChatRequestParameter(requestOptions, toolDefinitions))
 			.build();
 	}
 
-	private List<Input.ChatCompletionMessage> toDashScopeMessage(Message message) {
+	private List<Input.ChatCompletionMessage> toDashScopeMessage(Message message, boolean multiModel) {
 		if (message.getMessageType() == MessageType.USER || message.getMessageType() == MessageType.SYSTEM) {
 			Object content = message.getText();
 			Map<String, String> cacheControl = extractCacheControl(message);
@@ -377,14 +375,14 @@ public class DashScopeChatModel implements ChatModel {
 				if (!ObjectUtils.isEmpty(userMessage.getMedia())) {
 					content = convertMediaContent(userMessage, cacheControl);
 				}
-				else if (cacheControl != null) {
+				else if (multiModel || cacheControl != null) {
 					Assert.notNull(message.getText(), "Text must not be null");
-					content = List.of(new MediaContent(message.getText(), cacheControl));
+					content = List.of(textMediaContent(message.getText(), cacheControl));
 				}
 			}
-			else if (message instanceof SystemMessage && cacheControl != null) {
+			else if (message instanceof SystemMessage && (multiModel || cacheControl != null)) {
 				Assert.notNull(message.getText(), "Text must not be null");
-				content = List.of(new MediaContent(message.getText(), cacheControl));
+				content = List.of(textMediaContent(message.getText(), cacheControl));
 			}
 
 			return List.of(Input.ChatCompletionMessage.builder()
@@ -492,26 +490,32 @@ public class DashScopeChatModel implements ChatModel {
 				.stream()
 				.map(media -> this.fromMediaData(media.getMimeType(), media.getData()))
 				.toList();
-			contentList.add(new MediaContent("video", null, null, mediaList));
-			contentList.add(new MediaContent(message.getText(), cacheControl));
+			contentList.add(MediaContent.builder().video(mediaList).build());
+			contentList.add(textMediaContent(message.getText(), cacheControl));
 		}
 		else if (format == MessageFormat.AUDIO) {
 			contentList.addAll(message.getMedia()
 				.stream()
-				.map(media -> new MediaContent("audio", null, null, null,
-						this.fromMediaData(media.getMimeType(), media.getData())))
+				.map(media -> MediaContent.builder()
+					.audio(this.fromMediaData(media.getMimeType(), media.getData()))
+					.build())
 				.toList());
-			contentList.add(new MediaContent(message.getText(), cacheControl));
+			contentList.add(textMediaContent(message.getText(), cacheControl));
 		}
 		else {
 			contentList.addAll(message.getMedia()
 				.stream()
-				.map(media -> new MediaContent("image", null,
-						this.fromMediaData(media.getMimeType(), media.getData()), null))
+				.map(media -> MediaContent.builder()
+					.image(this.fromMediaData(media.getMimeType(), media.getData()))
+					.build())
 				.toList());
-			contentList.add(new MediaContent(message.getText(), cacheControl));
+			contentList.add(textMediaContent(message.getText(), cacheControl));
 		}
 		return contentList;
+	}
+
+	private MediaContent textMediaContent(String text, @Nullable Map<String, String> cacheControl) {
+		return MediaContent.builder().text(text).cacheControl(cacheControl).build();
 	}
 
 	private String fromMediaData(MimeType mimeType, Object mediaContentData) {
@@ -525,7 +529,13 @@ public class DashScopeChatModel implements ChatModel {
 				"Unsupported media data type: " + mediaContentData.getClass().getSimpleName());
 	}
 
-	private Parameters toDashScopeChatRequestParameter(DashScopeChatOptions options, List<ToolDefinition> toolDefinitions) {
+	private Parameters toDashScopeChatRequestParameter(DashScopeChatOptions options,
+			List<ToolDefinition> toolDefinitions) {
+		String resultFormat = options.getResultFormat();
+		if (resultFormat == null && !Boolean.TRUE.equals(options.getMultiModel())
+				&& CollectionUtils.isEmpty(options.getSkill())) {
+			resultFormat = DEFAULT_RESULT_FORMAT;
+		}
 
 		return Parameters.builder()
 			.temperature(toFloat(options.getTemperature()))
@@ -545,7 +555,7 @@ public class DashScopeChatModel implements ChatModel {
 			.seed(options.getSeed())
 			.incrementalOutput(options.getIncrementalOutput())
 			.responseFormat(options.getResponseFormat())
-			.resultFormat(Objects.requireNonNullElse(options.getResultFormat(), DEFAULT_RESULT_FORMAT))
+			.resultFormat(resultFormat)
 			.logprobs(options.getLogprobs())
 			.topLogprobs(options.getTopLogprobs())
 			.n(options.getN())
@@ -556,6 +566,7 @@ public class DashScopeChatModel implements ChatModel {
 			.enableSearch(options.getEnableSearch())
 			.searchOptions(options.getSearchOptions())
 			.skill(options.getSkill())
+			.extraBody(options.getExtraBody())
 			.build();
 	}
 
@@ -600,6 +611,20 @@ public class DashScopeChatModel implements ChatModel {
 
 	public Builder mutate() {
 		return new Builder(this);
+	}
+
+	/**
+	 * Accessible for testing.
+	 */
+	Prompt buildRequestPrompt(Prompt prompt) {
+		DashScopeChatOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
+		ChatOptions runtimeOptions = prompt.getOptions();
+		if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {
+			requestOptionsBuilder.combineWith(runtimeOptions.mutate());
+		}
+		DashScopeChatOptions requestOptions = requestOptionsBuilder.build();
+		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
+		return new Prompt(prompt.getInstructions(), requestOptions);
 	}
 
 	@Override

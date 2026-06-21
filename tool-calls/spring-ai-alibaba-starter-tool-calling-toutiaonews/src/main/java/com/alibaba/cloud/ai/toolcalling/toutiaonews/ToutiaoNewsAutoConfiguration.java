@@ -21,6 +21,8 @@ import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -56,6 +58,15 @@ public class ToutiaoNewsAutoConfiguration {
 		};
 		return new ToutiaoNewsSearchHotEventsService(jsonParseTool, properties,
 				WebClientTool.builder(jsonParseTool, properties).httpHeadersConsumer(consumer).build());
+	}
+
+	@Bean(name = "getToutiaoNewsToolCallback")
+	@ConditionalOnMissingBean(name = "getToutiaoNewsToolCallback")
+	public ToolCallback getToutiaoNewsToolCallback(ToutiaoNewsSearchHotEventsService getToutiaoNews) {
+		return FunctionToolCallback.builder(ToutiaoNewsConstants.TOOL_NAME, getToutiaoNews)
+			.description("Get the news from the toutiao news (获取今日头条新闻).")
+			.inputType(ToutiaoNewsSearchHotEventsService.Request.class)
+			.build();
 	}
 
 }

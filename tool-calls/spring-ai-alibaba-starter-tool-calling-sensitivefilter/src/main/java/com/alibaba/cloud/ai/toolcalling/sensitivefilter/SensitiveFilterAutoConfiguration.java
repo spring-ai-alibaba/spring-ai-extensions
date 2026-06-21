@@ -16,6 +16,8 @@
 
 package com.alibaba.cloud.ai.toolcalling.sensitivefilter;
 
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -40,6 +42,15 @@ public class SensitiveFilterAutoConfiguration {
 			+ "such as mobile phone numbers, ID numbers, bank card numbers, etc")
 	public SensitiveFilterService sensitiveFilter(SensitiveFilterProperties properties) {
 		return new SensitiveFilterService(properties);
+	}
+
+	@Bean(name = "sensitiveFilterToolCallback")
+	@ConditionalOnMissingBean(name = "sensitiveFilterToolCallback")
+	public ToolCallback sensitiveFilterToolCallback(SensitiveFilterService sensitiveFilter) {
+		return FunctionToolCallback.builder(SensitiveFilterConstants.TOOL_NAME, sensitiveFilter)
+			.description("It is used to filter and replace sensitive information in text, " + "such as mobile phone numbers, ID numbers, bank card numbers, etc")
+			.inputType(String.class)
+			.build();
 	}
 
 }

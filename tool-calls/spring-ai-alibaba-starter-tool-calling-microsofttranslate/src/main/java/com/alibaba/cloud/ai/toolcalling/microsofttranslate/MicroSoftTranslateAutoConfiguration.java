@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.microsofttranslate;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,6 +27,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Description;
 import org.springframework.http.HttpHeaders;
+
+import java.util.function.Function;
 
 /**
  * @author 31445
@@ -49,6 +53,17 @@ public class MicroSoftTranslateAutoConfiguration {
 			})
 			.build();
 		return new MicroSoftTranslateService(webClientTool, jsonParseTool);
+	}
+
+	@Bean(name = "microSoftTranslateFunctionToolCallback")
+	@ConditionalOnMissingBean(name = "microSoftTranslateFunctionToolCallback")
+	public ToolCallback microSoftTranslateFunctionToolCallback(MicroSoftTranslateService microSoftTranslateFunction) {
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		Function<MicroSoftTranslateService.Request, Object> microSoftTranslateFunctionFunction = (Function) microSoftTranslateFunction;
+		return FunctionToolCallback.builder(MicroSoftTranslateConstants.TOOL_NAME, microSoftTranslateFunctionFunction)
+			.description("Implement natural language translation capabilities.")
+			.inputType(MicroSoftTranslateService.Request.class)
+			.build();
 	}
 
 }
