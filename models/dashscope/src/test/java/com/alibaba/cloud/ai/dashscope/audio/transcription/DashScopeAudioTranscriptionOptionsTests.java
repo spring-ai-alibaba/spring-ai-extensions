@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -126,6 +127,23 @@ class DashScopeAudioTranscriptionOptionsTests {
 		translationOptions.setTargetLang("zh");
 		assertThat(translationOptions.getSourceLang()).isEqualTo("en");
 		assertThat(translationOptions.getTargetLang()).isEqualTo("zh");
+	}
+
+	// specialWordFilter / diarizationEnabled must serialize to snake_case so that the
+	// DashScope API recognizes them (see issue #259).
+	@Test
+	void testSnakeCaseSerializationOfSpecialFields() throws Exception {
+		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+			.specialWordFilter("*")
+			.diarizationEnabled(true)
+			.build();
+
+		String json = new ObjectMapper().writeValueAsString(options);
+
+		assertThat(json).contains("\"special_word_filter\":\"*\"");
+		assertThat(json).contains("\"diarization_enabled\":true");
+		assertThat(json).doesNotContain("specialWordFilter");
+		assertThat(json).doesNotContain("diarizationEnabled");
 	}
 
 }

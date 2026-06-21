@@ -126,10 +126,10 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
     @JsonProperty("timestamp_alignment_enabled")
     private Boolean timestampAlignmentEnabled;
 
-    @JsonProperty("specialWordFilter")
+    @JsonProperty("special_word_filter")
     private String specialWordFilter;
 
-    @JsonProperty("diarizationEnabled")
+    @JsonProperty("diarization_enabled")
     private Boolean diarizationEnabled;
 
     @JsonProperty("speaker_count")
