@@ -73,6 +73,14 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
         @JsonProperty("metadata")
         private DashScopeAudioTranscriptionMetadata metadata;
 
+        // Kept for backward compatibility: this public constructor was part of the
+        // exported API before the Jackson creator below started mapping the extra
+        // top-level response fields. Removing it would break already-compiled clients.
+        public DashScopeAudioTranscription(String text) {
+            super(text != null ? text : "");
+            this.text = text;
+        }
+
         @JsonCreator
         public DashScopeAudioTranscription(@JsonProperty("text") @JsonAlias("transcript") String text,
                 @JsonProperty("channel_id") Integer channelId,

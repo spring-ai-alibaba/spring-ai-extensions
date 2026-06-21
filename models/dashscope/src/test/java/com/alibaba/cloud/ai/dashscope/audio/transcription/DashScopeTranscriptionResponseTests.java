@@ -62,4 +62,14 @@ class DashScopeTranscriptionResponseTests {
 		assertThat(transcription.getText()).isEqualTo("aliased text");
 	}
 
+	// The original single-argument constructor must remain available for backward
+	// compatibility with clients compiled against the previous API.
+	@Test
+	void testSingleArgConstructorStillAvailable() {
+		DashScopeAudioTranscription transcription = new DashScopeAudioTranscription("plain text");
+
+		assertThat(transcription.getText()).isEqualTo("plain text");
+		assertThat(transcription.getMetadata()).isNull();
+	}
+
 }
