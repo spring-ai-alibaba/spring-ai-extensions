@@ -205,8 +205,11 @@ public class DashScopeSdkChatModel implements ChatModel {
 		GenerationParam.GenerationParamBuilder<?, ?> requestBuilder = GenerationParam.builder()
 			.model(model)
 			.messages(sdkMessages)
-			.resultFormat("message")
-			.enableSearch(requestOptions.getEnableSearch());
+			.resultFormat("message");
+
+		if (requestOptions.getEnableSearch() != null) {
+			requestBuilder.enableSearch(requestOptions.getEnableSearch());
+		}
 
 		if (requestOptions.getMaxTokens() != null) {
 			requestBuilder.maxTokens(requestOptions.getMaxTokens());
@@ -228,7 +231,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 			requestBuilder.repetitionPenalty(requestOptions.getRepetitionPenalty().floatValue());
 		}
 		if (stream) {
-			requestBuilder.incrementalOutput(requestOptions.getIncrementalOutput());
+			requestBuilder.incrementalOutput(Objects.requireNonNullElse(requestOptions.getIncrementalOutput(), true));
 		}
 		applyStop(requestBuilder, requestOptions.getStop());
 

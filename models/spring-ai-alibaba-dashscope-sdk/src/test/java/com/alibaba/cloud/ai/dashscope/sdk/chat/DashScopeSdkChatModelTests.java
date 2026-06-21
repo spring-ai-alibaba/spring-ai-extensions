@@ -97,6 +97,39 @@ class DashScopeSdkChatModelTests {
 	}
 
 	@Test
+	void streamRequestDefaultsIncrementalOutputWhenUnset() {
+		GenerationResult chunk = createResult("streaming", "stop", false);
+		this.generationClient.streamResult = Flowable.just(chunk);
+
+		StepVerifier.create(this.chatModel.stream(new Prompt(List.of(new UserMessage("Hi")))))
+			.assertNext(response -> assertThat(response.getResult().getOutput().getText()).isEqualTo("streaming"))
+			.verifyComplete();
+
+		assertThat(this.generationClient.lastStreamParam.getIncrementalOutput()).isTrue();
+	}
+
+	@Test
+	void buildRequestPromptPreservesDefaultSdkFlagsWhenRuntimeOverridesUnrelatedOptions() {
+		DashScopeSdkChatOptions defaultOptions = DashScopeSdkChatOptions.builder()
+			.model(TEST_MODEL)
+			.enableSearch(true)
+			.incrementalOutput(false)
+			.build();
+		DashScopeSdkChatModel model = DashScopeSdkChatModel.builder()
+			.generationClient(this.generationClient)
+			.defaultOptions(defaultOptions)
+			.build();
+
+		Prompt requestPrompt = model.buildRequestPrompt(new Prompt(List.of(new UserMessage("Hello")),
+				DashScopeSdkChatOptions.builder().temperature(0.7).build()));
+		DashScopeSdkChatOptions requestOptions = (DashScopeSdkChatOptions) requestPrompt.getOptions();
+
+		assertThat(requestOptions.getTemperature()).isEqualTo(0.7);
+		assertThat(requestOptions.getEnableSearch()).isTrue();
+		assertThat(requestOptions.getIncrementalOutput()).isFalse();
+	}
+
+	@Test
 	void testToolCallMapping() {
 		this.generationClient.callResult = createResult("", "tool_calls", true);
 
@@ -298,6 +331,8 @@ class DashScopeSdkChatModelTests {
 
 		private GenerationParam lastCallParam;
 
+		private GenerationParam lastStreamParam;
+
 		private int callCount;
 
 		private RuntimeException throwOnCall;
@@ -319,6 +354,7 @@ class DashScopeSdkChatModelTests {
 			if (this.throwOnStream != null) {
 				throw this.throwOnStream;
 			}
+			this.lastStreamParam = generationParam;
 			return this.streamResult;
 		}
 

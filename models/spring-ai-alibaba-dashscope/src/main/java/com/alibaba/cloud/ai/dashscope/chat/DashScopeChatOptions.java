@@ -827,6 +827,19 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 			return self();
 		}
 
+		@SuppressWarnings("unchecked")
+		private @Nullable Object effectiveStop() {
+			if (this.stopSequences == null) {
+				return this.stop;
+			}
+			if (this.stop instanceof List<?> stopList && stopList.stream().allMatch(String.class::isInstance)) {
+				List<String> merged = new ArrayList<>((List<String>) stopList);
+				merged.addAll(this.stopSequences);
+				return merged;
+			}
+			return new ArrayList<>(this.stopSequences);
+		}
+
 		@Override
 		public DashScopeChatOptions build() {
 			return new DashScopeChatOptions(this.model, this.stream, this.temperature, this.topP, this.topK,
@@ -834,7 +847,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 					this.toolStream, this.enableCodeInterpreter, this.repetitionPenalty, this.presencePenalty,
 					this.vlHighResolutionImages, this.vlEnableImageHwOutput, this.maxCompletionTokens, this.seed,
 					this.incrementalOutput, this.responseFormat, this.resultFormat, this.logprobs, this.topLogprobs,
-					this.n, this.stop, this.tools, this.toolChoice, this.parallelToolCalls, this.enableSearch,
+					this.n, effectiveStop(), this.tools, this.toolChoice, this.parallelToolCalls, this.enableSearch,
 					this.searchOptions, this.dataInspection, this.skill, this.extraBody, this.httpHeaders,
 					this.toolCallbacks, this.multiModel, this.toolContext);
 		}

@@ -50,6 +50,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.retry.RetryUtils;
@@ -784,6 +785,17 @@ class DashScopeChatModelTests {
 
         var chatResponse = chatModel.call(prompt);
         assertThat(chatResponse).isNotNull();
+    }
+
+    @Test
+    void createRequestMapsGenericStopSequencesIntoDashScopeStop() {
+        var message = UserMessage.builder().text(TEST_PROMPT).build();
+        var requestPrompt = chatModel.buildRequestPrompt(new Prompt(List.of(message),
+                ChatOptions.builder().stopSequences(List.of("END", "STOP")).build()));
+
+        ChatCompletionRequest request = chatModel.createRequest(requestPrompt);
+
+        assertThat(request.parameters().stop()).isEqualTo(List.of("END", "STOP"));
     }
 
     @Test

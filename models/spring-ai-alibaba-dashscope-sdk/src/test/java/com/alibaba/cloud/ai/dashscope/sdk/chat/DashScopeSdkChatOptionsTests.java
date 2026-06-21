@@ -102,8 +102,8 @@ class DashScopeSdkChatOptionsTests {
 	void testDefaultValues() {
 		DashScopeSdkChatOptions options = DashScopeSdkChatOptions.builder().build();
 
-		assertThat(options.getEnableSearch()).isFalse();
-		assertThat(options.getIncrementalOutput()).isTrue();
+		assertThat(options.getEnableSearch()).isNull();
+		assertThat(options.getIncrementalOutput()).isNull();
 		assertThat(options.getStop()).isNull();
 		assertThat(options.getStopSequences()).isNull();
 		assertThat(options.getHttpHeaders()).isNull();

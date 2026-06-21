@@ -118,6 +118,16 @@ class DashScopeChatOptionsTests {
     }
 
     @Test
+    void testCombineWithGenericStopSequencesMapsToStop() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .combineWith(ChatOptions.builder().stopSequences(List.of("END", "STOP")))
+                .build();
+
+        assertThat(options.getStop()).isEqualTo(List.of("END", "STOP"));
+        assertThat(options.getStopSequences()).containsExactly("END", "STOP");
+    }
+
+    @Test
     void testToolCallbacks() {
         // Test function callbacks related methods
         ToolCallback callback1 = Mockito.mock(ToolCallback.class);

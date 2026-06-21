@@ -22,6 +22,7 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.prompt.ChatOptions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -246,5 +247,17 @@ class DashScopeAgentOptionsTests {
         assertThat(options.getHasThoughts()).isTrue();
         assertThat(options.getEnableThinking()).isTrue();
         assertThat(options.getBizParams()).isEqualTo(testBizParams);
+    }
+
+    @Test
+    void combineWithGenericModelMapsToModelId() {
+        DashScopeAgentOptions options = DashScopeAgentOptions.builder()
+                .appId(TEST_APP_ID)
+                .modelId("default-model")
+                .combineWith(ChatOptions.builder().model("runtime-model"))
+                .build();
+
+        assertThat(options.getModelId()).isEqualTo("runtime-model");
+        assertThat(options.getModel()).isEqualTo("runtime-model");
     }
 }
