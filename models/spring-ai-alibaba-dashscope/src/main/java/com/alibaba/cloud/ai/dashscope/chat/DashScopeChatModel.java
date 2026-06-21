@@ -185,14 +185,15 @@ public final class DashScopeChatModel implements ChatModel {
 
 	@Override
 	public ChatOptions getOptions() {
-		return this.defaultOptions.copy();
+		return this.defaultOptions;
 	}
 
-    private boolean isMultiModel(@Nullable ChatOptions options) {
-        return options instanceof DashScopeChatOptions && Boolean.TRUE.equals(((DashScopeChatOptions) options).getMultiModel());
-    }
+	private boolean isMultiModel(@Nullable ChatOptions options) {
+		return options instanceof DashScopeChatOptions
+				&& Boolean.TRUE.equals(((DashScopeChatOptions) options).getMultiModel());
+	}
 
-    @Override
+	@Override
 	public Flux<ChatResponse> stream(Prompt prompt) {
 		Assert.notNull(prompt, "Prompt must not be null");
 		Assert.isTrue(!CollectionUtils.isEmpty(prompt.getInstructions()), "Prompt messages must not be empty");
@@ -440,9 +441,11 @@ public final class DashScopeChatModel implements ChatModel {
 	}
 
 	private HttpHeaders getAdditionalHttpHeaders(Prompt prompt) {
-		Map<String, String> headers = new HashMap<>(this.defaultOptions.getHttpHeaders());
+        Map<String, String> headers = new HashMap<>();
 		if (prompt.getOptions() instanceof DashScopeChatOptions chatOptions) {
-			headers.putAll(chatOptions.getHttpHeaders());
+            if (!CollectionUtils.isEmpty(chatOptions.getHttpHeaders())) {
+                headers.putAll(chatOptions.getHttpHeaders());
+            }
 			if (StringUtils.hasText(chatOptions.getDataInspection())) {
 				headers.put(DashScopeApiConstants.HEADER_DATAINSPECTION, chatOptions.getDataInspection());
 			}
@@ -617,6 +620,7 @@ public final class DashScopeChatModel implements ChatModel {
 	 * Accessible for testing.
 	 */
 	Prompt buildRequestPrompt(Prompt prompt) {
+		Assert.notNull(prompt, "Prompt must not be null");
 		DashScopeChatOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
 		ChatOptions runtimeOptions = prompt.getOptions();
 		if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {

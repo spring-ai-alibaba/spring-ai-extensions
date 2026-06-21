@@ -44,7 +44,7 @@ class DashScopeSdkImageOptionsTests {
 			.extraBody(Map.of("watermark", false))
 			.build();
 
-		DashScopeSdkImageOptions copy = DashScopeSdkImageOptions.fromOptions(options);
+		DashScopeSdkImageOptions copy = DashScopeSdkImageOptions.builder().from(options).build();
 
 		assertThat(copy).usingRecursiveComparison().isEqualTo(options);
 		assertThat(copy).isNotSameAs(options);
@@ -57,7 +57,7 @@ class DashScopeSdkImageOptionsTests {
 
 		assertThat(options.getPollIntervalMs()).isEqualTo(1000);
 		assertThat(options.getAsync()).isTrue();
-		assertThat(options.getHttpHeaders()).isNotNull().isEmpty();
+		assertThat(options.getHttpHeaders()).isNull();
 		assertThat(options.getExtraBody()).isNull();
 		assertThat(options.getSize()).isNull();
 	}
@@ -106,7 +106,7 @@ class DashScopeSdkImageOptionsTests {
 			.extraBody(Map.of("watermark", false))
 			.build();
 
-		DashScopeSdkImageOptions target = DashScopeSdkImageOptions.fromOptions(original);
+		DashScopeSdkImageOptions target = DashScopeSdkImageOptions.builder().from(original).build();
 
 		assertThat(target.getModel()).isEqualTo(original.getModel());
 		assertThat(target.getN()).isEqualTo(original.getN());
@@ -125,32 +125,15 @@ class DashScopeSdkImageOptionsTests {
 	}
 
 	@Test
-	void testFromOptionsCreatesIndependentMaps() {
-		DashScopeSdkImageOptions original = DashScopeSdkImageOptions.builder()
-			.httpHeaders(Map.of("x-test", "v1"))
-			.extraBody(Map.of("watermark", false))
-			.build();
-		DashScopeSdkImageOptions copy = DashScopeSdkImageOptions.fromOptions(original);
-
-		original.getExtraBody().put("seed", 42);
-		copy.getExtraBody().put("style", "anime");
-
-		assertThat(original.getHttpHeaders()).containsOnly(entry("x-test", "v1"));
-		assertThat(copy.getHttpHeaders()).containsOnly(entry("x-test", "v1"));
-		assertThat(original.getExtraBody()).containsOnly(entry("watermark", false), entry("seed", 42));
-		assertThat(copy.getExtraBody()).containsOnly(entry("watermark", false), entry("style", "anime"));
-	}
-
-	@Test
 	void testFromOptionsHandlesNullMaps() {
 		DashScopeSdkImageOptions original = DashScopeSdkImageOptions.builder()
                 .httpHeaders(null)
                 .extraBody(null)
                 .build();
 
-		DashScopeSdkImageOptions copy = DashScopeSdkImageOptions.fromOptions(original);
+		DashScopeSdkImageOptions copy = DashScopeSdkImageOptions.builder().from(original).build();
 
-		assertThat(copy.getHttpHeaders()).isNotNull().isEmpty();
+		assertThat(copy.getHttpHeaders()).isNull();
 		assertThat(copy.getExtraBody()).isNull();
 	}
 

@@ -220,7 +220,7 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 		return TextEmbeddingParam.TextType.valueOf(normalized);
 	}
 
-	private Map<String, Object> mergeHeaders(Map<String, String> runtimeHeaders) {
+	private Map<String, Object> mergeHeaders(@Nullable Map<String, String> runtimeHeaders) {
 		Map<String, Object> headers = new HashMap<>();
 		headers.putAll(this.connectionHeaders);
 		if (!CollectionUtils.isEmpty(runtimeHeaders)) {
@@ -261,9 +261,13 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 		return super.dimensions();
 	}
 
-	public DashScopeSdkEmbeddingOptions getDefaultOptions() {
-		return Objects.requireNonNull(DashScopeSdkEmbeddingOptions.fromOptions(this.defaultOptions));
-	}
+    /**
+     * Gets the embedding options for this model.
+     * @return the embedding options
+     */
+    public DashScopeSdkEmbeddingOptions getOptions() {
+        return this.defaultOptions;
+    }
 
 	public void setObservationConvention(EmbeddingModelObservationConvention observationConvention) {
 		Assert.notNull(observationConvention, "observationConvention cannot be null");

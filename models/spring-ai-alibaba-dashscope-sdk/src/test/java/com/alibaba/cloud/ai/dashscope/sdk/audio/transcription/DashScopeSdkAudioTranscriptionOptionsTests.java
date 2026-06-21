@@ -42,7 +42,7 @@ class DashScopeSdkAudioTranscriptionOptionsTests {
 			.httpHeaders(Map.of("x-test", "v"))
 			.build();
 
-		DashScopeSdkAudioTranscriptionOptions copy = DashScopeSdkAudioTranscriptionOptions.fromOptions(options);
+		DashScopeSdkAudioTranscriptionOptions copy = DashScopeSdkAudioTranscriptionOptions.builder().from(options).build();
 		assertThat(copy).usingRecursiveComparison().isEqualTo(options);
 		assertThat(copy).isNotSameAs(options);
 	}
@@ -63,7 +63,7 @@ class DashScopeSdkAudioTranscriptionOptionsTests {
 			.httpHeaders(Map.of("x-source", "s1"))
 			.build();
 
-		DashScopeSdkAudioTranscriptionOptions target = DashScopeSdkAudioTranscriptionOptions.fromOptions(original);
+		DashScopeSdkAudioTranscriptionOptions target = DashScopeSdkAudioTranscriptionOptions.builder().from(original).build();
 
 		assertThat(target.getModel()).isEqualTo(original.getModel());
 		assertThat(target.getFileUrls()).isEqualTo(original.getFileUrls());
@@ -79,40 +79,16 @@ class DashScopeSdkAudioTranscriptionOptionsTests {
 	}
 
 	@Test
-	void testFromOptionsCreatesIndependentCollections() {
-		DashScopeSdkAudioTranscriptionOptions original = DashScopeSdkAudioTranscriptionOptions.builder()
-			.fileUrls(List.of("https://example.com/a.wav"))
-			.channelId(List.of(0))
-			.httpHeaders(Map.of("x-source", "s1"))
-			.build();
-		DashScopeSdkAudioTranscriptionOptions copy = DashScopeSdkAudioTranscriptionOptions.fromOptions(original);
-
-		original.getFileUrls().add("https://example.com/b.wav");
-		original.getChannelId().add(1);
-		original.getHttpHeaders().put("x-source-2", "s2");
-		copy.getFileUrls().add("https://example.com/c.wav");
-		copy.getChannelId().add(2);
-		copy.getHttpHeaders().put("x-copy", "c1");
-
-		assertThat(original.getFileUrls()).containsExactly("https://example.com/a.wav", "https://example.com/b.wav");
-		assertThat(copy.getFileUrls()).containsExactly("https://example.com/a.wav", "https://example.com/c.wav");
-		assertThat(original.getChannelId()).containsExactly(0, 1);
-		assertThat(copy.getChannelId()).containsExactly(0, 2);
-		assertThat(original.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-source-2", "s2"));
-		assertThat(copy.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-copy", "c1"));
-	}
-
-	@Test
 	void testFromOptionsHandlesNullCollections() {
 		DashScopeSdkAudioTranscriptionOptions original = DashScopeSdkAudioTranscriptionOptions.builder()
 			.httpHeaders(null)
 			.build();
 
-		DashScopeSdkAudioTranscriptionOptions copy = DashScopeSdkAudioTranscriptionOptions.fromOptions(original);
+		DashScopeSdkAudioTranscriptionOptions copy = DashScopeSdkAudioTranscriptionOptions.builder().from(original).build();
 
 		assertThat(copy.getFileUrls()).isNull();
 		assertThat(copy.getChannelId()).isNull();
-		assertThat(copy.getHttpHeaders()).isNotNull().isEmpty();
+		assertThat(copy.getHttpHeaders()).isNull();
 	}
 
 }

@@ -125,41 +125,9 @@ public class DashScopeMultimodalEmbeddingOptions implements EmbeddingOptions {
                 + this.instruct + '\'' + '}';
     }
 
-    public static class Builder {
+    public static final class Builder extends AbstractBuilder<DashScopeMultimodalEmbeddingOptions, Builder> {
 
-        protected @Nullable String model;
-
-        protected @Nullable Integer dimensions;
-
-        protected @Nullable String outputType;
-
-        protected @Nullable Float fps;
-
-        protected @Nullable String instruct;
-
-        public Builder model(@Nullable String model) {
-            this.model = model;
-            return this;
-        }
-
-        public Builder dimensions(@Nullable Integer dimensions) {
-            this.dimensions = dimensions;
-            return this;
-        }
-
-        public Builder outputType(@Nullable String outputType) {
-            this.outputType = outputType;
-            return this;
-        }
-
-        public Builder fps(@Nullable Float fps) {
-            this.fps = fps;
-            return this;
-        }
-
-        public Builder instruct(@Nullable String instruct) {
-            this.instruct = instruct;
-            return this;
+        private Builder() {
         }
 
         public Builder from(DashScopeMultimodalEmbeddingOptions fromOptions) {
@@ -198,6 +166,52 @@ public class DashScopeMultimodalEmbeddingOptions implements EmbeddingOptions {
         public DashScopeMultimodalEmbeddingOptions build() {
             return new DashScopeMultimodalEmbeddingOptions(this.model, this.dimensions, this.outputType, this.fps, this.instruct);
         }
+
+    }
+
+    protected abstract static class AbstractBuilder<O extends DashScopeMultimodalEmbeddingOptions, B extends AbstractBuilder<O, B>> {
+
+        protected @Nullable String model;
+
+        protected @Nullable Integer dimensions;
+
+        protected @Nullable String outputType;
+
+        protected @Nullable Float fps;
+
+        protected @Nullable String instruct;
+
+        @SuppressWarnings("unchecked")
+        protected B self() {
+            return (B) this;
+        }
+
+        public B model(@Nullable String model) {
+            this.model = model;
+            return self();
+        }
+
+        public B dimensions(@Nullable Integer dimensions) {
+            this.dimensions = dimensions;
+            return self();
+        }
+
+        public B outputType(@Nullable String outputType) {
+            this.outputType = outputType;
+            return self();
+        }
+
+        public B fps(@Nullable Float fps) {
+            this.fps = fps;
+            return self();
+        }
+
+        public B instruct(@Nullable String instruct) {
+            this.instruct = instruct;
+            return self();
+        }
+
+        public abstract O build();
 
     }
 

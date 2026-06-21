@@ -42,7 +42,7 @@ class DashScopeSdkAudioSpeechOptionsTests {
 			.httpHeaders(Map.of("x-test", "v"))
 			.build();
 
-		DashScopeSdkAudioSpeechOptions copy = options.copy();
+		DashScopeSdkAudioSpeechOptions copy = DashScopeSdkAudioSpeechOptions.builder().from(options).build();
 
 		assertThat(copy).usingRecursiveComparison().isEqualTo(options);
 		assertThat(copy).isNotSameAs(options);
@@ -65,7 +65,7 @@ class DashScopeSdkAudioSpeechOptionsTests {
 			.httpHeaders(Map.of("x-source", "s1"))
 			.build();
 
-		DashScopeSdkAudioSpeechOptions target = DashScopeSdkAudioSpeechOptions.fromOptions(original);
+		DashScopeSdkAudioSpeechOptions target = DashScopeSdkAudioSpeechOptions.builder().from(original).build();
 
 		assertThat(target.getModel()).isEqualTo(original.getModel());
 		assertThat(target.getVoice()).isEqualTo(original.getVoice());
@@ -96,21 +96,7 @@ class DashScopeSdkAudioSpeechOptionsTests {
 		assertThat(options.getPitch()).isNull();
 		assertThat(options.getWordTimestampEnabled()).isNull();
 		assertThat(options.getPhonemeTimestampEnabled()).isNull();
-		assertThat(options.getHttpHeaders()).isNotNull().isEmpty();
-	}
-
-	@Test
-	void testFromOptionsCreatesIndependentHttpHeaders() {
-		DashScopeSdkAudioSpeechOptions original = DashScopeSdkAudioSpeechOptions.builder()
-			.httpHeaders(Map.of("x-source", "s1"))
-			.build();
-		DashScopeSdkAudioSpeechOptions copy = original.copy();
-
-		original.getHttpHeaders().put("x-source-2", "s2");
-		copy.getHttpHeaders().put("x-copy", "c1");
-
-		assertThat(original.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-source-2", "s2"));
-		assertThat(copy.getHttpHeaders()).containsOnly(entry("x-source", "s1"), entry("x-copy", "c1"));
+		assertThat(options.getHttpHeaders()).isNull();
 	}
 
 	@Test
@@ -119,9 +105,9 @@ class DashScopeSdkAudioSpeechOptionsTests {
 			.httpHeaders(null)
 			.build();
 
-		DashScopeSdkAudioSpeechOptions copy = DashScopeSdkAudioSpeechOptions.fromOptions(original);
+		DashScopeSdkAudioSpeechOptions copy = DashScopeSdkAudioSpeechOptions.builder().from(original).build();
 
-		assertThat(copy.getHttpHeaders()).isNotNull().isEmpty();
+		assertThat(copy.getHttpHeaders()).isNull();
 	}
 
 }

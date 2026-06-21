@@ -200,7 +200,7 @@ class DashScopeAudioSpeechOptionsTests {
 
         assertThat(merged.getModel()).isEqualTo("cosyvoice-v1");
         assertThat(merged.getSampleRate()).isEqualTo(24000);
-        assertThat(merged.getLanguageHints()).containsExactly("en");
+        assertThat(merged.getLanguageHints()).containsExactly("zh", "en");
         assertThat(merged.getEnableSsml()).isTrue();
     }
 

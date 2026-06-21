@@ -73,16 +73,6 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 		}
 	}
 
-    public static DashScopeEmbeddingOptions fromOptions(DashScopeEmbeddingOptions fromOptions) {
-        return builder()
-                .model(fromOptions.getModel())
-                .textType(fromOptions.getTextType())
-                .dimensions(fromOptions.getDimensions())
-                .outputType(fromOptions.getOutputType())
-                .embeddingsPath(fromOptions.getEmbeddingsPath())
-                .build();
-    }
-
 	public static Builder builder() {
 		return new Builder();
 	}
@@ -135,42 +125,9 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 				+ this.embeddingsPath + '\'' + '}';
 	}
 
-	public static class Builder {
+	public static final class Builder extends AbstractBuilder<DashScopeEmbeddingOptions, Builder> {
 
-		protected @Nullable String model;
-
-		protected @Nullable String textType;
-
-		protected @Nullable Integer dimensions;
-
-		protected @Nullable String outputType;
-
-		protected @Nullable String embeddingsPath;
-
-		public Builder model(@Nullable String model) {
-			this.model = model;
-			return this;
-		}
-
-		public Builder dimensions(@Nullable Integer dimensions) {
-			this.dimensions = dimensions;
-			return this;
-		}
-
-		public Builder textType(@Nullable String textType) {
-			this.textType = textType;
-			return this;
-		}
-
-		public Builder outputType(@Nullable String outputType) {
-			validateOutputType(outputType);
-			this.outputType = outputType;
-			return this;
-		}
-
-		public Builder embeddingsPath(@Nullable String embeddingsPath) {
-			this.embeddingsPath = embeddingsPath;
-			return this;
+		private Builder() {
 		}
 
 		public Builder from(DashScopeEmbeddingOptions fromOptions) {
@@ -210,6 +167,53 @@ public class DashScopeEmbeddingOptions implements EmbeddingOptions {
 			return new DashScopeEmbeddingOptions(this.model, this.textType, this.dimensions, this.outputType,
 					this.embeddingsPath);
 		}
+
+	}
+
+	protected abstract static class AbstractBuilder<O extends DashScopeEmbeddingOptions, B extends AbstractBuilder<O, B>> {
+
+		protected @Nullable String model;
+
+		protected @Nullable String textType;
+
+		protected @Nullable Integer dimensions;
+
+		protected @Nullable String outputType;
+
+		protected @Nullable String embeddingsPath;
+
+		@SuppressWarnings("unchecked")
+		protected B self() {
+			return (B) this;
+		}
+
+		public B model(@Nullable String model) {
+			this.model = model;
+			return self();
+		}
+
+		public B dimensions(@Nullable Integer dimensions) {
+			this.dimensions = dimensions;
+			return self();
+		}
+
+		public B textType(@Nullable String textType) {
+			this.textType = textType;
+			return self();
+		}
+
+		public B outputType(@Nullable String outputType) {
+			validateOutputType(outputType);
+			this.outputType = outputType;
+			return self();
+		}
+
+		public B embeddingsPath(@Nullable String embeddingsPath) {
+			this.embeddingsPath = embeddingsPath;
+			return self();
+		}
+
+		public abstract O build();
 
 	}
 
