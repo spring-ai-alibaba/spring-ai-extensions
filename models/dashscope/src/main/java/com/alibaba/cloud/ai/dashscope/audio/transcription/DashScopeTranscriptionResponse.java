@@ -74,9 +74,14 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
         private DashScopeAudioTranscriptionMetadata metadata;
 
         @JsonCreator
-        public DashScopeAudioTranscription(@JsonProperty("text") @JsonAlias("transcript") String text) {
+        public DashScopeAudioTranscription(@JsonProperty("text") @JsonAlias("transcript") String text,
+                @JsonProperty("channel_id") Integer channelId,
+                @JsonProperty("content_duration_in_milliseconds") Integer contentDurationInMilliseconds,
+                @JsonProperty("sentences") List<Sentence> sentences) {
             super(text != null ? text : "");
             this.text = text;
+            this.metadata = new DashScopeAudioTranscriptionMetadata(null, null, null, null, null, channelId,
+                    contentDurationInMilliseconds, sentences);
         }
 
         public void setMetadata(DashScopeAudioTranscriptionMetadata metadata) {
