@@ -110,7 +110,7 @@ class DashScopeSdkChatModelTests {
 	}
 
 	@Test
-	void buildRequestPromptPreservesDefaultSdkFlagsWhenRuntimeOverridesUnrelatedOptions() {
+	void callUsesRuntimeOptionsAsReplacement() {
 		DashScopeSdkChatOptions defaultOptions = DashScopeSdkChatOptions.builder()
 			.model(TEST_MODEL)
 			.enableSearch(true)
@@ -120,14 +120,14 @@ class DashScopeSdkChatModelTests {
 			.generationClient(this.generationClient)
 			.defaultOptions(defaultOptions)
 			.build();
+		this.generationClient.callResult = createResult("Hello from SDK", "stop", false);
 
-		Prompt requestPrompt = model.buildRequestPrompt(new Prompt(List.of(new UserMessage("Hello")),
-				DashScopeSdkChatOptions.builder().temperature(0.7).build()));
-		DashScopeSdkChatOptions requestOptions = (DashScopeSdkChatOptions) requestPrompt.getOptions();
+		model.call(new Prompt(List.of(new UserMessage("Hello")),
+				DashScopeSdkChatOptions.builder().model("runtime-model").temperature(0.7).build()));
 
-		assertThat(requestOptions.getTemperature()).isEqualTo(0.7);
-		assertThat(requestOptions.getEnableSearch()).isTrue();
-		assertThat(requestOptions.getIncrementalOutput()).isFalse();
+		GenerationParam request = this.generationClient.lastCallParam;
+		assertThat(request.getModel()).isEqualTo("runtime-model");
+		assertThat(request.getTemperature()).isEqualTo(0.7f);
 	}
 
 	@Test
@@ -215,10 +215,12 @@ class DashScopeSdkChatModelTests {
 
 	@Test
 	void testGenericStopSequencesMapToSdkRequestStopStrings() {
-		Prompt requestPrompt = this.chatModel.buildRequestPrompt(new Prompt(List.of(new UserMessage("Hello")),
-				ChatOptions.builder().stopSequences(List.of("END", "STOP")).build()));
-
-		GenerationParam generationParam = this.chatModel.createRequest(requestPrompt, false);
+		DashScopeSdkChatOptions runtimeOptions = DashScopeSdkChatOptions.builder()
+			.model(TEST_MODEL)
+			.combineWith(ChatOptions.builder().stopSequences(List.of("END", "STOP")))
+			.build();
+		GenerationParam generationParam = this.chatModel.createRequest(new Prompt(List.of(new UserMessage("Hello")),
+				runtimeOptions), false);
 
 		assertThat(generationParam.getStopStrings()).containsExactly("END", "STOP");
 	}

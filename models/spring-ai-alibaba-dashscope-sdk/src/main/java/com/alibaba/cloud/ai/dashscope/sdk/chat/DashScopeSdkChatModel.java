@@ -53,7 +53,6 @@ import org.springframework.ai.chat.observation.ChatModelObservationDocumentation
 import org.springframework.ai.chat.observation.DefaultChatModelObservationConvention;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.support.UsageCalculator;
@@ -490,19 +489,13 @@ public class DashScopeSdkChatModel implements ChatModel {
 		return new Builder(this);
 	}
 
-	/**
-	 * Accessible for testing.
-	 */
-	Prompt buildRequestPrompt(Prompt prompt) {
-		Assert.notNull(prompt, "Prompt must not be null");
-		DashScopeSdkChatOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
-		ChatOptions runtimeOptions = prompt.getOptions();
-		if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {
-			requestOptionsBuilder.combineWith(runtimeOptions.mutate());
+	private Prompt buildRequestPrompt(Prompt prompt) {
+		if (prompt.getOptions() == null) {
+			return prompt.mutate().chatOptions(this.getOptions()).build();
 		}
-		DashScopeSdkChatOptions requestOptions = requestOptionsBuilder.build();
-		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
-		return new Prompt(prompt.getInstructions(), requestOptions);
+		else {
+			return prompt;
+		}
 	}
 
 	@Override

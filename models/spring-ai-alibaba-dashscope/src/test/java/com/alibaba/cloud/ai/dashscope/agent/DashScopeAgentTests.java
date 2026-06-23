@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.agent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi;
@@ -30,6 +31,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.messages.Message;
@@ -135,6 +137,25 @@ class DashScopeAgentTests {
     // Verify response
     assertThat(result).isNotNull();
     assertThat(result.getResults()).hasSize(1);
+  }
+
+  @Test
+  void testCallUsesRuntimeOptionsAsReplacement() {
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    DashScopeAgentOptions runtimeOptions =
+        DashScopeAgentOptions.builder().appId("runtime-app-id").build();
+    Prompt prompt = new Prompt(List.of(message), runtimeOptions);
+    DashScopeAgentResponse response = createMockResponse();
+    when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class))).thenReturn(ResponseEntity.ok(response));
+
+    agent.call(prompt);
+
+    ArgumentCaptor<DashScopeAgentRequest> requestCaptor = ArgumentCaptor.forClass(DashScopeAgentRequest.class);
+    verify(dashScopeAgentApi).call(requestCaptor.capture());
+    DashScopeAgentRequest request = requestCaptor.getValue();
+    assertThat(request.appId()).isEqualTo("runtime-app-id");
+    assertThat(request.input().sessionId()).isNull();
+    assertThat(request.input().memoryId()).isNull();
   }
 
   /** Test call with null response */

@@ -166,7 +166,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		this.searchOptions = searchOptions;
 		this.dataInspection = dataInspection;
 		this.skill = skill != null ? List.copyOf(skill) : null;
-		this.extraBody = extraBody != null ? new HashMap<>(extraBody) : null;
+		this.extraBody = extraBody != null ? Map.copyOf(extraBody) : null;
 		this.httpHeaders = httpHeaders != null ? Map.copyOf(httpHeaders) : null;
 		this.toolCallbacks = toolCallbacks != null ? List.copyOf(toolCallbacks) : null;
 		this.multiModel = multiModel;
@@ -690,12 +690,12 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		}
 
 		public B extraBody(@Nullable Map<String, Object> extraBody) {
-			this.extraBody = extraBody != null ? new HashMap<>(extraBody) : null;
+			this.extraBody = extraBody;
 			return self();
 		}
 
 		public B httpHeaders(@Nullable Map<String, String> httpHeaders) {
-			this.httpHeaders = httpHeaders != null ? new HashMap<>(httpHeaders) : null;
+			this.httpHeaders = httpHeaders;
 			return self();
 		}
 
@@ -805,10 +805,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 					}
 				}
 				if (that.extraBody != null) {
-					if (this.extraBody == null) {
-						this.extraBody = new HashMap<>();
-					}
-					this.extraBody.putAll(that.extraBody);
+					this.extraBody = that.extraBody;
 				}
 				if (that.httpHeaders != null) {
 					if (this.httpHeaders == null) {

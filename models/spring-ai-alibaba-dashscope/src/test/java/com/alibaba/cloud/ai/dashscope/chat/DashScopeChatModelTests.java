@@ -790,12 +790,37 @@ class DashScopeChatModelTests {
     @Test
     void createRequestMapsGenericStopSequencesIntoDashScopeStop() {
         var message = UserMessage.builder().text(TEST_PROMPT).build();
-        var requestPrompt = chatModel.buildRequestPrompt(new Prompt(List.of(message),
-                ChatOptions.builder().stopSequences(List.of("END", "STOP")).build()));
-
-        ChatCompletionRequest request = chatModel.createRequest(requestPrompt);
+        DashScopeChatOptions runtimeOptions = DashScopeChatOptions.builder()
+                .combineWith(ChatOptions.builder().stopSequences(List.of("END", "STOP")))
+                .build();
+        ChatCompletionRequest request = chatModel.createRequest(new Prompt(List.of(message), runtimeOptions));
 
         assertThat(request.parameters().stop()).isEqualTo(List.of("END", "STOP"));
+    }
+
+    @Test
+    void callUsesRuntimeOptionsAsReplacement() {
+        var message = UserMessage.builder().text(TEST_PROMPT).build();
+        var runtimeOptions = DashScopeChatOptions.builder()
+                .model("runtime-model")
+                .build();
+        var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
+        var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
+        var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+        var usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+        var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenReturn(ResponseEntity.ok(chatCompletion));
+
+        chatModel.call(new Prompt(List.of(message), runtimeOptions));
+
+        ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
+        verify(dashScopeApi).chatCompletionEntity(requestCaptor.capture(), any(), eq(false));
+        ChatCompletionRequest request = requestCaptor.getValue();
+        assertThat(request.model()).isEqualTo("runtime-model");
+        assertThat(request.parameters().temperature()).isNull();
+        assertThat(request.parameters().topP()).isNull();
+        assertThat(request.parameters().topK()).isNull();
+        assertThat(request.parameters().seed()).isNull();
     }
 
     @Test

@@ -53,7 +53,6 @@ import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccess
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -616,19 +615,13 @@ public final class DashScopeChatModel implements ChatModel {
 		return new Builder(this);
 	}
 
-	/**
-	 * Accessible for testing.
-	 */
-	Prompt buildRequestPrompt(Prompt prompt) {
-		Assert.notNull(prompt, "Prompt must not be null");
-		DashScopeChatOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
-		ChatOptions runtimeOptions = prompt.getOptions();
-		if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {
-			requestOptionsBuilder.combineWith(runtimeOptions.mutate());
+	private Prompt buildRequestPrompt(Prompt prompt) {
+		if (prompt.getOptions() == null) {
+			return prompt.mutate().chatOptions(this.getOptions()).build();
 		}
-		DashScopeChatOptions requestOptions = requestOptionsBuilder.build();
-		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
-		return new Prompt(prompt.getInstructions(), requestOptions);
+		else {
+			return prompt;
+		}
 	}
 
 	@Override

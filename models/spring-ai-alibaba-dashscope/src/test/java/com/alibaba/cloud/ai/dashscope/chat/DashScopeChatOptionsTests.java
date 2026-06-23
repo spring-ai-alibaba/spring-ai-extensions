@@ -29,6 +29,7 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Test cases for DashScopeChatOptions
@@ -182,28 +183,21 @@ class DashScopeChatOptionsTests {
     }
 
     @Test
-    void testCopyCreatesIndependentExtraBody() {
+    void testExtraBodyIsImmutable() {
         DashScopeChatOptions original = DashScopeChatOptions.builder()
                 .extraBody(Map.of("custom_parameter", "custom-value"))
                 .build();
 
         DashScopeChatOptions copy = original.copy();
 
-        original.getExtraBody().put("original_only", "original");
-        copy.getExtraBody().put("copy_only", "copy");
-
-        assertThat(original.getExtraBody())
-                .containsEntry("custom_parameter", "custom-value")
-                .containsEntry("original_only", "original")
-                .doesNotContainKey("copy_only");
-        assertThat(copy.getExtraBody())
-                .containsEntry("custom_parameter", "custom-value")
-                .containsEntry("copy_only", "copy")
-                .doesNotContainKey("original_only");
+        assertThatThrownBy(() -> original.getExtraBody().put("original_only", "original"))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> copy.getExtraBody().put("copy_only", "copy"))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
-    void testCombineWithMergesExtraBodyWithRuntimeOverride() {
+    void testCombineWithReplacesExtraBodyWithRuntimeOverride() {
         DashScopeChatOptions options = DashScopeChatOptions.builder()
                 .extraBody(Map.of("default_key", "default-value", "overridden", "from-default"))
                 .combineWith(DashScopeChatOptions.builder()
@@ -211,9 +205,9 @@ class DashScopeChatOptionsTests {
                 .build();
 
         assertThat(options.getExtraBody())
-                .containsEntry("default_key", "default-value")
                 .containsEntry("runtime_key", "runtime-value")
-                .containsEntry("overridden", "from-runtime");
+                .containsEntry("overridden", "from-runtime")
+                .doesNotContainKey("default_key");
     }
 
     @Test
