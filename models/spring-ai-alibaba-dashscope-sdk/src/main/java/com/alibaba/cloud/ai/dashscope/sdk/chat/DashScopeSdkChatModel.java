@@ -73,7 +73,7 @@ import java.util.Objects;
 /**
  * {@link ChatModel} implementation backed by DashScope Java SDK.
  */
-public class DashScopeSdkChatModel implements ChatModel {
+public final class DashScopeSdkChatModel implements ChatModel {
 
 	private static final ChatModelObservationConvention DEFAULT_OBSERVATION_CONVENTION =
 			new DefaultChatModelObservationConvention();
