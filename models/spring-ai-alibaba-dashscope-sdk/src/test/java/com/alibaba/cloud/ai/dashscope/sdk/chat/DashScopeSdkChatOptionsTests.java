@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.sdk.chat;
 
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
 
@@ -99,11 +100,21 @@ class DashScopeSdkChatOptionsTests {
 	}
 
 	@Test
+	void testGenericStopSequencesMapToSdkStop() {
+		DashScopeSdkChatOptions options = DashScopeSdkChatOptions.builder()
+			.combineWith(ChatOptions.builder().stopSequences(List.of("END", "STOP")))
+			.build();
+
+		assertThat(options.getStop()).asInstanceOf(InstanceOfAssertFactories.LIST).containsExactly("END", "STOP");
+		assertThat(options.getStopSequences()).containsExactly("END", "STOP");
+	}
+
+	@Test
 	void testDefaultValues() {
 		DashScopeSdkChatOptions options = DashScopeSdkChatOptions.builder().build();
 
-		assertThat(options.getEnableSearch()).isFalse();
-		assertThat(options.getIncrementalOutput()).isTrue();
+		assertThat(options.getEnableSearch()).isNull();
+		assertThat(options.getIncrementalOutput()).isNull();
 		assertThat(options.getStop()).isNull();
 		assertThat(options.getStopSequences()).isNull();
 		assertThat(options.getHttpHeaders()).isNull();

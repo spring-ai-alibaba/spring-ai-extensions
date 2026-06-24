@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.jinacrawler;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -89,6 +91,15 @@ public class JinaCrawlerAutoConfiguration {
 		return new JinaCrawlerService(jsonParseTool,
 				WebClientTool.builder(jsonParseTool, jinaProperties).httpHeadersConsumer(consumer).build(),
 				jinaProperties);
+	}
+
+	@Bean(name = "jinaCrawlerToolCallback")
+	@ConditionalOnMissingBean(name = "jinaCrawlerToolCallback")
+	public ToolCallback jinaCrawlerToolCallback(JinaCrawlerService jinaCrawler) {
+		return FunctionToolCallback.builder(JinaCrawlerConstants.TOOL_NAME, jinaCrawler)
+			.description("Jina Reader Service Plugin.")
+			.inputType(JinaCrawlerService.Request.class)
+			.build();
 	}
 
 }

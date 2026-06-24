@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.amp;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -39,6 +41,15 @@ public class AmapAutoConfiguration {
 	public WeatherSearchService gaoDeGetAddressWeather(JsonParseTool jsonParseTool, AmapProperties amapProperties) {
 		return new WeatherSearchService(jsonParseTool, amapProperties,
 				WebClientTool.builder(jsonParseTool, amapProperties).build());
+	}
+
+	@Bean(name = "gaoDeGetAddressWeatherToolCallback")
+	@ConditionalOnMissingBean(name = "gaoDeGetAddressWeatherToolCallback")
+	public ToolCallback gaoDeGetAddressWeatherToolCallback(WeatherSearchService gaoDeGetAddressWeather) {
+		return FunctionToolCallback.builder(AmapConstants.TOOL_NAME, gaoDeGetAddressWeather)
+			.description("Get weather information according to address from Amap.")
+			.inputType(WeatherSearchService.Request.class)
+			.build();
 	}
 
 }

@@ -18,6 +18,8 @@ package com.alibaba.cloud.ai.toolcalling.googletrends;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -46,6 +48,15 @@ public class GoogleTrendsAutoConfiguration {
 			.httpHeadersConsumer(consumer)
 			.build();
 		return new GoogleTrendsService(webClientTool, jsonParseTool, properties);
+	}
+
+	@Bean(name = "googleTrendsServiceToolCallback")
+	@ConditionalOnMissingBean(name = "googleTrendsServiceToolCallback")
+	public ToolCallback googleTrendsServiceToolCallback(GoogleTrendsService googleTrendsService) {
+		return FunctionToolCallback.builder(GoogleTrendsConstants.TOOL_NAME, googleTrendsService)
+			.description("Google Trends API")
+			.inputType(GoogleTrendsService.Request.class)
+			.build();
 	}
 
 }

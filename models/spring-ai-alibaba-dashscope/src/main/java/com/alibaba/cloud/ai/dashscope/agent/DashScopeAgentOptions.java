@@ -353,6 +353,10 @@ public class DashScopeAgentOptions implements ChatOptions {
         @Override
         public B combineWith(ChatOptions.Builder<?> other) {
             super.combineWith(other);
+            if (this.model != null) {
+                this.modelId = this.model;
+                this.model = null;
+            }
             if (other instanceof AbstractBuilder<?> that) {
                 if (that.appId != null) {
                     this.appId = that.appId;

@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.toolcalling.alitranslate;
 
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -22,6 +24,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Description;
+
+import java.util.function.Function;
 
 /**
  * @author yunlong
@@ -38,6 +42,17 @@ public class AliTranslateAutoConfiguration {
 	@Description("Implement natural language translation capabilities.")
 	public AliTranslateService aliTranslateService(AliTranslateProperties properties) {
 		return new AliTranslateService(properties);
+	}
+
+	@Bean(name = "aliTranslateServiceToolCallback")
+	@ConditionalOnMissingBean(name = "aliTranslateServiceToolCallback")
+	public ToolCallback aliTranslateServiceToolCallback(AliTranslateService aliTranslateService) {
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		Function<AliTranslateService.Request, Object> aliTranslateServiceFunction = (Function) aliTranslateService;
+		return FunctionToolCallback.builder(AliTranslateConstants.TOOL_NAME, aliTranslateServiceFunction)
+			.description("Implement natural language translation capabilities.")
+			.inputType(AliTranslateService.Request.class)
+			.build();
 	}
 
 }

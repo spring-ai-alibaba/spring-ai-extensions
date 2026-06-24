@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
@@ -94,6 +95,39 @@ class DashScopeSdkChatModelTests {
 			.assertNext(response -> assertThat(response.getResult().getOutput().getText()).isEqualTo("I am "))
 			.assertNext(response -> assertThat(response.getResult().getOutput().getText()).isEqualTo("streaming"))
 			.verifyComplete();
+	}
+
+	@Test
+	void streamRequestDefaultsIncrementalOutputWhenUnset() {
+		GenerationResult chunk = createResult("streaming", "stop", false);
+		this.generationClient.streamResult = Flowable.just(chunk);
+
+		StepVerifier.create(this.chatModel.stream(new Prompt(List.of(new UserMessage("Hi")))))
+			.assertNext(response -> assertThat(response.getResult().getOutput().getText()).isEqualTo("streaming"))
+			.verifyComplete();
+
+		assertThat(this.generationClient.lastStreamParam.getIncrementalOutput()).isTrue();
+	}
+
+	@Test
+	void callUsesRuntimeOptionsAsReplacement() {
+		DashScopeSdkChatOptions defaultOptions = DashScopeSdkChatOptions.builder()
+			.model(TEST_MODEL)
+			.enableSearch(true)
+			.incrementalOutput(false)
+			.build();
+		DashScopeSdkChatModel model = DashScopeSdkChatModel.builder()
+			.generationClient(this.generationClient)
+			.defaultOptions(defaultOptions)
+			.build();
+		this.generationClient.callResult = createResult("Hello from SDK", "stop", false);
+
+		model.call(new Prompt(List.of(new UserMessage("Hello")),
+				DashScopeSdkChatOptions.builder().model("runtime-model").temperature(0.7).build()));
+
+		GenerationParam request = this.generationClient.lastCallParam;
+		assertThat(request.getModel()).isEqualTo("runtime-model");
+		assertThat(request.getTemperature()).isEqualTo(0.7f);
 	}
 
 	@Test
@@ -177,6 +211,18 @@ class DashScopeSdkChatModelTests {
 				false);
 
 		assertThat(numericStopRequest.getStopTokens()).contains(List.of(10, 20));
+	}
+
+	@Test
+	void testGenericStopSequencesMapToSdkRequestStopStrings() {
+		DashScopeSdkChatOptions runtimeOptions = DashScopeSdkChatOptions.builder()
+			.model(TEST_MODEL)
+			.combineWith(ChatOptions.builder().stopSequences(List.of("END", "STOP")))
+			.build();
+		GenerationParam generationParam = this.chatModel.createRequest(new Prompt(List.of(new UserMessage("Hello")),
+				runtimeOptions), false);
+
+		assertThat(generationParam.getStopStrings()).containsExactly("END", "STOP");
 	}
 
 	@Test
@@ -298,6 +344,8 @@ class DashScopeSdkChatModelTests {
 
 		private GenerationParam lastCallParam;
 
+		private GenerationParam lastStreamParam;
+
 		private int callCount;
 
 		private RuntimeException throwOnCall;
@@ -319,6 +367,7 @@ class DashScopeSdkChatModelTests {
 			if (this.throwOnStream != null) {
 				throw this.throwOnStream;
 			}
+			this.lastStreamParam = generationParam;
 			return this.streamResult;
 		}
 

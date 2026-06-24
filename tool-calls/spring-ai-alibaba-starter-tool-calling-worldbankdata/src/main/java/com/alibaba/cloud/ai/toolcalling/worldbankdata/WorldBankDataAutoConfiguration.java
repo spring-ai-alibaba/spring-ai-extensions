@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.worldbankdata;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -39,6 +41,15 @@ public class WorldBankDataAutoConfiguration {
 					httpHeaders.add("Accept", "application/json");
 					httpHeaders.add("User-Agent", "Spring-AI-Alibaba-WorldBankData/1.0");
 				}).build(), jsonParseTool, properties);
+	}
+
+	@Bean(name = "worldBankDataServiceToolCallback")
+	@ConditionalOnMissingBean(name = "worldBankDataServiceToolCallback")
+	public ToolCallback worldBankDataServiceToolCallback(WorldBankDataService worldBankDataService) {
+		return FunctionToolCallback.builder(WorldBankDataConstants.TOOL_NAME, worldBankDataService)
+			.description("World Bank Development Data Search Service")
+			.inputType(WorldBankDataService.Request.class)
+			.build();
 	}
 
 }

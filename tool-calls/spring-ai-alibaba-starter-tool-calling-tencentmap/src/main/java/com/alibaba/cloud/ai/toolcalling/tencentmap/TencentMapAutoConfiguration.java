@@ -19,6 +19,9 @@ import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -43,6 +46,15 @@ public class TencentMapAutoConfiguration {
 		logger.debug("tencentMapWeatherService is enabled.");
 		return new TencentMapWeatherService(WebClientTool.builder(jsonParseTool, tencentMapProperties).build(),
 				jsonParseTool, tencentMapProperties);
+	}
+
+	@Bean(name = "tencentMapGetAddressWeatherInformationToolCallback")
+	@ConditionalOnMissingBean(name = "tencentMapGetAddressWeatherInformationToolCallback")
+	public ToolCallback tencentMapGetAddressWeatherInformationToolCallback(TencentMapWeatherService tencentMapGetAddressWeatherInformation) {
+		return FunctionToolCallback.builder(TencentMapConstants.TOOL_NAME_GET_WEATHER, tencentMapGetAddressWeatherInformation)
+			.description("Query the weather conditions of a specified location")
+			.inputType(TencentMapWeatherService.Request.class)
+			.build();
 	}
 
 }

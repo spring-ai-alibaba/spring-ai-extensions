@@ -73,7 +73,7 @@ import java.util.Objects;
 /**
  * {@link ChatModel} implementation backed by DashScope Java SDK.
  */
-public class DashScopeSdkChatModel implements ChatModel {
+public final class DashScopeSdkChatModel implements ChatModel {
 
 	private static final ChatModelObservationConvention DEFAULT_OBSERVATION_CONVENTION =
 			new DefaultChatModelObservationConvention();
@@ -143,16 +143,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 		return this.defaultOptions;
 	}
 
-	private Prompt buildRequestPrompt(Prompt prompt) {
-        Assert.notNull(prompt, "Prompt must not be null");
-        if (prompt.getOptions() == null) {
-            return prompt.mutate().chatOptions(this.getOptions()).build();
-        }
-        else {
-            return prompt;
-        }
-	}
-
 	public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
 		GenerationParam request = createRequest(prompt, false);
 
@@ -214,8 +204,11 @@ public class DashScopeSdkChatModel implements ChatModel {
 		GenerationParam.GenerationParamBuilder<?, ?> requestBuilder = GenerationParam.builder()
 			.model(model)
 			.messages(sdkMessages)
-			.resultFormat("message")
-			.enableSearch(requestOptions.getEnableSearch());
+			.resultFormat("message");
+
+		if (requestOptions.getEnableSearch() != null) {
+			requestBuilder.enableSearch(requestOptions.getEnableSearch());
+		}
 
 		if (requestOptions.getMaxTokens() != null) {
 			requestBuilder.maxTokens(requestOptions.getMaxTokens());
@@ -237,7 +230,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 			requestBuilder.repetitionPenalty(requestOptions.getRepetitionPenalty().floatValue());
 		}
 		if (stream) {
-			requestBuilder.incrementalOutput(requestOptions.getIncrementalOutput());
+			requestBuilder.incrementalOutput(Objects.requireNonNullElse(requestOptions.getIncrementalOutput(), true));
 		}
 		applyStop(requestBuilder, requestOptions.getStop());
 
@@ -496,9 +489,22 @@ public class DashScopeSdkChatModel implements ChatModel {
 		return new Builder(this);
 	}
 
+	private Prompt buildRequestPrompt(Prompt prompt) {
+		if (prompt.getOptions() == null) {
+			return prompt.mutate().chatOptions(this.getOptions()).build();
+		}
+		else {
+			return prompt;
+		}
+	}
+
 	@Override
 	public DashScopeSdkChatModel clone() {
 		return this.mutate().build();
+	}
+
+    public ChatOptions getChatOptions() {
+		return this.defaultOptions;
 	}
 
 	public static Builder builder() {

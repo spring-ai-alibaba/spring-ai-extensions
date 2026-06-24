@@ -51,6 +51,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.retry.RetryUtils;
@@ -745,7 +746,28 @@ class DashScopeChatModelTests {
     }
 
     @Test
-    void testCallWithIncrementalOutput() {
+    void mediaContentBuilderSerializesDashScopeWireShape() throws Exception {
+        List<MediaContent> content = List.of(
+                MediaContent.builder().image("https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg").build(),
+                MediaContent.builder().video(List.of("https://example.com/frame-1.jpg", "https://example.com/frame-2.jpg")).build(),
+                MediaContent.builder().audio("https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3").build(),
+                MediaContent.builder().text("这些是什么?").cacheControl(Map.of("type", "ephemeral")).build());
+
+        String json = JsonMapper.builder().build().writeValueAsString(content);
+
+        assertThat(json).contains("\"image\":\"https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg\"");
+        assertThat(json).contains("\"video\":[\"https://example.com/frame-1.jpg\",\"https://example.com/frame-2.jpg\"]");
+        assertThat(json).contains("\"audio\":\"https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3\"");
+        assertThat(json).contains("\"text\":\"这些是什么?\"");
+        assertThat(json).contains("\"cache_control\":{\"type\":\"ephemeral\"}");
+        assertThat(json).doesNotContain("\"type\":\"image\"");
+        assertThat(json).doesNotContain("\"type\":\"video\"");
+        assertThat(json).doesNotContain("\"type\":\"audio\"");
+        assertThat(json).doesNotContain("\"type\":\"text\"");
+    }
+
+    @Test
+    void callOmitsIncrementalOutputWhenUnset() throws Exception {
         var message = UserMessage.builder().text(TEST_PROMPT).build();
         var prompt = Prompt.builder().messages(message).chatOptions(defaultOptions).build();
         var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
@@ -758,11 +780,48 @@ class DashScopeChatModelTests {
         when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenReturn(responseEntity);
 
         var request = chatModel.createRequest(prompt);
-        assertThat(request.parameters().incrementalOutput()).isTrue();
+        assertThat(request.parameters().incrementalOutput()).isNull();
         assertThat(JsonMapper.builder().build().writeValueAsString(request)).doesNotContain("\"stream\"");
+        assertThat(JsonMapper.builder().build().writeValueAsString(request)).doesNotContain("\"incremental_output\"");
 
         var chatResponse = chatModel.call(prompt);
         assertThat(chatResponse).isNotNull();
+    }
+
+    @Test
+    void createRequestMapsGenericStopSequencesIntoDashScopeStop() {
+        var message = UserMessage.builder().text(TEST_PROMPT).build();
+        DashScopeChatOptions runtimeOptions = DashScopeChatOptions.builder()
+                .combineWith(ChatOptions.builder().stopSequences(List.of("END", "STOP")))
+                .build();
+        ChatCompletionRequest request = chatModel.createRequest(new Prompt(List.of(message), runtimeOptions));
+
+        assertThat(request.parameters().stop()).isEqualTo(List.of("END", "STOP"));
+    }
+
+    @Test
+    void callUsesRuntimeOptionsAsReplacement() {
+        var message = UserMessage.builder().text(TEST_PROMPT).build();
+        var runtimeOptions = DashScopeChatOptions.builder()
+                .model("runtime-model")
+                .build();
+        var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
+        var choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
+        var output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+        var usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+        var chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenReturn(ResponseEntity.ok(chatCompletion));
+
+        chatModel.call(new Prompt(List.of(message), runtimeOptions));
+
+        ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
+        verify(dashScopeApi).chatCompletionEntity(requestCaptor.capture(), any(), eq(false));
+        ChatCompletionRequest request = requestCaptor.getValue();
+        assertThat(request.model()).isEqualTo("runtime-model");
+        assertThat(request.parameters().temperature()).isNull();
+        assertThat(request.parameters().topP()).isNull();
+        assertThat(request.parameters().topK()).isNull();
+        assertThat(request.parameters().seed()).isNull();
     }
 
     @Test
@@ -777,13 +836,15 @@ class DashScopeChatModelTests {
 
         when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.just(chunk));
 
-        var request = chatModel.createRequest(prompt);
-        assertThat(request.parameters().incrementalOutput()).isTrue();
-        assertThat(JsonMapper.builder().build().writeValueAsString(request)).doesNotContain("\"stream\"");
-
         StepVerifier.create(chatModel.stream(prompt))
                 .assertNext(chatResponse -> assertThat(chatResponse.getResult().getOutput().getText()).isEqualTo(TEST_RESPONSE))
                 .verifyComplete();
+
+        ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
+        verify(dashScopeApi).chatCompletionStream(requestCaptor.capture(), any(), eq(false));
+        ChatCompletionRequest request = requestCaptor.getValue();
+        assertThat(request.parameters().incrementalOutput()).isTrue();
+        assertThat(JsonMapper.builder().build().writeValueAsString(request)).doesNotContain("\"stream\"");
     }
 
     @Test
@@ -916,7 +977,7 @@ class DashScopeChatModelTests {
         assertThat(response.getResult().getOutput()).isNotNull();
 
         // Verify searchInfo is preserved in metadata
-        Object searchInfoFromMetadata = response.getResult().getOutput().getMetadata().get("search_info");
+        Object searchInfoFromMetadata = response.getResult().getMetadata().get("search_info");
         assertThat(searchInfoFromMetadata)
                 .as("searchInfo should be present in call() response metadata")
                 .isNotNull()
@@ -967,13 +1028,13 @@ class DashScopeChatModelTests {
                 .assertNext(response -> {
                     // First chunk - searchInfo is null, converted to empty string
                     assertThat(response.getResult().getOutput().getText()).isEqualTo("Hello ");
-                    Object si = response.getResult().getOutput().getMetadata().get("search_info");
+                    Object si = response.getResult().getMetadata().get("search_info");
                     assertThat(si).isEqualTo("");
                 })
                 .assertNext(response -> {
                     // Second chunk should have searchInfo
                     assertThat(response.getResult().getOutput().getText()).isEqualTo("World!");
-                    Object si = response.getResult().getOutput().getMetadata().get("search_info");
+                    Object si = response.getResult().getMetadata().get("search_info");
                     assertThat(si)
                             .as("searchInfo should be present in stream() response metadata")
                             .isNotNull()
@@ -1019,7 +1080,7 @@ class DashScopeChatModelTests {
 
         // Check the response contains searchInfo
         ChatResponse lastResponse = responses.get(responses.size() - 1);
-        Object searchInfoFromMetadata = lastResponse.getResult().getOutput().getMetadata().get("search_info");
+        Object searchInfoFromMetadata = lastResponse.getResult().getMetadata().get("search_info");
 
         assertThat(searchInfoFromMetadata)
                 .as("searchInfo should be preserved after chunk to completion conversion")
@@ -1031,6 +1092,35 @@ class DashScopeChatModelTests {
         assertThat(retrievedSearchInfo.searchResults()).isNotEmpty();
         assertThat(retrievedSearchInfo.searchResults().get(0).url())
                 .isEqualTo("https://example.com/page");
+    }
+
+    @Test
+    void testCallPreservesReasoningContentInGenerationMetadataOnly() {
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(
+                TEST_RESPONSE,
+                Role.ASSISTANT,
+                null,
+                null,
+                null,
+                "thinking",
+                null,
+                null,
+                null,
+                null
+        );
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
+        ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+        TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+        ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, usage);
+
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false)))
+                .thenReturn(ResponseEntity.ok(chatCompletion));
+
+        ChatResponse response = chatModel.call(new Prompt(new UserMessage(TEST_PROMPT)));
+
+        Object reasoningContent = response.getResult().getMetadata().get("reasoningContent");
+        assertThat(reasoningContent).isEqualTo("thinking");
+        assertThat(response.getResult().getOutput().getMetadata()).doesNotContainKey("reasoningContent");
     }
 
     @Test
@@ -1053,6 +1143,98 @@ class DashScopeChatModelTests {
         assertThat(request.parameters().searchOptions().enableSearchExtension()).isTrue();
         assertThat(request.parameters().searchOptions().prependSearchResult()).isTrue();
         assertThat(JsonMapper.builder().build().writeValueAsString(request)).doesNotContain("\"forced_search\"");
+    }
+
+    @Test
+    void testSearchOptionsBuilder() throws Exception {
+        SearchOptions searchOptions = SearchOptions.builder()
+                .enableSource(false)
+                .enableCitation(false)
+                .citationFormat("[<number>]")
+                .searchStrategy("turbo")
+                .enableSearchExtension(true)
+                .prependSearchResult(true)
+                .build();
+
+        assertThat(searchOptions.enableSource()).isFalse();
+        assertThat(searchOptions.enableCitation()).isFalse();
+        assertThat(searchOptions.citationFormat()).isEqualTo("[<number>]");
+        assertThat(searchOptions.searchStrategy()).isEqualTo("turbo");
+        assertThat(searchOptions.enableSearchExtension()).isTrue();
+        assertThat(searchOptions.prependSearchResult()).isTrue();
+        assertThat(JsonMapper.builder().build().writeValueAsString(searchOptions)).doesNotContain("\"forced_search\"");
+    }
+
+    @Test
+    void testCreateRequestFlattensExtraBodyIntoParameters() throws Exception {
+        DashScopeChatOptions runtimeOptions = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .extraBody(Map.<String, Object>of("custom_parameter", "custom-value", "custom_flag", true))
+                .build();
+
+        ChatCompletionRequest request = chatModel.createRequest(Prompt.builder()
+                .content(TEST_PROMPT)
+                .chatOptions(runtimeOptions)
+                .build());
+
+        assertThat(request.parameters().extraBody())
+                .containsEntry("custom_parameter", "custom-value")
+                .containsEntry("custom_flag", true);
+
+        String jsonRequest = JsonMapper.builder().build().writeValueAsString(request);
+        assertThat(jsonRequest)
+                .contains("\"custom_parameter\":\"custom-value\"")
+                .contains("\"custom_flag\":true")
+                .doesNotContain("\"extra_body\"");
+    }
+
+    @Test
+    void testCreateRequestPassesExtraBodyWithoutFilteringCallerOwnedKeys() throws Exception {
+        DashScopeChatOptions runtimeOptions = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .temperature(0.7)
+                .enableSearch(true)
+                .extraBody(Map.<String, Object>of(
+                        "temperature", 0.1,
+                        "enable_search", false,
+                        "custom_parameter", "custom-value"))
+                .build();
+
+        ChatCompletionRequest request = chatModel.createRequest(Prompt.builder()
+                .content(TEST_PROMPT)
+                .chatOptions(runtimeOptions)
+                .build());
+
+        assertThat(request.parameters().temperature()).isEqualTo(0.7f);
+        assertThat(request.parameters().enableSearch()).isTrue();
+        assertThat(request.parameters().extraBody())
+                .containsEntry("custom_parameter", "custom-value")
+                .containsEntry("temperature", 0.1)
+                .containsEntry("enable_search", false);
+
+        String jsonRequest = JsonMapper.builder().build().writeValueAsString(request);
+        assertThat(jsonRequest)
+                .contains("\"temperature\":0.7")
+                .contains("\"enable_search\":true")
+                .contains("\"custom_parameter\":\"custom-value\"")
+                .doesNotContain("\"extra_body\"");
+    }
+
+    @Test
+    void testCreateRequestAlwaysIncludesParametersObject() throws Exception {
+        DashScopeChatOptions runtimeOptions = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .multiModel(true)
+                .build();
+
+        ChatCompletionRequest request = chatModel.createRequest(Prompt.builder()
+                .content(TEST_PROMPT)
+                .chatOptions(runtimeOptions)
+                .build());
+
+        assertThat(request.parameters()).isNotNull();
+        assertThat(request.parameters().extraBody()).isEmpty();
+        assertThat(JsonMapper.builder().build().writeValueAsString(request)).contains("\"parameters\":{}");
     }
 
     @Test

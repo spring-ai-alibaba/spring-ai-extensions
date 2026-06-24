@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.serpapi;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -49,6 +51,15 @@ public class SerpApiAutoConfiguration {
 			.httpHeadersConsumer(consumer)
 			.build();
 		return new SerpApiService(serpApiProperties, jsonParseTool, webClientTool);
+	}
+
+	@Bean(name = "serpApiSearchToolCallback")
+	@ConditionalOnMissingBean(name = "serpApiSearchToolCallback")
+	public ToolCallback serpApiSearchToolCallback(SerpApiService serpApiSearch) {
+		return FunctionToolCallback.builder(SerpApiConstants.TOOL_NAME, serpApiSearch)
+			.description("Use SerpApi search to query for the latest news.")
+			.inputType(SerpApiService.Request.class)
+			.build();
 	}
 
 }

@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -312,6 +314,8 @@ public class DashScopeChatApiSpec {
 			@JsonProperty("skill")
 			private List<Skill> skill;
 
+			private Map<String, Object> extraBody = Map.of();
+
 			private Parameters() {
 			}
 
@@ -427,6 +431,11 @@ public class DashScopeChatApiSpec {
 				return this.skill;
 			}
 
+			@JsonAnyGetter
+			public Map<String, Object> extraBody() {
+				return this.extraBody;
+			}
+
 			public static Builder builder() {
 				return new Builder();
 			}
@@ -490,6 +499,8 @@ public class DashScopeChatApiSpec {
 				private SearchOptions searchOptions;
 
 				private List<Skill> skill;
+
+				private @Nullable Map<String, Object> extraBody;
 
 				private Builder() {
 				}
@@ -634,6 +645,11 @@ public class DashScopeChatApiSpec {
 					return this;
 				}
 
+				public Builder extraBody(@Nullable Map<String, Object> extraBody) {
+					this.extraBody = extraBody;
+					return this;
+				}
+
 				public Parameters build() {
 					Parameters parameters = new Parameters();
 					parameters.temperature = this.temperature;
@@ -664,6 +680,7 @@ public class DashScopeChatApiSpec {
 					parameters.enableSearch = this.enableSearch;
 					parameters.searchOptions = this.searchOptions;
 					parameters.skill = this.skill;
+					parameters.extraBody = this.extraBody != null ? this.extraBody : Map.of();
 					return parameters;
 				}
 
@@ -893,6 +910,65 @@ public class DashScopeChatApiSpec {
 					@JsonProperty("search_strategy") String searchStrategy,
 					@JsonProperty("enable_search_extension") Boolean enableSearchExtension,
 					@JsonProperty("prepend_search_result") Boolean prependSearchResult) {
+
+				public static Builder builder() {
+					return new Builder();
+				}
+
+				public static final class Builder {
+
+					private Boolean enableSource;
+
+					private Boolean enableCitation;
+
+					private String citationFormat;
+
+					private String searchStrategy;
+
+					private Boolean enableSearchExtension;
+
+					private Boolean prependSearchResult;
+
+					private Builder() {
+					}
+
+					public Builder enableSource(Boolean enableSource) {
+						this.enableSource = enableSource;
+						return this;
+					}
+
+					public Builder enableCitation(Boolean enableCitation) {
+						this.enableCitation = enableCitation;
+						return this;
+					}
+
+					public Builder citationFormat(String citationFormat) {
+						this.citationFormat = citationFormat;
+						return this;
+					}
+
+					public Builder searchStrategy(String searchStrategy) {
+						this.searchStrategy = searchStrategy;
+						return this;
+					}
+
+					public Builder enableSearchExtension(Boolean enableSearchExtension) {
+						this.enableSearchExtension = enableSearchExtension;
+						return this;
+					}
+
+					public Builder prependSearchResult(Boolean prependSearchResult) {
+						this.prependSearchResult = prependSearchResult;
+						return this;
+					}
+
+					public SearchOptions build() {
+						return new SearchOptions(this.enableSource, this.enableCitation, this.citationFormat,
+								this.searchStrategy, this.enableSearchExtension, this.prependSearchResult);
+					}
+
+				}
+
 			}
 
 			@JsonInclude(JsonInclude.Include.NON_NULL)
@@ -1055,7 +1131,7 @@ public class DashScopeChatApiSpec {
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
-	public record MediaContent(@JsonProperty("type") String type, @JsonProperty("text") @Nullable String text,
+	public record MediaContent(@JsonIgnore String type, @JsonProperty("text") @Nullable String text,
 			@JsonProperty("image") @Nullable String image, @JsonProperty("video") @Nullable List<String> video,
 			@JsonProperty("audio") @Nullable String audio,
 			@JsonProperty("cache_control") @Nullable Map<String, String> cacheControl) {
@@ -1075,6 +1151,62 @@ public class DashScopeChatApiSpec {
 		public MediaContent(String type, @Nullable String text, @Nullable String image, @Nullable List<String> video,
 				@Nullable String audio) {
 			this(type, text, image, video, audio, null);
+		}
+
+		public static Builder builder() {
+			return new Builder();
+		}
+
+		public static final class Builder {
+
+			private @Nullable String type;
+
+			private @Nullable String text;
+
+			private @Nullable String image;
+
+			private @Nullable List<String> video;
+
+			private @Nullable String audio;
+
+			private @Nullable Map<String, String> cacheControl;
+
+			private Builder() {
+			}
+
+			public Builder text(@Nullable String text) {
+				this.type = "text";
+				this.text = text;
+				return this;
+			}
+
+			public Builder image(@Nullable String image) {
+				this.type = "image";
+				this.image = image;
+				return this;
+			}
+
+			public Builder video(@Nullable List<String> video) {
+				this.type = "video";
+				this.video = video;
+				return this;
+			}
+
+			public Builder audio(@Nullable String audio) {
+				this.type = "audio";
+				this.audio = audio;
+				return this;
+			}
+
+			public Builder cacheControl(@Nullable Map<String, String> cacheControl) {
+				this.cacheControl = cacheControl;
+				return this;
+			}
+
+			public MediaContent build() {
+				return new MediaContent(this.type, this.text, this.image, this.video, this.audio, this.cacheControl);
+			}
+
 		}
 
 	}

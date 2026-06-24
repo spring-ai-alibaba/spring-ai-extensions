@@ -25,7 +25,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.observation.ChatModelObservationContext;
-import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
 /**
@@ -68,55 +67,5 @@ class DashScopeChatModelObservationConventionTests {
 		// Should return the original keyValues when no stop sequences are present
 		assertThat(result).isEqualTo(keyValues);
 	}
-
-	// Add a simple ChatOptions implementation class for testing
-	private static class TestChatOptions implements ChatOptions {
-
-		@Override
-		public String getModel() {
-			return "";
-		}
-
-		@Override
-		public Double getFrequencyPenalty() {
-			return 0.0;
-		}
-
-		@Override
-		public Integer getMaxTokens() {
-			return 0;
-		}
-
-		@Override
-		public Double getPresencePenalty() {
-			return 0.0;
-		}
-
-		@Override
-		public List<String> getStopSequences() {
-			return List.of();
-		}
-
-		@Override
-		public Double getTemperature() {
-			return 0.0;
-		}
-
-		@Override
-		public Integer getTopK() {
-			return 0;
-		}
-
-		@Override
-		public Double getTopP() {
-			return 0.0;
-		}
-
-        @Override
-        public Builder<?> mutate() {
-            return ChatOptions.builder();
-        }
-
-    }
 
 }

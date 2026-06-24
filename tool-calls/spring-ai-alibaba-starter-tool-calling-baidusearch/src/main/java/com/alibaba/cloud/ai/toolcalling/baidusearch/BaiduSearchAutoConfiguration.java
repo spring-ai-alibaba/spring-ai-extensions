@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.baidusearch;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -67,6 +69,25 @@ public class BaiduSearchAutoConfiguration {
 		return new BaiduAiSearchService(
 				WebClientTool.builder(jsonParseTool, properties).httpHeadersConsumer(consumer).build(), jsonParseTool,
 				properties);
+	}
+
+	@Bean(name = "baiduSearchToolCallback")
+	@ConditionalOnMissingBean(name = "baiduSearchToolCallback")
+	public ToolCallback baiduSearchToolCallback(BaiduSearchService baiduSearch) {
+		return FunctionToolCallback.builder(BaiduSearchConstants.TOOL_NAME, baiduSearch)
+			.description("Use baidu search engine to query for the latest news.")
+			.inputType(BaiduSearchService.Request.class)
+			.build();
+	}
+
+	@Bean(name = "baiduAiSearchToolCallback")
+	@ConditionalOnMissingBean(name = "baiduAiSearchToolCallback")
+	@ConditionalOnProperty(prefix = BaiduSearchConstants.CONFIG_PREFIX_AI, name = "enabled", havingValue = "true")
+	public ToolCallback baiduAiSearchToolCallback(BaiduAiSearchService baiduAiSearch) {
+		return FunctionToolCallback.builder(BaiduSearchConstants.TOOL_NAME_AI, baiduAiSearch)
+			.description("Use baidu ai search engine to query information.")
+			.inputType(BaiduAiSearchService.Request.class)
+			.build();
 	}
 
 }

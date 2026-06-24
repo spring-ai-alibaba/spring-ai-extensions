@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.kuaidi100;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.RestClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -49,6 +51,15 @@ public class Kuaidi100AutoConfiguration {
 	private JsonParseTool createJsonParseTool() {
 		JsonMapper jsonMapper = JsonMapper.shared();
 		return new JsonParseTool(jsonMapper);
+	}
+
+	@Bean(name = "queryTrackToolCallback")
+	@ConditionalOnMissingBean(name = "queryTrackToolCallback")
+	public ToolCallback queryTrackToolCallback(Kuaidi100Service queryTrack) {
+		return FunctionToolCallback.builder(Kuaidi100Constants.TOOL_NAME, queryTrack)
+			.description("Query courier tracking information")
+			.inputType(Kuaidi100Service.Request.class)
+			.build();
 	}
 
 }

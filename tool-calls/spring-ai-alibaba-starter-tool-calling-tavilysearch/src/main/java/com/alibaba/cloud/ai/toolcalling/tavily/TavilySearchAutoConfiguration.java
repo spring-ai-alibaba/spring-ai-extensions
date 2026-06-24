@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.tavily;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -45,6 +47,15 @@ public class TavilySearchAutoConfiguration {
 			})
 			.build();
 		return new TavilySearchService(jsonParseTool, webClientTool);
+	}
+
+	@Bean(name = "tavilySearchToolCallback")
+	@ConditionalOnMissingBean(name = "tavilySearchToolCallback")
+	public ToolCallback tavilySearchToolCallback(TavilySearchService tavilySearch) {
+		return FunctionToolCallback.builder(TavilySearchConstants.TOOL_NAME, tavilySearch)
+			.description("Provides a TavilySearchService bean for performing searches using the Tavily search engine.")
+			.inputType(TavilySearchService.Request.class)
+			.build();
 	}
 
 }

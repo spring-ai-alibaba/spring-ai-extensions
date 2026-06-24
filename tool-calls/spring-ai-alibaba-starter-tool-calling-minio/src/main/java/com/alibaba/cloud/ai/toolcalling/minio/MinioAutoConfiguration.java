@@ -16,6 +16,8 @@
 package com.alibaba.cloud.ai.toolcalling.minio;
 
 import io.minio.MinioClient;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -74,6 +76,42 @@ public class MinioAutoConfiguration {
 		return MinioClient.builder()
 			.endpoint(minioProperties.getEndpoint())
 			.credentials(minioProperties.getAccessKey(), minioProperties.getSecretKey())
+			.build();
+	}
+
+	@Bean(name = "minioUploadObjectServiceToolCallback")
+	@ConditionalOnMissingBean(name = "minioUploadObjectServiceToolCallback")
+	public ToolCallback minioUploadObjectServiceToolCallback(MinioUploadObjectService minioUploadObjectService) {
+		return FunctionToolCallback.builder(MinioConstants.TOOL_NAME_UPLOAD, minioUploadObjectService)
+			.description("Upload object to minio")
+			.inputType(MinioUploadObjectService.Request.class)
+			.build();
+	}
+
+	@Bean(name = "minioDownloadObjectServiceToolCallback")
+	@ConditionalOnMissingBean(name = "minioDownloadObjectServiceToolCallback")
+	public ToolCallback minioDownloadObjectServiceToolCallback(MinioDownloadObjectService minioDownloadObjectService) {
+		return FunctionToolCallback.builder(MinioConstants.TOOL_NAME_DOWNLOAD, minioDownloadObjectService)
+			.description("Download object from minio")
+			.inputType(MinioDownloadObjectService.Request.class)
+			.build();
+	}
+
+	@Bean(name = "minioDeleteObjectServiceToolCallback")
+	@ConditionalOnMissingBean(name = "minioDeleteObjectServiceToolCallback")
+	public ToolCallback minioDeleteObjectServiceToolCallback(MinioDeleteObjectService minioDeleteObjectService) {
+		return FunctionToolCallback.builder(MinioConstants.TOOL_NAME_DELETE, minioDeleteObjectService)
+			.description("Delete object from minio")
+			.inputType(MinioDeleteObjectService.Request.class)
+			.build();
+	}
+
+	@Bean(name = "minioCheckObjectExistsServiceToolCallback")
+	@ConditionalOnMissingBean(name = "minioCheckObjectExistsServiceToolCallback")
+	public ToolCallback minioCheckObjectExistsServiceToolCallback(MinioCheckObjectExistsService minioCheckObjectExistsService) {
+		return FunctionToolCallback.builder(MinioConstants.TOOL_NAME_CHECK_EXISTS, minioCheckObjectExistsService)
+			.description("Check object exists from minio")
+			.inputType(MinioCheckObjectExistsService.Request.class)
 			.build();
 	}
 

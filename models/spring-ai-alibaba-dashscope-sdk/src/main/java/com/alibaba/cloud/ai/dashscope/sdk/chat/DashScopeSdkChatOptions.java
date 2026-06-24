@@ -25,6 +25,7 @@ import org.springframework.ai.model.tool.DefaultToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,13 +59,13 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 	private final @Nullable Object stop;
 
 	@JsonProperty("enable_search")
-	private final Boolean enableSearch;
+	private final @Nullable Boolean enableSearch;
 
 	@JsonProperty("max_tokens")
 	private final @Nullable Integer maxTokens;
 
 	@JsonProperty("incremental_output")
-	private final Boolean incrementalOutput;
+	private final @Nullable Boolean incrementalOutput;
 
 	@JsonProperty("repetition_penalty")
 	private final @Nullable Double repetitionPenalty;
@@ -97,9 +98,9 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		this.topP = topP;
 		this.topK = topK;
 		this.stop = stop != null ? copyStop(stop) : null;
-		this.enableSearch = enableSearch != null ? enableSearch : false;
+		this.enableSearch = enableSearch;
 		this.maxTokens = maxTokens;
-		this.incrementalOutput = incrementalOutput != null ? incrementalOutput : true;
+		this.incrementalOutput = incrementalOutput;
 		this.repetitionPenalty = repetitionPenalty;
 		this.toolChoice = toolChoice;
 		this.httpHeaders = httpHeaders != null ? Map.copyOf(httpHeaders) : null;
@@ -148,7 +149,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		return this.stop;
 	}
 
-	public Boolean getEnableSearch() {
+	public @Nullable Boolean getEnableSearch() {
 		return this.enableSearch;
 	}
 
@@ -157,7 +158,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		return this.maxTokens;
 	}
 
-	public Boolean getIncrementalOutput() {
+	public @Nullable Boolean getIncrementalOutput() {
 		return this.incrementalOutput;
 	}
 
@@ -199,11 +200,12 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public @Nullable List<String> getStopSequences() {
-        if (this.stop instanceof List<?> list && list.stream().allMatch(String.class::isInstance)) {
-            return (List<String>) list;
-        }
-        return null;
+		if (this.stop instanceof List<?> list && list.stream().allMatch(String.class::isInstance)) {
+			return (List<String>) list;
+		}
+		return null;
 	}
 
 	public DashScopeSdkChatOptions copy() {
@@ -406,10 +408,23 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			return self();
 		}
 
+		@SuppressWarnings("unchecked")
+		private @Nullable Object effectiveStop() {
+			if (this.stopSequences == null) {
+				return this.stop;
+			}
+			if (this.stop instanceof List<?> stopList && stopList.stream().allMatch(String.class::isInstance)) {
+				List<String> merged = new ArrayList<>((List<String>) stopList);
+				merged.addAll(this.stopSequences);
+				return merged;
+			}
+			return new ArrayList<>(this.stopSequences);
+		}
+
 		@Override
 		public DashScopeSdkChatOptions build() {
 			return new DashScopeSdkChatOptions(this.model, this.stream, this.temperature, this.seed, this.topP,
-					this.topK, this.stop, this.enableSearch, this.maxTokens, this.incrementalOutput,
+					this.topK, effectiveStop(), this.enableSearch, this.maxTokens, this.incrementalOutput,
 					this.repetitionPenalty, this.toolChoice, this.httpHeaders, this.toolCallbacks, this.toolContext,
 					this.extraBody);
 		}

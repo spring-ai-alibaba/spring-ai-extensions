@@ -16,6 +16,8 @@
 package com.alibaba.cloud.ai.toolcalling.jsonprocessor;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -61,6 +63,42 @@ public class JsonProcessorAutoConfiguration {
 	@ConditionalOnMissingBean
 	public JsonProcessorReplaceService jsonReplacePropertyFiledValue(JsonParseTool jsonParseTool) {
 		return new JsonProcessorReplaceService(jsonParseTool);
+	}
+
+	@Bean(name = "jsonInsertPropertyFieldToolCallback")
+	@ConditionalOnMissingBean(name = "jsonInsertPropertyFieldToolCallback")
+	public ToolCallback jsonInsertPropertyFieldToolCallback(JsonProcessorInsertService jsonInsertPropertyField) {
+		return FunctionToolCallback.builder(JsonProcessorConstants.INSERT_TOOL_NAME, jsonInsertPropertyField)
+			.description("Use Gson to insert a jsonObject property field .")
+			.inputType(JsonProcessorInsertService.JsonInsertRequest.class)
+			.build();
+	}
+
+	@Bean(name = "jsonParsePropertyToolCallback")
+	@ConditionalOnMissingBean(name = "jsonParsePropertyToolCallback")
+	public ToolCallback jsonParsePropertyToolCallback(JsonProcessorParseService jsonParseProperty) {
+		return FunctionToolCallback.builder(JsonProcessorConstants.PARSE_TOOL_NAME, jsonParseProperty)
+			.description("Use Gson to parse String JsonObject .")
+			.inputType(JsonProcessorParseService.JsonParseRequest.class)
+			.build();
+	}
+
+	@Bean(name = "jsonRemovePropertyFieldToolCallback")
+	@ConditionalOnMissingBean(name = "jsonRemovePropertyFieldToolCallback")
+	public ToolCallback jsonRemovePropertyFieldToolCallback(JsonProcessorRemoveService jsonRemovePropertyField) {
+		return FunctionToolCallback.builder(JsonProcessorConstants.REMOVE_TOOL_NAME, jsonRemovePropertyField)
+			.description("Use Gson to remove JsonObject property field .")
+			.inputType(JsonProcessorRemoveService.JsonRemoveRequest.class)
+			.build();
+	}
+
+	@Bean(name = "jsonReplacePropertyFiledValueToolCallback")
+	@ConditionalOnMissingBean(name = "jsonReplacePropertyFiledValueToolCallback")
+	public ToolCallback jsonReplacePropertyFiledValueToolCallback(JsonProcessorReplaceService jsonReplacePropertyFiledValue) {
+		return FunctionToolCallback.builder(JsonProcessorConstants.REPLACE_TOOL_NAME, jsonReplacePropertyFiledValue)
+			.description("Use Gson to replace JsonObject Field Value .")
+			.inputType(JsonProcessorReplaceService.JsonReplaceRequest.class)
+			.build();
 	}
 
 }

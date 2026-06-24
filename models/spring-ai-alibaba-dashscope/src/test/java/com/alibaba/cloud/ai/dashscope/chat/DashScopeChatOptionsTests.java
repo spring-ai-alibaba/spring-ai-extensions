@@ -29,6 +29,7 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Test cases for DashScopeChatOptions
@@ -118,6 +119,16 @@ class DashScopeChatOptionsTests {
     }
 
     @Test
+    void testCombineWithGenericStopSequencesMapsToStop() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .combineWith(ChatOptions.builder().stopSequences(List.of("END", "STOP")))
+                .build();
+
+        assertThat(options.getStop()).isEqualTo(List.of("END", "STOP"));
+        assertThat(options.getStopSequences()).containsExactly("END", "STOP");
+    }
+
+    @Test
     void testToolCallbacks() {
         // Test function callbacks related methods
         ToolCallback callback1 = Mockito.mock(ToolCallback.class);
@@ -160,6 +171,43 @@ class DashScopeChatOptionsTests {
 
         assertThat(options.getResponseFormat()).isEqualTo(responseFormat);
         assertThat(options.getResponseFormat().getType()).isEqualTo(Type.JSON_OBJECT);
+    }
+
+    @Test
+    void testExtraBodyBuilderAndGetter() {
+        Map<String, Object> extraBody = Map.of("custom_parameter", "custom-value", "custom_flag", true);
+
+        DashScopeChatOptions options = DashScopeChatOptions.builder().extraBody(extraBody).build();
+
+        assertThat(options.getExtraBody()).containsAllEntriesOf(extraBody);
+    }
+
+    @Test
+    void testExtraBodyIsImmutable() {
+        DashScopeChatOptions original = DashScopeChatOptions.builder()
+                .extraBody(Map.of("custom_parameter", "custom-value"))
+                .build();
+
+        DashScopeChatOptions copy = original.copy();
+
+        assertThatThrownBy(() -> original.getExtraBody().put("original_only", "original"))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> copy.getExtraBody().put("copy_only", "copy"))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void testCombineWithReplacesExtraBodyWithRuntimeOverride() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .extraBody(Map.of("default_key", "default-value", "overridden", "from-default"))
+                .combineWith(DashScopeChatOptions.builder()
+                        .extraBody(Map.of("runtime_key", "runtime-value", "overridden", "from-runtime")))
+                .build();
+
+        assertThat(options.getExtraBody())
+                .containsEntry("runtime_key", "runtime-value")
+                .containsEntry("overridden", "from-runtime")
+                .doesNotContainKey("default_key");
     }
 
     @Test

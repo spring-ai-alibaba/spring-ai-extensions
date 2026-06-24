@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.openalex;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -45,6 +47,15 @@ public class OpenAlexAutoConfiguration {
 			})
 			.build();
 		return new OpenAlexService(properties, jsonParseTool, webClientTool);
+	}
+
+	@Bean(name = "openAlexServiceToolCallback")
+	@ConditionalOnMissingBean(name = "openAlexServiceToolCallback")
+	public ToolCallback openAlexServiceToolCallback(OpenAlexService openAlexService) {
+		return FunctionToolCallback.builder(OpenAlexConstants.TOOL_NAME, openAlexService)
+			.description("OpenAlex Academic Search Service")
+			.inputType(OpenAlexService.Request.class)
+			.build();
 	}
 
 }
