@@ -1,6 +1,6 @@
 # Spring AI Alibaba JDBC Memory Module
 
-[中文版本](./README-zh.md)
+[中文版本](README-zh.md)
 
 ## Introduction
 
@@ -123,5 +123,5 @@ CREATE TABLE ai_chat_memory (
 
 ## Frequently Asked Questions
 
-**Q: Which databases are supported?**  
+**Q: Which databases are supported?**
 A: Theoretically supports all relational databases that provide JDBC drivers. Tested databases include MySQL, PostgreSQL, H2, and Oracle.

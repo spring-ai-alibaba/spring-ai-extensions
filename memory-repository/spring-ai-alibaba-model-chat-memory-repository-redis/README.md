@@ -1,6 +1,6 @@
 # Spring AI Alibaba Redis Memory Module
 
-[中文版本](./README-zh.md)
+[中文版本](README-zh.md)
 
 ## Introduction
 

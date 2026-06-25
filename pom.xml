@@ -83,13 +83,13 @@
         <module>document-readers/spring-ai-alibaba-starter-document-reader-yuque</module>
 
         <!-- memory modules -->
-        <module>memory/repository/spring-ai-alibaba-model-chat-memory-repository-elasticsearch</module>
-        <module>memory/repository/spring-ai-alibaba-model-chat-memory-repository-jdbc</module>
-        <module>memory/repository/spring-ai-alibaba-model-chat-memory-repository-mem0</module>
-        <module>memory/repository/spring-ai-alibaba-model-chat-memory-repository-memcached</module>
-        <module>memory/repository/spring-ai-alibaba-model-chat-memory-repository-mongodb</module>
-        <module>memory/repository/spring-ai-alibaba-model-chat-memory-repository-redis</module>
-        <module>memory/repository/spring-ai-alibaba-model-chat-memory-repository-tablestore</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-elasticsearch</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-jdbc</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-mem0</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-memcached</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-mongodb</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-redis</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-tablestore</module>
 
         <!-- auto-configurations modules -->
         <module>auto-configurations/models/spring-ai-alibaba-autoconfigure-dashscope</module>
@@ -118,31 +118,31 @@
         <module>auto-configurations/vector-stores/spring-ai-alibaba-autoconfigure-vector-store-tair</module>
 
         <!-- spring-boot-starters modules -->
-        <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope-sdk</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-model-chat-memory</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-model-chat-memory-mem0</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-model-chat-memory-repository-elasticsearch</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-model-chat-memory-repository-jdbc</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-model-chat-memory-repository-memcached</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-model-chat-memory-repository-mongodb</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-model-chat-memory-repository-redis</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-model-chat-memory-repository-tablestore</module>
+        <module>starters/spring-ai-alibaba-starter-dashscope</module>
+        <module>starters/spring-ai-alibaba-starter-dashscope-sdk</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-mem0</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-repository-elasticsearch</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-repository-jdbc</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-repository-memcached</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-repository-mongodb</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-repository-redis</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-repository-tablestore</module>
 
-        <module>spring-boot-starters/spring-ai-alibaba-starter-nacos-prompt</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-arms-observation</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-registry</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-router</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-rag</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-rag-bailian</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-distributed</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-gateway</module>
+        <module>starters/spring-ai-alibaba-starter-nacos-prompt</module>
+        <module>starters/spring-ai-alibaba-starter-arms-observation</module>
+        <module>starters/spring-ai-alibaba-starter-mcp-registry</module>
+        <module>starters/spring-ai-alibaba-starter-mcp-router</module>
+        <module>starters/spring-ai-alibaba-starter-rag</module>
+        <module>starters/spring-ai-alibaba-starter-rag-bailian</module>
+        <module>starters/spring-ai-alibaba-starter-mcp-distributed</module>
+        <module>starters/spring-ai-alibaba-starter-mcp-gateway</module>
 
-        <module>spring-boot-starters/spring-ai-alibaba-starter-vector-store-analyticdb</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-vector-store-oceanbase</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-vector-store-opensearch</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-vector-store-tablestore</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-vector-store-tair</module>
+        <module>starters/spring-ai-alibaba-starter-vector-store-analyticdb</module>
+        <module>starters/spring-ai-alibaba-starter-vector-store-oceanbase</module>
+        <module>starters/spring-ai-alibaba-starter-vector-store-opensearch</module>
+        <module>starters/spring-ai-alibaba-starter-vector-store-tablestore</module>
+        <module>starters/spring-ai-alibaba-starter-vector-store-tair</module>
 
         <!-- tool-calls modules -->
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-alitranslate</module>

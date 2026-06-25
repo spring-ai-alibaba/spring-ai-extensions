@@ -1,6 +1,6 @@
 # Spring AI Alibaba Redis Memory 模块
 
-[English](./README.md)
+[English](README.md)
 
 ## 简介
 

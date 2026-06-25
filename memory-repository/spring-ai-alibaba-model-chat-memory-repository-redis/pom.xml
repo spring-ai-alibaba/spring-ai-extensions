@@ -20,13 +20,13 @@
         <groupId>com.alibaba.cloud.ai</groupId>
         <artifactId>spring-ai-alibaba-extensions</artifactId>
         <version>${revision}</version>
-        <relativePath>../../../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>spring-ai-alibaba-model-chat-memory-repository-memcached</artifactId>
+    <artifactId>spring-ai-alibaba-model-chat-memory-repository-redis</artifactId>
     <packaging>jar</packaging>
-    <name>Spring AI Alibaba Memcached Chat Memory</name>
-    <description>Spring AI Alibaba Memcached Chat Memory implementation</description>
+    <name>Spring AI Alibaba Redis Chat Memory</name>
+    <description>Spring AI Alibaba Redis Chat Memory implementation</description>
     <url>https://github.com/alibaba/spring-ai-alibaba</url>
 
     <licenses>
@@ -58,6 +58,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.ai</groupId>
@@ -65,9 +66,24 @@
         </dependency>
 
         <dependency>
-            <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-starter-tool-calling-memcached</artifactId>
-            <version>${project.parent.version}</version>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+            <version>${redisson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-redis</artifactId>
         </dependency>
 
         <!-- test dependencies -->
@@ -80,7 +96,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>

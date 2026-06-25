@@ -1,6 +1,6 @@
 # Spring AI Alibaba Chat Memory Example
 
-[中文版本](./README-zh.md)
+[中文版本](README-zh.md)
 
 This example demonstrates how to use the Chat Memory functionality.
 

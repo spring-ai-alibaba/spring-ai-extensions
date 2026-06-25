@@ -1,6 +1,6 @@
 # Spring AI Alibaba JDBC Memory 模块
 
-[English](./README.md)
+[English](README.md)
 
 ## 简介
 
@@ -123,5 +123,5 @@ CREATE TABLE ai_chat_memory (
 
 ## 常见问题解答
 
-**Q: 支持哪些数据库？**  
+**Q: 支持哪些数据库？**
 A: 理论上支持所有提供JDBC驱动的关系型数据库，已测试的包括MySQL、PostgreSQL、H2和Oracle。
