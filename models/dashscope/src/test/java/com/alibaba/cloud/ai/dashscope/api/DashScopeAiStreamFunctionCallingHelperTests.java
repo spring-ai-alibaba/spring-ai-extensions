@@ -93,16 +93,27 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 		assertEquals("request-1", result.requestId());
 		List<ToolCall> toolCalls = result.output().choices().get(0).message().toolCalls();
 		assertNotNull(toolCalls);
-		// According to DashScopeAiStreamFunctionCallingHelper implementation, it keeps
-		// all tool calls from previous
-		// and adds tool calls from current, so there should be 2 tool calls here
-		assertEquals(2, toolCalls.size());
+		assertEquals(1, toolCalls.size());
 		assertEquals("tool-1", toolCalls.get(0).id());
 		assertEquals("function-1", toolCalls.get(0).function().name());
-		assertEquals("{\"param", toolCalls.get(0).function().arguments());
-		assertEquals("tool-1", toolCalls.get(1).id());
-		assertEquals("function-1", toolCalls.get(1).function().name());
-		assertEquals("\":\"value\"}", toolCalls.get(1).function().arguments());
+		assertEquals("{\"param\":\"value\"}", toolCalls.get(0).function().arguments());
+	}
+
+	@Test
+	void testMergeWithSameToolCallIdAndMissingFunctionName() {
+		ChatCompletionChunk previous = createChunkWithToolCall("request-1", "tool-1", "get_weather", null);
+		ChatCompletionChunk current = createChunkWithToolCall("request-1", "tool-1", null,
+				"{\"location\":\"Beijing\"}", ChatCompletionFinishReason.TOOL_CALLS);
+
+		ChatCompletionChunk result = helperWithIncrementalOutput.merge(previous, current);
+
+		assertNotNull(result);
+		List<ToolCall> toolCalls = result.output().choices().get(0).message().toolCalls();
+		assertNotNull(toolCalls);
+		assertEquals(1, toolCalls.size());
+		assertEquals("tool-1", toolCalls.get(0).id());
+		assertEquals("get_weather", toolCalls.get(0).function().name());
+		assertEquals("{\"location\":\"Beijing\"}", toolCalls.get(0).function().arguments());
 	}
 
 	@Test
@@ -188,8 +199,8 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 		// Create previous chunk with multiple tool calls
 		ChatCompletionChunk previous = createChunkWithMultipleToolCalls("request-1");
 		// Create current chunk with a single tool call
-		ChatCompletionChunk current = createChunkWithToolCall("request-1", "tool-2", "function-2",
-				"{\"param2\":\"value2\"}");
+		ChatCompletionChunk current = createChunkWithToolCall("request-1", "tool-3", "function-3",
+				"{\"param3\":\"value3\"}");
 
 		ChatCompletionChunk result = helperWithIncrementalOutput.merge(previous, current);
 
@@ -207,9 +218,9 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 		assertEquals("tool-2", toolCalls.get(1).id());
 		assertEquals("function-2", toolCalls.get(1).function().name());
 		assertEquals("{\"param2\":\"value2\"}", toolCalls.get(1).function().arguments());
-		assertEquals("tool-2", toolCalls.get(2).id());
-		assertEquals("function-2", toolCalls.get(2).function().name());
-		assertEquals("{\"param2\":\"value2\"}", toolCalls.get(2).function().arguments());
+		assertEquals("tool-3", toolCalls.get(2).id());
+		assertEquals("function-3", toolCalls.get(2).function().name());
+		assertEquals("{\"param3\":\"value3\"}", toolCalls.get(2).function().arguments());
 	}
 
 	// Helper method: Create a simple ChatCompletionChunk
