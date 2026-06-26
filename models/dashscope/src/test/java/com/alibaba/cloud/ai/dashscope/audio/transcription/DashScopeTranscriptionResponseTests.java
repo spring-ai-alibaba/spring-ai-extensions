@@ -50,9 +50,11 @@ class DashScopeTranscriptionResponseTests {
 		assertThat(transcription.getMetadata().sentences().get(0).text()).isEqualTo("hello world");
 	}
 
-	// The "transcript" alias of the text field must still be honored.
+	// The "transcript" alias of the text field must still be honored. A text-only response
+	// (no channel_id / content_duration_in_milliseconds / sentences) must not create an empty
+	// metadata object — getMetadata() stays null, matching the prior behavior.
 	@Test
-	void testDeserializeHonorsTranscriptAlias() throws Exception {
+	void testDeserializeHonorsTranscriptAliasWithoutCreatingEmptyMetadata() throws Exception {
 		String json = """
 				{ "transcript": "aliased text" }
 				""";
@@ -60,6 +62,7 @@ class DashScopeTranscriptionResponseTests {
 		DashScopeAudioTranscription transcription = objectMapper.readValue(json, DashScopeAudioTranscription.class);
 
 		assertThat(transcription.getText()).isEqualTo("aliased text");
+		assertThat(transcription.getMetadata()).isNull();
 	}
 
 	// The original single-argument constructor must remain available for backward

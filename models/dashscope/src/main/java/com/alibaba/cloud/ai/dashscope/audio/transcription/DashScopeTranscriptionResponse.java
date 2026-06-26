@@ -88,8 +88,13 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
                 @JsonProperty("sentences") List<Sentence> sentences) {
             super(text != null ? text : "");
             this.text = text;
-            this.metadata = new DashScopeAudioTranscriptionMetadata(null, null, null, null, null, channelId,
-                    contentDurationInMilliseconds, sentences);
+            // Only attach metadata when the response actually carries at least one of the
+            // mapped top-level fields. A text-only response keeps metadata null to preserve the
+            // prior behavior and to avoid emitting an empty metadata object on re-serialization.
+            if (channelId != null || contentDurationInMilliseconds != null || sentences != null) {
+                this.metadata = new DashScopeAudioTranscriptionMetadata(null, null, null, null, null, channelId,
+                        contentDurationInMilliseconds, sentences);
+            }
         }
 
         public void setMetadata(DashScopeAudioTranscriptionMetadata metadata) {
