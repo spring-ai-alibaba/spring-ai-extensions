@@ -225,7 +225,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
     private Boolean internalToolExecutionEnabled;
 
     /**
-     * Indicates whether the request involves multiple models
+     * Whether to use the DashScope multimodal generation endpoint.
      */
     private @JsonProperty("multi_model") Boolean multiModel;
 
