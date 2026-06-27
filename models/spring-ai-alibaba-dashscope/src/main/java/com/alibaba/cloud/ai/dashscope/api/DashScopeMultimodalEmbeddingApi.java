@@ -138,9 +138,8 @@ public class DashScopeMultimodalEmbeddingApi {
 		}
 
 		public Builder headers(HttpHeaders headers) {
-			if (headers != null) {
-				this.headers.addAll(headers);
-			}
+            Assert.notNull(headers, "Headers cannot be null");
+            this.headers.addAll(headers);
 			return this;
 		}
 
@@ -157,10 +156,9 @@ public class DashScopeMultimodalEmbeddingApi {
 		}
 
 		public DashScopeMultimodalEmbeddingApi build() {
-			ApiKey apiKey = this.apiKey;
-			Assert.notNull(apiKey, "Api key cannot be null");
-			return new DashScopeMultimodalEmbeddingApi(baseUrl, apiKey, multimodalPath, headers, restClientBuilder,
-					responseErrorHandler);
+			Assert.notNull(this.apiKey, "Api key cannot be null");
+			return new DashScopeMultimodalEmbeddingApi(this.baseUrl, this.apiKey, this.multimodalPath, this.headers,
+                    this.restClientBuilder, this.responseErrorHandler);
 		}
 
 	}

@@ -342,10 +342,9 @@ public class DashScopeMultimodalEmbeddingModel implements DocumentEmbeddingModel
 		}
 
 		public DashScopeMultimodalEmbeddingModel build() {
-			DashScopeMultimodalEmbeddingApi dashScopeMultimodalEmbeddingApi = this.dashScopeMultimodalEmbeddingApi;
-			Assert.notNull(dashScopeMultimodalEmbeddingApi, "dashScopeMultimodalEmbeddingApi must not be null");
+			Assert.notNull(this.dashScopeMultimodalEmbeddingApi, "dashScopeMultimodalEmbeddingApi must not be null");
 			return new DashScopeMultimodalEmbeddingModel(
-					dashScopeMultimodalEmbeddingApi, this.defaultOptions,
+                    this.dashScopeMultimodalEmbeddingApi, this.defaultOptions,
 					this.retryTemplate, this.observationRegistry);
 		}
 	}

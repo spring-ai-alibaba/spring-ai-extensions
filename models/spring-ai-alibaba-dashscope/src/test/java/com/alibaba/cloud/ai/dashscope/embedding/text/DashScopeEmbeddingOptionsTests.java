@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 package com.alibaba.cloud.ai.dashscope.embedding.text;
+<<<<<<<< HEAD:models/spring-ai-alibaba-dashscope/src/test/java/com/alibaba/cloud/ai/dashscope/embedding/text/DashScopeEmbeddingOptionsTests.java
+========
+
+import static org.assertj.core.api.Assertions.assertThat;
+>>>>>>>> 74b36605 (feat: support multimodal embedding model (#193)):models/dashscope/src/test/java/com/alibaba/cloud/ai/dashscope/embedding/text/DashScopeEmbeddingOptionsTests.java
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import org.junit.jupiter.api.Test;

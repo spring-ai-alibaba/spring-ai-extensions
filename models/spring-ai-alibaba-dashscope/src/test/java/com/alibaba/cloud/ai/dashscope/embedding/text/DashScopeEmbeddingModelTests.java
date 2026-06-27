@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.alibaba.cloud.ai.dashscope.embedding.text;
+<<<<<<<< HEAD:models/spring-ai-alibaba-dashscope/src/test/java/com/alibaba/cloud/ai/dashscope/embedding/text/DashScopeEmbeddingModelTests.java
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +40,8 @@ import org.springframework.ai.embedding.EmbeddingRequest;
 import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
+========
+>>>>>>>> 74b36605 (feat: support multimodal embedding model (#193)):models/dashscope/src/test/java/com/alibaba/cloud/ai/dashscope/embedding/text/DashScopeEmbeddingModelTests.java
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -49,6 +52,31 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+<<<<<<<< HEAD:models/spring-ai-alibaba-dashscope/src/test/java/com/alibaba/cloud/ai/dashscope/embedding/text/DashScopeEmbeddingModelTests.java
+========
+import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingModel.Builder;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.Embedding;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.EmbeddingList;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.EmbeddingUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.Embeddings;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.EmbeddingModel;
+import io.micrometer.observation.ObservationRegistry;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.document.MetadataMode;
+import org.springframework.ai.embedding.EmbeddingRequest;
+import org.springframework.ai.embedding.EmbeddingResponse;
+import org.springframework.ai.retry.RetryUtils;
+import org.springframework.http.ResponseEntity;
+
+>>>>>>>> 74b36605 (feat: support multimodal embedding model (#193)):models/dashscope/src/test/java/com/alibaba/cloud/ai/dashscope/embedding/text/DashScopeEmbeddingModelTests.java
 /**
  * Test cases for DashScopeEmbeddingModel. Tests cover basic embedding operations, error
  * handling, and various edge cases.
