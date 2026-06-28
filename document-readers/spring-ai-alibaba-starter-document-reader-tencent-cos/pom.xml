@@ -63,7 +63,7 @@
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-dashscope</artifactId>
-            <version>${project.version}</version>
+            <version>${project.parent.version}</version>
             <optional>true</optional>
         </dependency>
 

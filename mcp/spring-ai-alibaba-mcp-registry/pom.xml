@@ -66,7 +66,7 @@
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-mcp-common</artifactId>
-            <version>${revision}</version>
+            <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
