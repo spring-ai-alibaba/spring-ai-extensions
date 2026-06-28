@@ -77,7 +77,5 @@ modified_mcp_config.json
 /spring-ai-alibaba-studio/ui/
 
 .claude
-CLAUDE.md
-AGENTS.md
 
 .devcontainer

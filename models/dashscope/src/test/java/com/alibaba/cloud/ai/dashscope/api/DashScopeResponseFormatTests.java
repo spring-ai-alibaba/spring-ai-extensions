@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author yuluo
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
  * @author brianxiadong
- * @author guanxu
+ * @author xuguan
  * @since 1.0.0-M2
  */
 class DashScopeResponseFormatTests {

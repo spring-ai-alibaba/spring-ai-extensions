@@ -108,7 +108,7 @@ public class DashScopeImageModel implements ImageModel {
     /**
      * Conventions to use for generating observations.
      */
-    private ImageModelObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
+    private ImageModelObservationConvention observationConvention;
 
     public DashScopeImageModel(
             DashScopeImageApi dashScopeImageApi,

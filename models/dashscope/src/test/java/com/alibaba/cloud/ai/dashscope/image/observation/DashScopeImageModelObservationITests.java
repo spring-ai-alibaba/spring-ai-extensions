@@ -52,129 +52,115 @@ import static org.mockito.ArgumentMatchers.any;
  */
 class DashScopeImageModelObservationTests {
 
-  private final DashScopeImageModel imageModel;
+    private final DashScopeImageModel imageModel;
 
-  private final TestObservationRegistry observationRegistry;
+    private final TestObservationRegistry observationRegistry;
 
-  public DashScopeImageModelObservationTests() {
-    this.observationRegistry = TestObservationRegistry.create();
-    this.imageModel =
-        new DashScopeImageModel(
-            DashScopeImageApi.builder()
-                .apiKey("sk" + "-7a74bd9492b24f6f835a03e01affe294")
+    public DashScopeImageModelObservationTests() {
+        this.observationRegistry = TestObservationRegistry.create();
+        DashScopeImageApi api = DashScopeImageApi.builder()
+                .apiKey("TEST_API_KEY")
                 .restClientBuilder(RestClient.builder())
                 .baseUrl(DEFAULT_BASE_URL)
                 .responseErrorHandler(RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER)
-                .build(),
-            observationRegistry);
-    DefaultImageModelObservationConvention defaultImageModelObservationConvention =
-        new DefaultImageModelObservationConvention();
-    this.imageModel.setObservationConvention(defaultImageModelObservationConvention);
-  }
+                .build();
+        this.imageModel = DashScopeImageModel.builder()
+                .dashScopeApi(api)
+                .observationRegistry(observationRegistry)
+                .build();
+        DefaultImageModelObservationConvention defaultImageModelObservationConvention = new DefaultImageModelObservationConvention();
+        this.imageModel.setObservationConvention(defaultImageModelObservationConvention);
+    }
 
-  @Test
-  @Tag("observation")
-  @EnabledIfEnvironmentVariable(named = "AI_DASHSCOPE_API_KEY", matches = "sk.+")
-  void imageModelObservationTest() {
+    @Test
+    @Tag("observation")
+    @EnabledIfEnvironmentVariable(named = "AI_DASHSCOPE_API_KEY", matches = "sk.+")
+    void imageModelObservationTest() {
 
-    DashScopeImageOptions options =
-        DashScopeImageOptions.builder()
-            .model("wanx-v1")
-            .n(1)
-            .width(1024)
-            .height(1024)
-            .seed(42)
-            .build();
+        DashScopeImageOptions options = DashScopeImageOptions.builder()
+                .model("wanx-v1")
+                .n(1)
+                .width(1024)
+                .height(1024)
+                .seed(42)
+                .build();
 
-    var instructions =
-        """
-				A light cream colored mini golden doodle with a sign that contains the message "I'm on my way to BARCADE!".""";
+        var instructions = """
+                A light cream colored mini golden doodle with a sign that contains the message "I'm on my way to BARCADE!".""";
 
-    ImagePrompt imagePrompt = new ImagePrompt(instructions, options);
+        ImagePrompt imagePrompt = new ImagePrompt(instructions, options);
 
-    ImageResponse imageResponse = imageModel.call(imagePrompt);
+        ImageResponse imageResponse = imageModel.call(imagePrompt);
 
-    assertThat(imageResponse.getResults()).hasSize(1);
+        assertThat(imageResponse.getResults()).hasSize(1);
 
-    ImageResponseMetadata imageResponseMetadata = imageResponse.getMetadata();
-    assertThat(imageResponseMetadata.getCreated()).isPositive();
+        ImageResponseMetadata imageResponseMetadata = imageResponse.getMetadata();
+        assertThat(imageResponseMetadata.getCreated()).isPositive();
 
-    var generation = imageResponse.getResult();
-    Image image = generation.getOutput();
-    assertThat(image.getUrl()).isNotEmpty();
+        var generation = imageResponse.getResult();
+        Image image = generation.getOutput();
+        assertThat(image.getUrl()).isNotEmpty();
 
-    TestObservationRegistryAssert.assertThat(this.observationRegistry)
-        .doesNotHaveAnyRemainingCurrentObservation()
-        .hasObservationWithNameEqualTo(DefaultImageModelObservationConvention.DEFAULT_NAME)
-        .that()
-        .hasContextualNameEqualTo("image " + "wanx-v1")
-        .hasHighCardinalityKeyValue(
-            ImageModelObservationDocumentation.HighCardinalityKeyNames.REQUEST_IMAGE_SIZE
-                .asString(),
-            "1024x1024")
-        .hasLowCardinalityKeyValue(
-            ImageModelObservationDocumentation.LowCardinalityKeyNames.AI_PROVIDER.asString(),
-            AiProvider.DASHSCOPE.value())
-        .hasLowCardinalityKeyValue(
-            ImageModelObservationDocumentation.LowCardinalityKeyNames.AI_OPERATION_TYPE.asString(),
-            AiOperationType.IMAGE.value());
-  }
+        TestObservationRegistryAssert.assertThat(this.observationRegistry)
+                .doesNotHaveAnyRemainingCurrentObservation()
+                .hasObservationWithNameEqualTo(DefaultImageModelObservationConvention.DEFAULT_NAME)
+                .that()
+                .hasContextualNameEqualTo("image " + "wanx-v1")
+                .hasHighCardinalityKeyValue(ImageModelObservationDocumentation.HighCardinalityKeyNames.REQUEST_IMAGE_SIZE.asString(), "1024x1024")
+                .hasLowCardinalityKeyValue(ImageModelObservationDocumentation.LowCardinalityKeyNames.AI_PROVIDER.asString(), AiProvider.DASHSCOPE.value())
+                .hasLowCardinalityKeyValue(ImageModelObservationDocumentation.LowCardinalityKeyNames.AI_OPERATION_TYPE.asString(), AiOperationType.IMAGE.value());
+    }
 
-  @Test
-  void mockedDashScopeApiShouldStillTriggerObservability() {
+    @Test
+    void mockedDashScopeApiShouldStillTriggerObservability() {
 
-    TestObservationRegistry observationRegistry = TestObservationRegistry.create();
+        TestObservationRegistry observationRegistry = TestObservationRegistry.create();
 
-    DashScopeImageApi mockApi = Mockito.mock(DashScopeImageApi.class);
+        DashScopeImageApi mockApi = Mockito.mock(DashScopeImageApi.class);
 
-    // mock
-    var fakeResult = new Result("https://example-image.url/image.png", null, null);
+        // mock
+        var fakeResult = new Result("https://example-image.url/image.png", null, null);
 
-    var output =
-        Output.builder()
-            .taskId("00001")
-            .taskStatus("SUCCEEDED")
-            .results(List.of(fakeResult))
-            .code("code")
-            .message("msg")
-            .build();
+        var output = Output.builder()
+                .taskId("00001")
+                .taskStatus("SUCCEEDED")
+                .results(List.of(fakeResult))
+                .code("code")
+                .message("msg")
+                .build();
 
-    var response = new DashScopeImageApiSpec.ImageResponse("req-test", output, null);
+        var response = new DashScopeImageApiSpec.ImageResponse("req-test", output, null);
 
-    Mockito.when(mockApi.submitImageGenTask(any(DashScopeImageApiSpec.ImageRequest.class), any(InvokeMode.class)))
-        .thenReturn(
-            ResponseEntity.ok(new DashScopeImageApiSpec.ImageResponse(output.taskId(), output, null)));
+        Mockito.when(mockApi.submitImageGenTask(any(DashScopeImageApiSpec.ImageRequest.class), any(InvokeMode.class)))
+                .thenReturn(ResponseEntity.ok(new DashScopeImageApiSpec.ImageResponse(output.taskId(), output, null)));
 
-    Mockito.when(mockApi.getImageGenTaskResult(any(String.class), any(String.class)))
-        .thenReturn(ResponseEntity.ok(response));
+        Mockito.when(mockApi.getImageGenTaskResult(any(String.class), any(String.class)))
+                .thenReturn(ResponseEntity.ok(response));
 
-    DashScopeImageModel model =
-        DashScopeImageModel.builder()
-            .dashScopeApi(mockApi)
-            .observationRegistry(observationRegistry)
-            .build();
+        DashScopeImageModel model = DashScopeImageModel.builder()
+                .dashScopeApi(mockApi)
+                .observationRegistry(observationRegistry)
+                .build();
 
-    DashScopeImageOptions options =
-        DashScopeImageOptions.builder()
-            .model("wanx-v1")
-            .width(512)
-            .height(512)
-            .function("mock-fn")
-            .n(1)
-            .build();
+        DashScopeImageOptions options = DashScopeImageOptions.builder()
+                .model("wanx-v1")
+                .width(512)
+                .height(512)
+                .function("mock-fn")
+                .n(1)
+                .build();
 
-    ImagePrompt prompt = new ImagePrompt("A test image", options);
-    ImageResponse responseObj = model.call(prompt);
+        ImagePrompt prompt = new ImagePrompt("A test image", options);
+        ImageResponse responseObj = model.call(prompt);
 
-    assertThat(responseObj).isNotNull();
-    assertThat(responseObj.getResults()).hasSize(1);
-    assertThat(responseObj.getResult().getOutput().getUrl())
-        .isEqualTo("https://example-image.url/image.png");
+        assertThat(responseObj).isNotNull();
+        assertThat(responseObj.getResults()).hasSize(1);
+        assertThat(responseObj.getResult().getOutput().getUrl()).isEqualTo("https://example-image.url/image.png");
 
-    TestObservationRegistryAssert.assertThat(observationRegistry)
-        .hasObservationWithNameEqualTo("dashscope.image.model.operation")
-        .that()
-        .hasHighCardinalityKeyValue("gen_ai.dashscope.function", "mock-fn")
-        .hasLowCardinalityKeyValue("gen_ai.operation.name", "image");
-  }
+        TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasObservationWithNameEqualTo("dashscope.image.model.operation")
+                .that()
+                .hasHighCardinalityKeyValue("gen_ai.dashscope.function", "mock-fn")
+                .hasLowCardinalityKeyValue("gen_ai.operation.name", "image");
+    }
 }

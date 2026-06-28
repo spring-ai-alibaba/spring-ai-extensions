@@ -29,7 +29,7 @@ import org.springframework.ai.model.ModelOptionsUtils;
  *
  * @author yuluo
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
- * @author guanxu
+ * @author xuguan
  */
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

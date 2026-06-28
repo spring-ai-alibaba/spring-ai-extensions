@@ -26,7 +26,6 @@ import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 
@@ -79,8 +78,9 @@ public class DashScopeImageApi {
 	}
 
 	// format: off
-	public DashScopeImageApi(String baseUrl, ApiKey apiKey, @Nullable String imagesPath, @Nullable String queryTaskPath, String workSpaceId,
-                             RestClient.Builder restClientBuilder, ResponseErrorHandler responseErrorHandler) {
+    public DashScopeImageApi(String baseUrl, ApiKey apiKey, @Nullable String imagesPath, @Nullable String queryTaskPath,
+                             @Nullable String workSpaceId, RestClient.Builder restClientBuilder,
+                             ResponseErrorHandler responseErrorHandler) {
 
 		this.baseUrl = baseUrl;
 		this.apiKey = apiKey;
@@ -175,7 +175,7 @@ public class DashScopeImageApi {
 
         private @Nullable String queryTaskPath;
 
-        private String workSpaceId;
+        private @Nullable String workSpaceId;
 
         private RestClient.Builder restClientBuilder = RestClient.builder();
 
@@ -195,23 +195,18 @@ public class DashScopeImageApi {
 		}
 
 		public DashScopeImageApi.Builder baseUrl(String baseUrl) {
-
-			Assert.notNull(baseUrl, "Base URL cannot be null");
+            Assert.hasText(baseUrl, "Base URL cannot be empty");
 			this.baseUrl = baseUrl;
 			return this;
 		}
 
-		public DashScopeImageApi.Builder workSpaceId(String workSpaceId) {
-			// Workspace ID is optional, but if provided, it must not be null.
-			if (StringUtils.hasText(workSpaceId)) {
-				Assert.notNull(workSpaceId, "Workspace ID cannot be null");
-			}
+		public DashScopeImageApi.Builder workSpaceId(@Nullable String workSpaceId) {
 			this.workSpaceId = workSpaceId;
 			return this;
 		}
 
 		public DashScopeImageApi.Builder apiKey(String simpleApiKey) {
-			Assert.notNull(simpleApiKey, "Simple api key cannot be null");
+            Assert.hasText(simpleApiKey, "Simple api key cannot be empty");
 			this.apiKey = new SimpleApiKey(simpleApiKey);
 			return this;
 		}
@@ -239,8 +234,11 @@ public class DashScopeImageApi {
 		}
 
 		public DashScopeImageApi build() {
+            Assert.hasText(this.baseUrl, "Base URL cannot be empty");
+            Assert.notNull(this.apiKey, "Api key cannot be null");
+            Assert.notNull(this.restClientBuilder, "Rest client builder cannot be null");
+            Assert.notNull(this.responseErrorHandler, "Response error handler cannot be null");
 
-			Assert.notNull(apiKey, "API key cannot be null");
 
 			return new DashScopeImageApi(this.baseUrl, this.apiKey, this.imagesPath, this.queryTaskPath,
                     this.workSpaceId, this.restClientBuilder, this.responseErrorHandler);

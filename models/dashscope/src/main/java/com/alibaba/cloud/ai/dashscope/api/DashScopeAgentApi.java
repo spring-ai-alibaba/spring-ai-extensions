@@ -40,7 +40,7 @@ import java.util.Objects;
 
 /**
  * @author linkesheng.lks
- * @author guanxu
+ * @author xuguan
  * @since 1.0.0-M2
  */
 public class DashScopeAgentApi {

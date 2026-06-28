@@ -70,8 +70,12 @@ class DashScopeImageModelTests {
 		// Initialize mock objects and test instances
 		dashScopeImageApi = Mockito.mock(DashScopeImageApi.class);
 		defaultOptions = DashScopeImageOptions.builder().model(TEST_MODEL).n(1).build();
-		imageModel = new DashScopeImageModel(dashScopeImageApi, defaultOptions, RetryTemplate.builder().build(),
-				ObservationRegistry.NOOP);
+        imageModel = DashScopeImageModel.builder()
+                .dashScopeApi(dashScopeImageApi)
+                .defaultOptions(defaultOptions)
+                .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
+                .observationRegistry(ObservationRegistry.NOOP)
+                .build();
 	}
 
 	@Test
