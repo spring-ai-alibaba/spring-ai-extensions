@@ -65,7 +65,7 @@ public class JsonSchemaUtil {
 			return false;
 		}
 
-		if (originType != null && originType.isTextual() && "array".equals(originType.asText())) {
+		if (originType != null && originType.isString() && "array".equals(originType.asString())) {
 			JsonNode originItems = originNode.get("items");
 			JsonNode targetItems = targetNode.get("items");
 			if ((originItems == null) != (targetItems == null)) {
@@ -96,10 +96,10 @@ public class JsonSchemaUtil {
 					continue;
 				}
 				JsonNode typeNode = valueNode.get("type");
-				if (typeNode == null || !typeNode.isTextual()) {
+				if (typeNode == null || !typeNode.isString()) {
 					continue;
 				}
-				String type = typeNode.asText();
+				String type = typeNode.asString();
 
 				if (!targetProperties.has(key)) {
 					return false;
@@ -107,7 +107,7 @@ public class JsonSchemaUtil {
 
 				JsonNode targetValueNode = targetProperties.get(key);
 				JsonNode targetPropTypeNode = targetValueNode.get("type");
-				String targetPropType = targetPropTypeNode != null && targetPropTypeNode.isTextual() ? targetPropTypeNode.asText() : "";
+				String targetPropType = targetPropTypeNode != null && targetPropTypeNode.isString() ? targetPropTypeNode.asString() : "";
 
 				if (!type.equals(targetPropType)) {
 					return false;
@@ -158,8 +158,8 @@ public class JsonSchemaUtil {
 			// 使用 Set 确保字段顺序不影响比较结果
 			Set<String> originSet = new HashSet<>();
 			for (JsonNode node : originRequired) {
-				if (node.isTextual()) {
-					originSet.add(node.asText());
+				if (node.isString()) {
+					originSet.add(node.asString());
 				}
 				else {
 					// 非字符串类型视为不匹配
@@ -168,8 +168,8 @@ public class JsonSchemaUtil {
 			}
 			Set<String> targetSet = new HashSet<>();
 			for (JsonNode node : targetRequired) {
-				if (node.isTextual()) {
-					targetSet.add(node.asText());
+				if (node.isString()) {
+					targetSet.add(node.asString());
 				}
 				else {
 					// 非字符串类型视为不匹配

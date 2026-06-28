@@ -177,12 +177,12 @@ class ImageInfoDeserializer extends ValueDeserializer<ImageInfo> {
 	public TavilySearchService.Response.@Nullable ImageInfo deserialize(JsonParser p, DeserializationContext ctxt) {
 		JsonNode node = ctxt.readTree(p);
 
-		if (node.isTextual()) {
-			return new TavilySearchService.Response.ImageInfo(node.asText(), null);
+		if (node.isString()) {
+			return new TavilySearchService.Response.ImageInfo(node.asString(), null);
 		}
 		else if (node.isObject()) {
-			String url = node.has("url") ? node.get("url").asText() : null;
-			String description = node.has("description") ? node.get("description").asText() : null;
+			String url = node.has("url") ? node.get("url").asString() : null;
+			String description = node.has("description") ? node.get("description").asString() : null;
 			return new TavilySearchService.Response.ImageInfo(url, description);
 		}
 

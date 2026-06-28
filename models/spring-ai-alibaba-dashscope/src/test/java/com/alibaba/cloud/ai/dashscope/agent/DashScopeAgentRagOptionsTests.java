@@ -44,8 +44,8 @@ class DashScopeAgentRagOptionsTests {
         assertThat(options.getPipelineIds()).containsExactly("p1", "p2");
         assertThat(options.getFileIds()).containsExactly("f1");
         assertThat(options.getTags()).containsExactly("tag1");
-        assertThat(options.getMetadataFilter().get("author").asText()).isEqualTo("alice");
-        assertThat(options.getStructuredFilter().get("category").asText()).isEqualTo("tech");
+        assertThat(options.getMetadataFilter().get("author").asString()).isEqualTo("alice");
+        assertThat(options.getStructuredFilter().get("category").asString()).isEqualTo("tech");
         assertThat(options.getSessionFileIds()).containsExactly("sf1");
     }
 
@@ -65,8 +65,8 @@ class DashScopeAgentRagOptionsTests {
         assertThat(options.getPipelineIds()).containsExactly("p1");
         assertThat(options.getFileIds()).containsExactly("f1");
         assertThat(options.getTags()).containsExactly("t1");
-        assertThat(options.getMetadataFilter().get("k").asText()).isEqualTo("v");
-        assertThat(options.getStructuredFilter().get("s").asText()).isEqualTo("x");
+        assertThat(options.getMetadataFilter().get("k").asString()).isEqualTo("v");
+        assertThat(options.getStructuredFilter().get("s").asString()).isEqualTo("x");
         assertThat(options.getSessionFileIds()).containsExactly("sf1");
     }
 

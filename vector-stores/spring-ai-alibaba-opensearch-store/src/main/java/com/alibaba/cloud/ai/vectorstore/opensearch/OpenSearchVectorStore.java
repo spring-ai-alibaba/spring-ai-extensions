@@ -378,7 +378,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 		private static String extractContent(JsonNode jsonDocument) {
 			if (jsonDocument.has(FIELDS_KEY)) {
 				JsonNode fields = jsonDocument.get(FIELDS_KEY);
-				String content = fields.path(CONTENT_FIELD_NAME).asText();
+				String content = fields.path(CONTENT_FIELD_NAME).asString();
 				if (content == null || content.isEmpty()) {
 					return EMPTY_TEXT;
 				}
@@ -394,7 +394,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 		 * @return The ID of the document, or empty string if not found or empty.
 		 */
 		private static String extractId(JsonNode jsonDocument) {
-			String id = jsonDocument.path(ID_FIELD_NAME).asText();
+			String id = jsonDocument.path(ID_FIELD_NAME).asString();
 			if (id == null || id.isEmpty()) {
 				return EMPTY_TEXT;
 			}
@@ -420,7 +420,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 		private static Map<String, Object> extractMetadata(JsonNode jsonDocument) {
 			if (jsonDocument.has(FIELDS_KEY)) {
 				JsonNode fields = jsonDocument.get(FIELDS_KEY);
-				String metadataStr = fields.path(METADATA_FIELD_NAME).asText();
+				String metadataStr = fields.path(METADATA_FIELD_NAME).asString();
 				try {
 					return JsonMapper.shared().readValue(metadataStr, HashMap.class);
 				}

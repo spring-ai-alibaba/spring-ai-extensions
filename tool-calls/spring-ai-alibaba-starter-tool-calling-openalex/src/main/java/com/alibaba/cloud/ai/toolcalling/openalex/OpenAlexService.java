@@ -176,19 +176,19 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 	}
 
 	private OpenAlexResult parseResult(JsonNode node, String entityType) {
-		String id = node.has("id") ? node.get("id").asText() : "";
-		String displayName = node.has("display_name") ? node.get("display_name").asText() : "";
-		String title = node.has("title") ? node.get("title").asText() : displayName;
+		String id = node.has("id") ? node.get("id").asString() : "";
+		String displayName = node.has("display_name") ? node.get("display_name").asString() : "";
+		String title = node.has("title") ? node.get("title").asString() : displayName;
 
 		// Extract description/snippet based on entity type
 		String description = "";
 		if (entityType.equals("works") || entityType.equals("work")) {
 			// For works, try to get abstract or use host venue info
 			if (node.has("host_venue") && node.get("host_venue").has("display_name")) {
-				description = "发表于: " + node.get("host_venue").get("display_name").asText();
+				description = "发表于: " + node.get("host_venue").get("display_name").asString();
 			}
 			if (node.has("publication_year")) {
-				description += " (" + node.get("publication_year").asText() + ")";
+				description += " (" + node.get("publication_year").asString() + ")";
 			}
 		}
 		else if (entityType.equals("authors") || entityType.equals("author")) {
@@ -198,17 +198,17 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 				if (institutions.isArray() && institutions.size() > 0) {
 					JsonNode firstInst = institutions.get(0);
 					if (firstInst.has("display_name")) {
-						description = "隶属于: " + firstInst.get("display_name").asText();
+						description = "隶属于: " + firstInst.get("display_name").asString();
 					}
 				}
 			}
 			if (node.has("works_count")) {
-				description += " | 作品数: " + node.get("works_count").asText();
+				description += " | 作品数: " + node.get("works_count").asString();
 			}
 		}
 
 		// Get URL
-		String url = node.has("id") ? node.get("id").asText() : "";
+		String url = node.has("id") ? node.get("id").asString() : "";
 
 		// Get citation count - safely handle missing values
 		Integer citationCount = null;
@@ -225,7 +225,7 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 		// Get DOI for works
 		String doi = null;
 		if (node.has("doi") && !node.get("doi").isNull()) {
-			doi = node.get("doi").asText();
+			doi = node.get("doi").asString();
 		}
 
 		return new OpenAlexResult(id, title, displayName, description, url, doi, citationCount, year, entityType);

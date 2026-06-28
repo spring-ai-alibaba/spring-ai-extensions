@@ -78,7 +78,7 @@ public class SinaNewsService implements Function<SinaNewsService.Request, SinaNe
 			if (!itemNode.has("info")) {
 				continue;
 			}
-			String title = itemNode.get("info").get("title").asText();
+			String title = itemNode.get("info").get("title").asString();
 			hotEvents.add(new HotEvent(title));
 		}
 

@@ -87,8 +87,8 @@ public class MessageDeserializer extends ValueDeserializer<Message> {
 		logger.debug("Deserializing message: {}", node);
 
 		// If node is plain text, create a UserMessage by default
-		if (node.isTextual()) {
-			return new UserMessage(node.asText());
+		if (node.isString()) {
+			return new UserMessage(node.asString());
 		}
 
 		// Extract message type
@@ -127,7 +127,7 @@ public class MessageDeserializer extends ValueDeserializer<Message> {
 			.orElseGet(() -> Optional.ofNullable(node.get("type"))
 				.map(JsonNode::asText)
 				.orElseGet(
-						() -> Optional.ofNullable(node.get("role")).map(n -> n.asText().toUpperCase()).orElse(null)));
+						() -> Optional.ofNullable(node.get("role")).map(n -> n.asString().toUpperCase()).orElse(null)));
 	}
 
 	/**

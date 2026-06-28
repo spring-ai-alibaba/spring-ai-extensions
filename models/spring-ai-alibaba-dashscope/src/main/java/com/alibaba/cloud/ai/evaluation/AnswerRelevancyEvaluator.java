@@ -94,7 +94,7 @@ public class AnswerRelevancyEvaluator extends LaajEvaluator {
 		JsonNode evaluationResponse = getObjectMapper().readTree(llmEvaluationResponse);
 
 		float score = (float) evaluationResponse.get("score").asDouble();
-		String feedback = evaluationResponse.get("feedback").asText();
+		String feedback = evaluationResponse.get("feedback").asString();
 		boolean passing = score > 0;
 		return new EvaluationResponse(passing, score, feedback, Collections.emptyMap());
 	}

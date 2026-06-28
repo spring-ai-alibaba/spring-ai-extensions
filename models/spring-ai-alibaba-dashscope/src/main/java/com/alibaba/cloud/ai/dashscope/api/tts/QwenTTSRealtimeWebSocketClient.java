@@ -226,7 +226,7 @@ public class QwenTTSRealtimeWebSocketClient extends WebSocketListener {
 				return;
 			}
 
-			String type = node.get(QwenTTSRealtimeConstants.PROTOCOL_TYPE).asText();
+			String type = node.get(QwenTTSRealtimeConstants.PROTOCOL_TYPE).asString();
 			switch (type) {
 				case QwenTTSRealtimeConstants.PROTOCOL_RESPONSE_TYPE_ERROR:
 					handleError(node);
@@ -238,7 +238,7 @@ public class QwenTTSRealtimeWebSocketClient extends WebSocketListener {
 						JsonNode session = node.get(QwenTTSRealtimeConstants.PROTOCOL_SESSION);
 						if (session.has(QwenTTSRealtimeConstants.PROTOCOL_SESSION_ID)) {
 							log.debug("Session created: {}",
-									session.get(QwenTTSRealtimeConstants.PROTOCOL_SESSION_ID).asText());
+									session.get(QwenTTSRealtimeConstants.PROTOCOL_SESSION_ID).asString());
 						}
 					}
 					break;
@@ -269,7 +269,7 @@ public class QwenTTSRealtimeWebSocketClient extends WebSocketListener {
 
 				case QwenTTSRealtimeConstants.PROTOCOL_RESPONSE_TYPE_AUDIO_DELTA:
 					if (node.has(QwenTTSRealtimeConstants.PROTOCOL_DELTA)) {
-						String delta = node.get(QwenTTSRealtimeConstants.PROTOCOL_DELTA).asText();
+						String delta = node.get(QwenTTSRealtimeConstants.PROTOCOL_DELTA).asString();
 						emitAudioFromDelta(delta);
 					}
 					break;
@@ -315,14 +315,14 @@ public class QwenTTSRealtimeWebSocketClient extends WebSocketListener {
 			JsonNode err = node.get(QwenTTSRealtimeConstants.PROTOCOL_ERROR);
 			if (err.isObject()) {
 				if (err.has(QwenTTSRealtimeConstants.PROTOCOL_ERROR_CODE)) {
-					code = err.get(QwenTTSRealtimeConstants.PROTOCOL_ERROR_CODE).asText();
+					code = err.get(QwenTTSRealtimeConstants.PROTOCOL_ERROR_CODE).asString();
 				}
 				if (err.has(QwenTTSRealtimeConstants.PROTOCOL_ERROR_MESSAGE)) {
-					message = err.get(QwenTTSRealtimeConstants.PROTOCOL_ERROR_MESSAGE).asText();
+					message = err.get(QwenTTSRealtimeConstants.PROTOCOL_ERROR_MESSAGE).asString();
 				}
 			}
 			else {
-				message = err.asText();
+				message = err.asString();
 			}
 		}
 		log.error("Server error: code={}, message={}", code, message);

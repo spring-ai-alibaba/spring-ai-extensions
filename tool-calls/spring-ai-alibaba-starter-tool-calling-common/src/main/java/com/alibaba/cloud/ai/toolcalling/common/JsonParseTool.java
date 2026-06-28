@@ -128,7 +128,7 @@ public class JsonParseTool {
 	public String getFieldValueAsText(String json, String fieldName) {
 		JsonNode rootNode = objectMapper.readTree(json);
 		JsonNode fieldNode = rootNode.get(fieldName);
-		return fieldNode.asText();
+		return fieldNode.asString();
 	}
 
 	/**

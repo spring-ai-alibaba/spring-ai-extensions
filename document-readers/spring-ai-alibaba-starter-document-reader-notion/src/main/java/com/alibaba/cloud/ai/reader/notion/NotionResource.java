@@ -147,7 +147,7 @@ public class NotionResource implements Resource {
 				JsonNode titleArray = titleProp.get("title");
 				if (titleArray != null && titleArray.isArray()) {
 					for (JsonNode titleNode : titleArray) {
-						content.append(titleNode.get("plain_text").asText());
+						content.append(titleNode.get("plain_text").asString());
 					}
 					content.append("\n\n");
 				}
@@ -173,13 +173,13 @@ public class NotionResource implements Resource {
 			// 5. Extract text content
 			if (blocks != null && blocks.isArray()) {
 				for (JsonNode block : blocks) {
-					String type = block.get("type").asText();
+					String type = block.get("type").asString();
 					if (block.has(type)) {
 						JsonNode typeObj = block.get(type);
 						if (typeObj.has("rich_text")) {
 							JsonNode richText = typeObj.get("rich_text");
 							for (JsonNode textNode : richText) {
-								content.append(textNode.get("plain_text").asText());
+								content.append(textNode.get("plain_text").asString());
 							}
 							content.append("\n");
 						}
@@ -225,7 +225,7 @@ public class NotionResource implements Resource {
 					for (Iterator<String> it = properties.propertyNames().iterator(); it.hasNext();) {
 						String propertyName = it.next();
 						JsonNode property = properties.get(propertyName);
-						String type = property.get("type").asText();
+						String type = property.get("type").asString();
 
 						if (property.has(type)) {
 							JsonNode value = property.get(type);
@@ -234,7 +234,7 @@ public class NotionResource implements Resource {
 									if (item.has("plain_text")) {
 										content.append(propertyName)
 											.append(": ")
-											.append(item.get("plain_text").asText())
+											.append(item.get("plain_text").asString())
 											.append("\n");
 									}
 								}

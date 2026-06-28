@@ -80,7 +80,7 @@ public class ToutiaoNewsSearchHotEventsService
 			if (!itemNode.has("Title")) {
 				continue;
 			}
-			String title = itemNode.get("Title").asText();
+			String title = itemNode.get("Title").asString();
 			hotEvents.add(new HotEvent(title));
 		}
 

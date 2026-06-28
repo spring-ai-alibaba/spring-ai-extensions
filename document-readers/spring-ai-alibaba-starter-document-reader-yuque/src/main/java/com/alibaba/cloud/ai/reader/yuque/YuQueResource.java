@@ -94,11 +94,11 @@ public class YuQueResource implements Resource {
 				throw new RuntimeException("Invalid response format: 'data' is not an object");
 			}
 
-			if (!Objects.equals(dataObject.get("type").asText(), SUPPORT_TYPE)) {
+			if (!Objects.equals(dataObject.get("type").asString(), SUPPORT_TYPE)) {
 				throw new RuntimeException("Unsupported resource type, only support " + SUPPORT_TYPE);
 			}
 
-			inputStream = new ByteArrayInputStream(dataObject.get("body_html").asText().getBytes());
+			inputStream = new ByteArrayInputStream(dataObject.get("body_html").asString().getBytes());
 			uri = URI.create(resourcePath);
 
 		}

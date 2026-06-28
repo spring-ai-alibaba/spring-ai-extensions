@@ -152,8 +152,8 @@ public class BilibiliDocumentReader implements DocumentReader {
 
 				JsonNode videoData = parseJson(Objects.requireNonNull(videoInfoResponse, "video info response must not be null"))
 					.path("data");
-			String title = videoData.path("title").asText();
-			String description = videoData.path("desc").asText();
+			String title = videoData.path("title").asString();
+			String description = videoData.path("desc").asString();
 
 			// Add video info document
 			Map<String, Object> infoMetadata = new java.util.HashMap<>();
@@ -240,7 +240,7 @@ public class BilibiliDocumentReader implements DocumentReader {
 		JsonNode subtitleList = playerData.path("subtitle").path("subtitles");
 
 		if (subtitleList.isArray() && subtitleList.size() > 0) {
-			String subtitleUrl = subtitleList.get(0).path("subtitle_url").asText();
+			String subtitleUrl = subtitleList.get(0).path("subtitle_url").asString();
 
 			// Add https: prefix if missing
 			if (subtitleUrl.startsWith("//")) {
@@ -253,7 +253,7 @@ public class BilibiliDocumentReader implements DocumentReader {
 			JsonNode subtitleJson = parseJson(
 					Objects.requireNonNull(subtitleResponse, "subtitle response must not be null"));
 			StringBuilder rawTranscript = new StringBuilder();
-			subtitleJson.path("body").forEach(node -> rawTranscript.append(node.path("content").asText()).append(" "));
+			subtitleJson.path("body").forEach(node -> rawTranscript.append(node.path("content").asString()).append(" "));
 
 			return rawTranscript.toString().trim();
 		}
@@ -269,8 +269,8 @@ public class BilibiliDocumentReader implements DocumentReader {
 		JsonNode navData = parseJson(Objects.requireNonNull(navResponse, "nav response must not be null"))
 			.path("data")
 			.path("wbi_img");
-		String imgUrl = navData.path("img_url").asText();
-		String subUrl = navData.path("sub_url").asText();
+		String imgUrl = navData.path("img_url").asString();
+		String subUrl = navData.path("sub_url").asString();
 
 		// Extract keys from URLs
 		String imgKey = imgUrl.substring(imgUrl.lastIndexOf('/') + 1).replace(".png", "");

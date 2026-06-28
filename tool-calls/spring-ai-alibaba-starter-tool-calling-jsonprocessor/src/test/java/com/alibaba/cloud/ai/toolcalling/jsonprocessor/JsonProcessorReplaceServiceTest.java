@@ -55,9 +55,9 @@ public class JsonProcessorReplaceServiceTest {
 
 		JsonNode result = (JsonNode) jsonProcessorReplaceService.apply(request);
 
-		Assertions.assertEquals("David", result.get("name").asText());
+		Assertions.assertEquals("David", result.get("name").asString());
 		Assertions.assertEquals(30, result.get("age").asInt());
-		Assertions.assertEquals("Beijing", result.get("city").asText());
+		Assertions.assertEquals("Beijing", result.get("city").asString());
 	}
 
 	@Test
@@ -68,9 +68,9 @@ public class JsonProcessorReplaceServiceTest {
 
 		JsonNode result = (JsonNode) jsonProcessorReplaceService.apply(request);
 
-		Assertions.assertEquals("John", result.get("name").asText());
+		Assertions.assertEquals("John", result.get("name").asString());
 		Assertions.assertEquals(40, result.get("age").asInt());
-		Assertions.assertEquals("Beijing", result.get("city").asText());
+		Assertions.assertEquals("Beijing", result.get("city").asString());
 	}
 
 	@Test
@@ -81,9 +81,9 @@ public class JsonProcessorReplaceServiceTest {
 
 		JsonNode result = (JsonNode) jsonProcessorReplaceService.apply(request);
 
-		Assertions.assertEquals("John", result.get("name").asText());
+		Assertions.assertEquals("John", result.get("name").asString());
 		Assertions.assertEquals(30, result.get("age").asInt());
-		Assertions.assertEquals("Beijing", result.get("city").asText());
+		Assertions.assertEquals("Beijing", result.get("city").asString());
 		Assertions.assertTrue(result.get("isActive").asBoolean());
 	}
 
@@ -98,8 +98,8 @@ public class JsonProcessorReplaceServiceTest {
 
 		JsonNode result = (JsonNode) jsonProcessorReplaceService.apply(request);
 
-		Assertions.assertEquals("John", result.get("name").asText());
-		Assertions.assertEquals("Chang'an Street", result.get("address").get("street").asText());
+		Assertions.assertEquals("John", result.get("name").asString());
+		Assertions.assertEquals("Chang'an Street", result.get("address").get("street").asString());
 	}
 
 	@Test

@@ -98,8 +98,8 @@ public class GoogleTranslateService
 	}
 
 	private void translateFailed(JsonNode rootNode) {
-		String errorMessage = rootNode.path("error").path("message").asText();
-		String code = rootNode.path("error").path("code").asText();
+		String errorMessage = rootNode.path("error").path("message").asString();
+		String code = rootNode.path("error").path("code").asString();
 		log.info("Translate Text Failed. message:{} code:{}", errorMessage, code);
 	}
 

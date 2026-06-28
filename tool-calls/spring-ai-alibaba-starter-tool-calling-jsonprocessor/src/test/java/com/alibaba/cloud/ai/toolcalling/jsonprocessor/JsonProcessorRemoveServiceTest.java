@@ -53,7 +53,7 @@ public class JsonProcessorRemoveServiceTest {
 		JsonNode result = (JsonNode) jsonProcessorRemoveService.apply(request);
 
 		// Verify that the returned value is the removed field value
-		Assertions.assertEquals("John", result.asText());
+		Assertions.assertEquals("John", result.asString());
 
 		// Verify that the field has been removed from the JSON
 		ObjectNode jsonObject = (ObjectNode) jsonMapper.readTree(jsonContent);
@@ -139,7 +139,7 @@ public class JsonProcessorRemoveServiceTest {
 		actualJson.remove("city");
 
 		// Verify the JSON structure
-		Assertions.assertEquals(expectedJson.get("name").asText(), actualJson.get("name").asText());
+		Assertions.assertEquals(expectedJson.get("name").asString(), actualJson.get("name").asString());
 		Assertions.assertEquals(expectedJson.get("age").asInt(), actualJson.get("age").asInt());
 		Assertions.assertEquals(expectedJson.get("isActive").asBoolean(), actualJson.get("isActive").asBoolean());
 		Assertions.assertFalse(actualJson.has("city"));

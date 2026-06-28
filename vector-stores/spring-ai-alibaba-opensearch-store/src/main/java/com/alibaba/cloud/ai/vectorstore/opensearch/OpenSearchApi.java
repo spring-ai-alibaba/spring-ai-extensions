@@ -238,8 +238,8 @@ public class OpenSearchApi {
 		 * @param jsonObject The JSONObject representing the response body.
 		 */
 		public ResponseBody(JsonNode jsonObject) {
-			this(jsonObject.path(CODE_KEY).asInt(), jsonObject.path(STATUS_KEY).asText(),
-					jsonObject.path(ERROR_CODE_KEY).asText(), jsonObject.path(ERROR_MESSAGE_KEY).asText());
+			this(jsonObject.path(CODE_KEY).asInt(), jsonObject.path(STATUS_KEY).asString(),
+					jsonObject.path(ERROR_CODE_KEY).asString(), jsonObject.path(ERROR_MESSAGE_KEY).asString());
 		}
 
 		private static JsonNode parseJson(String jsonString) {
@@ -301,7 +301,7 @@ public class OpenSearchApi {
 		}
 
 		public SearchResponseBody(JsonNode jsonObject) {
-			this(jsonObject.path(ERROR_CODE_KEY).asText(), jsonObject.path(ERROR_MESSAGE_KEY).asText(),
+			this(jsonObject.path(ERROR_CODE_KEY).asString(), jsonObject.path(ERROR_MESSAGE_KEY).asString(),
 					jsonObject.path(TOTAL_COUNT_KEY).asInt(), (ArrayNode) jsonObject.path(RESULT_KEY));
 		}
 

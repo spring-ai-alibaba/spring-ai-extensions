@@ -83,12 +83,12 @@ public class NotionDocumentReader implements DocumentReader {
 		// Add metadata from Notion API
 		if (pageMetadata != null) {
 			// Creation and update times
-			String createdTime = pageMetadata.get("created_time").asText();
+			String createdTime = pageMetadata.get("created_time").asString();
 			if (StringUtils.hasText(createdTime)) {
 				metadata.put("createdTime", Instant.parse(createdTime).toEpochMilli());
 			}
 
-			String lastEditedTime = pageMetadata.get("last_edited_time").asText();
+			String lastEditedTime = pageMetadata.get("last_edited_time").asString();
 			if (StringUtils.hasText(lastEditedTime)) {
 				metadata.put("lastEditedTime", Instant.parse(lastEditedTime).toEpochMilli());
 			}
@@ -96,8 +96,8 @@ public class NotionDocumentReader implements DocumentReader {
 			// Creator and last editor
 			JsonNode createdBy = pageMetadata.get("created_by");
 			if (createdBy != null) {
-				String creatorName = createdBy.get("name").asText();
-				String creatorId = createdBy.get("id").asText();
+				String creatorName = createdBy.get("name").asString();
+				String creatorId = createdBy.get("id").asString();
 				if (StringUtils.hasText(creatorName)) {
 					metadata.put("createdBy", creatorName);
 				}
@@ -108,8 +108,8 @@ public class NotionDocumentReader implements DocumentReader {
 
 			JsonNode lastEditedBy = pageMetadata.get("last_edited_by");
 			if (lastEditedBy != null) {
-				String editorName = lastEditedBy.get("name").asText();
-				String editorId = lastEditedBy.get("id").asText();
+				String editorName = lastEditedBy.get("name").asString();
+				String editorId = lastEditedBy.get("id").asString();
 				if (StringUtils.hasText(editorName)) {
 					metadata.put("lastEditedBy", editorName);
 				}
@@ -119,7 +119,7 @@ public class NotionDocumentReader implements DocumentReader {
 			}
 
 			// URL
-			String url = pageMetadata.get("url").asText();
+			String url = pageMetadata.get("url").asString();
 			if (StringUtils.hasText(url)) {
 				metadata.put("url", url);
 			}
@@ -127,10 +127,10 @@ public class NotionDocumentReader implements DocumentReader {
 			// Parent information
 			JsonNode parent = pageMetadata.get("parent");
 			if (parent != null) {
-				String parentType = parent.get("type").asText();
+				String parentType = parent.get("type").asString();
 				if (StringUtils.hasText(parentType)) {
 					metadata.put("parentType", parentType);
-					String parentId = parent.get(parentType + "_id").asText();
+					String parentId = parent.get(parentType + "_id").asString();
 					if (StringUtils.hasText(parentId)) {
 						metadata.put("parentId", parentId);
 					}
@@ -140,8 +140,8 @@ public class NotionDocumentReader implements DocumentReader {
 			// Icon
 			JsonNode icon = pageMetadata.get("icon");
 			if (icon != null) {
-				String iconType = icon.get("type").asText();
-				String iconUrl = icon.get("url").asText();
+				String iconType = icon.get("type").asString();
+				String iconUrl = icon.get("url").asString();
 				if (StringUtils.hasText(iconType)) {
 					metadata.put("iconType", iconType);
 				}
@@ -153,8 +153,8 @@ public class NotionDocumentReader implements DocumentReader {
 			// Cover
 			JsonNode cover = pageMetadata.get("cover");
 			if (cover != null) {
-				String coverType = cover.get("type").asText();
-				String coverUrl = cover.get("url").asText();
+				String coverType = cover.get("type").asString();
+				String coverUrl = cover.get("url").asString();
 				if (StringUtils.hasText(coverType)) {
 					metadata.put("coverType", coverType);
 				}

@@ -78,13 +78,13 @@ public class ChatGptDataDocumentReader implements DocumentReader {
 			return "";
 		}
 
-		String role = messageNode.get("role").asText();
+		String role = messageNode.get("role").asString();
 
 		JsonNode content = messageNode.get("content");
 		JsonNode parts = content.get("parts");
-		String text = parts.get(0).asText();
+		String text = parts.get(0).asString();
 
-		String createTimeStr = messageNode.get("create_time").asText();
+		String createTimeStr = messageNode.get("create_time").asString();
 		LocalDateTime dateTime = LocalDateTime.parse(createTimeStr, DateTimeFormatter.ISO_DATE_TIME);
 		String formattedDate = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
@@ -103,7 +103,7 @@ public class ChatGptDataDocumentReader implements DocumentReader {
 			// Process each conversation
 			return IntStream.range(0, limit).mapToObj(i -> {
 				JsonNode conversation = data.get(i);
-				String title = conversation.get("title").asText();
+				String title = conversation.get("title").asString();
 				JsonNode mapping = conversation.get("mapping");
 
 				// Build the conversation text by processing each message
@@ -124,8 +124,8 @@ public class ChatGptDataDocumentReader implements DocumentReader {
 				Map<String, Object> metadata = new HashMap<>();
 				metadata.put("source", logFilePath);
 				metadata.put("title", title);
-				metadata.put("id", conversation.get("id").asText());
-				metadata.put("create_time", conversation.get("create_time").asText());
+				metadata.put("id", conversation.get("id").asString());
+				metadata.put("create_time", conversation.get("create_time").asString());
 
 				// Return new Document object
 				return new Document(conversationText.toString(), metadata);

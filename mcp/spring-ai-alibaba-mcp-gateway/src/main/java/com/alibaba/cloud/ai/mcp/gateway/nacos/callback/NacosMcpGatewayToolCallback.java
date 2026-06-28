@@ -230,8 +230,8 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
 
             JsonNode requestTemplate = toolConfig.path("requestTemplate");
             JsonNode argsPosition = toolConfig.path("argsPosition");
-            String url = requestTemplate.path("url").asText();
-            String method = requestTemplate.path("method").asText();
+            String url = requestTemplate.path("url").asString();
+            String method = requestTemplate.path("method").asString();
             logger.info("[processToolRequest] requestTemplate: {} url: {} method: {}", requestTemplate, url, method);
 
             // Check URL and method
@@ -391,8 +391,8 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
         params.put("args", args);
         params.put("extendedData", responseBody);
         if (!responseTemplate.isEmpty()) {
-            if (responseTemplate.has("body") && !responseTemplate.path("body").asText().isEmpty()) {
-                String bodyTemplate = responseTemplate.path("body").asText();
+            if (responseTemplate.has("body") && !responseTemplate.path("body").asString().isEmpty()) {
+                String bodyTemplate = responseTemplate.path("body").asString();
                 // Hand over to ResponseTemplateParser for unified processing
                 result = processTemplateString(bodyTemplate, params);
                 logger.info("[processResponse] ResponseTemplateParser result: {}", result);
@@ -542,10 +542,10 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
             }
 
             // Return appropriate value based on node type
-            if (currentNode.isTextual()) {
-                return currentNode.asText();
+            if (currentNode.isString()) {
+                return currentNode.asString();
             } else if (currentNode.isNumber()) {
-                return currentNode.asText();
+                return currentNode.asString();
             } else if (currentNode.isBoolean()) {
                 return String.valueOf(currentNode.asBoolean());
             } else {

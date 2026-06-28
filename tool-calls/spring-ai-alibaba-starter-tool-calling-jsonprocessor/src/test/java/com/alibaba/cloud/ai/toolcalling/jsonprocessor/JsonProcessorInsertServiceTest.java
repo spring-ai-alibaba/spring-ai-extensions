@@ -55,9 +55,9 @@ public class JsonProcessorInsertServiceTest {
 
 		JsonNode result = (JsonNode) jsonProcessorInsertService.apply(request);
 
-		Assertions.assertEquals("John", result.get("name").asText());
+		Assertions.assertEquals("John", result.get("name").asString());
 		Assertions.assertEquals(30, result.get("age").asInt());
-		Assertions.assertEquals("Beijing", result.get("city").asText());
+		Assertions.assertEquals("Beijing", result.get("city").asString());
 	}
 
 	@Test
@@ -68,7 +68,7 @@ public class JsonProcessorInsertServiceTest {
 
 		JsonNode result = (JsonNode) jsonProcessorInsertService.apply(request);
 
-		Assertions.assertEquals("John", result.get("name").asText());
+		Assertions.assertEquals("John", result.get("name").asString());
 		Assertions.assertEquals(30, result.get("age").asInt());
 		Assertions.assertTrue(result.get("isActive").asBoolean());
 	}
@@ -84,10 +84,10 @@ public class JsonProcessorInsertServiceTest {
 
 		JsonNode result = (JsonNode) jsonProcessorInsertService.apply(request);
 
-		Assertions.assertEquals("John", result.get("name").asText());
+		Assertions.assertEquals("John", result.get("name").asString());
 		Assertions.assertEquals(30, result.get("age").asInt());
-		Assertions.assertEquals("Chang'an Street", result.get("address").get("street").asText());
-		Assertions.assertEquals("100000", result.get("address").get("zipCode").asText());
+		Assertions.assertEquals("Chang'an Street", result.get("address").get("street").asString());
+		Assertions.assertEquals("100000", result.get("address").get("zipCode").asString());
 	}
 
 	@Test
@@ -102,12 +102,12 @@ public class JsonProcessorInsertServiceTest {
 
 		JsonNode result = (JsonNode) jsonProcessorInsertService.apply(request);
 
-		Assertions.assertEquals("John", result.get("name").asText());
+		Assertions.assertEquals("John", result.get("name").asString());
 		Assertions.assertEquals(30, result.get("age").asInt());
 		Assertions.assertEquals(3, result.get("hobbies").size());
-		Assertions.assertEquals("Reading", result.get("hobbies").get(0).asText());
-		Assertions.assertEquals("Traveling", result.get("hobbies").get(1).asText());
-		Assertions.assertEquals("Programming", result.get("hobbies").get(2).asText());
+		Assertions.assertEquals("Reading", result.get("hobbies").get(0).asString());
+		Assertions.assertEquals("Traveling", result.get("hobbies").get(1).asString());
+		Assertions.assertEquals("Programming", result.get("hobbies").get(2).asString());
 	}
 
 	@Test
@@ -139,7 +139,7 @@ public class JsonProcessorInsertServiceTest {
 
 		JsonNode result = (JsonNode) jsonProcessorInsertService.apply(request);
 
-		Assertions.assertEquals("David", result.get("name").asText());
+		Assertions.assertEquals("David", result.get("name").asString());
 		Assertions.assertEquals(30, result.get("age").asInt());
 	}
 
