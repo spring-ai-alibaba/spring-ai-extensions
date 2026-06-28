@@ -18,13 +18,13 @@ package com.alibaba.cloud.ai.dashscope.api;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeImageApiConstants;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.InvokeMode;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
@@ -78,7 +78,7 @@ public class DashScopeImageApi {
 	}
 
 	// format: off
-    public DashScopeImageApi(String baseUrl, ApiKey apiKey, @Nullable String imagesPath, @Nullable String queryTaskPath,
+	public DashScopeImageApi(String baseUrl, ApiKey apiKey, @Nullable String imagesPath, @Nullable String queryTaskPath,
                              @Nullable String workSpaceId, RestClient.Builder restClientBuilder,
                              ResponseErrorHandler responseErrorHandler) {
 
@@ -101,6 +101,7 @@ public class DashScopeImageApi {
 
 	public ResponseEntity<DashScopeImageApiSpec.ImageResponse> submitImageGenTask(DashScopeImageApiSpec.ImageRequest request, InvokeMode invokeMode) {
 		final String model = request.model();
+        Assert.hasText(model, "Model must not be empty");
 
         String imagePath = this.resolveImagePath(model, invokeMode);
         Assert.hasText(imagePath, "Image path must not be empty");
@@ -143,7 +144,7 @@ public class DashScopeImageApi {
 	 * Resolves query task API path from model name.
      * Use the user's explicitly set path if available.
 	 */
-	private @Nullable String resolveQueryTaskPath(String model) {
+	private String resolveQueryTaskPath(String model) {
         return this.queryTaskPath != null
                 ? this.queryTaskPath
                 : DashScopeImageApiConstants.getQueryTaskUrl(model);
@@ -169,7 +170,7 @@ public class DashScopeImageApi {
 
         private String baseUrl = DEFAULT_BASE_URL;
 
-        private ApiKey apiKey;
+        private @Nullable ApiKey apiKey;
 
         private @Nullable String imagesPath;
 
@@ -195,7 +196,7 @@ public class DashScopeImageApi {
 		}
 
 		public DashScopeImageApi.Builder baseUrl(String baseUrl) {
-            Assert.hasText(baseUrl, "Base URL cannot be empty");
+			Assert.hasText(baseUrl, "Base URL cannot be empty");
 			this.baseUrl = baseUrl;
 			return this;
 		}
@@ -206,7 +207,7 @@ public class DashScopeImageApi {
 		}
 
 		public DashScopeImageApi.Builder apiKey(String simpleApiKey) {
-            Assert.hasText(simpleApiKey, "Simple api key cannot be empty");
+			Assert.hasText(simpleApiKey, "Simple api key cannot be empty");
 			this.apiKey = new SimpleApiKey(simpleApiKey);
 			return this;
 		}
@@ -238,7 +239,6 @@ public class DashScopeImageApi {
             Assert.notNull(this.apiKey, "Api key cannot be null");
             Assert.notNull(this.restClientBuilder, "Rest client builder cannot be null");
             Assert.notNull(this.responseErrorHandler, "Response error handler cannot be null");
-
 
 			return new DashScopeImageApi(this.baseUrl, this.apiKey, this.imagesPath, this.queryTaskPath,
                     this.workSpaceId, this.restClientBuilder, this.responseErrorHandler);

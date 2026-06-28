@@ -57,7 +57,7 @@ import org.springframework.util.Assert;
  * @author yuluo
  * @author <a href="mailto:550588941@qq.com">why_ohh</a>
  * @author yyyhhx
- * @author guanxu
+ * @author xuguan
  * @since 2024/7/31 10:57
  */
 public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {

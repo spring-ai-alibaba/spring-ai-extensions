@@ -25,7 +25,7 @@ import java.util.Objects;
 
 /**
  * @author buvidk
- * @author guanxu
+ * @author xuguan
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashScopeMultimodalEmbeddingOptions implements EmbeddingOptions {

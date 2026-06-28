@@ -28,7 +28,7 @@ import java.util.Objects;
  * @author why_ohh
  * @author yuluo
  * @author <a href="mailto:550588941@qq.com">why_ohh</a>
- * @author guanxu
+ * @author xuguan
  * @since 2024/8/1 11:14
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)

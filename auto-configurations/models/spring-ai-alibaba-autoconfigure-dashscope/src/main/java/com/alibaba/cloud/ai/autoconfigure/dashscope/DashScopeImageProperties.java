@@ -19,9 +19,9 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageOptions;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
-import org.springframework.lang.Nullable;
 
 /**
  * TongYi Image API properties.

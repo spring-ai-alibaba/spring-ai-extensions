@@ -37,7 +37,7 @@ import org.springframework.util.Assert;
 /**
  * @author yuluo
  * @author yingzi
- * @author guanxu
+ * @author xuguan
  */
 public class DashScopeApiSpec {
 

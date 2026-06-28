@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * @author yuluo
  * @author brianxiadong
- * @author guanxu
+ * @author xuguan
  */
 class DashScopeChatResponseFormatTests {
 

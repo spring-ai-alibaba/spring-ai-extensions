@@ -38,7 +38,7 @@ import org.springframework.ai.tool.ToolCallback;
  * Options for the DashScope Chat API.
  *
  * @author nottyjay
- * @author guanxu
+ * @author xuguan
  * @author yingzi
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)

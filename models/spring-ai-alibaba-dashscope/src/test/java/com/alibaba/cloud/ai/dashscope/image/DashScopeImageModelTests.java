@@ -33,7 +33,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
-import org.springframework.core.retry.RetryTemplate;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.ResponseEntity;
 
@@ -70,7 +69,7 @@ class DashScopeImageModelTests {
 		// Initialize mock objects and test instances
 		dashScopeImageApi = Mockito.mock(DashScopeImageApi.class);
 		defaultOptions = DashScopeImageOptions.builder().model(TEST_MODEL).n(1).build();
-        imageModel = DashScopeImageModel.builder()
+		imageModel = DashScopeImageModel.builder()
                 .dashScopeApi(dashScopeImageApi)
                 .defaultOptions(defaultOptions)
                 .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)

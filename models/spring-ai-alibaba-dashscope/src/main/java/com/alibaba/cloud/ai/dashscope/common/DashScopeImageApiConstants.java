@@ -24,7 +24,7 @@ import java.util.Map.Entry;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.InvokeMode;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.RequestType;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ImageModel;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 /**
