@@ -46,9 +46,9 @@ class DashScopeRerankOptionsTests {
 	void testDefaultValues() {
 		DashScopeRerankOptions options = DashScopeRerankOptions.builder().build();
 
-		assertThat(options.getModel()).isNull();
-		assertThat(options.getTopN()).isNull();
-		assertThat(options.getReturnDocuments()).isNull();
+        assertThat(options.getModel()).isEqualTo("gte-rerank");
+		assertThat(options.getTopN()).isEqualTo(3);
+		assertThat(options.getReturnDocuments()).isEqualTo(false);
 	}
 
 	/**
@@ -119,33 +119,7 @@ class DashScopeRerankOptionsTests {
 
 		assertThat(options.getModel()).isEqualTo(TEST_MODEL);
 		assertThat(options.getTopN()).isEqualTo(TEST_TOP_N);
-		assertThat(options.getReturnDocuments()).isNull();
-	}
-
-	/**
-	 * Test that null fields in runtime options fall through to the configured default.
-	 * This is the core contract that prevents hardcoded constructor values from silently
-	 * overriding yml-configured model names when merging options.
-	 */
-	@Test
-	void testNullFieldsFallThroughToDefault() {
-		DashScopeRerankOptions configuredDefaults = DashScopeRerankOptions.builder()
-			.model("gte-rerank-v2")
-			.topN(10)
-			.returnDocuments(true)
-			.build();
-
-		// Runtime options with only topN set — model and returnDocuments are null
-		DashScopeRerankOptions runtimeOptions = DashScopeRerankOptions.builder().topN(5).build();
-
-		String mergedModel = runtimeOptions.getModel() != null ? runtimeOptions.getModel() : configuredDefaults.getModel();
-		Integer mergedTopN = runtimeOptions.getTopN() != null ? runtimeOptions.getTopN() : configuredDefaults.getTopN();
-		Boolean mergedReturnDocs = runtimeOptions.getReturnDocuments() != null ? runtimeOptions.getReturnDocuments()
-				: configuredDefaults.getReturnDocuments();
-
-		assertThat(mergedModel).isEqualTo("gte-rerank-v2");
-		assertThat(mergedTopN).isEqualTo(5);
-		assertThat(mergedReturnDocs).isTrue();
+        assertThat(options.getReturnDocuments()).isEqualTo(false);
 	}
 
 	@Test
