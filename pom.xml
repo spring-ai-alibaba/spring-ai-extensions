@@ -222,7 +222,7 @@
     <properties>
 
         <!-- Spring AI Alibaba Version -->
-        <revision>2.0.0.1</revision>
+        <revision>2.0.0.0-RC1</revision>
 
         <!-- Maven project basic config -->
         <java.version>17</java.version>

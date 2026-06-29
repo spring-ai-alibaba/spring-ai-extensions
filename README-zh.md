@@ -12,7 +12,7 @@
 
 1. 需要 JDK 17+
 2. 如果遇到任何 `spring-ai` 依赖问题，请查看 [FAQ 页面](https://java2ai.com/docs/1.0.0.2/faq) 了解如何配置 `spring-milestones` Maven 仓库
-3. 当前版本使用 `spring-ai-extensions-bom` `2.0.0.1`、Spring AI `2.0.0` 和 Spring Boot `4.1.0`
+3. 当前版本使用 `spring-ai-extensions-bom` `2.0.0.0-RC1`、Spring AI `2.0.0` 和 Spring Boot `4.1.0`
 
 ### 使用 `ChatClient` 开发聊天机器人
 
@@ -25,7 +25,7 @@
     <dependency>
       <groupId>com.alibaba.cloud.ai</groupId>
       <artifactId>spring-ai-extensions-bom</artifactId>
-      <version>2.0.0.1</version>
+      <version>2.0.0.0-RC1</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
