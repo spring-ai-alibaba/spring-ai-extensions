@@ -303,9 +303,9 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		@Override
 		public B clone() {
 			B copy = super.clone();
-			copy.stop = this.stop;
-            copy.httpHeaders = this.httpHeaders;
-			copy.extraBody = this.extraBody;
+			copy.stop = copyStop(this.stop);
+            copy.httpHeaders = this.httpHeaders != null ? new HashMap<>(this.httpHeaders) : null;
+            copy.extraBody = this.extraBody != null ? new HashMap<>(this.extraBody) : null;
 			return copy;
 		}
 
