@@ -24,12 +24,14 @@ import java.util.List;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.DashScopeAudioAsrTranscriptionResponse;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.DashScopeAudioAsrTranscriptionResponse.TranscriptionResult;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.DashScopeAudioTranscription;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.DashScopeAudioAsrTranscriptionResponse.TranscriptionResult.Transcript;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionApiSpec.DashScopeAudioTranscriptionResponse;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.DashScopeAudioTranscription;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Sentence;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Translation;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,7 +121,7 @@ class DashScopeAudioTranscriptionIT {
 	 *
 	 * 测试 paraformer-realtime-v2 模型的 streamRecognition 双向流功能
 	 */
-	@org.junit.jupiter.api.Test
+	@Test
 	void testStreamRecognition_Paraformer_RealApi() throws IOException {
 		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
 				.model(AudioModel.PARAFORMER_REALTIME_V2.getValue())
@@ -162,7 +164,7 @@ class DashScopeAudioTranscriptionIT {
 	 *
 	 * 测试 fun-asr-realtime 模型的 streamRecognition 双向流功能
 	 */
-	@org.junit.jupiter.api.Test
+	@Test
 	void testStreamRecognition_FunAsr_RealApi() throws IOException {
 		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
 				.model(AudioModel.FUN_ASR_REALTIME.getValue())
@@ -197,7 +199,7 @@ class DashScopeAudioTranscriptionIT {
 	 *
 	 * 测试 gummy-realtime-v1 模型的 streamTranslation 双向流功能
 	 */
-	@org.junit.jupiter.api.Test
+	@Test
 	void testStreamTranslation_GummyRealtime_RealApi() throws IOException {
 		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
 				.model(AudioModel.GUMMY_REALTIME_V1.getValue())
@@ -239,7 +241,7 @@ class DashScopeAudioTranscriptionIT {
 	 * 测试 gummy-chat-v1 模型的 streamTranslationChat 双向流功能
 	 * 流在 sentenceEnd 后自动完成
 	 */
-	@org.junit.jupiter.api.Test
+	@Test
 	void testStreamTranslationChat_GummyChat_RealApi() throws IOException {
 		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
 				.model(AudioModel.GUMMY_CHAT_V1.getValue())
@@ -305,7 +307,7 @@ class DashScopeAudioTranscriptionIT {
 	 * }'
 	 * </pre>
 	 */
-	@org.junit.jupiter.api.Test
+	@Test
 	void testLiveTranslate_Call_RealApi() {
 		// Arrange - 构造 Options
 		DashScopeAudioTranscriptionOptions.Audio audio = new DashScopeAudioTranscriptionOptions.Audio();
@@ -391,7 +393,7 @@ class DashScopeAudioTranscriptionIT {
 	 * }'
 	 * </pre>
 	 */
-	@org.junit.jupiter.api.Test
+	@Test
 	void testLiveTranslate_Stream_RealApi() {
 		// Arrange - 构造 Options (stream: true)
 		DashScopeAudioTranscriptionOptions.Audio audio = new DashScopeAudioTranscriptionOptions.Audio();
@@ -481,7 +483,7 @@ class DashScopeAudioTranscriptionIT {
 	 * 测试 gummy-chat-v1 模型的 WebSocket 实时语音识别功能
 	 * 注意：由于OkHttp的maxFrameLength限制（256KB），使用较小的音频文件进行测试
 	 */
-	@org.junit.jupiter.api.Test
+	@Test
 	void testWebSocket_short_RealApi() {
 		// Arrange - 构造 Options
 		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
@@ -539,7 +541,7 @@ class DashScopeAudioTranscriptionIT {
      * 测试 gummy-realtime-v1 模型的 WebSocket 实时语音识别功能
      * 注意：由于OkHttp的maxFrameLength限制（256KB），使用较小的音频文件进行测试
      */
-    @org.junit.jupiter.api.Test
+    @Test
     void testWebSocket_long_RealApi() {
         // Arrange - 构造 Options
         DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
@@ -596,7 +598,7 @@ class DashScopeAudioTranscriptionIT {
      *
      * 测试 paraformer-realtime-v2 模型的 WebSocket 实时语音识别功能
      */
-    @org.junit.jupiter.api.Test
+    @Test
     void testWebSocket_Paraformer_RealApi() {
         // Arrange - 构造 Options
         DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
@@ -644,7 +646,7 @@ class DashScopeAudioTranscriptionIT {
      *
      * 测试 fun-asr-realtime 模型的 WebSocket 实时语音识别功能
      */
-    @org.junit.jupiter.api.Test
+    @Test
     void testWebSocket_FUNASR_RealApi() {
         // Arrange - 构造 Options
         DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
@@ -712,7 +714,7 @@ class DashScopeAudioTranscriptionIT {
 	 * }'
 	 * </pre>
 	 */
-	@org.junit.jupiter.api.Test
+	@Test
 	void testAsr_Paraformer_call_RealApi() {
 		// Arrange - 构造 Options
 		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
@@ -747,10 +749,11 @@ class DashScopeAudioTranscriptionIT {
 			logger.info("Paraformer transcription result for file: {}", result.fileUrl());
 
 			if (result.transcripts() != null) {
-				for (DashScopeAudioTranscription transcript : result.transcripts()) {
-					Integer channelId = transcript.getMetadata() != null ? transcript.getMetadata().channelId() : null;
-					logger.info("  - Channel: {}, Text: {}", channelId, transcript.getText());
-					assertThat(transcript.getText()).isNotEmpty();
+				for (Transcript transcript : result.transcripts()) {
+					Integer channelId = transcript.channelId();
+                    String text = transcript.text();
+                    logger.info("  - Channel: {}, Text: {}", channelId, text);
+					assertThat(text).isNotEmpty();
 				}
 			}
 
@@ -790,7 +793,7 @@ class DashScopeAudioTranscriptionIT {
 	 * }'
 	 * </pre>
 	 */
-	@org.junit.jupiter.api.Test
+	@Test
 	void testAsr_FunAsr_call_RealApi() {
 		// Arrange - 构造 Options
 		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
@@ -822,11 +825,12 @@ class DashScopeAudioTranscriptionIT {
 			logger.info("Fun-ASR transcription result for file: {}", result.fileUrl());
 
 			if (result.transcripts() != null) {
-				for (DashScopeAudioTranscription transcript : result.transcripts()) {
-					Integer channelId = transcript.getMetadata() != null ? transcript.getMetadata().channelId() : null;
-					logger.info("  - Channel: {}, Text: {}", channelId, transcript.getText());
-					assertThat(transcript.getText()).isNotEmpty();
-				}
+                for (Transcript transcript : result.transcripts()) {
+                    Integer channelId = transcript.channelId();
+                    String text = transcript.text();
+                    logger.info("  - Channel: {}, Text: {}", channelId, text);
+                    assertThat(text).isNotEmpty();
+                }
 			}
 
 			if (result.properties() != null) {
@@ -871,7 +875,7 @@ class DashScopeAudioTranscriptionIT {
 	 * }'
 	 * </pre>
 	 */
-	@org.junit.jupiter.api.Test
+	@Test
 	void testAsr_QwenAsr_Call_RealApi() {
 		// Arrange - 构造 Options
 		DashScopeAudioTranscriptionOptions.AsrOptions asrOptions =
@@ -961,7 +965,7 @@ class DashScopeAudioTranscriptionIT {
 	 * }'
 	 * </pre>
 	 */
-	@org.junit.jupiter.api.Test
+	@Test
 	void testAsr_QwenAsr_Stream_RealApi() {
 		// Arrange - 构造 Options
 		DashScopeAudioTranscriptionOptions.AsrOptions asrOptions =

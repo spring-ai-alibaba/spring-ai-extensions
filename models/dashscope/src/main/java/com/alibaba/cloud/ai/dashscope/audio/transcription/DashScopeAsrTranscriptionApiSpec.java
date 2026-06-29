@@ -15,14 +15,13 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
+import java.util.List;
+
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions.Resource;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.DashScopeAudioTranscription;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Usage;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
-
-import java.util.List;
 
 /**
  * @author yingzi
@@ -353,8 +352,39 @@ public class DashScopeAsrTranscriptionApiSpec {
         public record TranscriptionResult(
                 @JsonProperty("file_url") String fileUrl,
                 @JsonProperty("properties") Properties properties,
-                @JsonProperty("transcripts") List<DashScopeAudioTranscription> transcripts
+                @JsonProperty("transcripts") List<Transcript> transcripts
         ) {
+
+            @JsonInclude(JsonInclude.Include.NON_NULL)
+            public record Transcript(
+                    @JsonProperty("channel_id") Integer channelId,
+                    @JsonProperty("content_duration_in_milliseconds") Integer contentDurationInMilliseconds,
+                    @JsonProperty("text") String text,
+                    @JsonProperty("sentences") List<Sentence> sentences
+            ) {
+
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                public record Sentence(
+                        @JsonProperty("begin_time") Integer beginTime,
+                        @JsonProperty("end_time") Integer endTime,
+                        @JsonProperty("text") String text,
+                        @JsonProperty("sentence_id") Integer sentenceId,
+                        @JsonProperty("speaker_id") Integer speakerId,
+                        @JsonProperty("words") List<Word> words
+                ) {
+
+                    @JsonInclude(JsonInclude.Include.NON_NULL)
+                    public record Word(
+                            @JsonProperty("begin_time") Integer beginTime,
+                            @JsonProperty("end_time") Integer endTime,
+                            @JsonProperty("text") String text,
+                            @JsonProperty("punctuation") String punctuation
+                    ) {}
+
+                }
+
+            }
+
             @JsonInclude(JsonInclude.Include.NON_NULL)
             public record Properties(
                     @JsonProperty("audio_format") String audioFormat,
