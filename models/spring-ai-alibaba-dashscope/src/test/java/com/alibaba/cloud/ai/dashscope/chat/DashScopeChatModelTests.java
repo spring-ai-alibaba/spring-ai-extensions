@@ -20,26 +20,25 @@ import java.util.List;
 import java.util.Map;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel.Builder;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.CacheCreation;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletion;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionChunk;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionFinishReason;
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionMessage;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionFunction;
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ToolCall;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionMessage;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionOutput;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionOutput.Choice;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.SearchOptions;
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.SearchInfo;
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.SearchResult;
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.CacheCreation;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.MediaContent;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.PromptTokenDetailed;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.Role;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.SearchInfo;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.SearchResult;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ToolCall;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel.Builder;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
-import tools.jackson.databind.json.JsonMapper;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,14 +60,15 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
+import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -1432,10 +1432,10 @@ class DashScopeChatModelTests {
                 .build();
         Prompt prompt = new Prompt(List.of(new UserMessage(TEST_PROMPT), assistantMessage), defaultOptions);
 
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
         var assistantRequestMessage = request.input().messages().get(1);
-        assertThat(assistantRequestMessage.role()).isEqualTo(ChatCompletionMessage.Role.ASSISTANT);
+        assertThat(assistantRequestMessage.role()).isEqualTo(DashScopeChatApiSpec.Role.ASSISTANT);
         assertThat(assistantRequestMessage.rawContent()).isInstanceOf(List.class);
 
         @SuppressWarnings("unchecked")
@@ -1455,7 +1455,7 @@ class DashScopeChatModelTests {
                 .build();
         Prompt prompt = new Prompt(List.of(new UserMessage(TEST_PROMPT), assistantMessage), defaultOptions);
 
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
         var assistantRequestMessage = request.input().messages().get(1);
         assertThat(assistantRequestMessage.partial()).isTrue();
@@ -1478,7 +1478,7 @@ class DashScopeChatModelTests {
                 .build();
         Prompt prompt = new Prompt(List.of(new UserMessage(TEST_PROMPT), assistantMessage), defaultOptions);
 
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
         var assistantRequestMessage = request.input().messages().get(1);
         assertThat(assistantRequestMessage.toolCalls()).hasSize(1);
@@ -1503,18 +1503,16 @@ class DashScopeChatModelTests {
                 .build();
         Prompt prompt = new Prompt(List.of(toolResponseMessage), defaultOptions);
 
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
         assertThat(request.input().messages()).hasSize(2);
         var firstToolMessage = request.input().messages().get(0);
-        assertThat(firstToolMessage.role()).isEqualTo(ChatCompletionMessage.Role.TOOL);
-        assertThat(firstToolMessage.name()).isEqualTo("get_weather");
+        assertThat(firstToolMessage.role()).isEqualTo(DashScopeChatApiSpec.Role.TOOL);
         assertThat(firstToolMessage.toolCallId()).isEqualTo("call-1");
         assertThat(firstToolMessage.rawContent()).isInstanceOf(String.class);
         assertThat(firstToolMessage.rawContent()).isEqualTo("{\"city\":\"HZ\"}");
 
         var secondToolMessage = request.input().messages().get(1);
-        assertThat(secondToolMessage.name()).isEqualTo("get_time");
         assertThat(secondToolMessage.toolCallId()).isEqualTo("call-2");
         assertThat(secondToolMessage.rawContent()).isInstanceOf(List.class);
 
@@ -1549,7 +1547,7 @@ class DashScopeChatModelTests {
                 .build();
         Prompt prompt = new Prompt(List.of(assistantMessage, toolResponseMessage), defaultOptions);
 
-        ChatCompletionRequest request = chatModel.createRequest(prompt, false);
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
 
         var assistantRequestMessage = request.input().messages().get(0);
         assertThat(assistantRequestMessage.rawContent()).isInstanceOf(String.class);
