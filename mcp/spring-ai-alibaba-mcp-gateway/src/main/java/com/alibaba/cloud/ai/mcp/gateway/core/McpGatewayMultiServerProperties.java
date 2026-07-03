@@ -16,6 +16,7 @@
 
 package com.alibaba.cloud.ai.mcp.gateway.core;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.ArrayList;
@@ -86,7 +87,7 @@ public class McpGatewayMultiServerProperties {
 	public static class ServerConfig {
 
 		/** Logical name for this server entry. Used for logging. */
-		private String name;
+		private @Nullable String name;
 
 		/** Transport protocol. Defaults to SSE. */
 		private TransportType transport = TransportType.SSE;
@@ -101,7 +102,7 @@ public class McpGatewayMultiServerProperties {
 		private String mcpEndpoint = "/mcp";
 
 		/** MCP server info name, defaults to name field if not set. */
-		private String serverName;
+		private @Nullable String serverName;
 
 		/** MCP server info version. */
 		private String serverVersion = "1.0.0";
@@ -109,7 +110,7 @@ public class McpGatewayMultiServerProperties {
 		/** Nacos service names whose tools will be aggregated into this server. */
 		private List<String> serviceNames = new ArrayList<>();
 
-		public String getName() {
+		public @Nullable String getName() {
 			return name;
 		}
 
@@ -149,7 +150,7 @@ public class McpGatewayMultiServerProperties {
 			this.mcpEndpoint = mcpEndpoint;
 		}
 
-		public String getServerName() {
+		public @Nullable String getServerName() {
 			return serverName != null ? serverName : name;
 		}
 

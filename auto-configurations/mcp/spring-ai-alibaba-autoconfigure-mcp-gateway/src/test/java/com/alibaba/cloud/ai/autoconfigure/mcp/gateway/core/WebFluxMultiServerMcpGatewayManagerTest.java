@@ -18,11 +18,11 @@ package com.alibaba.cloud.ai.autoconfigure.mcp.gateway.core;
 
 import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayMultiServerProperties;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Collections;
 import java.util.List;
@@ -40,15 +40,14 @@ class WebFluxMultiServerMcpGatewayManagerTest {
 	@Mock
 	private NacosMcpOperationService nacosService;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper jsonMapper = JsonMapper.shared();
 
 	@Test
 	void managerWithEmptyServersReturnsNullRouterFunction() {
 		McpGatewayMultiServerProperties props = new McpGatewayMultiServerProperties();
 		props.setServers(Collections.emptyList());
 
-		WebFluxMultiServerMcpGatewayManager manager = new WebFluxMultiServerMcpGatewayManager(props, nacosService,
-				objectMapper);
+		WebFluxMultiServerMcpGatewayManager manager = new WebFluxMultiServerMcpGatewayManager(props, nacosService, jsonMapper);
 
 		assertNull(manager.getCombinedRouterFunction());
 
@@ -62,8 +61,7 @@ class WebFluxMultiServerMcpGatewayManagerTest {
 		McpGatewayMultiServerProperties props = buildPropsWithSseServer("/mcp/server1/sse", "/mcp/server1/message",
 				"nacos-svc");
 
-		WebFluxMultiServerMcpGatewayManager manager = new WebFluxMultiServerMcpGatewayManager(props, nacosService,
-				objectMapper);
+		WebFluxMultiServerMcpGatewayManager manager = new WebFluxMultiServerMcpGatewayManager(props, nacosService, jsonMapper);
 
 		assertNotNull(manager.getCombinedRouterFunction(), "SSE WebFlux transport should produce a RouterFunction");
 
@@ -74,8 +72,7 @@ class WebFluxMultiServerMcpGatewayManagerTest {
 	void managerWithStreamableEntryCreatesReactiveRouterFunction() {
 		McpGatewayMultiServerProperties props = buildPropsWithStreamableServer("/mcp/server2/mcp");
 
-		WebFluxMultiServerMcpGatewayManager manager = new WebFluxMultiServerMcpGatewayManager(props, nacosService,
-				objectMapper);
+		WebFluxMultiServerMcpGatewayManager manager = new WebFluxMultiServerMcpGatewayManager(props, nacosService, jsonMapper);
 
 		assertNotNull(manager.getCombinedRouterFunction(),
 				"STREAMABLE WebFlux transport should produce a RouterFunction");
@@ -97,8 +94,7 @@ class WebFluxMultiServerMcpGatewayManagerTest {
 
 		props.setServers(List.of(sse, streamable));
 
-		WebFluxMultiServerMcpGatewayManager manager = new WebFluxMultiServerMcpGatewayManager(props, nacosService,
-				objectMapper);
+		WebFluxMultiServerMcpGatewayManager manager = new WebFluxMultiServerMcpGatewayManager(props, nacosService, jsonMapper);
 
 		assertNotNull(manager.getCombinedRouterFunction());
 
@@ -111,8 +107,7 @@ class WebFluxMultiServerMcpGatewayManagerTest {
 
 		McpGatewayMultiServerProperties props = buildPropsWithSseServer("/mcp/srv/sse", "/mcp/srv/message", "svc");
 
-		WebFluxMultiServerMcpGatewayManager manager = new WebFluxMultiServerMcpGatewayManager(props, nacosService,
-				objectMapper);
+		WebFluxMultiServerMcpGatewayManager manager = new WebFluxMultiServerMcpGatewayManager(props, nacosService, jsonMapper);
 
 		assertDoesNotThrow(manager::destroy);
 	}

@@ -23,20 +23,21 @@ import com.alibaba.cloud.ai.mcp.gateway.nacos.provider.NacosMcpAsyncGatewayTools
 import com.alibaba.cloud.ai.mcp.gateway.nacos.tools.NacosMcpGatewayToolsInitializer;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.watcher.NacosMcpGatewayToolsWatcher;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
+import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures.AsyncToolSpecification;
-import io.modelcontextprotocol.server.transport.WebFluxSseServerTransportProvider;
-import io.modelcontextprotocol.server.transport.WebFluxStreamableServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.mcp.McpToolUtils;
+import org.springframework.ai.mcp.server.webflux.transport.WebFluxSseServerTransportProvider;
+import org.springframework.ai.mcp.server.webflux.transport.WebFluxStreamableServerTransportProvider;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
@@ -61,13 +62,13 @@ public class WebFluxMultiServerMcpGatewayManager extends MultiServerMcpGatewayMa
 
 	private static final Logger logger = LoggerFactory.getLogger(WebFluxMultiServerMcpGatewayManager.class);
 
-	private RouterFunction<ServerResponse> combinedRouterFunction;
+	private @Nullable RouterFunction<ServerResponse> combinedRouterFunction;
 
 	public WebFluxMultiServerMcpGatewayManager(McpGatewayMultiServerProperties properties,
-			NacosMcpOperationService nacosService, ObjectMapper objectMapper) {
+			NacosMcpOperationService nacosService, JsonMapper jsonMapper) {
 		for (McpGatewayMultiServerProperties.ServerConfig cfg : properties.getServers()) {
 			try {
-				initServerEntry(cfg, nacosService, objectMapper);
+				initServerEntry(cfg, nacosService, jsonMapper);
 			}
 			catch (Exception e) {
 				logger.error("Failed to initialize multi-server entry '{}', skipping.", cfg.getName(), e);
@@ -77,11 +78,11 @@ public class WebFluxMultiServerMcpGatewayManager extends MultiServerMcpGatewayMa
 
 	@SuppressWarnings("unchecked")
 	private void initServerEntry(McpGatewayMultiServerProperties.ServerConfig cfg,
-			NacosMcpOperationService nacosService, ObjectMapper objectMapper) {
+			NacosMcpOperationService nacosService, JsonMapper jsonMapper) {
 
 		// 1. Create transport and resolve server builder by transport type (MCP SDK 0.14+).
 		// WebFlux transports return RouterFunction<?> so we cast with suppressed warning.
-		var mcpJsonMapper = new JacksonMcpJsonMapper(objectMapper);
+		var mcpJsonMapper = new JacksonMcpJsonMapper(jsonMapper);
 		RouterFunction<ServerResponse> routerFunction;
 		McpServer.AsyncSpecification<?> serverBuilder;
 
@@ -141,7 +142,7 @@ public class WebFluxMultiServerMcpGatewayManager extends MultiServerMcpGatewayMa
 	 * Returns the combined {@link RouterFunction} for all configured server entries.
 	 * @return combined router function, or {@code null} if no entries were initialized
 	 */
-	public RouterFunction<ServerResponse> getCombinedRouterFunction() {
+	public @Nullable RouterFunction<ServerResponse> getCombinedRouterFunction() {
 		return combinedRouterFunction;
 	}
 

@@ -82,7 +82,7 @@
         </dependency>
 
         <dependency>
-            <groupId>io.modelcontextprotocol.sdk</groupId>
+            <groupId>org.springframework.ai</groupId>
             <artifactId>mcp-spring-webmvc</artifactId>
             <optional>true</optional>
         </dependency>

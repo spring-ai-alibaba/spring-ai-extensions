@@ -20,9 +20,7 @@ import com.alibaba.cloud.ai.autoconfigure.mcp.gateway.nacos.NacosMcpGatewayAutoC
 import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayMultiServerProperties;
 import com.alibaba.cloud.ai.mcp.gateway.core.utils.SpringBeanUtils;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.modelcontextprotocol.server.transport.WebMvcSseServerTransportProvider;
-import org.springframework.lang.NonNull;
+import org.springframework.ai.mcp.server.webmvc.transport.WebMvcSseServerTransportProvider;
 import org.springframework.beans.BeansException;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -34,6 +32,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Auto-configuration for the multi-server MCP Gateway in a Spring WebMVC (servlet)
@@ -82,15 +81,15 @@ public class McpGatewayMultiServerWebMvcAutoConfiguration implements Application
 	 * skipped, so we must initialize it here.
 	 */
 	@Override
-	public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		SpringBeanUtils.getInstance().setApplicationContext(applicationContext);
 	}
 
 	@Bean
 	public WebMvcMultiServerMcpGatewayManager webMvcMultiServerMcpGatewayManager(
 			McpGatewayMultiServerProperties properties, NacosMcpOperationService nacosService,
-			ObjectMapper objectMapper) {
-		return new WebMvcMultiServerMcpGatewayManager(properties, nacosService, objectMapper);
+			JsonMapper jsonMapper) {
+		return new WebMvcMultiServerMcpGatewayManager(properties, nacosService, jsonMapper);
 	}
 
 	@Bean

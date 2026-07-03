@@ -23,20 +23,21 @@ import com.alibaba.cloud.ai.mcp.gateway.nacos.provider.NacosMcpSyncGatewayToolsP
 import com.alibaba.cloud.ai.mcp.gateway.nacos.tools.NacosMcpGatewayToolsInitializer;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.watcher.NacosMcpGatewayToolsWatcher;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
+import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
-import io.modelcontextprotocol.server.transport.WebMvcSseServerTransportProvider;
-import io.modelcontextprotocol.server.transport.WebMvcStreamableServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.mcp.McpToolUtils;
+import org.springframework.ai.mcp.server.webmvc.transport.WebMvcSseServerTransportProvider;
+import org.springframework.ai.mcp.server.webmvc.transport.WebMvcStreamableServerTransportProvider;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
@@ -57,13 +58,13 @@ public class WebMvcMultiServerMcpGatewayManager extends MultiServerMcpGatewayMan
 
 	private static final Logger logger = LoggerFactory.getLogger(WebMvcMultiServerMcpGatewayManager.class);
 
-	private RouterFunction<ServerResponse> combinedRouterFunction;
+	private @Nullable RouterFunction<ServerResponse> combinedRouterFunction;
 
 	public WebMvcMultiServerMcpGatewayManager(McpGatewayMultiServerProperties properties,
-			NacosMcpOperationService nacosService, ObjectMapper objectMapper) {
+			NacosMcpOperationService nacosService, JsonMapper jsonMapper) {
 		for (McpGatewayMultiServerProperties.ServerConfig cfg : properties.getServers()) {
 			try {
-				initServerEntry(cfg, nacosService, objectMapper);
+				initServerEntry(cfg, nacosService, jsonMapper);
 			}
 			catch (Exception e) {
 				logger.error("Failed to initialize multi-server entry '{}', skipping.", cfg.getName(), e);
@@ -72,11 +73,11 @@ public class WebMvcMultiServerMcpGatewayManager extends MultiServerMcpGatewayMan
 	}
 
 	private void initServerEntry(McpGatewayMultiServerProperties.ServerConfig cfg,
-			NacosMcpOperationService nacosService, ObjectMapper objectMapper) {
+			NacosMcpOperationService nacosService, JsonMapper jsonMapper) {
 
 		// 1. Create transport and resolve server builder by transport type (MCP SDK 0.14+).
 		// JacksonMcpJsonMapper wraps Spring's ObjectMapper (e.g. FAIL_ON_UNKNOWN_PROPERTIES=false).
-		var mcpJsonMapper = new JacksonMcpJsonMapper(objectMapper);
+		var mcpJsonMapper = new JacksonMcpJsonMapper(jsonMapper);
 		RouterFunction<ServerResponse> routerFunction;
 		McpServer.SyncSpecification<?> serverBuilder;
 
@@ -136,7 +137,7 @@ public class WebMvcMultiServerMcpGatewayManager extends MultiServerMcpGatewayMan
 	 * Returns the combined {@link RouterFunction} for all configured server entries.
 	 * @return combined router function, or {@code null} if no entries were initialized
 	 */
-	public RouterFunction<ServerResponse> getCombinedRouterFunction() {
+	public @Nullable RouterFunction<ServerResponse> getCombinedRouterFunction() {
 		return combinedRouterFunction;
 	}
 

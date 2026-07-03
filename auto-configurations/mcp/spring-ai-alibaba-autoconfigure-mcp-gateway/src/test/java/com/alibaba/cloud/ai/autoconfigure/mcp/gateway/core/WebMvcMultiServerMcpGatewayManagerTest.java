@@ -18,11 +18,11 @@ package com.alibaba.cloud.ai.autoconfigure.mcp.gateway.core;
 
 import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayMultiServerProperties;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Collections;
 import java.util.List;
@@ -40,15 +40,14 @@ class WebMvcMultiServerMcpGatewayManagerTest {
 	@Mock
 	private NacosMcpOperationService nacosService;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final JsonMapper jsonMapper = JsonMapper.shared();
 
 	@Test
 	void managerWithEmptyServersReturnsNullRouterFunction() {
 		McpGatewayMultiServerProperties props = new McpGatewayMultiServerProperties();
 		props.setServers(Collections.emptyList());
 
-		WebMvcMultiServerMcpGatewayManager manager = new WebMvcMultiServerMcpGatewayManager(props, nacosService,
-				objectMapper);
+		WebMvcMultiServerMcpGatewayManager manager = new WebMvcMultiServerMcpGatewayManager(props, nacosService, jsonMapper);
 
 		assertNull(manager.getCombinedRouterFunction(),
 				"No servers configured means no router function should be created");
@@ -63,8 +62,7 @@ class WebMvcMultiServerMcpGatewayManagerTest {
 		McpGatewayMultiServerProperties props = buildPropsWithSseServer("/mcp/server1/sse", "/mcp/server1/message",
 				"nacos-svc");
 
-		WebMvcMultiServerMcpGatewayManager manager = new WebMvcMultiServerMcpGatewayManager(props, nacosService,
-				objectMapper);
+		WebMvcMultiServerMcpGatewayManager manager = new WebMvcMultiServerMcpGatewayManager(props, nacosService, jsonMapper);
 
 		assertNotNull(manager.getCombinedRouterFunction(), "SSE transport should produce a RouterFunction");
 
@@ -75,8 +73,7 @@ class WebMvcMultiServerMcpGatewayManagerTest {
 	void managerWithStreamableEntryCreatesRouterFunction() {
 		McpGatewayMultiServerProperties props = buildPropsWithStreamableServer("/mcp/server2/mcp");
 
-		WebMvcMultiServerMcpGatewayManager manager = new WebMvcMultiServerMcpGatewayManager(props, nacosService,
-				objectMapper);
+		WebMvcMultiServerMcpGatewayManager manager = new WebMvcMultiServerMcpGatewayManager(props, nacosService, jsonMapper);
 
 		assertNotNull(manager.getCombinedRouterFunction(), "STREAMABLE transport should produce a RouterFunction");
 
@@ -97,8 +94,7 @@ class WebMvcMultiServerMcpGatewayManagerTest {
 
 		props.setServers(List.of(sse, streamable));
 
-		WebMvcMultiServerMcpGatewayManager manager = new WebMvcMultiServerMcpGatewayManager(props, nacosService,
-				objectMapper);
+		WebMvcMultiServerMcpGatewayManager manager = new WebMvcMultiServerMcpGatewayManager(props, nacosService, jsonMapper);
 
 		assertNotNull(manager.getCombinedRouterFunction(),
 				"Manager with multiple entries should return a combined RouterFunction");
@@ -110,8 +106,7 @@ class WebMvcMultiServerMcpGatewayManagerTest {
 	void managerWithEmptyServiceNamesStillCreatesServer() {
 		McpGatewayMultiServerProperties props = buildPropsWithSseServer("/mcp/test/sse", "/mcp/test/message");
 
-		WebMvcMultiServerMcpGatewayManager manager = new WebMvcMultiServerMcpGatewayManager(props, nacosService,
-				objectMapper);
+		WebMvcMultiServerMcpGatewayManager manager = new WebMvcMultiServerMcpGatewayManager(props, nacosService, jsonMapper);
 
 		// Even with no Nacos services, server should be created with empty tool list
 		assertNotNull(manager.getCombinedRouterFunction());
@@ -125,8 +120,7 @@ class WebMvcMultiServerMcpGatewayManagerTest {
 
 		McpGatewayMultiServerProperties props = buildPropsWithSseServer("/mcp/srv/sse", "/mcp/srv/message", "svc");
 
-		WebMvcMultiServerMcpGatewayManager manager = new WebMvcMultiServerMcpGatewayManager(props, nacosService,
-				objectMapper);
+		WebMvcMultiServerMcpGatewayManager manager = new WebMvcMultiServerMcpGatewayManager(props, nacosService, jsonMapper);
 
 		// destroy() should not throw
 		assertDoesNotThrow(manager::destroy);

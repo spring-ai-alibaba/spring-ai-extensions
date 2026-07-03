@@ -20,9 +20,7 @@ import com.alibaba.cloud.ai.autoconfigure.mcp.gateway.nacos.NacosMcpGatewayAutoC
 import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayMultiServerProperties;
 import com.alibaba.cloud.ai.mcp.gateway.core.utils.SpringBeanUtils;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.modelcontextprotocol.server.transport.WebFluxSseServerTransportProvider;
-import org.springframework.lang.NonNull;
+import org.springframework.ai.mcp.server.webflux.transport.WebFluxSseServerTransportProvider;
 import org.springframework.beans.BeansException;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -34,6 +32,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Auto-configuration for the multi-server MCP Gateway in a Spring WebFlux (reactive)
@@ -75,15 +74,15 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 public class McpGatewayMultiServerWebFluxAutoConfiguration implements ApplicationContextAware {
 
 	@Override
-	public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		SpringBeanUtils.getInstance().setApplicationContext(applicationContext);
 	}
 
 	@Bean
 	public WebFluxMultiServerMcpGatewayManager webFluxMultiServerMcpGatewayManager(
 			McpGatewayMultiServerProperties properties, NacosMcpOperationService nacosService,
-			ObjectMapper objectMapper) {
-		return new WebFluxMultiServerMcpGatewayManager(properties, nacosService, objectMapper);
+			JsonMapper jsonMapper) {
+		return new WebFluxMultiServerMcpGatewayManager(properties, nacosService, jsonMapper);
 	}
 
 	@Bean

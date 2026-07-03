@@ -32,7 +32,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
-import org.jspecify.annotations.NonNull;
 
 /**
  * Autoconfiguration for MCP Server Bean initialization compatible with v0.11.0. This
@@ -49,7 +48,7 @@ public class McpGatewayServerAutoConfiguration implements ApplicationContextAwar
 	private static final Logger log = LoggerFactory.getLogger(McpGatewayServerAutoConfiguration.class);
 
 	@Override
-	public void setApplicationContext(@NonNull final ApplicationContext applicationContext) throws BeansException {
+	public void setApplicationContext(final ApplicationContext applicationContext) throws BeansException {
 		SpringBeanUtils.getInstance().setApplicationContext(applicationContext);
 	}
 
