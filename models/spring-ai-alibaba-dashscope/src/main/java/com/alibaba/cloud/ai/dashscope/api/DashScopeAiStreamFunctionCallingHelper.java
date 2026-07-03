@@ -32,7 +32,6 @@ import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.SearchInfo;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ToolCall;
 import org.jspecify.annotations.Nullable;
-
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -59,7 +58,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 	 * @param current the current ChatCompletionChunk
 	 * @return the merged ChatCompletionChunk
 	 */
-	public ChatCompletionChunk merge(ChatCompletionChunk previous, ChatCompletionChunk current) {
+	public ChatCompletionChunk merge(@Nullable ChatCompletionChunk previous, ChatCompletionChunk current) {
 		if (previous == null) {
 			return current;
 		}
@@ -149,7 +148,10 @@ public class DashScopeAiStreamFunctionCallingHelper {
 			}
 			var currentToolCall = current.toolCalls().iterator().next();
 			if (isSameStreamingToolCall(lastPreviousToolCall, currentToolCall)) {
-				toolCalls.add(merge(lastPreviousToolCall, currentToolCall));
+                ToolCall merged = merge(lastPreviousToolCall, currentToolCall);
+                if (merged != null) {
+                    toolCalls.add(merged);
+                }
 			}
 			else {
 				if (lastPreviousToolCall != null) {
@@ -166,7 +168,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		return new ChatCompletionMessage(content, role, name, toolCallId, toolCalls, reasoningContent, partial, phase, annotations, status);
 	}
 
-	private boolean isSameStreamingToolCall(ToolCall previous, ToolCall current) {
+	private boolean isSameStreamingToolCall(@Nullable ToolCall previous, @Nullable ToolCall current) {
 		if (previous == null || current == null) {
 			return false;
 		}
@@ -179,7 +181,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
         return !StringUtils.hasText(current.id());
 	}
 
-	private ToolCall merge(ToolCall previous, ToolCall current) {
+	private @Nullable ToolCall merge(@Nullable ToolCall previous, @Nullable ToolCall current) {
 
         if (previous == null) {
             return current;
@@ -208,9 +210,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		if (previous == null) {
 			return current;
 		}
-		if (current == null) {
-			return previous;
-		}
+
 		String name = (StringUtils.hasText(current.name()) ? current.name() : previous.name());
 		StringBuilder arguments = new StringBuilder();
 		if (previous.arguments() != null) {
@@ -257,7 +257,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		return new ChatCompletion(chunk.requestId(), chunk.output(), chunk.usage());
 	}
 
-	private @Nullable Choice checkChatCompletionChunk(ChatCompletionChunk chatCompletion) {
+	private @Nullable Choice checkChatCompletionChunk(@Nullable ChatCompletionChunk chatCompletion) {
 		if (chatCompletion == null || chatCompletion.output() == null
 				|| CollectionUtils.isEmpty(chatCompletion.output().choices())) {
 			return null;
