@@ -359,28 +359,28 @@ public class DashScopeAsrTranscriptionApiSpec {
 
             @JsonInclude(JsonInclude.Include.NON_NULL)
             public record Transcript(
-                    @JsonProperty("channel_id") Integer channelId,
-                    @JsonProperty("content_duration_in_milliseconds") Integer contentDurationInMilliseconds,
-                    @JsonProperty("text") String text,
-                    @JsonProperty("sentences") List<Sentence> sentences
+                    @JsonProperty("channel_id") @Nullable Integer channelId,
+                    @JsonProperty("content_duration_in_milliseconds") @Nullable Integer contentDurationInMilliseconds,
+                    @JsonProperty("text") @Nullable String text,
+                    @JsonProperty("sentences") @Nullable List<Sentence> sentences
             ) {
 
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 public record Sentence(
-                        @JsonProperty("begin_time") Integer beginTime,
-                        @JsonProperty("end_time") Integer endTime,
-                        @JsonProperty("text") String text,
-                        @JsonProperty("sentence_id") Integer sentenceId,
-                        @JsonProperty("speaker_id") Integer speakerId,
-                        @JsonProperty("words") List<Word> words
+                        @JsonProperty("begin_time") @Nullable Integer beginTime,
+                        @JsonProperty("end_time") @Nullable Integer endTime,
+                        @JsonProperty("text") @Nullable String text,
+                        @JsonProperty("sentence_id") @Nullable Integer sentenceId,
+                        @JsonProperty("speaker_id") @Nullable Integer speakerId,
+                        @JsonProperty("words") @Nullable List<Word> words
                 ) {
 
                     @JsonInclude(JsonInclude.Include.NON_NULL)
                     public record Word(
-                            @JsonProperty("begin_time") Integer beginTime,
-                            @JsonProperty("end_time") Integer endTime,
-                            @JsonProperty("text") String text,
-                            @JsonProperty("punctuation") String punctuation
+                            @JsonProperty("begin_time") @Nullable Integer beginTime,
+                            @JsonProperty("end_time") @Nullable Integer endTime,
+                            @JsonProperty("text") @Nullable String text,
+                            @JsonProperty("punctuation") @Nullable String punctuation
                     ) {}
 
                 }
