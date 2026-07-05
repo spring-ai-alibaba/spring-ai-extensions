@@ -52,7 +52,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnableAutoConfiguration
 @Import(SslAutoConfiguration.class)
 @SpringBootTest(classes = SslLettuceRedisChatMemoryTest.TestConfiguration.class)
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 public class SslLettuceRedisChatMemoryTest {
 
 	private static final int REDIS_PORT = 6379;

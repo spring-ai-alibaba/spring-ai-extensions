@@ -47,7 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 2025/7/31 16:48
  */
 @SpringBootTest(classes = LettuceRedisChatMemoryRepositoryTest.TestConfiguration.class)
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 public class LettuceRedisChatMemoryRepositoryTest {
 
 	private static final int REDIS_PORT = 6379;

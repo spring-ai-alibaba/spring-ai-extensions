@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.reader.arxiv;
 
+import com.alibaba.cloud.ai.document.DocumentParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIf;
 import org.springframework.ai.document.Document;
@@ -47,7 +48,8 @@ public class ArxivDocumentReaderTest {
 	@Test
 	public void testDocumentReader() {
 		// Create document reader
-		ArxivDocumentReader reader = new ArxivDocumentReader(TEST_QUERY, MAX_SIZE);
+		DocumentParser parser = inputStream -> List.of(new Document("Parsed arXiv PDF content"));
+		ArxivDocumentReader reader = new ArxivDocumentReader(TEST_QUERY, MAX_SIZE, parser);
 
 		// Get documents
 		List<Document> documents = reader.get();
