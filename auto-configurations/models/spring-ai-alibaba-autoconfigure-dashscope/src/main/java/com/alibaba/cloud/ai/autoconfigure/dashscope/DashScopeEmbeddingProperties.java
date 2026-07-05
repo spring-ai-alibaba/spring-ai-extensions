@@ -20,6 +20,7 @@ import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions;
 import org.springframework.ai.document.MetadataMode;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 @ConfigurationProperties(DashScopeEmbeddingProperties.CONFIG_PREFIX)
@@ -43,12 +44,50 @@ public class DashScopeEmbeddingProperties extends DashScopeParentProperties {
   private DashScopeEmbeddingOptions options =
       DashScopeEmbeddingOptions.builder().model(DEFAULT_EMBEDDING_MODEL).build();
 
+  public DashScopeEmbeddingOptions toOptions() {
+    return this.options;
+  }
+
+  @DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX)
+  @Deprecated(since = "2.0.0", forRemoval = true)
   public DashScopeEmbeddingOptions getOptions() {
     return this.options;
   }
 
   public void setOptions(DashScopeEmbeddingOptions options) {
     this.options = options;
+  }
+
+  public String getModel() {
+    return this.options.getModel();
+  }
+
+  public void setModel(String model) {
+    this.options.setModel(model);
+  }
+
+  public Integer getDimensions() {
+    return this.options.getDimensions();
+  }
+
+  public void setDimensions(Integer dimensions) {
+    this.options.setDimensions(dimensions);
+  }
+
+  public String getTextType() {
+    return this.options.getTextType();
+  }
+
+  public void setTextType(String textType) {
+    this.options.setTextType(textType);
+  }
+
+  public String getOutputType() {
+    return this.options.getOutputType();
+  }
+
+  public void setOutputType(String outputType) {
+    this.options.setOutputType(outputType);
   }
 
   public MetadataMode getMetadataMode() {
@@ -73,5 +112,6 @@ public class DashScopeEmbeddingProperties extends DashScopeParentProperties {
 
   public void setEmbeddingsPath(String embeddingsPath) {
     this.embeddingsPath = embeddingsPath;
+    this.options.setEmbeddingsPath(embeddingsPath);
   }
 }

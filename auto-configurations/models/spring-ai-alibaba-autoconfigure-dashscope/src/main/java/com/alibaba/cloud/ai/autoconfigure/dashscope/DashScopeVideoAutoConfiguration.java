@@ -72,7 +72,7 @@ public class DashScopeVideoAutoConfiguration {
 
 		return DashScopeVideoModel.builder()
 			.videoApi(videoApi)
-			.defaultOptions(videoProperties.getOptions())
+			.defaultOptions(videoProperties.toOptions())
 			.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
 			.build();
 	}

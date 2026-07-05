@@ -59,7 +59,7 @@ public class DashScopeSdkEmbeddingAutoConfiguration {
 			.apiKey(resolved.apiKey())
 			.workspaceId(resolved.workspaceId())
 			.connectionHeaders(resolved.headers())
-			.defaultOptions(embeddingProperties.getOptions())
+			.defaultOptions(embeddingProperties.toOptions())
 			.metadataMode(embeddingProperties.getMetadataMode())
 			.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
 			.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))

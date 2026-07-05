@@ -78,7 +78,7 @@ public class DashScopeAudioSpeechAutoConfiguration {
 
 		return DashScopeAudioSpeechModel.builder()
                 .audioSpeechApi(dashScopeAudioSpeechApi)
-                .defaultOptions(audioSpeechProperties.getOptions())
+                .defaultOptions(audioSpeechProperties.toOptions())
                 .retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
                 .build();
 	}

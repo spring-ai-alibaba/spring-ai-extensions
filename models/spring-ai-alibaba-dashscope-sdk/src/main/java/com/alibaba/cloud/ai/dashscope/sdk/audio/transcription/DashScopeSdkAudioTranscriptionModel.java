@@ -92,7 +92,7 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 		List<String> fileUrls = resolveFileUrls(prompt, options);
 		if (CollectionUtils.isEmpty(fileUrls)) {
 			throw new IllegalArgumentException(
-					"No valid file URLs found. Configure spring.ai.dashscope.sdk.audio.transcription.options.file-urls or use URL resource.");
+					"No valid file URLs found. Configure spring.ai.dashscope.sdk.audio.transcription.file-urls or use URL resource.");
 		}
 
 		TranscriptionParam request = createRequest(fileUrls, options);

@@ -7,6 +7,1560 @@
       "description": "Enable DashScope model.",
       "sourceType": "com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionProperties",
       "defaultValue": true
+    },
+    {
+      "name": "spring.ai.dashscope.agent.options.app-id",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.agent.app-id"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.agent.options.session-id",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.agent.session-id"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.agent.options.memory-id",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.agent.memory-id"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.agent.options.model-id",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.agent.model-id"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.agent.options.incremental-output",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.agent.incremental-output"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.agent.options.has-thoughts",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.agent.has-thoughts"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.agent.options.enable-thinking",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.agent.enable-thinking"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.agent.options.images",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.agent.images"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.agent.options.files",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.agent.files"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.agent.options.biz-params",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.agent.biz-params"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.agent.options.rag-options",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.agent.rag-options"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.agent.options.flow-stream-mode",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.agent.flow-stream-mode"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.model",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.model"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.voice",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.voice"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.text-type",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.text-type"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.enable-aigc-tag",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.enable-aigc-tag"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.aigc-propagator",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.aigc-propagator"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.aigc-propagate-id",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.aigc-propagate-id"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.sample-rate",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.sample-rate"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.format",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.format"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.response-format",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.response-format"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.word-timestamp-enabled",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.word-timestamp-enabled"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.phoneme-timestamp-enabled",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.phoneme-timestamp-enabled"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.volume",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.volume"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.speed",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.speed"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.rate",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.rate"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.pitch",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.pitch"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.enable-ssml",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.enable-ssml"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.bit-rate",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.bit-rate"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.seed",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.seed"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.language-hints",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.language-hints"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.instruction",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.instruction"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.optimize-instructions",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.optimize-instructions"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.speech.options.language-type",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.speech.language-type"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.model",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.model"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.vocabulary-id",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.vocabulary-id"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.format",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.format"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.sample-rate",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.sample-rate"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.source-language",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.source-language"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.transcription-enabled",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.transcription-enabled"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.translation-enabled",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.translation-enabled"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.translation-target-languages",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.translation-target-languages"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.asr-options",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.asr-options"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.max-end-silence",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.max-end-silence"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.modalities",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.modalities"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.audio",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.audio"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.stream",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.stream"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.stream-options",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.stream-options"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.max-tokens",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.max-tokens"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.seed",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.seed"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.temperature",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.temperature"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.top-p",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.top-p"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.presence-penalty",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.presence-penalty"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.top-k",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.top-k"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.repetition-penalty",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.repetition-penalty"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.translation-options",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.translation-options"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.disfluency-removal-enabled",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.disfluency-removal-enabled"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.language-hints",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.language-hints"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.semantic-punctuation-enabled",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.semantic-punctuation-enabled"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.max-sentence-silence",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.max-sentence-silence"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.multi-threshold-mode-enabled",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.multi-threshold-mode-enabled"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.punctuation-prediction-enabled",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.punctuation-prediction-enabled"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.heartbeat",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.heartbeat"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.inverse-text-normalization-enabled",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.inverse-text-normalization-enabled"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.resources",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.resources"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.timestamp-alignment-enabled",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.timestamp-alignment-enabled"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.special-word-filter",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.special-word-filter"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.diarization-enabled",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.diarization-enabled"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.speaker-count",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.speaker-count"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.audio.transcription.options.channel-id",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.audio.transcription.channel-id"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.translation-options",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.translation-options"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.output-format",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.output-format"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.top-log-probs",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.top-log-probs"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.logprobs",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.logprobs"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.ocr-options",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.ocr-options"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.vl-enable-image-hw-output",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.vl-enable-image-hw-output"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.audio",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.audio"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.stream-options",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.stream-options"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.asr-options",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.asr-options"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.max-input-tokens",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.max-input-tokens"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.modalities",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.modalities"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.model",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.model"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.max-tokens",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.max-tokens"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.stream",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.stream"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.temperature",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.temperature"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.search-options",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.search-options"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.parallel-tool-calls",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.parallel-tool-calls"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.http-headers",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.http-headers"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.top-p",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.top-p"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.top-k",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.top-k"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.stop",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.stop"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.response-format",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.response-format"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.thinking-budget",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.thinking-budget"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.enable-code-interpreter",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.enable-code-interpreter"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.enable-search",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.enable-search"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.repetition-penalty",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.repetition-penalty"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.tools",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.tools"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.tool-choice",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.tool-choice"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.seed",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.seed"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.tool-callbacks",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.tool-callbacks"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.tool-names",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.tool-names"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.internal-tool-execution-enabled",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.internal-tool-execution-enabled"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.tool-context",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.tool-context"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.incremental-output",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.incremental-output"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.vl-high-resolution-images",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.vl-high-resolution-images"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.enable-thinking",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.enable-thinking"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.multi-model",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.multi-model"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.chat.options.extra-body",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.chat.extra-body"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.embedding.options.model",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.embedding.model"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.embedding.options.dimensions",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.embedding.dimensions"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.embedding.options.text-type",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.embedding.text-type"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.embedding.options.output-type",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.embedding.output-type"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.embedding.options.embeddings-path",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.embedding.embeddings-path"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.model",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.model"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.n",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.n"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.width",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.width"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.height",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.height"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.size",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.size"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.style",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.style"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.style-index",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.style-index"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.style-ref-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.style-ref-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.base-image-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.base-image-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.images",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.images"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.mask-image-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.mask-image-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.sketch-image-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.sketch-image-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.template-image-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.template-image-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.shoe-image-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.shoe-image-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.face-image-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.face-image-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.background-image-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.background-image-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.foreground-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.foreground-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.person-image-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.person-image-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.top-garment-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.top-garment-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.bottom-garment-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.bottom-garment-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.coarse-image-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.coarse-image-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.user-urls",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.user-urls"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.ref-img",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.ref-img"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.predefined-face-id",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.predefined-face-id"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.face-prompt",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.face-prompt"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.bgstyle-scale",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.bgstyle-scale"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.real-person",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.real-person"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.seed",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.seed"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.ref-strength",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.ref-strength"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.response-format",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.response-format"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.ref-mode",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.ref-mode"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.negative-prompt",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.negative-prompt"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.text",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.text"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.prompt-extend",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.prompt-extend"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.watermark",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.watermark"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.function",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.function"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.sketch-weight",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.sketch-weight"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.sketch-extraction",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.sketch-extraction"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.sketch-color",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.sketch-color"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.mask-color",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.mask-color"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.bbox-list",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.bbox-list"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.max-images",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.max-images"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.enable-interleave",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.enable-interleave"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.enable-sequential",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.enable-sequential"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.color-palette",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.color-palette"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.thinking-mode",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.thinking-mode"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.output-ratio",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.output-ratio"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.xscale",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.xscale"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.yscale",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.yscale"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.angle",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.angle"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.left-offset",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.left-offset"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.right-offset",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.right-offset"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.top-offset",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.top-offset"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.bottom-offset",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.bottom-offset"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.best-quality",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.best-quality"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.limit-image-size",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.limit-image-size"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.source-lang",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.source-lang"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.target-lang",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.target-lang"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.ext",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.ext"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.element-list",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.element-list"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.result-type",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.result-type"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.series-amount",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.series-amount"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.aspect-ratio",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.aspect-ratio"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.resolution",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.resolution"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.short-side-size",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.short-side-size"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.scale",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.scale"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.model-version",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.model-version"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.noise-level",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.noise-level"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.ref-prompt-weight",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.ref-prompt-weight"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.reference-edge",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.reference-edge"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.generate-mode",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.generate-mode"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.auxiliary-parameters",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.auxiliary-parameters"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.title",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.title"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.sub-title",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.sub-title"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.body-text",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.body-text"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.prompt-text-zh",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.prompt-text-zh"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.prompt-text-en",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.prompt-text-en"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.wh-ratios",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.wh-ratios"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.lora-name",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.lora-name"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.lora-weight",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.lora-weight"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.ctrl-ratio",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.ctrl-ratio"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.ctrl-step",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.ctrl-step"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.creative-title-layout",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.creative-title-layout"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.fast-mode",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.fast-mode"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.dilate-flag",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.dilate-flag"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.restore-face",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.restore-face"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.gender",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.gender"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.clothes-type",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.clothes-type"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.resources",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.resources"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.skin-retouch",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.skin-retouch"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.steps",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.steps"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.font-name",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.font-name"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.ttf-url",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.ttf-url"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.image-short-size",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.image-short-size"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.alpha-channel",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.alpha-channel"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.training-file-ids",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.training-file-ids"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.invoke-mode",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.invoke-mode"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.image.options.request-type",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.image.request-type"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.embedding.multimodal.options.model",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.embedding.multimodal.model"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.embedding.multimodal.options.dimensions",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.embedding.multimodal.dimensions"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.embedding.multimodal.options.output-type",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.embedding.multimodal.output-type"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.embedding.multimodal.options.fps",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.embedding.multimodal.fps"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.embedding.multimodal.options.instruct",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.embedding.multimodal.instruct"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.rerank.options.top-n",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.rerank.top-n"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.rerank.options.return-documents",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.rerank.return-documents"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.rerank.options.model",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.rerank.model"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.video.options.model",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.video.model"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.video.options.input",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.video.input"
+      }
+    },
+    {
+      "name": "spring.ai.dashscope.video.options.parameters",
+      "deprecation": {
+        "reason": "The .options property segment is deprecated in Spring AI 2.0.",
+        "replacement": "spring.ai.dashscope.video.parameters"
+      }
     }
   ],
   "hints": []

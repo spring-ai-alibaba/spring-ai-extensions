@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.embedding.multimodal.DashScopeMultimodalEmbeddingOptions;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
@@ -39,12 +40,58 @@ public class DashScopeMultimodalEmbeddingProperties extends DashScopeParentPrope
 			.model(DEFAULT_MULTIMODAL_EMBEDDING_MODEL)
 			.build();
 
+	public DashScopeMultimodalEmbeddingOptions toOptions() {
+		return this.options;
+	}
+
+	@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX)
+	@Deprecated(since = "2.0.0", forRemoval = true)
 	public DashScopeMultimodalEmbeddingOptions getOptions() {
 		return this.options;
 	}
 
 	public void setOptions(DashScopeMultimodalEmbeddingOptions options) {
 		this.options = options;
+	}
+
+	public String getModel() {
+		return this.options.getModel();
+	}
+
+	public void setModel(String model) {
+		this.options.setModel(model);
+	}
+
+	public Integer getDimensions() {
+		return this.options.getDimensions();
+	}
+
+	public void setDimensions(Integer dimensions) {
+		this.options.setDimensions(dimensions);
+	}
+
+	public String getOutputType() {
+		return this.options.getOutputType();
+	}
+
+	public void setOutputType(String outputType) {
+		this.options.setOutputType(outputType);
+	}
+
+	public Float getFps() {
+		return this.options.getFps();
+	}
+
+	public void setFps(Float fps) {
+		this.options.setFps(fps);
+	}
+
+	public String getInstruct() {
+		return this.options.getInstruct();
+	}
+
+	public void setInstruct(String instruct) {
+		this.options.setInstruct(instruct);
 	}
 
 	public String getMultimodalPath() {

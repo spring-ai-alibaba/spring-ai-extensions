@@ -79,7 +79,7 @@ public class DashScopeRerankAutoConfiguration {
 
 		return DashScopeRerankModel.builder()
                 .dashScopeApi(dashScopeApi)
-                .defaultOptions(rerankProperties.getOptions())
+                .defaultOptions(rerankProperties.toOptions())
                 .retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
                 .build();
 	}

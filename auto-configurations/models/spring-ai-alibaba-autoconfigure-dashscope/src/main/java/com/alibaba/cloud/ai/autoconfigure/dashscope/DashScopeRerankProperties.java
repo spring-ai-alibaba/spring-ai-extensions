@@ -19,6 +19,7 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.rerank.DashScopeRerankOptions;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
@@ -42,37 +43,43 @@ public class DashScopeRerankProperties extends DashScopeParentProperties {
     public static final String DEFAULT_RERANK_MODEL = "gte-rerank";
 
     /**
-     * Top n rerank results.
-     */
-    private Integer topN = 5;
-
-    /**
-     * If need to return original documents.
-     */
-    private Boolean returnDocuments = false;
-
-    /**
      * Default rerank path.
      */
     private String rerankPath = DashScopeApiConstants.TEXT_RERANK_RESTFUL_URL;
 
     @NestedConfigurationProperty
-    private DashScopeRerankOptions options = DashScopeRerankOptions.builder().model(DEFAULT_RERANK_MODEL).build();
+    private DashScopeRerankOptions options = DashScopeRerankOptions.builder()
+            .model(DEFAULT_RERANK_MODEL)
+            .topN(5)
+            .returnDocuments(false)
+            .build();
+
+    public DashScopeRerankOptions toOptions() {
+        return this.options;
+    }
 
     public Integer getTopN() {
-        return topN;
+        return this.options.getTopN();
     }
 
     public void setTopN(Integer topN) {
-        this.topN = topN;
+        this.options.setTopN(topN);
     }
 
     public Boolean getReturnDocuments() {
-        return returnDocuments;
+        return this.options.getReturnDocuments();
     }
 
     public void setReturnDocuments(Boolean returnDocuments) {
-        this.returnDocuments = returnDocuments;
+        this.options.setReturnDocuments(returnDocuments);
+    }
+
+    public String getModel() {
+        return this.options.getModel();
+    }
+
+    public void setModel(String model) {
+        this.options.setModel(model);
     }
 
     public String getRerankPath() {
@@ -83,6 +90,8 @@ public class DashScopeRerankProperties extends DashScopeParentProperties {
         this.rerankPath = rerankPath;
     }
 
+    @DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX)
+    @Deprecated(since = "2.0.0", forRemoval = true)
     public DashScopeRerankOptions getOptions() {
         return options;
     }
