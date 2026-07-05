@@ -44,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration test using Testcontainers to automatically manage Redis test environment
  */
 @SpringBootTest(classes = JedisRedisChatMemoryRepositoryTest.TestConfiguration.class)
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class JedisRedisChatMemoryRepositoryTest {
 
 	private static final int REDIS_PORT = 6379;

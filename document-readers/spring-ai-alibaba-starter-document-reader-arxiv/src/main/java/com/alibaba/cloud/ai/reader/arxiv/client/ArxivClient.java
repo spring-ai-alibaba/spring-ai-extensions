@@ -54,7 +54,7 @@ public class ArxivClient {
 
 	private static final Logger logger = LoggerFactory.getLogger(ArxivClient.class);
 
-	private static final String QUERY_URL_FORMAT = "https://export.arxiv.org/api/query?%s";
+	private static final String DEFAULT_QUERY_URL_FORMAT = "https://export.arxiv.org/api/query?%s";
 
 	private static final DateTimeFormatter ATOM_DATE_FORMAT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
@@ -70,14 +70,21 @@ public class ArxivClient {
 
 	private final DocumentBuilder documentBuilder;
 
+	private final String queryUrlFormat;
+
 	public ArxivClient() {
 		this(100, 3.0f, 3);
 	}
 
 	public ArxivClient(int pageSize, float delaySeconds, int numRetries) {
+		this(pageSize, delaySeconds, numRetries, DEFAULT_QUERY_URL_FORMAT);
+	}
+
+	protected ArxivClient(int pageSize, float delaySeconds, int numRetries, String queryUrlFormat) {
 		this.pageSize = pageSize;
 		this.delaySeconds = delaySeconds;
 		this.numRetries = numRetries;
+		this.queryUrlFormat = queryUrlFormat;
 		this.httpClient = HttpClient.newBuilder()
 			.version(HttpClient.Version.HTTP_2)
 			.connectTimeout(Duration.ofSeconds(10))
@@ -120,7 +127,7 @@ public class ArxivClient {
 					URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8)))
 			.collect(Collectors.joining("&"));
 
-		return String.format(QUERY_URL_FORMAT, queryString);
+		return String.format(queryUrlFormat, queryString);
 	}
 
 	/**

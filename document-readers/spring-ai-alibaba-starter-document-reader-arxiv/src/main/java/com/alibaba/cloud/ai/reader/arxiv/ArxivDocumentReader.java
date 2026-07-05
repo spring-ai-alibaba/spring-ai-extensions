@@ -60,12 +60,23 @@ public class ArxivDocumentReader implements DocumentReader {
 	 * @param maxSize maximum number of documents to retrieve
 	 */
 	public ArxivDocumentReader(String queryString, int maxSize) {
+		this(queryString, maxSize, new PagePdfDocumentParser());
+	}
+
+	/**
+	 * Create an arXiv document reader with a custom document parser
+	 * @param queryString arXiv query string
+	 * @param maxSize maximum number of documents to retrieve
+	 * @param parser parser used for downloaded PDF content
+	 */
+	public ArxivDocumentReader(String queryString, int maxSize, DocumentParser parser) {
 		Assert.hasText(queryString, "Query string must not be empty");
 		Assert.isTrue(maxSize > 0, "Max size must be greater than 0");
+		Assert.notNull(parser, "Document parser must not be null");
 
 		this.queryString = queryString;
 		this.maxSize = maxSize;
-		this.parser = (DocumentParser) new PagePdfDocumentParser();
+		this.parser = parser;
 		this.arxivClient = new ArxivClient();
 		this.arxivResource = new ArxivResource(queryString, maxSize);
 	}

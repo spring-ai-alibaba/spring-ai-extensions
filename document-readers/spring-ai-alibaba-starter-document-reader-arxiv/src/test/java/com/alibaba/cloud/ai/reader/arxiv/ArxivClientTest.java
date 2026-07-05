@@ -16,9 +16,13 @@
 package com.alibaba.cloud.ai.reader.arxiv;
 
 import com.alibaba.cloud.ai.reader.arxiv.client.*;
+import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIf;
 
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -121,62 +125,67 @@ public class ArxivClientTest {
 
 	@Test
 	public void testPagination() throws IOException {
-		// Create client with longer delay to avoid rate limiting
-		ArxivClient client = new ArxivClient(20, 5.0f, 3); // Set page size to 20
+		HttpServer server = createPaginationServer();
+		server.start();
+		try {
+			ArxivClient client = new TestArxivClient(1, 0.0f, 0,
+					"http://localhost:" + server.getAddress().getPort() + "/api/query?%s");
 
-		ArxivSearch search = new ArxivSearch();
-		// Use a more specific and reliable query that should always return results
-		search.setQuery("cat:cs.AI AND ti:\"machine learning\"");
-		// Set max results to a number larger than page size to ensure we get multiple
-		// pages
-		search.setMaxResults(50); // Request more than one page
-		// Set sort order to ensure consistent results
-		search.setSortBy(ArxivSortCriterion.RELEVANCE);
-		search.setSortOrder(ArxivSortOrder.DESCENDING);
+			ArxivSearch search = new ArxivSearch();
+			search.setIdList(List.of("2501.01639v1", "2212.12633v2"));
+			search.setMaxResults(2); // Request more than one page
 
-		// Get first page
-		Iterator<ArxivResult> firstPage = client.results(search, 0);
-		List<ArxivResult> firstPageResults = new ArrayList<>();
+			// Get first page
+			Iterator<ArxivResult> firstPage = client.results(search, 0);
+			List<ArxivResult> firstPageResults = new ArrayList<>();
 
-		// Only take at most pageSize (20) items from the iterator
-		int count = 0;
-		while (firstPage.hasNext() && count < 20) {
-			firstPageResults.add(firstPage.next());
-			count++;
+			// Only take at most pageSize (1) item from the iterator
+			int count = 0;
+			while (count < 1 && firstPage.hasNext()) {
+				firstPageResults.add(firstPage.next());
+				count++;
+			}
+
+			// Print debug information
+			System.out.println("First page results count: " + firstPageResults.size());
+
+			// Verify we have results from first page
+			assertTrue(firstPageResults.size() > 0, "First page should return results");
+			assertTrue(firstPageResults.size() <= 1, "First page should not exceed page size");
+
+			// Get second page
+			Iterator<ArxivResult> secondPage = client.results(search, firstPageResults.size());
+			List<ArxivResult> secondPageResults = new ArrayList<>();
+
+			// Take only up to 1 result from second page
+			count = 0;
+			while (count < 1 && secondPage.hasNext()) {
+				secondPageResults.add(secondPage.next());
+				count++;
+			}
+
+			System.out.println("Second page results count: " + secondPageResults.size());
+
+			// Verify we have results from second page
+			assertTrue(secondPageResults.size() > 0, "Second page should return results");
+			assertTrue(secondPageResults.size() <= 1, "Second page should not exceed page size");
+
+			// Verify results are different
+			Set<String> firstPageIds = firstPageResults.stream()
+				.map(ArxivResult::getEntryId)
+				.collect(Collectors.toSet());
+			Set<String> secondPageIds = secondPageResults.stream()
+				.map(ArxivResult::getEntryId)
+				.collect(Collectors.toSet());
+
+			// Check for any overlap between pages
+			Set<String> intersection = new HashSet<>(firstPageIds);
+			intersection.retainAll(secondPageIds);
+			assertTrue(intersection.isEmpty(), "Pages should not have overlapping results");
 		}
-
-		// Print debug information
-		System.out.println("First page results count: " + firstPageResults.size());
-
-		// Verify we have results from first page
-		assertTrue(firstPageResults.size() > 0, "First page should return results");
-		assertTrue(firstPageResults.size() <= 20, "First page should not exceed page size");
-
-		// Get second page
-		Iterator<ArxivResult> secondPage = client.results(search, firstPageResults.size());
-		List<ArxivResult> secondPageResults = new ArrayList<>();
-
-		// Take only up to 20 results from second page
-		count = 0;
-		while (secondPage.hasNext() && count < 20) {
-			secondPageResults.add(secondPage.next());
-			count++;
+		finally {
+			server.stop(0);
 		}
-
-		System.out.println("Second page results count: " + secondPageResults.size());
-
-		// Verify we have results from second page
-		assertTrue(secondPageResults.size() > 0, "Second page should return results");
-		assertTrue(secondPageResults.size() <= 20, "Second page should not exceed page size");
-
-		// Verify results are different
-		Set<String> firstPageIds = firstPageResults.stream().map(ArxivResult::getEntryId).collect(Collectors.toSet());
-		Set<String> secondPageIds = secondPageResults.stream().map(ArxivResult::getEntryId).collect(Collectors.toSet());
-
-		// Check for any overlap between pages
-		Set<String> intersection = new HashSet<>(firstPageIds);
-		intersection.retainAll(secondPageIds);
-		assertTrue(intersection.isEmpty(), "Pages should not have overlapping results");
 	}
 
 	@Test
@@ -219,6 +228,48 @@ public class ArxivClientTest {
 		Files.deleteIfExists(defaultPath);
 		Files.deleteIfExists(customPath);
 		Files.deleteIfExists(tempDir);
+	}
+
+	private static HttpServer createPaginationServer() throws IOException {
+		HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+		server.createContext("/api/query", exchange -> {
+			String query = exchange.getRequestURI().getRawQuery();
+			String id = query != null && query.contains("start=1") ? "2212.12633v2" : "2501.01639v1";
+			byte[] body = atomFeed(id).getBytes(StandardCharsets.UTF_8);
+			exchange.getResponseHeaders().set("Content-Type", "application/atom+xml; charset=UTF-8");
+			exchange.sendResponseHeaders(200, body.length);
+			try (OutputStream outputStream = exchange.getResponseBody()) {
+				outputStream.write(body);
+			}
+		});
+		return server;
+	}
+
+	private static String atomFeed(String id) {
+		return """
+				<?xml version="1.0" encoding="UTF-8"?>
+				<feed xmlns="http://www.w3.org/2005/Atom" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">
+					<opensearch:totalResults>2</opensearch:totalResults>
+					<entry>
+						<id>https://arxiv.org/abs/%s</id>
+						<title>Test paper %s</title>
+						<summary>Deterministic pagination fixture.</summary>
+						<updated>2025-01-01T00:00:00Z</updated>
+						<published>2025-01-01T00:00:00Z</published>
+						<author><name>Test Author</name></author>
+						<category term="cs.AI" />
+						<link href="https://arxiv.org/abs/%s" rel="alternate" type="text/html" />
+					</entry>
+				</feed>
+				""".formatted(id, id, id);
+	}
+
+	private static final class TestArxivClient extends ArxivClient {
+
+		private TestArxivClient(int pageSize, float delaySeconds, int numRetries, String queryUrlFormat) {
+			super(pageSize, delaySeconds, numRetries, queryUrlFormat);
+		}
+
 	}
 
 }
