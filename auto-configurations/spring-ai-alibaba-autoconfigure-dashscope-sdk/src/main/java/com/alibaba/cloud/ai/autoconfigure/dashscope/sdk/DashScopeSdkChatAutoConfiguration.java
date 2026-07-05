@@ -65,7 +65,7 @@ public class DashScopeSdkChatAutoConfiguration {
 			.apiKey(resolved.apiKey())
 			.workspaceId(resolved.workspaceId())
 			.connectionHeaders(resolved.headers())
-			.defaultOptions(chatProperties.getOptions())
+			.defaultOptions(chatProperties.toOptions())
 			.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
 			.toolCallingManager(toolCallingManager)
 			.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))

@@ -77,7 +77,7 @@ public class DashScopeEmbeddingAutoConfiguration {
 		var embeddingModel = DashScopeEmbeddingModel.builder()
                 .dashScopeApi(dashScopeApi)
                 .metadataMode(embeddingProperties.getMetadataMode())
-                .defaultOptions(embeddingProperties.getOptions())
+                .defaultOptions(embeddingProperties.toOptions())
                 .retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
                 .observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
                 .build();

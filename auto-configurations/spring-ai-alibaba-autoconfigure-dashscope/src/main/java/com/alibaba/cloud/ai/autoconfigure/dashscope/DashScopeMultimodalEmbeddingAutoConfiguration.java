@@ -74,7 +74,7 @@ public class DashScopeMultimodalEmbeddingAutoConfiguration {
 
 		var embeddingModel = DashScopeMultimodalEmbeddingModel.builder()
 				.dashScopeMultimodalEmbeddingApi(dashScopeApi)
-				.defaultOptions(embeddingProperties.getOptions())
+				.defaultOptions(embeddingProperties.toOptions())
 				.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
 				.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
 				.build();

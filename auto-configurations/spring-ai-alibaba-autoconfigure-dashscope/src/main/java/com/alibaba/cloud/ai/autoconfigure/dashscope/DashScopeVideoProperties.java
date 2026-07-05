@@ -19,6 +19,7 @@ import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeVideoApiConstants;
 import com.alibaba.cloud.ai.dashscope.video.DashScopeVideoOptions;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
@@ -41,6 +42,10 @@ public class DashScopeVideoProperties extends DashScopeParentProperties {
 	@NestedConfigurationProperty
     private DashScopeVideoOptions options = DashScopeVideoOptions.builder().build();
 
+    public DashScopeVideoOptions toOptions() {
+        return this.options;
+    }
+
     public String getVideoPath() {
         return videoPath;
     }
@@ -57,12 +62,38 @@ public class DashScopeVideoProperties extends DashScopeParentProperties {
         this.queryTaskPath = queryTaskPath;
     }
 
-    public DashScopeVideoOptions getOptions() {
+    @DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX)
+    @Deprecated(since = "2.0.0", forRemoval = true)
+	public DashScopeVideoOptions getOptions() {
 		return this.options;
 	}
 
 	public void setOptions(DashScopeVideoOptions options) {
 		this.options = options;
 	}
+
+    public String getModel() {
+        return this.options.getModel();
+    }
+
+    public void setModel(String model) {
+        this.options.setModel(model);
+    }
+
+    public DashScopeVideoOptions.InputOptions getInput() {
+        return this.options.getInput();
+    }
+
+    public void setInput(DashScopeVideoOptions.InputOptions input) {
+        this.options.setInput(input);
+    }
+
+    public DashScopeVideoOptions.ParametersOptions getParameters() {
+        return this.options.getParameters();
+    }
+
+    public void setParameters(DashScopeVideoOptions.ParametersOptions parameters) {
+        this.options.setParameters(parameters);
+    }
 
 }

@@ -83,7 +83,7 @@ public class DashScopeAudioTranscriptionAutoConfiguration {
 
 		return DashScopeAudioTranscriptionModel.builder()
                 .audioTranscriptionApi(dashScopeAudioTranscriptionApi)
-                .defaultOptions(audioTranscriptionProperties.getOptions())
+                .defaultOptions(audioTranscriptionProperties.toOptions())
                 .retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
                 .build();
 	}

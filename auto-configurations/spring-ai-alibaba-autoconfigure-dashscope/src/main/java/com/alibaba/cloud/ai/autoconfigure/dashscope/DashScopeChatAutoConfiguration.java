@@ -91,7 +91,7 @@ public class DashScopeChatAutoConfiguration {
 					.dashScopeApi(dashscopeApi)
 					.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
 					.toolCallingManager(toolCallingManager)
-					.defaultOptions(chatProperties.getOptions())
+					.defaultOptions(chatProperties.toOptions())
 					.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
 					.toolExecutionEligibilityPredicate(
 							dashscopeToolExecutionEligibilityPredicate.getIfUnique(DefaultToolExecutionEligibilityPredicate::new))

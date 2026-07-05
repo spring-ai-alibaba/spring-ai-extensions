@@ -56,7 +56,7 @@ public class DashScopeSdkAudioTranscriptionAutoConfiguration {
 			.apiKey(resolved.apiKey())
 			.workspaceId(resolved.workspaceId())
 			.connectionHeaders(resolved.headers())
-			.defaultOptions(audioTranscriptionProperties.getOptions())
+			.defaultOptions(audioTranscriptionProperties.toOptions())
 			.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
 			.build();
 	}

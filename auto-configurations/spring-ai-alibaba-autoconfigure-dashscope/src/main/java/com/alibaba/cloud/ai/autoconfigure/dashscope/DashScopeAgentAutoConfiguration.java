@@ -74,7 +74,7 @@ public class DashScopeAgentAutoConfiguration {
 
         var dashScopeAgent = DashScopeAgent.builder()
                 .dashScopeAgentApi(dashScopeAgentApi)
-                .defaultOptions(agentProperties.getOptions())
+                .defaultOptions(agentProperties.toOptions())
                 .build();
 
         return dashScopeAgent;

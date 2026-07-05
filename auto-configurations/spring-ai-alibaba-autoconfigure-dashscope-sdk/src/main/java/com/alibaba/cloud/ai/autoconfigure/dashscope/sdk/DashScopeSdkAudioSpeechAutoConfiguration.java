@@ -55,7 +55,7 @@ public class DashScopeSdkAudioSpeechAutoConfiguration {
 			.apiKey(resolved.apiKey())
 			.workspaceId(resolved.workspaceId())
 			.connectionHeaders(resolved.headers())
-			.defaultOptions(audioSpeechProperties.getOptions())
+			.defaultOptions(audioSpeechProperties.toOptions())
 			.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
 			.build();
 	}

@@ -16,9 +16,12 @@
 
 package com.alibaba.cloud.ai.autoconfigure.dashscope.sdk;
 
+import java.util.Map;
+
 import com.alibaba.cloud.ai.dashscope.sdk.embedding.DashScopeSdkEmbeddingOptions;
 import org.springframework.ai.document.MetadataMode;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
@@ -38,6 +41,10 @@ public class DashScopeSdkEmbeddingProperties extends DashScopeSdkParentPropertie
 		.model("text-embedding-v2")
 		.build();
 
+	public DashScopeSdkEmbeddingOptions toOptions() {
+		return this.options;
+	}
+
 	public boolean isEnabled() {
 		return this.enabled;
 	}
@@ -54,12 +61,46 @@ public class DashScopeSdkEmbeddingProperties extends DashScopeSdkParentPropertie
 		this.metadataMode = metadataMode;
 	}
 
+	@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX)
+	@Deprecated(since = "2.0.0", forRemoval = true)
 	public DashScopeSdkEmbeddingOptions getOptions() {
 		return this.options;
 	}
 
 	public void setOptions(DashScopeSdkEmbeddingOptions options) {
 		this.options = options;
+	}
+
+	public String getModel() {
+		return this.options.getModel();
+	}
+
+	public void setModel(String model) {
+		this.options.setModel(model);
+	}
+
+	public String getTextType() {
+		return this.options.getTextType();
+	}
+
+	public void setTextType(String textType) {
+		this.options.setTextType(textType);
+	}
+
+	public Integer getDimensions() {
+		return this.options.getDimensions();
+	}
+
+	public void setDimensions(Integer dimensions) {
+		this.options.setDimensions(dimensions);
+	}
+
+	public Map<String, String> getHttpHeaders() {
+		return this.options.getHttpHeaders();
+	}
+
+	public void setHttpHeaders(Map<String, String> httpHeaders) {
+		this.options.setHttpHeaders(httpHeaders);
 	}
 
 }

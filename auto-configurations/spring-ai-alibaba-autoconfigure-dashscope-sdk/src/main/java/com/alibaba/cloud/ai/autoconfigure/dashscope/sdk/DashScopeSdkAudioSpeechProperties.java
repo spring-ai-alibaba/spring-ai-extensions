@@ -16,8 +16,11 @@
 
 package com.alibaba.cloud.ai.autoconfigure.dashscope.sdk;
 
+import java.util.Map;
+
 import com.alibaba.cloud.ai.dashscope.sdk.audio.tts.DashScopeSdkAudioSpeechOptions;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
@@ -35,6 +38,10 @@ public class DashScopeSdkAudioSpeechProperties extends DashScopeSdkParentPropert
 		.model("sambert-zhichu-v1")
 		.build();
 
+	public DashScopeSdkAudioSpeechOptions toOptions() {
+		return this.options;
+	}
+
 	public boolean isEnabled() {
 		return this.enabled;
 	}
@@ -43,12 +50,110 @@ public class DashScopeSdkAudioSpeechProperties extends DashScopeSdkParentPropert
 		this.enabled = enabled;
 	}
 
+	@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX)
+	@Deprecated(since = "2.0.0", forRemoval = true)
 	public DashScopeSdkAudioSpeechOptions getOptions() {
 		return this.options;
 	}
 
 	public void setOptions(DashScopeSdkAudioSpeechOptions options) {
 		this.options = options;
+	}
+
+	public String getModel() {
+		return this.options.getModel();
+	}
+
+	public void setModel(String model) {
+		this.options.setModel(model);
+	}
+
+	public String getVoice() {
+		return this.options.getVoice();
+	}
+
+	public void setVoice(String voice) {
+		this.options.setVoice(voice);
+	}
+
+	public String getFormat() {
+		return this.options.getFormat();
+	}
+
+	public void setFormat(String format) {
+		this.options.setFormat(format);
+	}
+
+	public Double getSpeed() {
+		return this.options.getSpeed();
+	}
+
+	public void setSpeed(Double speed) {
+		this.options.setSpeed(speed);
+	}
+
+	public String getTextType() {
+		return this.options.getTextType();
+	}
+
+	public void setTextType(String textType) {
+		this.options.setTextType(textType);
+	}
+
+	public Integer getSampleRate() {
+		return this.options.getSampleRate();
+	}
+
+	public void setSampleRate(Integer sampleRate) {
+		this.options.setSampleRate(sampleRate);
+	}
+
+	public Integer getVolume() {
+		return this.options.getVolume();
+	}
+
+	public void setVolume(Integer volume) {
+		this.options.setVolume(volume);
+	}
+
+	public Float getRate() {
+		return this.options.getRate();
+	}
+
+	public void setRate(Float rate) {
+		this.options.setRate(rate);
+	}
+
+	public Float getPitch() {
+		return this.options.getPitch();
+	}
+
+	public void setPitch(Float pitch) {
+		this.options.setPitch(pitch);
+	}
+
+	public Boolean getWordTimestampEnabled() {
+		return this.options.getWordTimestampEnabled();
+	}
+
+	public void setWordTimestampEnabled(Boolean wordTimestampEnabled) {
+		this.options.setWordTimestampEnabled(wordTimestampEnabled);
+	}
+
+	public Boolean getPhonemeTimestampEnabled() {
+		return this.options.getPhonemeTimestampEnabled();
+	}
+
+	public void setPhonemeTimestampEnabled(Boolean phonemeTimestampEnabled) {
+		this.options.setPhonemeTimestampEnabled(phonemeTimestampEnabled);
+	}
+
+	public Map<String, String> getHttpHeaders() {
+		return this.options.getHttpHeaders();
+	}
+
+	public void setHttpHeaders(Map<String, String> httpHeaders) {
+		this.options.setHttpHeaders(httpHeaders);
 	}
 
 }

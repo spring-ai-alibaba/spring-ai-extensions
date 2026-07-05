@@ -59,7 +59,7 @@ public class DashScopeSdkImageAutoConfiguration {
 			.apiKey(resolved.apiKey())
 			.workspaceId(resolved.workspaceId())
 			.connectionHeaders(resolved.headers())
-			.defaultOptions(imageProperties.getOptions())
+			.defaultOptions(imageProperties.toOptions())
 			.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
 			.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
 			.build();
