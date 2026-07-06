@@ -126,7 +126,7 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 		return this.order;
 	}
 
-	protected Filter.@Nullable Expression doGetFilterExpression(Map<String, @Nullable Object> context) {
+	protected Filter.@Nullable Expression doGetFilterExpression(Map<String, ?> context) {
 
 		Object filterExpressionValue = context.get(FILTER_EXPRESSION);
 		if (filterExpressionValue == null

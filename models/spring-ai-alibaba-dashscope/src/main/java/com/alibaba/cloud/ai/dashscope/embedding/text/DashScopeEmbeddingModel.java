@@ -47,6 +47,7 @@ import org.springframework.ai.embedding.observation.EmbeddingModelObservationCon
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationDocumentation;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
 
 /**
@@ -158,8 +159,9 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
                 .observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
                         this.observationRegistry)
                 .observe(() -> {
-                    DashScopeApiSpec.EmbeddingList apiEmbeddingResponse = RetryUtils.execute(this.retryTemplate,
-                            () -> this.dashScopeApi.embeddings(apiRequest).getBody());
+                    ResponseEntity<DashScopeApiSpec.EmbeddingList> apiEmbeddingResponseEntity = RetryUtils
+                            .execute(this.retryTemplate, () -> this.dashScopeApi.embeddings(apiRequest));
+                    var apiEmbeddingResponse = apiEmbeddingResponseEntity.getBody();
 
                     if (apiEmbeddingResponse == null) {
                         logger.warn("No embeddings returned for request: {}", request);
