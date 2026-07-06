@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Description;
 @EnableConfigurationProperties(JsonProcessorProperties.class)
 @ConditionalOnClass({ JsonProcessorInsertService.class, JsonProcessorRemoveService.class,
 		JsonProcessorReplaceService.class, JsonProcessorParseService.class })
-@ConditionalOnProperty(value = JsonProcessorConstants.CONFIG_PREFIX, name = "enabled", havingValue = "true",
+@ConditionalOnProperty(prefix = JsonProcessorConstants.CONFIG_PREFIX, name = "enabled", havingValue = "true",
 		matchIfMissing = true)
 public class JsonProcessorAutoConfiguration {
 
