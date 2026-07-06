@@ -374,6 +374,29 @@ public class DashScopeApi {
 	}
 
 	public void upsertPipeline(List<Document> documents, DashScopeStoreOptions storeOptions) {
+		DashScopeApiSpec.UpsertPipelineRequest upsertPipelineRequest = createUpsertPipelineRequest(documents,
+				storeOptions);
+		ResponseEntity<DashScopeApiSpec.UpsertPipelineResponse> upsertPipelineResponse = this.restClient.put()
+			.uri(PIPELINE_RESTFUL_URL)
+			.body(upsertPipelineRequest)
+			.retrieve()
+			.toEntity(DashScopeApiSpec.UpsertPipelineResponse.class);
+		if (upsertPipelineResponse.getBody() == null
+				|| !"SUCCESS".equalsIgnoreCase(upsertPipelineResponse.getBody().status())) {
+			throw new DashScopeException(ErrorCodeEnum.CREATE_INDEX_ERROR);
+		}
+		String pipelineId = upsertPipelineResponse.getBody().id();
+		addPipelineDocuments(pipelineId, upsertPipelineRequest);
+	}
+
+	public void addPipelineDocuments(String pipelineId, List<Document> documents, DashScopeStoreOptions storeOptions) {
+		DashScopeApiSpec.UpsertPipelineRequest upsertPipelineRequest = createUpsertPipelineRequest(documents,
+				storeOptions);
+		addPipelineDocuments(pipelineId, upsertPipelineRequest);
+	}
+
+	private DashScopeApiSpec.UpsertPipelineRequest createUpsertPipelineRequest(List<Document> documents,
+			DashScopeStoreOptions storeOptions) {
 		String embeddingModelName = (storeOptions.getEmbeddingOptions() == null ? DEFAULT_EMBEDDING_MODEL
 				: storeOptions.getEmbeddingOptions().getModel());
 		DashScopeApiSpec.EmbeddingConfiguredTransformations embeddingConfig = new DashScopeApiSpec.EmbeddingConfiguredTransformations(
@@ -413,19 +436,13 @@ public class DashScopeApi {
 				Arrays.asList(embeddingConfig, parserConfig, retrieverConfig),
                 List.of(new DashScopeApiSpec.DataSourcesConfig("DATA_CENTER_FILE",
                         new DashScopeApiSpec.DataSourcesConfig.DataSourcesComponent(documentIdList))),
-                List.of(new DashScopeApiSpec.DataSinksConfig("BUILT_IN", null))
+                 List.of(new DashScopeApiSpec.DataSinksConfig("BUILT_IN", null))
 
 		);
-		ResponseEntity<DashScopeApiSpec.UpsertPipelineResponse> upsertPipelineResponse = this.restClient.put()
-			.uri(PIPELINE_RESTFUL_URL)
-			.body(upsertPipelineRequest)
-			.retrieve()
-			.toEntity(DashScopeApiSpec.UpsertPipelineResponse.class);
-		if (upsertPipelineResponse.getBody() == null
-				|| !"SUCCESS".equalsIgnoreCase(upsertPipelineResponse.getBody().status())) {
-			throw new DashScopeException(ErrorCodeEnum.CREATE_INDEX_ERROR);
-		}
-		String pipelineId = upsertPipelineResponse.getBody().id();
+		return upsertPipelineRequest;
+	}
+
+	private void addPipelineDocuments(String pipelineId, DashScopeApiSpec.UpsertPipelineRequest upsertPipelineRequest) {
 		ResponseEntity<DashScopeApiSpec.StartPipelineResponse> startPipelineResponse = this.restClient.post()
 			.uri(MANAGED_INGEST_PIPELINE_RESTFUL_URL, pipelineId)
 			.body(upsertPipelineRequest)

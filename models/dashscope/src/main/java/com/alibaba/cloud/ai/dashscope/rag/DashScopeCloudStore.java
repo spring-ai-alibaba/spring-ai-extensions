@@ -23,6 +23,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -65,6 +66,11 @@ public class DashScopeCloudStore implements VectorStore {
 			.collect(Collectors.toList());
 		if (documentIdList == null || documentIdList.isEmpty()) {
 			throw new DashScopeException("document's id must not be null");
+		}
+		String pipelineId = dashScopeApi.getPipelineIdByName(options.getIndexName());
+		if (StringUtils.hasText(pipelineId)) {
+			dashScopeApi.addPipelineDocuments(pipelineId, documents, options);
+			return;
 		}
 		dashScopeApi.upsertPipeline(documents, options);
 	}

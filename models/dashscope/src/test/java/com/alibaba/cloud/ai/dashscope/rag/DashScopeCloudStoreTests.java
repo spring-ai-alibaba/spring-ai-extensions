@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -87,7 +88,27 @@ class DashScopeCloudStoreTests {
 	}
 
 	@Test
-	void testAddDocumentsSuccessfully() {
+	void testAddDocumentsToExistingPipelineSuccessfully() {
+		// Create test documents
+		Map<String, Object> metadata = new HashMap<>();
+		metadata.put("key", "value");
+
+		List<Document> documents = Arrays.asList(new Document("id1", "content1", metadata),
+				new Document("id2", "content2", metadata));
+
+		// Execute add operation
+		cloudStore.add(documents);
+
+		// Verify API call
+		verify(dashScopeApi).addPipelineDocuments(eq(TEST_PIPELINE_ID), eq(documents), eq(options));
+		verify(dashScopeApi, never()).upsertPipeline(eq(documents), eq(options));
+	}
+
+	@Test
+	void testCreatePipelineWhenAddingDocumentsToNewIndex() {
+		// Mock non-existent index scenario
+		when(dashScopeApi.getPipelineIdByName(TEST_INDEX_NAME)).thenReturn(null);
+
 		// Create test documents
 		Map<String, Object> metadata = new HashMap<>();
 		metadata.put("key", "value");
