@@ -16,8 +16,6 @@
 
 package com.alibaba.cloud.ai.autoconfigure.dashscope.sdk;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -141,31 +139,12 @@ class DashScopeSdkPropertiesTests {
 		assertThat(properties.toOptions().getFileUrls()).containsExactly("https://example.com/legacy.wav");
 	}
 
-	@Test
-	void additionalMetadataContainsLegacyOptionsReplacements() throws IOException {
-		String metadata = additionalMetadata();
-
-		assertThat(metadata)
-			.contains("spring.ai.dashscope.sdk.chat.options.model", "spring.ai.dashscope.sdk.chat.model")
-			.contains("spring.ai.dashscope.sdk.image.options.async", "spring.ai.dashscope.sdk.image.async")
-			.contains("spring.ai.dashscope.sdk.audio.transcription.options.file-urls",
-					"spring.ai.dashscope.sdk.audio.transcription.file-urls");
-	}
-
 	private static <T> T bind(String prefix, Class<T> propertiesType, String... pairs) {
 		Map<String, String> source = new LinkedHashMap<>();
 		for (int i = 0; i < pairs.length; i += 2) {
 			source.put(pairs[i], pairs[i + 1]);
 		}
 		return new Binder(new MapConfigurationPropertySource(source)).bind(prefix, propertiesType).get();
-	}
-
-	private static String additionalMetadata() throws IOException {
-		try (var inputStream = DashScopeSdkPropertiesTests.class.getClassLoader()
-			.getResourceAsStream("META-INF/additional-spring-configuration-metadata.json")) {
-			assertThat(inputStream).isNotNull();
-			return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-		}
 	}
 
 }

@@ -17,17 +17,18 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeResponseFormat;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.ResponseFormat;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.SearchOptions;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.Skill;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.Tool;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeChatApiConstants;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ChatModel;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
  * @author yuluo
@@ -57,328 +58,320 @@ public class DashScopeChatProperties extends DashScopeParentProperties {
 	 * DashScope Chat completions path.
 	 */
 	private String completionsPath = DashScopeChatApiConstants.TEXT_GENERATION;
-
-	@NestedConfigurationProperty
 	private DashScopeChatOptions options = DashScopeChatOptions.builder()
 		.model(DEFAULT_CHAT_MODEL)
 		.build();
+	private final Options legacyOptions = new Options();
 
 	public DashScopeChatOptions toOptions() {
+		if (this.options == null) {
+			this.options = DashScopeChatOptions.builder().model(DEFAULT_CHAT_MODEL).build();
+		}
 		return this.options;
 	}
 
 	@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX)
 	@Deprecated(since = "2.0.0", forRemoval = true)
-	public DashScopeChatOptions getOptions() {
-		return this.options;
+	public Options getOptions() {
+		return this.legacyOptions;
 	}
 
-	public void setOptions(DashScopeChatOptions options) {
-		this.options = options;
+	public void setOptions(Options options) {
+		// Deprecated options are applied by the nested Options setters.
 	}
 
-	public DashScopeApiSpec.TranslationOptions getTranslationOptions() {
-		return this.options.getTranslationOptions();
+	private void updateOptions(java.util.function.Consumer<DashScopeChatOptions.Builder> customizer) {
+		DashScopeChatOptions.Builder builder = toOptions().mutate();
+		customizer.accept(builder);
+		this.options = builder.build();
 	}
 
-	public void setTranslationOptions(DashScopeApiSpec.TranslationOptions translationOptions) {
-		this.options.setTranslationOptions(translationOptions);
-	}
-
-	public String getOutputFormat() {
-		return this.options.getOutputFormat();
-	}
-
-	public void setOutputFormat(String outputFormat) {
-		this.options.setOutputFormat(outputFormat);
-	}
-
-	public Integer getTopLogProbs() {
-		return this.options.getTopLogProbs();
-	}
-
-	public void setTopLogProbs(Integer topLogProbs) {
-		this.options.setTopLogProbs(topLogProbs);
-	}
-
-	public Boolean getLogprobs() {
-		return this.options.getLogprobs();
-	}
-
-	public void setLogprobs(Boolean logprobs) {
-		this.options.setLogprobs(logprobs);
-	}
-
-	public DashScopeApiSpec.OCROption getOcrOptions() {
-		return this.options.getOcrOptions();
-	}
-
-	public void setOcrOptions(DashScopeApiSpec.OCROption ocrOptions) {
-		this.options.setOcrOptions(ocrOptions);
-	}
-
-	public Boolean getVlEnableImageHwOutput() {
-		return this.options.getVlEnableImageHwOutput();
-	}
-
-	public void setVlEnableImageHwOutput(Boolean vlEnableImageHwOutput) {
-		this.options.setVlEnableImageHwOutput(vlEnableImageHwOutput);
-	}
-
-	public Object getAudio() {
-		return this.options.getAudio();
-	}
-
-	public void setAudio(Object audio) {
-		this.options.setAudio(audio);
-	}
-
-	public Object getStreamOptions() {
-		return this.options.getStreamOptions();
-	}
-
-	public void setStreamOptions(Object streamOptions) {
-		this.options.setStreamOptions(streamOptions);
-	}
-
-	public Object getAsrOptions() {
-		return this.options.getAsrOptions();
-	}
-
-	public void setAsrOptions(Object asrOptions) {
-		this.options.setAsrOptions(asrOptions);
-	}
-
-	public Integer getMaxInputTokens() {
-		return this.options.getMaxInputTokens();
-	}
-
-	public void setMaxInputTokens(Integer maxInputTokens) {
-		this.options.setMaxInputTokens(maxInputTokens);
-	}
-
-	public List<String> getModalities() {
-		return this.options.getModalities();
-	}
-
-	public void setModalities(List<String> modalities) {
-		this.options.setModalities(modalities);
-	}
-
-	public String getModel() {
-		return this.options.getModel();
+	public @Nullable String getModel() {
+		return toOptions().getModel();
 	}
 
 	public void setModel(String model) {
-		this.options.setModel(model);
+		updateOptions(builder -> builder.model(model));
 	}
 
-	public Integer getMaxTokens() {
-		return this.options.getMaxTokens();
+	public @Nullable Integer getMaxTokens() {
+		return toOptions().getMaxTokens();
 	}
 
 	public void setMaxTokens(Integer maxTokens) {
-		this.options.setMaxTokens(maxTokens);
+		updateOptions(builder -> builder.maxTokens(maxTokens));
 	}
 
-	public Boolean getStream() {
-		return this.options.getStream();
+	public @Nullable Integer getMaxCompletionTokens() {
+		return toOptions().getMaxCompletionTokens();
+	}
+
+	public void setMaxCompletionTokens(Integer maxCompletionTokens) {
+		updateOptions(builder -> builder.maxCompletionTokens(maxCompletionTokens));
+	}
+
+	public @Nullable Boolean getStream() {
+		return toOptions().getStream();
 	}
 
 	public void setStream(Boolean stream) {
-		this.options.setStream(stream);
+		updateOptions(builder -> builder.stream(stream));
 	}
 
-	public Double getTemperature() {
-		return this.options.getTemperature();
+	public @Nullable Double getTemperature() {
+		return toOptions().getTemperature();
 	}
 
 	public void setTemperature(Double temperature) {
-		this.options.setTemperature(temperature);
+		updateOptions(builder -> builder.temperature(temperature));
 	}
 
-	public DashScopeApiSpec.SearchOptions getSearchOptions() {
-		return this.options.getSearchOptions();
+	public @Nullable SearchOptions getSearchOptions() {
+		return toOptions().getSearchOptions();
 	}
 
-	public void setSearchOptions(DashScopeApiSpec.SearchOptions searchOptions) {
-		this.options.setSearchOptions(searchOptions);
+	public void setSearchOptions(SearchOptions searchOptions) {
+		updateOptions(builder -> builder.searchOptions(searchOptions));
 	}
 
-	public Boolean getParallelToolCalls() {
-		return this.options.getParallelToolCalls();
+	public @Nullable Boolean getParallelToolCalls() {
+		return toOptions().getParallelToolCalls();
 	}
 
 	public void setParallelToolCalls(Boolean parallelToolCalls) {
-		this.options.setParallelToolCalls(parallelToolCalls);
+		updateOptions(builder -> builder.parallelToolCalls(parallelToolCalls));
 	}
 
-	public Map<String, String> getHttpHeaders() {
-		return this.options.getHttpHeaders();
+	public @Nullable Map<String, String> getHttpHeaders() {
+		return toOptions().getHttpHeaders();
 	}
 
 	public void setHttpHeaders(Map<String, String> httpHeaders) {
-		this.options.setHttpHeaders(httpHeaders);
+		updateOptions(builder -> builder.httpHeaders(httpHeaders));
 	}
 
-	public Double getTopP() {
-		return this.options.getTopP();
+	public @Nullable Double getTopP() {
+		return toOptions().getTopP();
 	}
 
 	public void setTopP(Double topP) {
-		this.options.setTopP(topP);
+		updateOptions(builder -> builder.topP(topP));
 	}
 
-	public Integer getTopK() {
-		return this.options.getTopK();
+	public @Nullable Integer getTopK() {
+		return toOptions().getTopK();
 	}
 
 	public void setTopK(Integer topK) {
-		this.options.setTopK(topK);
+		updateOptions(builder -> builder.topK(topK));
 	}
 
-	public List<Object> getStop() {
-		return this.options.getStop();
+	public @Nullable Object getStop() {
+		return toOptions().getStop();
 	}
 
-	public void setStop(List<Object> stop) {
-		this.options.setStop(stop);
+	public void setStop(Object stop) {
+		updateOptions(builder -> builder.stop(stop));
 	}
 
-	public DashScopeResponseFormat getResponseFormat() {
-		return this.options.getResponseFormat();
+	public @Nullable ResponseFormat getResponseFormat() {
+		return toOptions().getResponseFormat();
 	}
 
-	public void setResponseFormat(DashScopeResponseFormat responseFormat) {
-		this.options.setResponseFormat(responseFormat);
+	public void setResponseFormat(ResponseFormat responseFormat) {
+		updateOptions(builder -> builder.responseFormat(responseFormat));
 	}
 
-	public Integer getThinkingBudget() {
-		return this.options.getThinkingBudget();
+	public @Nullable String getResultFormat() {
+		return toOptions().getResultFormat();
+	}
+
+	public void setResultFormat(String resultFormat) {
+		updateOptions(builder -> builder.resultFormat(resultFormat));
+	}
+
+	public @Nullable Boolean getLogprobs() {
+		return toOptions().getLogprobs();
+	}
+
+	public void setLogprobs(Boolean logprobs) {
+		updateOptions(builder -> builder.logprobs(logprobs));
+	}
+
+	public @Nullable Integer getTopLogProbs() {
+		return toOptions().getTopLogProbs();
+	}
+
+	public void setTopLogProbs(Integer topLogProbs) {
+		updateOptions(builder -> builder.topLogprobs(topLogProbs));
+	}
+
+	public @Nullable Integer getN() {
+		return toOptions().getN();
+	}
+
+	public void setN(Integer n) {
+		updateOptions(builder -> builder.n(n));
+	}
+
+	public @Nullable Integer getThinkingBudget() {
+		return toOptions().getThinkingBudget();
 	}
 
 	public void setThinkingBudget(Integer thinkingBudget) {
-		this.options.setThinkingBudget(thinkingBudget);
+		updateOptions(builder -> builder.thinkingBudget(thinkingBudget));
 	}
 
-	public Boolean getEnableCodeInterpreter() {
-		return this.options.getEnableCodeInterpreter();
+	public @Nullable Boolean getEnableCodeInterpreter() {
+		return toOptions().getEnableCodeInterpreter();
 	}
 
 	public void setEnableCodeInterpreter(Boolean enableCodeInterpreter) {
-		this.options.setEnableCodeInterpreter(enableCodeInterpreter);
+		updateOptions(builder -> builder.enableCodeInterpreter(enableCodeInterpreter));
 	}
 
-	public Boolean getEnableSearch() {
-		return this.options.getEnableSearch();
+	public @Nullable Boolean getEnableSearch() {
+		return toOptions().getEnableSearch();
 	}
 
 	public void setEnableSearch(Boolean enableSearch) {
-		this.options.setEnableSearch(enableSearch);
+		updateOptions(builder -> builder.enableSearch(enableSearch));
 	}
 
-	public Double getRepetitionPenalty() {
-		return this.options.getRepetitionPenalty();
+	public @Nullable Double getRepetitionPenalty() {
+		return toOptions().getRepetitionPenalty();
 	}
 
 	public void setRepetitionPenalty(Double repetitionPenalty) {
-		this.options.setRepetitionPenalty(repetitionPenalty);
+		updateOptions(builder -> builder.repetitionPenalty(repetitionPenalty));
 	}
 
-	public List<DashScopeApiSpec.FunctionTool> getTools() {
-		return this.options.getTools();
+	public @Nullable Double getPresencePenalty() {
+		return toOptions().getPresencePenalty();
 	}
 
-	public void setTools(List<DashScopeApiSpec.FunctionTool> tools) {
-		this.options.setTools(tools);
+	public void setPresencePenalty(Double presencePenalty) {
+		updateOptions(builder -> builder.presencePenalty(presencePenalty));
 	}
 
-	public Object getToolChoice() {
-		return this.options.getToolChoice();
+	public @Nullable Boolean getPreserveThinking() {
+		return toOptions().getPreserveThinking();
+	}
+
+	public void setPreserveThinking(Boolean preserveThinking) {
+		updateOptions(builder -> builder.preserveThinking(preserveThinking));
+	}
+
+	public @Nullable String getReasoningEffort() {
+		return toOptions().getReasoningEffort();
+	}
+
+	public void setReasoningEffort(String reasoningEffort) {
+		updateOptions(builder -> builder.reasoningEffort(reasoningEffort));
+	}
+
+	public @Nullable Boolean getToolStream() {
+		return toOptions().getToolStream();
+	}
+
+	public void setToolStream(Boolean toolStream) {
+		updateOptions(builder -> builder.toolStream(toolStream));
+	}
+
+	public @Nullable List<Tool> getTools() {
+		return toOptions().getTools();
+	}
+
+	public void setTools(List<Tool> tools) {
+		updateOptions(builder -> builder.tools(tools));
+	}
+
+	public @Nullable Object getToolChoice() {
+		return toOptions().getToolChoice();
 	}
 
 	public void setToolChoice(Object toolChoice) {
-		this.options.setToolChoice(toolChoice);
+		updateOptions(builder -> builder.toolChoice(toolChoice));
 	}
 
-	public Integer getSeed() {
-		return this.options.getSeed();
+	public @Nullable Integer getSeed() {
+		return toOptions().getSeed();
 	}
 
 	public void setSeed(Integer seed) {
-		this.options.setSeed(seed);
+		updateOptions(builder -> builder.seed(seed));
 	}
 
-	public List<ToolCallback> getToolCallbacks() {
-		return this.options.getToolCallbacks();
+	public @Nullable List<ToolCallback> getToolCallbacks() {
+		return toOptions().getToolCallbacks();
 	}
 
 	public void setToolCallbacks(List<ToolCallback> toolCallbacks) {
-		this.options.setToolCallbacks(toolCallbacks);
+		updateOptions(builder -> builder.toolCallbacks(toolCallbacks));
 	}
 
-	public Set<String> getToolNames() {
-		return this.options.getToolNames();
-	}
-
-	public void setToolNames(Set<String> toolNames) {
-		this.options.setToolNames(toolNames);
-	}
-
-	public Boolean getInternalToolExecutionEnabled() {
-		return this.options.getInternalToolExecutionEnabled();
-	}
-
-	public void setInternalToolExecutionEnabled(Boolean internalToolExecutionEnabled) {
-		this.options.setInternalToolExecutionEnabled(internalToolExecutionEnabled);
-	}
-
-	public Map<String, Object> getToolContext() {
-		return this.options.getToolContext();
+	public @Nullable Map<String, Object> getToolContext() {
+		return toOptions().getToolContext();
 	}
 
 	public void setToolContext(Map<String, Object> toolContext) {
-		this.options.setToolContext(toolContext);
+		updateOptions(builder -> builder.toolContext(toolContext));
 	}
 
-	public Boolean getIncrementalOutput() {
-		return this.options.getIncrementalOutput();
+	public @Nullable Boolean getIncrementalOutput() {
+		return toOptions().getIncrementalOutput();
 	}
 
 	public void setIncrementalOutput(Boolean incrementalOutput) {
-		this.options.setIncrementalOutput(incrementalOutput);
+		updateOptions(builder -> builder.incrementalOutput(incrementalOutput));
 	}
 
-	public Boolean getVlHighResolutionImages() {
-		return this.options.getVlHighResolutionImages();
+	public @Nullable Boolean getVlHighResolutionImages() {
+		return toOptions().getVlHighResolutionImages();
 	}
 
 	public void setVlHighResolutionImages(Boolean vlHighResolutionImages) {
-		this.options.setVlHighResolutionImages(vlHighResolutionImages);
+		updateOptions(builder -> builder.vlHighResolutionImages(vlHighResolutionImages));
 	}
 
-	public Boolean getEnableThinking() {
-		return this.options.getEnableThinking();
+	public @Nullable Boolean getEnableThinking() {
+		return toOptions().getEnableThinking();
 	}
 
 	public void setEnableThinking(Boolean enableThinking) {
-		this.options.setEnableThinking(enableThinking);
+		updateOptions(builder -> builder.enableThinking(enableThinking));
 	}
 
-	public Boolean getMultiModel() {
-		return this.options.getMultiModel();
+	public @Nullable Boolean getMultiModel() {
+		return toOptions().getMultiModel();
 	}
 
 	public void setMultiModel(Boolean multiModel) {
-		this.options.setMultiModel(multiModel);
+		updateOptions(builder -> builder.multiModel(multiModel));
 	}
 
-	public Map<String, Object> getExtraBody() {
-		return this.options.getExtraBody();
+	public @Nullable Map<String, Object> getExtraBody() {
+		return toOptions().getExtraBody();
 	}
 
 	public void setExtraBody(Map<String, Object> extraBody) {
-		this.options.setExtraBody(extraBody);
+		updateOptions(builder -> builder.extraBody(extraBody));
+	}
+
+	public @Nullable String getDataInspection() {
+		return toOptions().getDataInspection();
+	}
+
+	public void setDataInspection(String dataInspection) {
+		updateOptions(builder -> builder.dataInspection(dataInspection));
+	}
+
+	public @Nullable List<Skill> getSkill() {
+		return toOptions().getSkill();
+	}
+
+	public void setSkill(List<Skill> skill) {
+		updateOptions(builder -> builder.skill(skill));
 	}
 
 	public String getCompletionsPath() {
@@ -398,5 +391,369 @@ public class DashScopeChatProperties extends DashScopeParentProperties {
 
 		this.enabled = enabled;
 	}
+	public class Options {
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".model")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getModel() {
+			return DashScopeChatProperties.this.getModel();
+		}
+
+		public void setModel(String model) {
+			DashScopeChatProperties.this.setModel(model);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".max-tokens")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getMaxTokens() {
+			return DashScopeChatProperties.this.getMaxTokens();
+		}
+
+		public void setMaxTokens(Integer maxTokens) {
+			DashScopeChatProperties.this.setMaxTokens(maxTokens);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".max-completion-tokens")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getMaxCompletionTokens() {
+			return DashScopeChatProperties.this.getMaxCompletionTokens();
+		}
+
+		public void setMaxCompletionTokens(Integer maxCompletionTokens) {
+			DashScopeChatProperties.this.setMaxCompletionTokens(maxCompletionTokens);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".stream")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getStream() {
+			return DashScopeChatProperties.this.getStream();
+		}
+
+		public void setStream(Boolean stream) {
+			DashScopeChatProperties.this.setStream(stream);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".temperature")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Double getTemperature() {
+			return DashScopeChatProperties.this.getTemperature();
+		}
+
+		public void setTemperature(Double temperature) {
+			DashScopeChatProperties.this.setTemperature(temperature);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".search-options")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable SearchOptions getSearchOptions() {
+			return DashScopeChatProperties.this.getSearchOptions();
+		}
+
+		public void setSearchOptions(SearchOptions searchOptions) {
+			DashScopeChatProperties.this.setSearchOptions(searchOptions);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".parallel-tool-calls")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getParallelToolCalls() {
+			return DashScopeChatProperties.this.getParallelToolCalls();
+		}
+
+		public void setParallelToolCalls(Boolean parallelToolCalls) {
+			DashScopeChatProperties.this.setParallelToolCalls(parallelToolCalls);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".http-headers")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Map<String, String> getHttpHeaders() {
+			return DashScopeChatProperties.this.getHttpHeaders();
+		}
+
+		public void setHttpHeaders(Map<String, String> httpHeaders) {
+			DashScopeChatProperties.this.setHttpHeaders(httpHeaders);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".top-p")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Double getTopP() {
+			return DashScopeChatProperties.this.getTopP();
+		}
+
+		public void setTopP(Double topP) {
+			DashScopeChatProperties.this.setTopP(topP);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".top-k")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getTopK() {
+			return DashScopeChatProperties.this.getTopK();
+		}
+
+		public void setTopK(Integer topK) {
+			DashScopeChatProperties.this.setTopK(topK);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".stop")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Object getStop() {
+			return DashScopeChatProperties.this.getStop();
+		}
+
+		public void setStop(Object stop) {
+			DashScopeChatProperties.this.setStop(stop);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".response-format")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable ResponseFormat getResponseFormat() {
+			return DashScopeChatProperties.this.getResponseFormat();
+		}
+
+		public void setResponseFormat(ResponseFormat responseFormat) {
+			DashScopeChatProperties.this.setResponseFormat(responseFormat);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".result-format")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getResultFormat() {
+			return DashScopeChatProperties.this.getResultFormat();
+		}
+
+		public void setResultFormat(String resultFormat) {
+			DashScopeChatProperties.this.setResultFormat(resultFormat);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".logprobs")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getLogprobs() {
+			return DashScopeChatProperties.this.getLogprobs();
+		}
+
+		public void setLogprobs(Boolean logprobs) {
+			DashScopeChatProperties.this.setLogprobs(logprobs);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".top-log-probs")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getTopLogProbs() {
+			return DashScopeChatProperties.this.getTopLogProbs();
+		}
+
+		public void setTopLogProbs(Integer topLogProbs) {
+			DashScopeChatProperties.this.setTopLogProbs(topLogProbs);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".n")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getN() {
+			return DashScopeChatProperties.this.getN();
+		}
+
+		public void setN(Integer n) {
+			DashScopeChatProperties.this.setN(n);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".thinking-budget")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getThinkingBudget() {
+			return DashScopeChatProperties.this.getThinkingBudget();
+		}
+
+		public void setThinkingBudget(Integer thinkingBudget) {
+			DashScopeChatProperties.this.setThinkingBudget(thinkingBudget);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".enable-code-interpreter")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getEnableCodeInterpreter() {
+			return DashScopeChatProperties.this.getEnableCodeInterpreter();
+		}
+
+		public void setEnableCodeInterpreter(Boolean enableCodeInterpreter) {
+			DashScopeChatProperties.this.setEnableCodeInterpreter(enableCodeInterpreter);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".enable-search")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getEnableSearch() {
+			return DashScopeChatProperties.this.getEnableSearch();
+		}
+
+		public void setEnableSearch(Boolean enableSearch) {
+			DashScopeChatProperties.this.setEnableSearch(enableSearch);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".repetition-penalty")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Double getRepetitionPenalty() {
+			return DashScopeChatProperties.this.getRepetitionPenalty();
+		}
+
+		public void setRepetitionPenalty(Double repetitionPenalty) {
+			DashScopeChatProperties.this.setRepetitionPenalty(repetitionPenalty);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".presence-penalty")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Double getPresencePenalty() {
+			return DashScopeChatProperties.this.getPresencePenalty();
+		}
+
+		public void setPresencePenalty(Double presencePenalty) {
+			DashScopeChatProperties.this.setPresencePenalty(presencePenalty);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".preserve-thinking")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getPreserveThinking() {
+			return DashScopeChatProperties.this.getPreserveThinking();
+		}
+
+		public void setPreserveThinking(Boolean preserveThinking) {
+			DashScopeChatProperties.this.setPreserveThinking(preserveThinking);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".reasoning-effort")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getReasoningEffort() {
+			return DashScopeChatProperties.this.getReasoningEffort();
+		}
+
+		public void setReasoningEffort(String reasoningEffort) {
+			DashScopeChatProperties.this.setReasoningEffort(reasoningEffort);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".tool-stream")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getToolStream() {
+			return DashScopeChatProperties.this.getToolStream();
+		}
+
+		public void setToolStream(Boolean toolStream) {
+			DashScopeChatProperties.this.setToolStream(toolStream);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".tools")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable List<Tool> getTools() {
+			return DashScopeChatProperties.this.getTools();
+		}
+
+		public void setTools(List<Tool> tools) {
+			DashScopeChatProperties.this.setTools(tools);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".tool-choice")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Object getToolChoice() {
+			return DashScopeChatProperties.this.getToolChoice();
+		}
+
+		public void setToolChoice(Object toolChoice) {
+			DashScopeChatProperties.this.setToolChoice(toolChoice);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".seed")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getSeed() {
+			return DashScopeChatProperties.this.getSeed();
+		}
+
+		public void setSeed(Integer seed) {
+			DashScopeChatProperties.this.setSeed(seed);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".tool-callbacks")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable List<ToolCallback> getToolCallbacks() {
+			return DashScopeChatProperties.this.getToolCallbacks();
+		}
+
+		public void setToolCallbacks(List<ToolCallback> toolCallbacks) {
+			DashScopeChatProperties.this.setToolCallbacks(toolCallbacks);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".tool-context")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Map<String, Object> getToolContext() {
+			return DashScopeChatProperties.this.getToolContext();
+		}
+
+		public void setToolContext(Map<String, Object> toolContext) {
+			DashScopeChatProperties.this.setToolContext(toolContext);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".incremental-output")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getIncrementalOutput() {
+			return DashScopeChatProperties.this.getIncrementalOutput();
+		}
+
+		public void setIncrementalOutput(Boolean incrementalOutput) {
+			DashScopeChatProperties.this.setIncrementalOutput(incrementalOutput);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".vl-high-resolution-images")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getVlHighResolutionImages() {
+			return DashScopeChatProperties.this.getVlHighResolutionImages();
+		}
+
+		public void setVlHighResolutionImages(Boolean vlHighResolutionImages) {
+			DashScopeChatProperties.this.setVlHighResolutionImages(vlHighResolutionImages);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".enable-thinking")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getEnableThinking() {
+			return DashScopeChatProperties.this.getEnableThinking();
+		}
+
+		public void setEnableThinking(Boolean enableThinking) {
+			DashScopeChatProperties.this.setEnableThinking(enableThinking);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".multi-model")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getMultiModel() {
+			return DashScopeChatProperties.this.getMultiModel();
+		}
+
+		public void setMultiModel(Boolean multiModel) {
+			DashScopeChatProperties.this.setMultiModel(multiModel);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".extra-body")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Map<String, Object> getExtraBody() {
+			return DashScopeChatProperties.this.getExtraBody();
+		}
+
+		public void setExtraBody(Map<String, Object> extraBody) {
+			DashScopeChatProperties.this.setExtraBody(extraBody);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".data-inspection")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getDataInspection() {
+			return DashScopeChatProperties.this.getDataInspection();
+		}
+
+		public void setDataInspection(String dataInspection) {
+			DashScopeChatProperties.this.setDataInspection(dataInspection);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".skill")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable List<Skill> getSkill() {
+			return DashScopeChatProperties.this.getSkill();
+		}
+
+		public void setSkill(List<Skill> skill) {
+			DashScopeChatProperties.this.setSkill(skill);
+		}
+
+	}
+
 
 }

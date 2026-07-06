@@ -18,9 +18,9 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeVideoApiConstants;
 import com.alibaba.cloud.ai.dashscope.video.DashScopeVideoOptions;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
  * DashScope Video Generation Properties.
@@ -38,13 +38,15 @@ public class DashScopeVideoProperties extends DashScopeParentProperties {
     private String videoPath = DashScopeVideoApiConstants.VIDEO_GENERATION_SYNTHESIS;
 
     private String queryTaskPath = DashScopeApiConstants.QUERY_TASK_RESTFUL_URL;
-
-	@NestedConfigurationProperty
     private DashScopeVideoOptions options = DashScopeVideoOptions.builder().build();
+	private final Options legacyOptions = new Options();
 
     public DashScopeVideoOptions toOptions() {
-        return this.options;
-    }
+		if (this.options == null) {
+			this.options = DashScopeVideoOptions.builder().build();
+		}
+		return this.options;
+	}
 
     public String getVideoPath() {
         return videoPath;
@@ -64,36 +66,76 @@ public class DashScopeVideoProperties extends DashScopeParentProperties {
 
     @DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX)
     @Deprecated(since = "2.0.0", forRemoval = true)
-	public DashScopeVideoOptions getOptions() {
-		return this.options;
+	public Options getOptions() {
+		return this.legacyOptions;
 	}
 
-	public void setOptions(DashScopeVideoOptions options) {
-		this.options = options;
+	public void setOptions(Options options) {
+		// Deprecated options are applied by the nested Options setters.
 	}
 
-    public String getModel() {
-        return this.options.getModel();
+	private void updateOptions(java.util.function.Consumer<DashScopeVideoOptions.Builder> customizer) {
+		DashScopeVideoOptions.Builder builder = DashScopeVideoOptions.builder().from(toOptions());
+		customizer.accept(builder);
+		this.options = builder.build();
+	}
+
+    public @Nullable String getModel() {
+        return toOptions().getModel();
     }
 
     public void setModel(String model) {
-        this.options.setModel(model);
+        updateOptions(builder -> builder.model(model));
     }
 
-    public DashScopeVideoOptions.InputOptions getInput() {
-        return this.options.getInput();
+    public DashScopeVideoOptions.@Nullable InputOptions getInput() {
+        return toOptions().getInput();
     }
 
     public void setInput(DashScopeVideoOptions.InputOptions input) {
-        this.options.setInput(input);
+        updateOptions(builder -> builder.input(input));
     }
 
-    public DashScopeVideoOptions.ParametersOptions getParameters() {
-        return this.options.getParameters();
+    public DashScopeVideoOptions.@Nullable ParametersOptions getParameters() {
+        return toOptions().getParameters();
     }
 
     public void setParameters(DashScopeVideoOptions.ParametersOptions parameters) {
-        this.options.setParameters(parameters);
+        updateOptions(builder -> builder.parameters(parameters));
     }
+	public class Options {
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".model")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getModel() {
+			return DashScopeVideoProperties.this.getModel();
+		}
+
+		public void setModel(String model) {
+			DashScopeVideoProperties.this.setModel(model);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".input")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public DashScopeVideoOptions.@Nullable InputOptions getInput() {
+			return DashScopeVideoProperties.this.getInput();
+		}
+
+		public void setInput(DashScopeVideoOptions.InputOptions input) {
+			DashScopeVideoProperties.this.setInput(input);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".parameters")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public DashScopeVideoOptions.@Nullable ParametersOptions getParameters() {
+			return DashScopeVideoProperties.this.getParameters();
+		}
+
+		public void setParameters(DashScopeVideoOptions.ParametersOptions parameters) {
+			DashScopeVideoProperties.this.setParameters(parameters);
+		}
+
+	}
+
 
 }

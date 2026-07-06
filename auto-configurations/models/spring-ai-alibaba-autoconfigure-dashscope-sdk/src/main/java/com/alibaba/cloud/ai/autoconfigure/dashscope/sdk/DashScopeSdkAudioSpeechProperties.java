@@ -19,9 +19,9 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope.sdk;
 import java.util.Map;
 
 import com.alibaba.cloud.ai.dashscope.sdk.audio.tts.DashScopeSdkAudioSpeechOptions;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
  * DashScope SDK audio speech model properties.
@@ -32,13 +32,15 @@ public class DashScopeSdkAudioSpeechProperties extends DashScopeSdkParentPropert
 	public static final String CONFIG_PREFIX = "spring.ai.dashscope.sdk.audio.speech";
 
 	private boolean enabled = true;
-
-	@NestedConfigurationProperty
 	private DashScopeSdkAudioSpeechOptions options = DashScopeSdkAudioSpeechOptions.builder()
 		.model("sambert-zhichu-v1")
 		.build();
+	private final Options legacyOptions = new Options();
 
 	public DashScopeSdkAudioSpeechOptions toOptions() {
+		if (this.options == null) {
+			this.options = DashScopeSdkAudioSpeechOptions.builder().model("sambert-zhichu-v1").build();
+		}
 		return this.options;
 	}
 
@@ -52,108 +54,238 @@ public class DashScopeSdkAudioSpeechProperties extends DashScopeSdkParentPropert
 
 	@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX)
 	@Deprecated(since = "2.0.0", forRemoval = true)
-	public DashScopeSdkAudioSpeechOptions getOptions() {
-		return this.options;
+	public Options getOptions() {
+		return this.legacyOptions;
 	}
 
-	public void setOptions(DashScopeSdkAudioSpeechOptions options) {
-		this.options = options;
+	public void setOptions(Options options) {
+		// Deprecated options are applied by the nested Options setters.
 	}
 
-	public String getModel() {
-		return this.options.getModel();
+	private void updateOptions(java.util.function.Consumer<DashScopeSdkAudioSpeechOptions.Builder> customizer) {
+		DashScopeSdkAudioSpeechOptions.Builder builder = DashScopeSdkAudioSpeechOptions.builder().from(toOptions());
+		customizer.accept(builder);
+		this.options = builder.build();
+	}
+
+	public @Nullable String getModel() {
+		return toOptions().getModel();
 	}
 
 	public void setModel(String model) {
-		this.options.setModel(model);
+		updateOptions(builder -> builder.model(model));
 	}
 
-	public String getVoice() {
-		return this.options.getVoice();
+	public @Nullable String getVoice() {
+		return toOptions().getVoice();
 	}
 
 	public void setVoice(String voice) {
-		this.options.setVoice(voice);
+		updateOptions(builder -> builder.voice(voice));
 	}
 
-	public String getFormat() {
-		return this.options.getFormat();
+	public @Nullable String getFormat() {
+		return toOptions().getFormat();
 	}
 
 	public void setFormat(String format) {
-		this.options.setFormat(format);
+		updateOptions(builder -> builder.format(format));
 	}
 
-	public Double getSpeed() {
-		return this.options.getSpeed();
+	public @Nullable Double getSpeed() {
+		return toOptions().getSpeed();
 	}
 
 	public void setSpeed(Double speed) {
-		this.options.setSpeed(speed);
+		updateOptions(builder -> builder.speed(speed));
 	}
 
-	public String getTextType() {
-		return this.options.getTextType();
+	public @Nullable String getTextType() {
+		return toOptions().getTextType();
 	}
 
 	public void setTextType(String textType) {
-		this.options.setTextType(textType);
+		updateOptions(builder -> builder.textType(textType));
 	}
 
-	public Integer getSampleRate() {
-		return this.options.getSampleRate();
+	public @Nullable Integer getSampleRate() {
+		return toOptions().getSampleRate();
 	}
 
 	public void setSampleRate(Integer sampleRate) {
-		this.options.setSampleRate(sampleRate);
+		updateOptions(builder -> builder.sampleRate(sampleRate));
 	}
 
-	public Integer getVolume() {
-		return this.options.getVolume();
+	public @Nullable Integer getVolume() {
+		return toOptions().getVolume();
 	}
 
 	public void setVolume(Integer volume) {
-		this.options.setVolume(volume);
+		updateOptions(builder -> builder.volume(volume));
 	}
 
-	public Float getRate() {
-		return this.options.getRate();
+	public @Nullable Float getRate() {
+		return toOptions().getRate();
 	}
 
 	public void setRate(Float rate) {
-		this.options.setRate(rate);
+		updateOptions(builder -> builder.rate(rate));
 	}
 
-	public Float getPitch() {
-		return this.options.getPitch();
+	public @Nullable Float getPitch() {
+		return toOptions().getPitch();
 	}
 
 	public void setPitch(Float pitch) {
-		this.options.setPitch(pitch);
+		updateOptions(builder -> builder.pitch(pitch));
 	}
 
-	public Boolean getWordTimestampEnabled() {
-		return this.options.getWordTimestampEnabled();
+	public @Nullable Boolean getWordTimestampEnabled() {
+		return toOptions().getWordTimestampEnabled();
 	}
 
 	public void setWordTimestampEnabled(Boolean wordTimestampEnabled) {
-		this.options.setWordTimestampEnabled(wordTimestampEnabled);
+		updateOptions(builder -> builder.wordTimestampEnabled(wordTimestampEnabled));
 	}
 
-	public Boolean getPhonemeTimestampEnabled() {
-		return this.options.getPhonemeTimestampEnabled();
+	public @Nullable Boolean getPhonemeTimestampEnabled() {
+		return toOptions().getPhonemeTimestampEnabled();
 	}
 
 	public void setPhonemeTimestampEnabled(Boolean phonemeTimestampEnabled) {
-		this.options.setPhonemeTimestampEnabled(phonemeTimestampEnabled);
+		updateOptions(builder -> builder.phonemeTimestampEnabled(phonemeTimestampEnabled));
 	}
 
-	public Map<String, String> getHttpHeaders() {
-		return this.options.getHttpHeaders();
+	public @Nullable Map<String, String> getHttpHeaders() {
+		return toOptions().getHttpHeaders();
 	}
 
 	public void setHttpHeaders(Map<String, String> httpHeaders) {
-		this.options.setHttpHeaders(httpHeaders);
+		updateOptions(builder -> builder.httpHeaders(httpHeaders));
 	}
+	public class Options {
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".model")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getModel() {
+			return DashScopeSdkAudioSpeechProperties.this.getModel();
+		}
+
+		public void setModel(String model) {
+			DashScopeSdkAudioSpeechProperties.this.setModel(model);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".voice")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getVoice() {
+			return DashScopeSdkAudioSpeechProperties.this.getVoice();
+		}
+
+		public void setVoice(String voice) {
+			DashScopeSdkAudioSpeechProperties.this.setVoice(voice);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".format")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getFormat() {
+			return DashScopeSdkAudioSpeechProperties.this.getFormat();
+		}
+
+		public void setFormat(String format) {
+			DashScopeSdkAudioSpeechProperties.this.setFormat(format);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".speed")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Double getSpeed() {
+			return DashScopeSdkAudioSpeechProperties.this.getSpeed();
+		}
+
+		public void setSpeed(Double speed) {
+			DashScopeSdkAudioSpeechProperties.this.setSpeed(speed);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".text-type")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getTextType() {
+			return DashScopeSdkAudioSpeechProperties.this.getTextType();
+		}
+
+		public void setTextType(String textType) {
+			DashScopeSdkAudioSpeechProperties.this.setTextType(textType);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".sample-rate")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getSampleRate() {
+			return DashScopeSdkAudioSpeechProperties.this.getSampleRate();
+		}
+
+		public void setSampleRate(Integer sampleRate) {
+			DashScopeSdkAudioSpeechProperties.this.setSampleRate(sampleRate);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".volume")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getVolume() {
+			return DashScopeSdkAudioSpeechProperties.this.getVolume();
+		}
+
+		public void setVolume(Integer volume) {
+			DashScopeSdkAudioSpeechProperties.this.setVolume(volume);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".rate")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Float getRate() {
+			return DashScopeSdkAudioSpeechProperties.this.getRate();
+		}
+
+		public void setRate(Float rate) {
+			DashScopeSdkAudioSpeechProperties.this.setRate(rate);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".pitch")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Float getPitch() {
+			return DashScopeSdkAudioSpeechProperties.this.getPitch();
+		}
+
+		public void setPitch(Float pitch) {
+			DashScopeSdkAudioSpeechProperties.this.setPitch(pitch);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".word-timestamp-enabled")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getWordTimestampEnabled() {
+			return DashScopeSdkAudioSpeechProperties.this.getWordTimestampEnabled();
+		}
+
+		public void setWordTimestampEnabled(Boolean wordTimestampEnabled) {
+			DashScopeSdkAudioSpeechProperties.this.setWordTimestampEnabled(wordTimestampEnabled);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".phoneme-timestamp-enabled")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getPhonemeTimestampEnabled() {
+			return DashScopeSdkAudioSpeechProperties.this.getPhonemeTimestampEnabled();
+		}
+
+		public void setPhonemeTimestampEnabled(Boolean phonemeTimestampEnabled) {
+			DashScopeSdkAudioSpeechProperties.this.setPhonemeTimestampEnabled(phonemeTimestampEnabled);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".http-headers")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Map<String, String> getHttpHeaders() {
+			return DashScopeSdkAudioSpeechProperties.this.getHttpHeaders();
+		}
+
+		public void setHttpHeaders(Map<String, String> httpHeaders) {
+			DashScopeSdkAudioSpeechProperties.this.setHttpHeaders(httpHeaders);
+		}
+
+	}
+
 
 }

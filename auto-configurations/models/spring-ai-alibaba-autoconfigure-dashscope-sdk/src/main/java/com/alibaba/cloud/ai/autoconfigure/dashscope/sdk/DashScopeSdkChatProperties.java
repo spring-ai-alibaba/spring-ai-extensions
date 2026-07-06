@@ -18,13 +18,12 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope.sdk;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.alibaba.cloud.ai.dashscope.sdk.chat.DashScopeSdkChatOptions;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
  * DashScope SDK chat model properties.
@@ -37,13 +36,15 @@ public class DashScopeSdkChatProperties extends DashScopeSdkParentProperties {
 	public static final String DEFAULT_DEPLOYMENT_NAME = "qwen-plus";
 
 	private boolean enabled = true;
-
-	@NestedConfigurationProperty
 	private DashScopeSdkChatOptions options = DashScopeSdkChatOptions.builder()
 		.model(DEFAULT_DEPLOYMENT_NAME)
 		.build();
+	private final Options legacyOptions = new Options();
 
 	public DashScopeSdkChatOptions toOptions() {
+		if (this.options == null) {
+			this.options = DashScopeSdkChatOptions.builder().model(DEFAULT_DEPLOYMENT_NAME).build();
+		}
 		return this.options;
 	}
 
@@ -57,156 +58,310 @@ public class DashScopeSdkChatProperties extends DashScopeSdkParentProperties {
 
 	@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX)
 	@Deprecated(since = "2.0.0", forRemoval = true)
-	public DashScopeSdkChatOptions getOptions() {
-		return this.options;
+	public Options getOptions() {
+		return this.legacyOptions;
 	}
 
-	public void setOptions(DashScopeSdkChatOptions options) {
-		this.options = options;
+	public void setOptions(Options options) {
+		// Deprecated options are applied by the nested Options setters.
 	}
 
-	public String getModel() {
-		return this.options.getModel();
+	private void updateOptions(java.util.function.Consumer<DashScopeSdkChatOptions.Builder> customizer) {
+		DashScopeSdkChatOptions.Builder builder = toOptions().mutate();
+		customizer.accept(builder);
+		this.options = builder.build();
+	}
+
+	public @Nullable String getModel() {
+		return toOptions().getModel();
 	}
 
 	public void setModel(String model) {
-		this.options.setModel(model);
+		updateOptions(builder -> builder.model(model));
 	}
 
-	public Boolean getStream() {
-		return this.options.getStream();
+	public @Nullable Boolean getStream() {
+		return toOptions().getStream();
 	}
 
 	public void setStream(Boolean stream) {
-		this.options.setStream(stream);
+		updateOptions(builder -> builder.stream(stream));
 	}
 
-	public Double getTemperature() {
-		return this.options.getTemperature();
+	public @Nullable Double getTemperature() {
+		return toOptions().getTemperature();
 	}
 
 	public void setTemperature(Double temperature) {
-		this.options.setTemperature(temperature);
+		updateOptions(builder -> builder.temperature(temperature));
 	}
 
-	public Integer getSeed() {
-		return this.options.getSeed();
+	public @Nullable Integer getSeed() {
+		return toOptions().getSeed();
 	}
 
 	public void setSeed(Integer seed) {
-		this.options.setSeed(seed);
+		updateOptions(builder -> builder.seed(seed));
 	}
 
-	public Double getTopP() {
-		return this.options.getTopP();
+	public @Nullable Double getTopP() {
+		return toOptions().getTopP();
 	}
 
 	public void setTopP(Double topP) {
-		this.options.setTopP(topP);
+		updateOptions(builder -> builder.topP(topP));
 	}
 
-	public Integer getTopK() {
-		return this.options.getTopK();
+	public @Nullable Integer getTopK() {
+		return toOptions().getTopK();
 	}
 
 	public void setTopK(Integer topK) {
-		this.options.setTopK(topK);
+		updateOptions(builder -> builder.topK(topK));
 	}
 
-	public List<Object> getStop() {
-		return this.options.getStop();
+	public @Nullable Object getStop() {
+		return toOptions().getStop();
 	}
 
-	public void setStop(List<Object> stop) {
-		this.options.setStop(stop);
+	public void setStop(Object stop) {
+		updateOptions(builder -> builder.stop(stop));
 	}
 
-	public Boolean getEnableSearch() {
-		return this.options.getEnableSearch();
+	public @Nullable Boolean getEnableSearch() {
+		return toOptions().getEnableSearch();
 	}
 
 	public void setEnableSearch(Boolean enableSearch) {
-		this.options.setEnableSearch(enableSearch);
+		updateOptions(builder -> builder.enableSearch(enableSearch));
 	}
 
-	public Integer getMaxTokens() {
-		return this.options.getMaxTokens();
+	public @Nullable Integer getMaxTokens() {
+		return toOptions().getMaxTokens();
 	}
 
 	public void setMaxTokens(Integer maxTokens) {
-		this.options.setMaxTokens(maxTokens);
+		updateOptions(builder -> builder.maxTokens(maxTokens));
 	}
 
-	public Boolean getIncrementalOutput() {
-		return this.options.getIncrementalOutput();
+	public @Nullable Boolean getIncrementalOutput() {
+		return toOptions().getIncrementalOutput();
 	}
 
 	public void setIncrementalOutput(Boolean incrementalOutput) {
-		this.options.setIncrementalOutput(incrementalOutput);
+		updateOptions(builder -> builder.incrementalOutput(incrementalOutput));
 	}
 
-	public Double getRepetitionPenalty() {
-		return this.options.getRepetitionPenalty();
+	public @Nullable Double getRepetitionPenalty() {
+		return toOptions().getRepetitionPenalty();
 	}
 
 	public void setRepetitionPenalty(Double repetitionPenalty) {
-		this.options.setRepetitionPenalty(repetitionPenalty);
+		updateOptions(builder -> builder.repetitionPenalty(repetitionPenalty));
 	}
 
-	public Object getToolChoice() {
-		return this.options.getToolChoice();
+	public @Nullable Object getToolChoice() {
+		return toOptions().getToolChoice();
 	}
 
 	public void setToolChoice(Object toolChoice) {
-		this.options.setToolChoice(toolChoice);
+		updateOptions(builder -> builder.toolChoice(toolChoice));
 	}
 
-	public Map<String, String> getHttpHeaders() {
-		return this.options.getHttpHeaders();
+	public @Nullable Map<String, String> getHttpHeaders() {
+		return toOptions().getHttpHeaders();
 	}
 
 	public void setHttpHeaders(Map<String, String> httpHeaders) {
-		this.options.setHttpHeaders(httpHeaders);
+		updateOptions(builder -> builder.httpHeaders(httpHeaders));
 	}
 
-	public Map<String, Object> getExtraBody() {
-		return this.options.getExtraBody();
+	public @Nullable Map<String, Object> getExtraBody() {
+		return toOptions().getExtraBody();
 	}
 
 	public void setExtraBody(Map<String, Object> extraBody) {
-		this.options.setExtraBody(extraBody);
+		updateOptions(builder -> builder.extraBody(extraBody));
 	}
 
-	public List<ToolCallback> getToolCallbacks() {
-		return this.options.getToolCallbacks();
+	public @Nullable List<ToolCallback> getToolCallbacks() {
+		return toOptions().getToolCallbacks();
 	}
 
 	public void setToolCallbacks(List<ToolCallback> toolCallbacks) {
-		this.options.setToolCallbacks(toolCallbacks);
+		updateOptions(builder -> builder.toolCallbacks(toolCallbacks));
 	}
 
-	public Set<String> getToolNames() {
-		return this.options.getToolNames();
-	}
-
-	public void setToolNames(Set<String> toolNames) {
-		this.options.setToolNames(toolNames);
-	}
-
-	public Boolean getInternalToolExecutionEnabled() {
-		return this.options.getInternalToolExecutionEnabled();
-	}
-
-	public void setInternalToolExecutionEnabled(Boolean internalToolExecutionEnabled) {
-		this.options.setInternalToolExecutionEnabled(internalToolExecutionEnabled);
-	}
-
-	public Map<String, Object> getToolContext() {
-		return this.options.getToolContext();
+	public @Nullable Map<String, Object> getToolContext() {
+		return toOptions().getToolContext();
 	}
 
 	public void setToolContext(Map<String, Object> toolContext) {
-		this.options.setToolContext(toolContext);
+		updateOptions(builder -> builder.toolContext(toolContext));
 	}
+	public class Options {
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".model")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getModel() {
+			return DashScopeSdkChatProperties.this.getModel();
+		}
+
+		public void setModel(String model) {
+			DashScopeSdkChatProperties.this.setModel(model);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".stream")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getStream() {
+			return DashScopeSdkChatProperties.this.getStream();
+		}
+
+		public void setStream(Boolean stream) {
+			DashScopeSdkChatProperties.this.setStream(stream);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".temperature")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Double getTemperature() {
+			return DashScopeSdkChatProperties.this.getTemperature();
+		}
+
+		public void setTemperature(Double temperature) {
+			DashScopeSdkChatProperties.this.setTemperature(temperature);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".seed")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getSeed() {
+			return DashScopeSdkChatProperties.this.getSeed();
+		}
+
+		public void setSeed(Integer seed) {
+			DashScopeSdkChatProperties.this.setSeed(seed);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".top-p")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Double getTopP() {
+			return DashScopeSdkChatProperties.this.getTopP();
+		}
+
+		public void setTopP(Double topP) {
+			DashScopeSdkChatProperties.this.setTopP(topP);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".top-k")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getTopK() {
+			return DashScopeSdkChatProperties.this.getTopK();
+		}
+
+		public void setTopK(Integer topK) {
+			DashScopeSdkChatProperties.this.setTopK(topK);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".stop")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Object getStop() {
+			return DashScopeSdkChatProperties.this.getStop();
+		}
+
+		public void setStop(Object stop) {
+			DashScopeSdkChatProperties.this.setStop(stop);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".enable-search")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getEnableSearch() {
+			return DashScopeSdkChatProperties.this.getEnableSearch();
+		}
+
+		public void setEnableSearch(Boolean enableSearch) {
+			DashScopeSdkChatProperties.this.setEnableSearch(enableSearch);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".max-tokens")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getMaxTokens() {
+			return DashScopeSdkChatProperties.this.getMaxTokens();
+		}
+
+		public void setMaxTokens(Integer maxTokens) {
+			DashScopeSdkChatProperties.this.setMaxTokens(maxTokens);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".incremental-output")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getIncrementalOutput() {
+			return DashScopeSdkChatProperties.this.getIncrementalOutput();
+		}
+
+		public void setIncrementalOutput(Boolean incrementalOutput) {
+			DashScopeSdkChatProperties.this.setIncrementalOutput(incrementalOutput);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".repetition-penalty")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Double getRepetitionPenalty() {
+			return DashScopeSdkChatProperties.this.getRepetitionPenalty();
+		}
+
+		public void setRepetitionPenalty(Double repetitionPenalty) {
+			DashScopeSdkChatProperties.this.setRepetitionPenalty(repetitionPenalty);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".tool-choice")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Object getToolChoice() {
+			return DashScopeSdkChatProperties.this.getToolChoice();
+		}
+
+		public void setToolChoice(Object toolChoice) {
+			DashScopeSdkChatProperties.this.setToolChoice(toolChoice);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".http-headers")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Map<String, String> getHttpHeaders() {
+			return DashScopeSdkChatProperties.this.getHttpHeaders();
+		}
+
+		public void setHttpHeaders(Map<String, String> httpHeaders) {
+			DashScopeSdkChatProperties.this.setHttpHeaders(httpHeaders);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".extra-body")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Map<String, Object> getExtraBody() {
+			return DashScopeSdkChatProperties.this.getExtraBody();
+		}
+
+		public void setExtraBody(Map<String, Object> extraBody) {
+			DashScopeSdkChatProperties.this.setExtraBody(extraBody);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".tool-callbacks")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable List<ToolCallback> getToolCallbacks() {
+			return DashScopeSdkChatProperties.this.getToolCallbacks();
+		}
+
+		public void setToolCallbacks(List<ToolCallback> toolCallbacks) {
+			DashScopeSdkChatProperties.this.setToolCallbacks(toolCallbacks);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".tool-context")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Map<String, Object> getToolContext() {
+			return DashScopeSdkChatProperties.this.getToolContext();
+		}
+
+		public void setToolContext(Map<String, Object> toolContext) {
+			DashScopeSdkChatProperties.this.setToolContext(toolContext);
+		}
+
+	}
+
 
 }

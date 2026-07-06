@@ -19,9 +19,9 @@ import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
  * @author xYLiu、yuluo、kevinlin09、yingzi
@@ -36,310 +36,318 @@ public class DashScopeAudioTranscriptionProperties extends DashScopeParentProper
 	public static final String CONFIG_PREFIX = "spring.ai.dashscope.audio.transcription";
 
     private String websocketUrl = DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL;
-
-	@NestedConfigurationProperty
 	private DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder().build();
+	private final Options legacyOptions = new Options();
 
 	public DashScopeAudioTranscriptionOptions toOptions() {
+		if (this.options == null) {
+			this.options = DashScopeAudioTranscriptionOptions.builder().build();
+		}
 		return this.options;
 	}
 
 	@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX)
 	@Deprecated(since = "2.0.0", forRemoval = true)
-	public DashScopeAudioTranscriptionOptions getOptions() {
-		return this.options;
+	public Options getOptions() {
+		return this.legacyOptions;
 	}
 
-	public void setOptions(DashScopeAudioTranscriptionOptions options) {
-		this.options = options;
+	public void setOptions(Options options) {
+		// Deprecated options are applied by the nested Options setters.
 	}
 
-	public String getModel() {
-		return this.options.getModel();
+	private void updateOptions(java.util.function.Consumer<DashScopeAudioTranscriptionOptions.Builder> customizer) {
+		DashScopeAudioTranscriptionOptions.Builder builder = DashScopeAudioTranscriptionOptions.builder().from(toOptions());
+		customizer.accept(builder);
+		this.options = builder.build();
+	}
+
+	public @Nullable String getModel() {
+		return toOptions().getModel();
 	}
 
 	public void setModel(String model) {
-		this.options.setModel(model);
+		updateOptions(builder -> builder.model(model));
 	}
 
-	public String getVocabularyId() {
-		return this.options.getVocabularyId();
+	public @Nullable String getVocabularyId() {
+		return toOptions().getVocabularyId();
 	}
 
 	public void setVocabularyId(String vocabularyId) {
-		this.options.setVocabularyId(vocabularyId);
+		updateOptions(builder -> builder.vocabularyId(vocabularyId));
 	}
 
-	public String getFormat() {
-		return this.options.getFormat();
+	public @Nullable String getFormat() {
+		return toOptions().getFormat();
 	}
 
 	public void setFormat(String format) {
-		this.options.setFormat(format);
+		updateOptions(builder -> builder.format(format));
 	}
 
-	public Integer getSampleRate() {
-		return this.options.getSampleRate();
+	public @Nullable Integer getSampleRate() {
+		return toOptions().getSampleRate();
 	}
 
 	public void setSampleRate(Integer sampleRate) {
-		this.options.setSampleRate(sampleRate);
+		updateOptions(builder -> builder.sampleRate(sampleRate));
 	}
 
-	public String getSourceLanguage() {
-		return this.options.getSourceLanguage();
+	public @Nullable String getSourceLanguage() {
+		return toOptions().getSourceLanguage();
 	}
 
 	public void setSourceLanguage(String sourceLanguage) {
-		this.options.setSourceLanguage(sourceLanguage);
+		updateOptions(builder -> builder.sourceLanguage(sourceLanguage));
 	}
 
-	public Boolean getTranscriptionEnabled() {
-		return this.options.getTranscriptionEnabled();
+	public @Nullable Boolean getTranscriptionEnabled() {
+		return toOptions().getTranscriptionEnabled();
 	}
 
 	public void setTranscriptionEnabled(Boolean transcriptionEnabled) {
-		this.options.setTranscriptionEnabled(transcriptionEnabled);
+		updateOptions(builder -> builder.transcriptionEnabled(transcriptionEnabled));
 	}
 
-	public Boolean getTranslationEnabled() {
-		return this.options.getTranslationEnabled();
+	public @Nullable Boolean getTranslationEnabled() {
+		return toOptions().getTranslationEnabled();
 	}
 
 	public void setTranslationEnabled(Boolean translationEnabled) {
-		this.options.setTranslationEnabled(translationEnabled);
+		updateOptions(builder -> builder.translationEnabled(translationEnabled));
 	}
 
-	public List<String> getTranslationTargetLanguages() {
-		return this.options.getTranslationTargetLanguages();
+	public @Nullable List<String> getTranslationTargetLanguages() {
+		return toOptions().getTranslationTargetLanguages();
 	}
 
 	public void setTranslationTargetLanguages(List<String> translationTargetLanguages) {
-		this.options.setTranslationTargetLanguages(translationTargetLanguages);
+		updateOptions(builder -> builder.translationTargetLanguages(translationTargetLanguages));
 	}
 
-	public DashScopeAudioTranscriptionOptions.AsrOptions getAsrOptions() {
-		return this.options.getAsrOptions();
+	public DashScopeAudioTranscriptionOptions.@Nullable AsrOptions getAsrOptions() {
+		return toOptions().getAsrOptions();
 	}
 
 	public void setAsrOptions(DashScopeAudioTranscriptionOptions.AsrOptions asrOptions) {
-		this.options.setAsrOptions(asrOptions);
+		updateOptions(builder -> builder.asrOptions(asrOptions));
 	}
 
-	public Integer getMaxEndSilence() {
-		return this.options.getMaxEndSilence();
+	public @Nullable Integer getMaxEndSilence() {
+		return toOptions().getMaxEndSilence();
 	}
 
 	public void setMaxEndSilence(Integer maxEndSilence) {
-		this.options.setMaxEndSilence(maxEndSilence);
+		updateOptions(builder -> builder.maxEndSilence(maxEndSilence));
 	}
 
-	public List<String> getModalities() {
-		return this.options.getModalities();
+	public @Nullable List<String> getModalities() {
+		return toOptions().getModalities();
 	}
 
 	public void setModalities(List<String> modalities) {
-		this.options.setModalities(modalities);
+		updateOptions(builder -> builder.modalities(modalities));
 	}
 
-	public DashScopeAudioTranscriptionOptions.Audio getAudio() {
-		return this.options.getAudio();
+	public DashScopeAudioTranscriptionOptions.@Nullable Audio getAudio() {
+		return toOptions().getAudio();
 	}
 
 	public void setAudio(DashScopeAudioTranscriptionOptions.Audio audio) {
-		this.options.setAudio(audio);
+		updateOptions(builder -> builder.audio(audio));
 	}
 
-	public Boolean getStream() {
-		return this.options.getStream();
+	public @Nullable Boolean getStream() {
+		return toOptions().getStream();
 	}
 
 	public void setStream(Boolean stream) {
-		this.options.setStream(stream);
+		updateOptions(builder -> builder.stream(stream));
 	}
 
-	public DashScopeAudioTranscriptionOptions.StreamOptions getStreamOptions() {
-		return this.options.getStreamOptions();
+	public DashScopeAudioTranscriptionOptions.@Nullable StreamOptions getStreamOptions() {
+		return toOptions().getStreamOptions();
 	}
 
 	public void setStreamOptions(DashScopeAudioTranscriptionOptions.StreamOptions streamOptions) {
-		this.options.setStreamOptions(streamOptions);
+		updateOptions(builder -> builder.streamOptions(streamOptions));
 	}
 
-	public Integer getMaxTokens() {
-		return this.options.getMaxTokens();
+	public @Nullable Integer getMaxTokens() {
+		return toOptions().getMaxTokens();
 	}
 
 	public void setMaxTokens(Integer maxTokens) {
-		this.options.setMaxTokens(maxTokens);
+		updateOptions(builder -> builder.maxTokens(maxTokens));
 	}
 
-	public Integer getSeed() {
-		return this.options.getSeed();
+	public @Nullable Integer getSeed() {
+		return toOptions().getSeed();
 	}
 
 	public void setSeed(Integer seed) {
-		this.options.setSeed(seed);
+		updateOptions(builder -> builder.seed(seed));
 	}
 
-	public Float getTemperature() {
-		return this.options.getTemperature();
+	public @Nullable Float getTemperature() {
+		return toOptions().getTemperature();
 	}
 
 	public void setTemperature(Float temperature) {
-		this.options.setTemperature(temperature);
+		updateOptions(builder -> builder.temperature(temperature));
 	}
 
-	public Float getTopP() {
-		return this.options.getTopP();
+	public @Nullable Float getTopP() {
+		return toOptions().getTopP();
 	}
 
 	public void setTopP(Float topP) {
-		this.options.setTopP(topP);
+		updateOptions(builder -> builder.topP(topP));
 	}
 
-	public Float getPresencePenalty() {
-		return this.options.getPresencePenalty();
+	public @Nullable Float getPresencePenalty() {
+		return toOptions().getPresencePenalty();
 	}
 
 	public void setPresencePenalty(Float presencePenalty) {
-		this.options.setPresencePenalty(presencePenalty);
+		updateOptions(builder -> builder.presencePenalty(presencePenalty));
 	}
 
-	public Integer getTopK() {
-		return this.options.getTopK();
+	public @Nullable Integer getTopK() {
+		return toOptions().getTopK();
 	}
 
 	public void setTopK(Integer topK) {
-		this.options.setTopK(topK);
+		updateOptions(builder -> builder.topK(topK));
 	}
 
-	public Float getRepetitionPenalty() {
-		return this.options.getRepetitionPenalty();
+	public @Nullable Float getRepetitionPenalty() {
+		return toOptions().getRepetitionPenalty();
 	}
 
 	public void setRepetitionPenalty(Float repetitionPenalty) {
-		this.options.setRepetitionPenalty(repetitionPenalty);
+		updateOptions(builder -> builder.repetitionPenalty(repetitionPenalty));
 	}
 
-	public DashScopeAudioTranscriptionOptions.TranslationOptions getTranslationOptions() {
-		return this.options.getTranslationOptions();
+	public DashScopeAudioTranscriptionOptions.@Nullable TranslationOptions getTranslationOptions() {
+		return toOptions().getTranslationOptions();
 	}
 
 	public void setTranslationOptions(DashScopeAudioTranscriptionOptions.TranslationOptions translationOptions) {
-		this.options.setTranslationOptions(translationOptions);
+		updateOptions(builder -> builder.translationOptions(translationOptions));
 	}
 
-	public Boolean getDisfluencyRemovalEnabled() {
-		return this.options.getDisfluencyRemovalEnabled();
+	public @Nullable Boolean getDisfluencyRemovalEnabled() {
+		return toOptions().getDisfluencyRemovalEnabled();
 	}
 
 	public void setDisfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
-		this.options.setDisfluencyRemovalEnabled(disfluencyRemovalEnabled);
+		updateOptions(builder -> builder.disfluencyRemovalEnabled(disfluencyRemovalEnabled));
 	}
 
-	public List<String> getLanguageHints() {
-		return this.options.getLanguageHints();
+	public @Nullable List<String> getLanguageHints() {
+		return toOptions().getLanguageHints();
 	}
 
 	public void setLanguageHints(List<String> languageHints) {
-		this.options.setLanguageHints(languageHints);
+		updateOptions(builder -> builder.languageHints(languageHints));
 	}
 
-	public Boolean getSemanticPunctuationEnabled() {
-		return this.options.getSemanticPunctuationEnabled();
+	public @Nullable Boolean getSemanticPunctuationEnabled() {
+		return toOptions().getSemanticPunctuationEnabled();
 	}
 
 	public void setSemanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
-		this.options.setSemanticPunctuationEnabled(semanticPunctuationEnabled);
+		updateOptions(builder -> builder.semanticPunctuationEnabled(semanticPunctuationEnabled));
 	}
 
-	public Integer getMaxSentenceSilence() {
-		return this.options.getMaxSentenceSilence();
+	public @Nullable Integer getMaxSentenceSilence() {
+		return toOptions().getMaxSentenceSilence();
 	}
 
 	public void setMaxSentenceSilence(Integer maxSentenceSilence) {
-		this.options.setMaxSentenceSilence(maxSentenceSilence);
+		updateOptions(builder -> builder.maxSentenceSilence(maxSentenceSilence));
 	}
 
-	public Boolean getMultiThresholdModeEnabled() {
-		return this.options.getMultiThresholdModeEnabled();
+	public @Nullable Boolean getMultiThresholdModeEnabled() {
+		return toOptions().getMultiThresholdModeEnabled();
 	}
 
 	public void setMultiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
-		this.options.setMultiThresholdModeEnabled(multiThresholdModeEnabled);
+		updateOptions(builder -> builder.multiThresholdModeEnabled(multiThresholdModeEnabled));
 	}
 
-	public Boolean getPunctuationPredictionEnabled() {
-		return this.options.getPunctuationPredictionEnabled();
+	public @Nullable Boolean getPunctuationPredictionEnabled() {
+		return toOptions().getPunctuationPredictionEnabled();
 	}
 
 	public void setPunctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
-		this.options.setPunctuationPredictionEnabled(punctuationPredictionEnabled);
+		updateOptions(builder -> builder.punctuationPredictionEnabled(punctuationPredictionEnabled));
 	}
 
-	public Boolean getHeartbeat() {
-		return this.options.getHeartbeat();
+	public @Nullable Boolean getHeartbeat() {
+		return toOptions().getHeartbeat();
 	}
 
 	public void setHeartbeat(Boolean heartbeat) {
-		this.options.setHeartbeat(heartbeat);
+		updateOptions(builder -> builder.heartbeat(heartbeat));
 	}
 
-	public Boolean getInverseTextNormalizationEnabled() {
-		return this.options.getInverseTextNormalizationEnabled();
+	public @Nullable Boolean getInverseTextNormalizationEnabled() {
+		return toOptions().getInverseTextNormalizationEnabled();
 	}
 
 	public void setInverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
-		this.options.setInverseTextNormalizationEnabled(inverseTextNormalizationEnabled);
+		updateOptions(builder -> builder.inverseTextNormalizationEnabled(inverseTextNormalizationEnabled));
 	}
 
-	public List<DashScopeAudioTranscriptionOptions.Resource> getResources() {
-		return this.options.getResources();
+	public @Nullable List<DashScopeAudioTranscriptionOptions.Resource> getResources() {
+		return toOptions().getResources();
 	}
 
 	public void setResources(List<DashScopeAudioTranscriptionOptions.Resource> resources) {
-		this.options.setResources(resources);
+		updateOptions(builder -> builder.resources(resources));
 	}
 
-	public Boolean getTimestampAlignmentEnabled() {
-		return this.options.getTimestampAlignmentEnabled();
+	public @Nullable Boolean getTimestampAlignmentEnabled() {
+		return toOptions().getTimestampAlignmentEnabled();
 	}
 
 	public void setTimestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
-		this.options.setTimestampAlignmentEnabled(timestampAlignmentEnabled);
+		updateOptions(builder -> builder.timestampAlignmentEnabled(timestampAlignmentEnabled));
 	}
 
-	public String getSpecialWordFilter() {
-		return this.options.getSpecialWordFilter();
+	public @Nullable String getSpecialWordFilter() {
+		return toOptions().getSpecialWordFilter();
 	}
 
 	public void setSpecialWordFilter(String specialWordFilter) {
-		this.options.setSpecialWordFilter(specialWordFilter);
+		updateOptions(builder -> builder.specialWordFilter(specialWordFilter));
 	}
 
-	public Boolean getDiarizationEnabled() {
-		return this.options.getDiarizationEnabled();
+	public @Nullable Boolean getDiarizationEnabled() {
+		return toOptions().getDiarizationEnabled();
 	}
 
 	public void setDiarizationEnabled(Boolean diarizationEnabled) {
-		this.options.setDiarizationEnabled(diarizationEnabled);
+		updateOptions(builder -> builder.diarizationEnabled(diarizationEnabled));
 	}
 
-	public Integer getSpeakerCount() {
-		return this.options.getSpeakerCount();
+	public @Nullable Integer getSpeakerCount() {
+		return toOptions().getSpeakerCount();
 	}
 
 	public void setSpeakerCount(Integer speakerCount) {
-		this.options.setSpeakerCount(speakerCount);
+		updateOptions(builder -> builder.speakerCount(speakerCount));
 	}
 
-	public List<Integer> getChannelId() {
-		return this.options.getChannelId();
+	public @Nullable List<Integer> getChannelId() {
+		return toOptions().getChannelId();
 	}
 
 	public void setChannelId(List<Integer> channelId) {
-		this.options.setChannelId(channelId);
+		updateOptions(builder -> builder.channelId(channelId));
 	}
 
     public String getWebsocketUrl() {
@@ -349,5 +357,369 @@ public class DashScopeAudioTranscriptionProperties extends DashScopeParentProper
     public void setWebsocketUrl(String websocketUrl) {
         this.websocketUrl = websocketUrl;
     }
+	public class Options {
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".model")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getModel() {
+			return DashScopeAudioTranscriptionProperties.this.getModel();
+		}
+
+		public void setModel(String model) {
+			DashScopeAudioTranscriptionProperties.this.setModel(model);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".vocabulary-id")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getVocabularyId() {
+			return DashScopeAudioTranscriptionProperties.this.getVocabularyId();
+		}
+
+		public void setVocabularyId(String vocabularyId) {
+			DashScopeAudioTranscriptionProperties.this.setVocabularyId(vocabularyId);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".format")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getFormat() {
+			return DashScopeAudioTranscriptionProperties.this.getFormat();
+		}
+
+		public void setFormat(String format) {
+			DashScopeAudioTranscriptionProperties.this.setFormat(format);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".sample-rate")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getSampleRate() {
+			return DashScopeAudioTranscriptionProperties.this.getSampleRate();
+		}
+
+		public void setSampleRate(Integer sampleRate) {
+			DashScopeAudioTranscriptionProperties.this.setSampleRate(sampleRate);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".source-language")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getSourceLanguage() {
+			return DashScopeAudioTranscriptionProperties.this.getSourceLanguage();
+		}
+
+		public void setSourceLanguage(String sourceLanguage) {
+			DashScopeAudioTranscriptionProperties.this.setSourceLanguage(sourceLanguage);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".transcription-enabled")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getTranscriptionEnabled() {
+			return DashScopeAudioTranscriptionProperties.this.getTranscriptionEnabled();
+		}
+
+		public void setTranscriptionEnabled(Boolean transcriptionEnabled) {
+			DashScopeAudioTranscriptionProperties.this.setTranscriptionEnabled(transcriptionEnabled);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".translation-enabled")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getTranslationEnabled() {
+			return DashScopeAudioTranscriptionProperties.this.getTranslationEnabled();
+		}
+
+		public void setTranslationEnabled(Boolean translationEnabled) {
+			DashScopeAudioTranscriptionProperties.this.setTranslationEnabled(translationEnabled);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".translation-target-languages")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable List<String> getTranslationTargetLanguages() {
+			return DashScopeAudioTranscriptionProperties.this.getTranslationTargetLanguages();
+		}
+
+		public void setTranslationTargetLanguages(List<String> translationTargetLanguages) {
+			DashScopeAudioTranscriptionProperties.this.setTranslationTargetLanguages(translationTargetLanguages);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".asr-options")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public DashScopeAudioTranscriptionOptions.@Nullable AsrOptions getAsrOptions() {
+			return DashScopeAudioTranscriptionProperties.this.getAsrOptions();
+		}
+
+		public void setAsrOptions(DashScopeAudioTranscriptionOptions.AsrOptions asrOptions) {
+			DashScopeAudioTranscriptionProperties.this.setAsrOptions(asrOptions);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".max-end-silence")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getMaxEndSilence() {
+			return DashScopeAudioTranscriptionProperties.this.getMaxEndSilence();
+		}
+
+		public void setMaxEndSilence(Integer maxEndSilence) {
+			DashScopeAudioTranscriptionProperties.this.setMaxEndSilence(maxEndSilence);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".modalities")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable List<String> getModalities() {
+			return DashScopeAudioTranscriptionProperties.this.getModalities();
+		}
+
+		public void setModalities(List<String> modalities) {
+			DashScopeAudioTranscriptionProperties.this.setModalities(modalities);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".audio")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public DashScopeAudioTranscriptionOptions.@Nullable Audio getAudio() {
+			return DashScopeAudioTranscriptionProperties.this.getAudio();
+		}
+
+		public void setAudio(DashScopeAudioTranscriptionOptions.Audio audio) {
+			DashScopeAudioTranscriptionProperties.this.setAudio(audio);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".stream")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getStream() {
+			return DashScopeAudioTranscriptionProperties.this.getStream();
+		}
+
+		public void setStream(Boolean stream) {
+			DashScopeAudioTranscriptionProperties.this.setStream(stream);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".stream-options")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public DashScopeAudioTranscriptionOptions.@Nullable StreamOptions getStreamOptions() {
+			return DashScopeAudioTranscriptionProperties.this.getStreamOptions();
+		}
+
+		public void setStreamOptions(DashScopeAudioTranscriptionOptions.StreamOptions streamOptions) {
+			DashScopeAudioTranscriptionProperties.this.setStreamOptions(streamOptions);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".max-tokens")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getMaxTokens() {
+			return DashScopeAudioTranscriptionProperties.this.getMaxTokens();
+		}
+
+		public void setMaxTokens(Integer maxTokens) {
+			DashScopeAudioTranscriptionProperties.this.setMaxTokens(maxTokens);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".seed")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getSeed() {
+			return DashScopeAudioTranscriptionProperties.this.getSeed();
+		}
+
+		public void setSeed(Integer seed) {
+			DashScopeAudioTranscriptionProperties.this.setSeed(seed);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".temperature")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Float getTemperature() {
+			return DashScopeAudioTranscriptionProperties.this.getTemperature();
+		}
+
+		public void setTemperature(Float temperature) {
+			DashScopeAudioTranscriptionProperties.this.setTemperature(temperature);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".top-p")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Float getTopP() {
+			return DashScopeAudioTranscriptionProperties.this.getTopP();
+		}
+
+		public void setTopP(Float topP) {
+			DashScopeAudioTranscriptionProperties.this.setTopP(topP);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".presence-penalty")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Float getPresencePenalty() {
+			return DashScopeAudioTranscriptionProperties.this.getPresencePenalty();
+		}
+
+		public void setPresencePenalty(Float presencePenalty) {
+			DashScopeAudioTranscriptionProperties.this.setPresencePenalty(presencePenalty);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".top-k")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getTopK() {
+			return DashScopeAudioTranscriptionProperties.this.getTopK();
+		}
+
+		public void setTopK(Integer topK) {
+			DashScopeAudioTranscriptionProperties.this.setTopK(topK);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".repetition-penalty")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Float getRepetitionPenalty() {
+			return DashScopeAudioTranscriptionProperties.this.getRepetitionPenalty();
+		}
+
+		public void setRepetitionPenalty(Float repetitionPenalty) {
+			DashScopeAudioTranscriptionProperties.this.setRepetitionPenalty(repetitionPenalty);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".translation-options")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public DashScopeAudioTranscriptionOptions.@Nullable TranslationOptions getTranslationOptions() {
+			return DashScopeAudioTranscriptionProperties.this.getTranslationOptions();
+		}
+
+		public void setTranslationOptions(DashScopeAudioTranscriptionOptions.TranslationOptions translationOptions) {
+			DashScopeAudioTranscriptionProperties.this.setTranslationOptions(translationOptions);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".disfluency-removal-enabled")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getDisfluencyRemovalEnabled() {
+			return DashScopeAudioTranscriptionProperties.this.getDisfluencyRemovalEnabled();
+		}
+
+		public void setDisfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+			DashScopeAudioTranscriptionProperties.this.setDisfluencyRemovalEnabled(disfluencyRemovalEnabled);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".language-hints")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable List<String> getLanguageHints() {
+			return DashScopeAudioTranscriptionProperties.this.getLanguageHints();
+		}
+
+		public void setLanguageHints(List<String> languageHints) {
+			DashScopeAudioTranscriptionProperties.this.setLanguageHints(languageHints);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".semantic-punctuation-enabled")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getSemanticPunctuationEnabled() {
+			return DashScopeAudioTranscriptionProperties.this.getSemanticPunctuationEnabled();
+		}
+
+		public void setSemanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
+			DashScopeAudioTranscriptionProperties.this.setSemanticPunctuationEnabled(semanticPunctuationEnabled);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".max-sentence-silence")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getMaxSentenceSilence() {
+			return DashScopeAudioTranscriptionProperties.this.getMaxSentenceSilence();
+		}
+
+		public void setMaxSentenceSilence(Integer maxSentenceSilence) {
+			DashScopeAudioTranscriptionProperties.this.setMaxSentenceSilence(maxSentenceSilence);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".multi-threshold-mode-enabled")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getMultiThresholdModeEnabled() {
+			return DashScopeAudioTranscriptionProperties.this.getMultiThresholdModeEnabled();
+		}
+
+		public void setMultiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
+			DashScopeAudioTranscriptionProperties.this.setMultiThresholdModeEnabled(multiThresholdModeEnabled);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".punctuation-prediction-enabled")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getPunctuationPredictionEnabled() {
+			return DashScopeAudioTranscriptionProperties.this.getPunctuationPredictionEnabled();
+		}
+
+		public void setPunctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
+			DashScopeAudioTranscriptionProperties.this.setPunctuationPredictionEnabled(punctuationPredictionEnabled);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".heartbeat")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getHeartbeat() {
+			return DashScopeAudioTranscriptionProperties.this.getHeartbeat();
+		}
+
+		public void setHeartbeat(Boolean heartbeat) {
+			DashScopeAudioTranscriptionProperties.this.setHeartbeat(heartbeat);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".inverse-text-normalization-enabled")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getInverseTextNormalizationEnabled() {
+			return DashScopeAudioTranscriptionProperties.this.getInverseTextNormalizationEnabled();
+		}
+
+		public void setInverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
+			DashScopeAudioTranscriptionProperties.this.setInverseTextNormalizationEnabled(inverseTextNormalizationEnabled);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".resources")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable List<DashScopeAudioTranscriptionOptions.Resource> getResources() {
+			return DashScopeAudioTranscriptionProperties.this.getResources();
+		}
+
+		public void setResources(List<DashScopeAudioTranscriptionOptions.Resource> resources) {
+			DashScopeAudioTranscriptionProperties.this.setResources(resources);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".timestamp-alignment-enabled")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getTimestampAlignmentEnabled() {
+			return DashScopeAudioTranscriptionProperties.this.getTimestampAlignmentEnabled();
+		}
+
+		public void setTimestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
+			DashScopeAudioTranscriptionProperties.this.setTimestampAlignmentEnabled(timestampAlignmentEnabled);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".special-word-filter")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable String getSpecialWordFilter() {
+			return DashScopeAudioTranscriptionProperties.this.getSpecialWordFilter();
+		}
+
+		public void setSpecialWordFilter(String specialWordFilter) {
+			DashScopeAudioTranscriptionProperties.this.setSpecialWordFilter(specialWordFilter);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".diarization-enabled")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Boolean getDiarizationEnabled() {
+			return DashScopeAudioTranscriptionProperties.this.getDiarizationEnabled();
+		}
+
+		public void setDiarizationEnabled(Boolean diarizationEnabled) {
+			DashScopeAudioTranscriptionProperties.this.setDiarizationEnabled(diarizationEnabled);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".speaker-count")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable Integer getSpeakerCount() {
+			return DashScopeAudioTranscriptionProperties.this.getSpeakerCount();
+		}
+
+		public void setSpeakerCount(Integer speakerCount) {
+			DashScopeAudioTranscriptionProperties.this.setSpeakerCount(speakerCount);
+		}
+
+		@DeprecatedConfigurationProperty(replacement = CONFIG_PREFIX + ".channel-id")
+		@Deprecated(since = "2.0.0", forRemoval = true)
+		public @Nullable List<Integer> getChannelId() {
+			return DashScopeAudioTranscriptionProperties.this.getChannelId();
+		}
+
+		public void setChannelId(List<Integer> channelId) {
+			DashScopeAudioTranscriptionProperties.this.setChannelId(channelId);
+		}
+
+	}
+
 
 }

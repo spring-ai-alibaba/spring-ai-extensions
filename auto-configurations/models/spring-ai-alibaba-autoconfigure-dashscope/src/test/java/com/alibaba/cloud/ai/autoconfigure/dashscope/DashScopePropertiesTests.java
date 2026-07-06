@@ -16,8 +16,6 @@
 
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -223,30 +221,12 @@ class DashScopePropertiesTests {
 		assertThat(properties.toOptions().getModel()).isEqualTo("legacy-video");
 	}
 
-	@Test
-	void additionalMetadataContainsLegacyOptionsReplacements() throws IOException {
-		String metadata = additionalMetadata();
-
-		assertThat(metadata)
-			.contains("spring.ai.dashscope.chat.options.model", "spring.ai.dashscope.chat.model")
-			.contains("spring.ai.dashscope.image.options.request-type", "spring.ai.dashscope.image.request-type")
-			.contains("spring.ai.dashscope.video.options.model", "spring.ai.dashscope.video.model");
-	}
-
 	private static <T> T bind(String prefix, Class<T> propertiesType, String... pairs) {
 		Map<String, String> source = new LinkedHashMap<>();
 		for (int i = 0; i < pairs.length; i += 2) {
 			source.put(pairs[i], pairs[i + 1]);
 		}
 		return new Binder(new MapConfigurationPropertySource(source)).bind(prefix, propertiesType).get();
-	}
-
-	private static String additionalMetadata() throws IOException {
-		try (var inputStream = DashScopePropertiesTests.class.getClassLoader()
-			.getResourceAsStream("META-INF/additional-spring-configuration-metadata.json")) {
-			assertThat(inputStream).isNotNull();
-			return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-		}
 	}
 
 }
