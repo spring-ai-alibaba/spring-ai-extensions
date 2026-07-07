@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.model.ModelOptionsUtils;
 /**
- * @author yuluo, yingzi
+ * @author yuluo, yingzi, xuguan
  */
 
 public class DashScopeApiSpec {
@@ -984,8 +984,8 @@ public class DashScopeApiSpec {
          * When set to {"type": "ephemeral"}, the system will attempt to hit or create a cache.
          */
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        public record MediaContent(@JsonProperty("type") String type, @JsonProperty("text") String text,
-                                   @JsonProperty("image") String image, @JsonProperty("video") List<String> video,
+        public record MediaContent(@JsonIgnore @JsonProperty("type") String type, @JsonProperty("text") String text,
+                                   @JsonProperty("image") String image, @JsonProperty("video") Object video,
                                    @JsonProperty("audio") String audio,
                                    @JsonProperty("cache_control") Map<String, String> cacheControl) {
             /**
@@ -1005,11 +1005,11 @@ public class DashScopeApiSpec {
                 this("text", text, null, null, null, cacheControl);
             }
 
-            public MediaContent(String type, String text, String image, List<String> video) {
+            public MediaContent(String type, String text, String image, Object video) {
                 this(type, text, image, video, null, null);
             }
 
-            public MediaContent(String type, String text, String image, List<String> video, String audio) {
+            public MediaContent(String type, String text, String image, Object video, String audio) {
                 this(type, text, image, video, audio, null);
             }
         }

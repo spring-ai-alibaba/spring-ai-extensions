@@ -15,9 +15,11 @@
  */
 package com.alibaba.cloud.ai.dashscope.chat;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import org.junit.jupiter.api.Assumptions;
@@ -29,6 +31,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.content.Media;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -42,6 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * AI_DASHSCOPE_API_KEY environment variable is set.
  *
  * @author brianxiadong
+ * @author xuguan
  * @since 1.0.0-M5.1
  */
 @Tag("integration")
@@ -157,6 +161,39 @@ class DashScopeChatIT {
         assertThat(result).containsIgnoringCase("time");
         assertThat(result).containsIgnoringCase("alarm");
         assertThat(result).containsIgnoringCase("weather");
+    }
+
+    @Test
+    void testVideoMediaVisionChat() {
+        // Create real API client with API key from environment
+        DashScopeApi realApi = DashScopeApi.builder().apiKey(apiKey).build();
+
+        // Create chat model with default options
+        DashScopeChatOptions options = DashScopeChatOptions.builder().model("qwen3-vl-flash").multiModel(true).build();
+
+        DashScopeChatModel chatModel = DashScopeChatModel.builder()
+                .dashScopeApi(realApi)
+                .defaultOptions(options)
+                .build();
+
+        // Create prompt with user message
+        Media media = Media.builder()
+                .mimeType(Media.Format.VIDEO_MP4)
+                .data(URI.create("https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241115/cqqkru/1.mp4"))
+                .build();
+        UserMessage userMessage = UserMessage
+                .builder()
+                .text("视频里的内容是什么?")
+                .media(media)
+                .metadata(Map.of("messageFormat", MessageFormat.VIDEO))
+                .build();
+        Prompt prompt = Prompt.builder().messages(userMessage).build();
+
+        // Call the chat model
+        Generation response = chatModel.call(prompt).getResult();
+
+        String text = response.getOutput().getText();
+        System.out.println("Chat Response Text: " + text);
     }
 
     static class DateTimeTools {

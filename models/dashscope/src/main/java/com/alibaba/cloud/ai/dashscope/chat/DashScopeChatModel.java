@@ -96,6 +96,7 @@ import java.util.stream.IntStream;
  *
  * @author yuluo
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
+ * @author xuguan
  * @see ChatModel
  */
 public class DashScopeChatModel implements ChatModel {
@@ -640,47 +641,41 @@ public class DashScopeChatModel implements ChatModel {
 	}
 
 	private List<MediaContent> convertMediaContent(UserMessage message, Map<String, String> cacheControl) {
-		MessageFormat format = MessageFormat.IMAGE;
-		if (message.getMetadata().get(DashScopeApiConstants.MESSAGE_FORMAT) instanceof MessageFormat messageFormat) {
-			format = messageFormat;
-		}
-
 		List<MediaContent> contentList = new ArrayList<>();
-		if (format == MessageFormat.VIDEO) {
-			List<String> mediaList = message.getMedia()
-				.stream()
-				.map(media -> this.fromMediaData(media.getMimeType(), media.getData()))
-				.toList();
+		for (var media : message.getMedia()) {
+			MessageFormat format = null;
+			if (message.getMetadata().get(DashScopeApiConstants.MESSAGE_FORMAT) instanceof MessageFormat messageFormat) {
+				format = messageFormat;
+			}
+			if (format == null) {
+				break;
+			}
 
-			contentList.add(new MediaContent("video", null, null, mediaList));
-
-			// Apply cache_control to the text content (last content part)
-			MediaContent mediaContent = new MediaContent(message.getText(), cacheControl);
-			contentList.add(mediaContent);
-		}
-		else if (format == MessageFormat.AUDIO) {
-			contentList.addAll(message.getMedia()
-				.stream()
-				.map(media -> new MediaContent("audio", null, null, null,
-						this.fromMediaData(media.getMimeType(), media.getData())))
-				.toList());
-
-			// Apply cache_control to the text content (last content part)
-			MediaContent mediaContent = new MediaContent(message.getText(), cacheControl);
-			contentList.add(mediaContent);
-		}
-		else {
-			contentList.addAll(message.getMedia()
-				.stream()
-				.map(media -> new MediaContent("image", null, this.fromMediaData(media.getMimeType(), media.getData()),
-						null))
-				.toList());
-
-			// Apply cache_control to the text content (last content part)
-			MediaContent mediaContent = new MediaContent(message.getText(), cacheControl);
-			contentList.add(mediaContent);
+			if (format == MessageFormat.IMAGE) {
+				contentList.add(new MediaContent("image", null, this.fromMediaData(media.getMimeType(), media.getData()), null));
+			}
+			else if (format == MessageFormat.VIDEO) {
+                String mimeType = media.getMimeType().toString();
+                // Image list
+                if (mimeType.startsWith("image/")) {
+                    contentList.add(new MediaContent("video", null, null, List.of(this.fromMediaData(media.getMimeType(), media.getData()))));
+                }
+                // Video
+                else {
+                    contentList.add(new MediaContent("video", null, null, this.fromMediaData(media.getMimeType(), media.getData())));
+                }
+			}
+			else if (format == MessageFormat.AUDIO) {
+				contentList.add(new MediaContent("audio", null, null, null, this.fromMediaData(media.getMimeType(), media.getData())));
+			}
+			else {
+                // Default to text
+				contentList.add(new MediaContent(this.fromMediaData(media.getMimeType(), media.getData()), cacheControl));
+			}
 		}
 
+		// Apply cache_control to the text content (last content part)
+        contentList.add(new MediaContent(message.getText(), cacheControl));
 		return contentList;
 	}
 
