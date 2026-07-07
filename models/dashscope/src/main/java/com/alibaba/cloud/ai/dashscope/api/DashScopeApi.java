@@ -416,6 +416,20 @@ public class DashScopeApi {
                 List.of(new DashScopeApiSpec.DataSinksConfig("BUILT_IN", null))
 
 		);
+		String pipelineId = getPipelineIdByName(storeOptions.getIndexName());
+		if (!StringUtils.hasText(pipelineId)) {
+			pipelineId = createPipeline(upsertPipelineRequest);
+		}
+		if (!StringUtils.hasText(pipelineId)) {
+			pipelineId = getPipelineIdByName(storeOptions.getIndexName());
+		}
+		if (!StringUtils.hasText(pipelineId)) {
+			throw new DashScopeException(ErrorCodeEnum.CREATE_INDEX_ERROR);
+		}
+		startManagedIngest(pipelineId, upsertPipelineRequest);
+	}
+
+	private String createPipeline(DashScopeApiSpec.UpsertPipelineRequest upsertPipelineRequest) {
 		ResponseEntity<DashScopeApiSpec.UpsertPipelineResponse> upsertPipelineResponse = this.restClient.put()
 			.uri(PIPELINE_RESTFUL_URL)
 			.body(upsertPipelineRequest)
@@ -423,9 +437,12 @@ public class DashScopeApi {
 			.toEntity(DashScopeApiSpec.UpsertPipelineResponse.class);
 		if (upsertPipelineResponse.getBody() == null
 				|| !"SUCCESS".equalsIgnoreCase(upsertPipelineResponse.getBody().status())) {
-			throw new DashScopeException(ErrorCodeEnum.CREATE_INDEX_ERROR);
+			return null;
 		}
-		String pipelineId = upsertPipelineResponse.getBody().id();
+		return upsertPipelineResponse.getBody().id();
+	}
+
+	private void startManagedIngest(String pipelineId, DashScopeApiSpec.UpsertPipelineRequest upsertPipelineRequest) {
 		ResponseEntity<DashScopeApiSpec.StartPipelineResponse> startPipelineResponse = this.restClient.post()
 			.uri(MANAGED_INGEST_PIPELINE_RESTFUL_URL, pipelineId)
 			.body(upsertPipelineRequest)
