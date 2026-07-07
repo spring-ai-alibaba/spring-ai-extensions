@@ -350,6 +350,11 @@ public class DashScopeApiSpec {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record AddPipelineDocumentsRequest(@JsonProperty("configured_transformations") List transformations,
+                                              @JsonProperty("data_sources") List<DataSourcesConfig> dataSources) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record DataSinksConfig(@JsonProperty("sink_type") String sinkType,
                                   @JsonProperty("component") DataSinksComponent component) {
 

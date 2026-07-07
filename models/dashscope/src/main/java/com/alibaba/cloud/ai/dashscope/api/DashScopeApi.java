@@ -67,6 +67,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ADD_FILE_CATEGORY_RESTFUL_URL;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ADD_PIPELINE_DOCUMENTS_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DELETE_PIPELINE_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DOCUMENT_SPLITER_RESTFUL_URL;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.DOWNLOAD_LEASE_CATEGORY_RESTFUL_URL;
@@ -416,6 +417,26 @@ public class DashScopeApi {
                 List.of(new DashScopeApiSpec.DataSinksConfig("BUILT_IN", null))
 
 		);
+		String pipelineId = getPipelineIdByName(storeOptions.getIndexName());
+		if (StringUtils.hasText(pipelineId)) {
+			addPipelineDocuments(pipelineId, upsertPipelineRequest);
+			return;
+		}
+		pipelineId = createPipeline(upsertPipelineRequest);
+		if (!StringUtils.hasText(pipelineId)) {
+			pipelineId = getPipelineIdByName(storeOptions.getIndexName());
+			if (StringUtils.hasText(pipelineId)) {
+				addPipelineDocuments(pipelineId, upsertPipelineRequest);
+				return;
+			}
+		}
+		if (!StringUtils.hasText(pipelineId)) {
+			throw new DashScopeException(ErrorCodeEnum.CREATE_INDEX_ERROR);
+		}
+		startManagedIngest(pipelineId, upsertPipelineRequest);
+	}
+
+	private String createPipeline(DashScopeApiSpec.UpsertPipelineRequest upsertPipelineRequest) {
 		ResponseEntity<DashScopeApiSpec.UpsertPipelineResponse> upsertPipelineResponse = this.restClient.put()
 			.uri(PIPELINE_RESTFUL_URL)
 			.body(upsertPipelineRequest)
@@ -423,9 +444,26 @@ public class DashScopeApi {
 			.toEntity(DashScopeApiSpec.UpsertPipelineResponse.class);
 		if (upsertPipelineResponse.getBody() == null
 				|| !"SUCCESS".equalsIgnoreCase(upsertPipelineResponse.getBody().status())) {
-			throw new DashScopeException(ErrorCodeEnum.CREATE_INDEX_ERROR);
+			return null;
 		}
-		String pipelineId = upsertPipelineResponse.getBody().id();
+		return upsertPipelineResponse.getBody().id();
+	}
+
+	private void addPipelineDocuments(String pipelineId, DashScopeApiSpec.UpsertPipelineRequest upsertPipelineRequest) {
+		DashScopeApiSpec.AddPipelineDocumentsRequest request = new DashScopeApiSpec.AddPipelineDocumentsRequest(
+				upsertPipelineRequest.transformations(), upsertPipelineRequest.dataSources());
+		ResponseEntity<DashScopeApiSpec.StartPipelineResponse> response = this.restClient.put()
+			.uri(ADD_PIPELINE_DOCUMENTS_RESTFUL_URL, pipelineId)
+			.body(request)
+			.retrieve()
+			.toEntity(DashScopeApiSpec.StartPipelineResponse.class);
+		if (response.getBody() == null || !"SUCCESS".equalsIgnoreCase(response.getBody().code())
+				|| response.getBody().ingestionId() == null) {
+			throw new DashScopeException(ErrorCodeEnum.INDEX_ADD_DOCUMENT_ERROR);
+		}
+	}
+
+	private void startManagedIngest(String pipelineId, DashScopeApiSpec.UpsertPipelineRequest upsertPipelineRequest) {
 		ResponseEntity<DashScopeApiSpec.StartPipelineResponse> startPipelineResponse = this.restClient.post()
 			.uri(MANAGED_INGEST_PIPELINE_RESTFUL_URL, pipelineId)
 			.body(upsertPipelineRequest)
