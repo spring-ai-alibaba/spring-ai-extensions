@@ -478,7 +478,7 @@ public class DashScopeApi {
 	public boolean deletePipelineDocument(String pipelineId, List<String> idList) {
 		DashScopeApiSpec.DelePipelineDocumentRequest request = new DashScopeApiSpec.DelePipelineDocumentRequest(Arrays
 			.asList(new DashScopeApiSpec.DelePipelineDocumentRequest.DelePipelineDocumentDataSource("DATA_CENTER_FILE",
-					Arrays.asList(new DashScopeApiSpec.DelePipelineDocumentRequest.DelePipelineDocumentDataSourceComponent(idList)))));
+					new DashScopeApiSpec.DelePipelineDocumentRequest.DelePipelineDocumentDataSourceComponent(idList))));
 		ResponseEntity<DashScopeApiSpec.DelePipelineDocumentResponse> deleDocumentResponse = this.restClient.post()
 			.uri(DELETE_PIPELINE_RESTFUL_URL, pipelineId)
 			.body(request)

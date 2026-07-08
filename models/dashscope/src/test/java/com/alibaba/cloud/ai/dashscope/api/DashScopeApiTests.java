@@ -39,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.client.ExpectedCount.once;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -142,6 +143,34 @@ class DashScopeApiTests {
 		assertThatCode(() -> api.upsertPipeline(List.of(new Document("file-1", "content", Map.of())), options))
 			.doesNotThrowAnyException();
 
+		server.verify();
+	}
+
+	// The DATA_CENTER_FILE data source expects `component` to be a single object (as the
+	// add/upsert path already sends). Wrapping it in an array made the delete request body
+	// malformed and DashScope answered 500 SystemError (gh#288). Assert `component` is an
+	// object whose `doc_ids` are directly addressable; the old array shape fails this.
+	@Test
+	void deletePipelineDocumentShouldSendComponentAsObjectNotArray() {
+		RestClient.Builder restClientBuilder = RestClient.builder();
+		MockRestServiceServer server = MockRestServiceServer.bindTo(restClientBuilder).build();
+		DashScopeApi api = DashScopeApi.builder()
+			.apiKey("test-api-key")
+			.restClientBuilder(restClientBuilder)
+			.build();
+
+		server.expect(once(), requestTo("https://dashscope.aliyuncs.com/api/v1/indices/pipeline/pipeline-1/delete"))
+			.andExpect(method(HttpMethod.POST))
+			.andExpect(jsonPath("$.data_sources[0].source_type").value("DATA_CENTER_FILE"))
+			.andExpect(jsonPath("$.data_sources[0].component.doc_ids[0]").value("doc-1"))
+			.andExpect(jsonPath("$.data_sources[0].component.doc_ids[1]").value("doc-2"))
+			.andRespond(withSuccess("""
+					{"status":"200","code":"SUCCESS"}
+					""", MediaType.APPLICATION_JSON));
+
+		boolean deleted = api.deletePipelineDocument("pipeline-1", List.of("doc-1", "doc-2"));
+
+		assertEquals(true, deleted);
 		server.verify();
 	}
 

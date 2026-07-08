@@ -441,7 +441,7 @@ public class DashScopeApiSpec {
             @JsonProperty("data_sources") List<DelePipelineDocumentDataSource> dataSources) {
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record DelePipelineDocumentDataSource(@JsonProperty("source_type") String sourceType,
-                                                     @JsonProperty("component") List<DelePipelineDocumentDataSourceComponent> component) {
+                                                     @JsonProperty("component") DelePipelineDocumentDataSourceComponent component) {
         }
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
