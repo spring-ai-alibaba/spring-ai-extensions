@@ -855,8 +855,9 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
                 logger.info("[handleMcpStreamProtocol] Using HttpClientSseClientTransport for mcp-sse");
             }
 
-            // Create MCP sync client
-            McpSyncClient client = McpClient.sync(transport).build();
+            // Create MCP sync client with the configured request timeout so slow
+            // proxied MCP tools honor spring.ai.alibaba.mcp.gateway.tool-timeout too
+            McpSyncClient client = McpClient.sync(transport).requestTimeout(getTimeoutDuration()).build();
 
             try {
                 // Initialize client
@@ -902,7 +903,15 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
     }
 
     private Duration getTimeoutDuration() {
-
+        try {
+            McpGatewayProperties gatewayProperties = SpringBeanUtils.getInstance().getBean(McpGatewayProperties.class);
+            if (gatewayProperties != null && gatewayProperties.getToolTimeout() != null) {
+                return gatewayProperties.getToolTimeout();
+            }
+        } catch (Exception ex) {
+            logger.debug("Unable to obtain McpGatewayProperties; using default tool timeout for tool '{}'",
+                    this.toolDefinition.name(), ex);
+        }
         return Duration.ofSeconds(30); // Default timeout
     }
 

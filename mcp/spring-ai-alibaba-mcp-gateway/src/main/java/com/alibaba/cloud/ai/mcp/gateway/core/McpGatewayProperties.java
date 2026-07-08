@@ -61,6 +61,12 @@ public class McpGatewayProperties {
 
 	private StreamableConfig streamable = new StreamableConfig();
 
+	/**
+	 * Timeout for a single outbound gateway tool call. Some proxied tool endpoints may take
+	 * longer than the default to respond, so this is configurable. Defaults to 30 seconds.
+	 */
+	private Duration toolTimeout = Duration.ofSeconds(30);
+
 	public static class SseConfig {
 
 		private Boolean enabled = true; // 默认启用，保持向后兼容
@@ -203,6 +209,14 @@ public class McpGatewayProperties {
 
 	public void setWebclientConnectorProtocol(String webclientConnectorProtocol) {
 		this.webclientConnectorProtocol = webclientConnectorProtocol;
+	}
+
+	public Duration getToolTimeout() {
+		return toolTimeout;
+	}
+
+	public void setToolTimeout(Duration toolTimeout) {
+		this.toolTimeout = toolTimeout;
 	}
 
 }

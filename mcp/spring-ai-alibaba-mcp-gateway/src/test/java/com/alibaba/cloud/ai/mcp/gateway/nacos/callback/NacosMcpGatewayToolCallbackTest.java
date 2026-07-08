@@ -16,6 +16,7 @@
 
 package com.alibaba.cloud.ai.mcp.gateway.nacos.callback;
 
+import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayProperties;
 import com.alibaba.cloud.ai.mcp.gateway.core.utils.SpringBeanUtils;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.definition.NacosMcpGatewayToolDefinition;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
@@ -31,6 +32,7 @@ import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 
@@ -86,6 +88,40 @@ class NacosMcpGatewayToolCallbackTest {
 		String result = (String) processResponse.invoke(callback, response, templateNode, Collections.emptyMap());
 
 		assertEquals(response, result);
+	}
+
+	@Test
+	void getTimeoutDurationReadsConfiguredValue() throws Exception {
+		McpGatewayProperties properties = new McpGatewayProperties();
+		properties.setToolTimeout(Duration.ofSeconds(60));
+		applicationContext.getBeanFactory().registerSingleton("mcpGatewayProperties", properties);
+
+		Duration timeout = invokeGetTimeoutDuration();
+
+		assertEquals(Duration.ofSeconds(60), timeout);
+	}
+
+	@Test
+	void getTimeoutDurationFallsBackToDefaultWhenNoPropertiesBean() throws Exception {
+		// setUp() registers no McpGatewayProperties bean, so the lookup fails and the
+		// default 30s timeout is used.
+		Duration timeout = invokeGetTimeoutDuration();
+
+		assertEquals(Duration.ofSeconds(30), timeout);
+	}
+
+	private Duration invokeGetTimeoutDuration() throws Exception {
+		NacosMcpGatewayToolDefinition definition = new NacosMcpGatewayToolDefinition();
+		definition.setName("test-tool");
+		definition.setDescription("test tool");
+		definition.setProtocol("http");
+		definition.setRemoteServerConfig(new McpServerRemoteServiceConfig());
+
+		NacosMcpGatewayToolCallback callback = new NacosMcpGatewayToolCallback(definition);
+
+		Method getTimeoutDuration = NacosMcpGatewayToolCallback.class.getDeclaredMethod("getTimeoutDuration");
+		getTimeoutDuration.setAccessible(true);
+		return (Duration) getTimeoutDuration.invoke(callback);
 	}
 
 }
