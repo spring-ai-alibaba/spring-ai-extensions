@@ -647,9 +647,6 @@ public class DashScopeChatModel implements ChatModel {
 			if (message.getMetadata().get(DashScopeApiConstants.MESSAGE_FORMAT) instanceof MessageFormat messageFormat) {
 				format = messageFormat;
 			}
-			if (format == null) {
-				break;
-			}
 
 			if (format == MessageFormat.IMAGE) {
 				contentList.add(new MediaContent("image", null, this.fromMediaData(media.getMimeType(), media.getData()), null));
