@@ -60,6 +60,7 @@ import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.chat.observation.ChatModelObservationDocumentation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.content.Media;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
@@ -641,35 +642,48 @@ public class DashScopeChatModel implements ChatModel {
 	}
 
 	private List<MediaContent> convertMediaContent(UserMessage message, Map<String, String> cacheControl) {
-		List<MediaContent> contentList = new ArrayList<>();
-		for (var media : message.getMedia()) {
-			MessageFormat format = null;
-			if (message.getMetadata().get(DashScopeApiConstants.MESSAGE_FORMAT) instanceof MessageFormat messageFormat) {
-				format = messageFormat;
-			}
-
-			if (format == MessageFormat.IMAGE) {
-				contentList.add(new MediaContent("image", null, this.fromMediaData(media.getMimeType(), media.getData()), null));
-			}
-			else if (format == MessageFormat.VIDEO) {
+        Assert.hasText(message.getText(), "User message text must not be empty");
+        List<MediaContent> contentList = new ArrayList<>();
+        MessageFormat format = null;
+        if (message.getMetadata().get(DashScopeApiConstants.MESSAGE_FORMAT) instanceof MessageFormat messageFormat) {
+            format = messageFormat;
+        }
+        if (format == MessageFormat.IMAGE) {
+            contentList.addAll(message.getMedia()
+                    .stream()
+                    .map(media -> new MediaContent("image", null, this.fromMediaData(media.getMimeType(), media.getData()), null))
+                    .toList());
+        }
+        else if (format == MessageFormat.VIDEO) {
+            List<String> imageList = new ArrayList<>();
+            for (Media media : message.getMedia()) {
                 String mimeType = media.getMimeType().toString();
                 // Image list
                 if (mimeType.startsWith("image/")) {
-                    contentList.add(new MediaContent("video", null, null, List.of(this.fromMediaData(media.getMimeType(), media.getData()))));
+                    imageList.add(this.fromMediaData(media.getMimeType(), media.getData()));
                 }
                 // Video
                 else {
                     contentList.add(new MediaContent("video", null, null, this.fromMediaData(media.getMimeType(), media.getData())));
                 }
-			}
-			else if (format == MessageFormat.AUDIO) {
-				contentList.add(new MediaContent("audio", null, null, null, this.fromMediaData(media.getMimeType(), media.getData())));
-			}
-			else {
-                // Default to text
-				contentList.add(new MediaContent(this.fromMediaData(media.getMimeType(), media.getData()), cacheControl));
-			}
-		}
+            }
+            if (!imageList.isEmpty()) {
+                contentList.add(new MediaContent("video", null, null, imageList));
+            }
+        }
+        else if (format == MessageFormat.AUDIO) {
+            contentList.addAll(message.getMedia()
+                    .stream()
+                    .map(media -> new MediaContent("audio", null, null, null, this.fromMediaData(media.getMimeType(), media.getData())))
+                    .toList());
+        }
+        else {
+            // Default to text
+            contentList.addAll(message.getMedia()
+                    .stream()
+                    .map(media -> new MediaContent(this.fromMediaData(media.getMimeType(), media.getData())))
+                    .toList());
+        }
 
 		// Apply cache_control to the text content (last content part)
         contentList.add(new MediaContent(message.getText(), cacheControl));
