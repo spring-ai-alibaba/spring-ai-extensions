@@ -319,6 +319,16 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
      */
     private @JsonProperty("extra_body") Map<String, Object> extraBody;
 
+    /**
+     * Frame extraction rate for video inputs. Sent as the {@code fps} attribute of
+     * video content items. Applies to both single video files (controls frame
+     * extraction frequency) and image frame lists (tells the model the extraction
+     * interval). Can be overridden per message via the
+     * {@link com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants#VIDEO_FPS}
+     * message metadata key.
+     */
+    private @JsonProperty("fps") Double fps;
+
     public DashScopeApiSpec.TranslationOptions getTranslationOptions() {
         return translationOptions;
     }
@@ -669,6 +679,14 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         this.extraBody = extraBody;
     }
 
+    public Double getFps() {
+        return this.fps;
+    }
+
+    public void setFps(Double fps) {
+        this.fps = fps;
+    }
+
     public static DashScopeChatOptionsBuilder builder() {
         return new DashScopeChatOptionsBuilder();
     }
@@ -979,6 +997,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
             return this;
         }
 
+        public DashScopeChatOptionsBuilder fps(Double fps) {
+            this.options.fps = fps;
+            return this;
+        }
+
         public DashScopeChatOptions build() {
             return this.options;
         }
@@ -1016,6 +1039,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 .audio(fromOptions.audio)
                 .streamOptions(fromOptions.streamOptions)
                 .extraBody(fromOptions.extraBody)
+                .fps(fromOptions.fps)
                 .build();
     }
 
@@ -1048,7 +1072,8 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 && Objects.equals(this.toolContext, that.toolContext)
                 && Objects.equals(this.modalities, that.modalities) && Objects.equals(this.audio, that.audio)
                 && Objects.equals(this.streamOptions, that.streamOptions)
-                && Objects.equals(this.extraBody, that.extraBody);
+                && Objects.equals(this.extraBody, that.extraBody)
+                && Objects.equals(this.fps, that.fps);
     }
 
     @Override
@@ -1058,7 +1083,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 this.repetitionPenalty, this.tools, this.toolChoice, this.vlHighResolutionImages, this.enableThinking,
                 this.thinkingBudget, this.toolCallbacks, this.toolNames, this.internalToolExecutionEnabled,
                 this.multiModel, this.searchOptions, this.parallelToolCalls, this.httpHeaders, this.toolContext,
-                this.modalities, this.audio, this.streamOptions, this.extraBody);
+                this.modalities, this.audio, this.streamOptions, this.extraBody, this.fps);
     }
 
     @Override

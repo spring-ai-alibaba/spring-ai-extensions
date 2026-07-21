@@ -514,7 +514,8 @@ public class DashScopeChatModel implements ChatModel {
 
 				if (message instanceof UserMessage userMessage) {
 					if (!CollectionUtils.isEmpty(userMessage.getMedia())) {
-						content = convertMediaContent(userMessage, cacheControl);
+						content = convertMediaContent(userMessage, cacheControl,
+								resolveVideoFps(userMessage, prompt.getOptions()));
 					}
 					else if (cacheControl != null) {
 						// Convert text to MediaContent with cache_control
@@ -641,7 +642,32 @@ public class DashScopeChatModel implements ChatModel {
 		return null;
 	}
 
-	private List<MediaContent> convertMediaContent(UserMessage message, Map<String, String> cacheControl) {
+	/**
+	 * Resolve the video fps for a user message. Message metadata
+	 * {@link DashScopeApiConstants#VIDEO_FPS} takes precedence over
+	 * {@link DashScopeChatOptions#getFps()}. Returns null when neither is set,
+	 * leaving the fps unset so DashScope applies its server-side default.
+	 */
+	private Double resolveVideoFps(UserMessage message, ChatOptions options) {
+		Object metadataFps = message.getMetadata().get(DashScopeApiConstants.VIDEO_FPS);
+		if (metadataFps instanceof Number num) {
+			return num.doubleValue();
+		}
+		if (metadataFps instanceof String str) {
+			try {
+				return Double.parseDouble(str.trim());
+			}
+			catch (NumberFormatException e) {
+				logger.warn("DashScopeChatModel resolveVideoFps Invalid videoFps format in message metadata");
+			}
+		}
+		if (options instanceof DashScopeChatOptions dashScopeOptions) {
+			return dashScopeOptions.getFps();
+		}
+		return null;
+	}
+
+	private List<MediaContent> convertMediaContent(UserMessage message, Map<String, String> cacheControl, Double fps) {
         Assert.hasText(message.getText(), "User message text must not be empty");
         List<MediaContent> contentList = new ArrayList<>();
         MessageFormat format = null;
@@ -664,11 +690,12 @@ public class DashScopeChatModel implements ChatModel {
                 }
                 // Video
                 else {
-                    contentList.add(new MediaContent("video", null, null, this.fromMediaData(media.getMimeType(), media.getData())));
+                    contentList.add(new MediaContent("video", null, null,
+                            this.fromMediaData(media.getMimeType(), media.getData()), null, fps));
                 }
             }
             if (!imageList.isEmpty()) {
-                contentList.add(new MediaContent("video", null, null, imageList));
+                contentList.add(new MediaContent("video", null, null, imageList, null, fps));
             }
         }
         else if (format == MessageFormat.AUDIO) {

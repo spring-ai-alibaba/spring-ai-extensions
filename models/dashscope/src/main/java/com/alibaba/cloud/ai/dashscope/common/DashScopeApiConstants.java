@@ -112,6 +112,8 @@ public final class DashScopeApiConstants {
 
 	public static final String MESSAGE_FORMAT = "messageFormat";
 
+	public static final String VIDEO_FPS = "videoFps";
+
 	/**
 	 * Metadata key for cache control. When set to a Map containing {"type": "ephemeral"},
 	 * the system will create or hit an explicit cache for the message content.

@@ -985,20 +985,21 @@ public class DashScopeApiSpec {
          * @param video The image list of video. by adding multiple image_url content
          * parts. Image input is only supported when using the glm-4v model.
          * @param audio The audio content of the message.
+         * @param fps The frame extraction rate for video content.
          * @param cacheControl The cache control settings for explicit caching.
          * When set to {"type": "ephemeral"}, the system will attempt to hit or create a cache.
          */
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record MediaContent(@JsonIgnore @JsonProperty("type") String type, @JsonProperty("text") String text,
                                    @JsonProperty("image") String image, @JsonProperty("video") Object video,
-                                   @JsonProperty("audio") String audio,
+                                   @JsonProperty("audio") String audio, @JsonProperty("fps") Double fps,
                                    @JsonProperty("cache_control") Map<String, String> cacheControl) {
             /**
              * Shortcut constructor for a text content.
              * @param text The text content of the message.
              */
             public MediaContent(String text) {
-                this("text", text, null, null, null, null);
+                this("text", text, null, null, null, null, null);
             }
 
             /**
@@ -1007,15 +1008,27 @@ public class DashScopeApiSpec {
              * @param cacheControl The cache control settings.
              */
             public MediaContent(String text, Map<String, String> cacheControl) {
-                this("text", text, null, null, null, cacheControl);
+                this("text", text, null, null, null, null, cacheControl);
             }
 
             public MediaContent(String type, String text, String image, Object video) {
-                this(type, text, image, video, null, null);
+                this(type, text, image, video, null, null, null);
             }
 
             public MediaContent(String type, String text, String image, Object video, String audio) {
-                this(type, text, image, video, audio, null);
+                this(type, text, image, video, audio, null, null);
+            }
+
+            public MediaContent(String type, String text, String image, Object video, String audio, Double fps) {
+                this(type, text, image, video, audio, fps, null);
+            }
+
+            /**
+             * Constructor kept for binary compatibility with the pre-fps signature.
+             */
+            public MediaContent(String type, String text, String image, Object video, String audio,
+                                Map<String, String> cacheControl) {
+                this(type, text, image, video, audio, null, cacheControl);
             }
         }
 

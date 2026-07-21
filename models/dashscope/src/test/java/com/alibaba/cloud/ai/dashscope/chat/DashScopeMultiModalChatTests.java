@@ -52,6 +52,7 @@ import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.MESSAGE_FORMAT;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.VIDEO_FPS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -435,6 +436,208 @@ public class DashScopeMultiModalChatTests {
         Generation response = chatModel.call(prompt).getResult();
 
         String text = response.getOutput().getText();
+        System.out.println("Chat Response Text: " + text);
+    }
+
+    @Test
+    @Tag("integration")
+    @EnabledIfEnvironmentVariable(named = "AI_DASHSCOPE_API_KEY", matches = ".+")
+    void integrationTestSingleVideoWithFpsFromOptions() {
+        // Create real API client with API key from environment
+        String apiKey = System.getenv("AI_DASHSCOPE_API_KEY");
+        DashScopeApi realApi = DashScopeApi.builder().apiKey(apiKey).build();
+
+        // Create chat model with default options that include fps
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .multiModel(true)
+                .fps(2.0)
+                .build();
+
+        DashScopeChatModel chatModel = DashScopeChatModel.builder()
+                .dashScopeApi(realApi)
+                .defaultOptions(options)
+                .build();
+
+        // Create prompt with user message that contains a single video
+        Media media = Media.builder()
+                .mimeType(Media.Format.VIDEO_MP4)
+                .data(URI.create("https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241115/cqqkru/1.mp4"))
+                .build();
+        UserMessage userMessage = UserMessage.builder()
+                .text(MULTIMODAL_VIDEO_PROMPT)
+                .media(media)
+                .build();
+        userMessage.getMetadata().put(MESSAGE_FORMAT, MessageFormat.VIDEO);
+        Prompt prompt = Prompt.builder().messages(userMessage).build();
+
+        // Call the chat model
+        Generation response = chatModel.call(prompt).getResult();
+
+        String text = response.getOutput().getText();
+        assertThat(text).isNotEmpty();
+        System.out.println("Chat Response Text: " + text);
+    }
+
+    @Test
+    @Tag("integration")
+    @EnabledIfEnvironmentVariable(named = "AI_DASHSCOPE_API_KEY", matches = ".+")
+    void integrationTestSingleVideoFpsMetadataOverridesOptions() {
+        // Create real API client with API key from environment
+        String apiKey = System.getenv("AI_DASHSCOPE_API_KEY");
+        DashScopeApi realApi = DashScopeApi.builder().apiKey(apiKey).build();
+
+        // Create chat model with default options that include fps
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .multiModel(true)
+                .fps(4.0)
+                .build();
+
+        DashScopeChatModel chatModel = DashScopeChatModel.builder()
+                .dashScopeApi(realApi)
+                .defaultOptions(options)
+                .build();
+
+        // Create prompt with user message that contains a single video and message-level fps
+        Media media = Media.builder()
+                .mimeType(Media.Format.VIDEO_MP4)
+                .data(URI.create("https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241115/cqqkru/1.mp4"))
+                .build();
+        UserMessage userMessage = UserMessage.builder()
+                .text(MULTIMODAL_VIDEO_PROMPT)
+                .media(media)
+                .build();
+        userMessage.getMetadata().put(MESSAGE_FORMAT, MessageFormat.VIDEO);
+        userMessage.getMetadata().put(VIDEO_FPS, 0.5);
+        Prompt prompt = Prompt.builder().messages(userMessage).build();
+
+        // Call the chat model
+        Generation response = chatModel.call(prompt).getResult();
+
+        String text = response.getOutput().getText();
+        assertThat(text).isNotEmpty();
+        System.out.println("Chat Response Text: " + text);
+    }
+
+    @Test
+    @Tag("integration")
+    @EnabledIfEnvironmentVariable(named = "AI_DASHSCOPE_API_KEY", matches = ".+")
+    void integrationTestVideoFrameListWithFps() {
+        // Create real API client with API key from environment
+        String apiKey = System.getenv("AI_DASHSCOPE_API_KEY");
+        DashScopeApi realApi = DashScopeApi.builder().apiKey(apiKey).build();
+
+        // Create chat model with default options that include fps
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .multiModel(true)
+                .fps(2.0)
+                .build();
+
+        DashScopeChatModel chatModel = DashScopeChatModel.builder()
+                .dashScopeApi(realApi)
+                .defaultOptions(options)
+                .build();
+
+        // Create media list from the existing video frame URLs
+        List<Media> mediaList = new ArrayList<>();
+        for (String url : MULTIMODAL_VIDEO_FRAME_URLS) {
+            mediaList.add(new Media(MimeTypeUtils.IMAGE_JPEG, URI.create(url)));
+        }
+
+        UserMessage userMessage = UserMessage.builder()
+                .text(TEST_VIDEO_PROMPT)
+                .media(mediaList)
+                .build();
+        userMessage.getMetadata().put(MESSAGE_FORMAT, MessageFormat.VIDEO);
+        Prompt prompt = Prompt.builder().messages(userMessage).build();
+
+        // Call the chat model
+        Generation response = chatModel.call(prompt).getResult();
+
+        String text = response.getOutput().getText();
+        assertThat(text).isNotEmpty();
+        System.out.println("Chat Response Text: " + text);
+    }
+
+    @Test
+    @Tag("integration")
+    @EnabledIfEnvironmentVariable(named = "AI_DASHSCOPE_API_KEY", matches = ".+")
+    void integrationTestVideoWithoutFps() {
+        // Create real API client with API key from environment
+        String apiKey = System.getenv("AI_DASHSCOPE_API_KEY");
+        DashScopeApi realApi = DashScopeApi.builder().apiKey(apiKey).build();
+
+        // Create chat model without fps settings
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .multiModel(true)
+                .build();
+
+        DashScopeChatModel chatModel = DashScopeChatModel.builder()
+                .dashScopeApi(realApi)
+                .defaultOptions(options)
+                .build();
+
+        // Create prompt with user message that contains a single video
+        Media media = Media.builder()
+                .mimeType(Media.Format.VIDEO_MP4)
+                .data(URI.create("https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241115/cqqkru/1.mp4"))
+                .build();
+        UserMessage userMessage = UserMessage.builder()
+                .text(MULTIMODAL_VIDEO_PROMPT)
+                .media(media)
+                .build();
+        userMessage.getMetadata().put(MESSAGE_FORMAT, MessageFormat.VIDEO);
+        Prompt prompt = Prompt.builder().messages(userMessage).build();
+
+        // Call the chat model
+        Generation response = chatModel.call(prompt).getResult();
+
+        String text = response.getOutput().getText();
+        assertThat(text).isNotEmpty();
+        System.out.println("Chat Response Text: " + text);
+    }
+
+    @Test
+    @Tag("integration")
+    @EnabledIfEnvironmentVariable(named = "AI_DASHSCOPE_API_KEY", matches = ".+")
+    void integrationTestInvalidMetadataFpsFallsBackToOptions() {
+        // Create real API client with API key from environment
+        String apiKey = System.getenv("AI_DASHSCOPE_API_KEY");
+        DashScopeApi realApi = DashScopeApi.builder().apiKey(apiKey).build();
+
+        // Create chat model with default options that include fps
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .multiModel(true)
+                .fps(2.0)
+                .build();
+
+        DashScopeChatModel chatModel = DashScopeChatModel.builder()
+                .dashScopeApi(realApi)
+                .defaultOptions(options)
+                .build();
+
+        // Create prompt with user message that contains invalid metadata fps
+        Media media = Media.builder()
+                .mimeType(Media.Format.VIDEO_MP4)
+                .data(URI.create("https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241115/cqqkru/1.mp4"))
+                .build();
+        UserMessage userMessage = UserMessage.builder()
+                .text(MULTIMODAL_VIDEO_PROMPT)
+                .media(media)
+                .build();
+        userMessage.getMetadata().put(MESSAGE_FORMAT, MessageFormat.VIDEO);
+        userMessage.getMetadata().put(VIDEO_FPS, "abc");
+        Prompt prompt = Prompt.builder().messages(userMessage).build();
+
+        // Call the chat model
+        Generation response = chatModel.call(prompt).getResult();
+
+        String text = response.getOutput().getText();
+        assertThat(text).isNotEmpty();
         System.out.println("Chat Response Text: " + text);
     }
 

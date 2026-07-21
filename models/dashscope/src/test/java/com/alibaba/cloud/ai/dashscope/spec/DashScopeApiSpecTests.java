@@ -15,15 +15,18 @@
  */
 package com.alibaba.cloud.ai.dashscope.spec;
 
+import java.util.List;
 import java.util.Map;
 
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.MediaContent;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionRequestParameter.ToolChoiceBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Test cases for {@link ToolChoiceBuilder}.
+ * Test cases for {@link DashScopeApiSpec} types.
  */
 class DashScopeApiSpecTests {
 
@@ -46,6 +49,31 @@ class DashScopeApiSpecTests {
     void functionToolChoice() {
         assertThat(ToolChoiceBuilder.function("getCurrentWeather"))
             .isEqualTo(Map.of("type", "function", "function", Map.of("name", "getCurrentWeather")));
+    }
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    void mediaContentSerializesFpsForSingleVideo() throws Exception {
+        MediaContent content = new MediaContent("video", null, null, "https://example.com/1.mp4", null, 2.0);
+        String json = objectMapper.writeValueAsString(content);
+        assertThat(json).contains("\"video\":\"https://example.com/1.mp4\"");
+        assertThat(json).contains("\"fps\":2.0");
+    }
+
+    @Test
+    void mediaContentSerializesFpsForFrameList() throws Exception {
+        MediaContent content = new MediaContent("video", null, null,
+                List.of("https://example.com/f1.jpg", "https://example.com/f2.jpg"), null, 4.0);
+        String json = objectMapper.writeValueAsString(content);
+        assertThat(json).contains("\"fps\":4");
+    }
+
+    @Test
+    void mediaContentOmitsFpsWhenNull() throws Exception {
+        MediaContent content = new MediaContent("video", null, null, "https://example.com/1.mp4", null, (Double) null);
+        String json = objectMapper.writeValueAsString(content);
+        assertThat(json).doesNotContain("fps");
     }
 
 }
