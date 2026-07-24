@@ -44,6 +44,8 @@ public class ConfigurablePromptTemplateFactory {
 
 	private final Map<String, ConfigurablePromptTemplate> templates = new ConcurrentHashMap<>();
 
+	private final Map<String, ConfigurablePromptTemplate> fallbackTemplates = new ConcurrentHashMap<>();
+
 	private final Set<String> subscribedPrompts = ConcurrentHashMap.newKeySet();
 
 	private final PromptTemplateBuilderConfigure promptTemplateBuilderConfigure;
@@ -98,7 +100,8 @@ public class ConfigurablePromptTemplateFactory {
 	}
 
 	private ConfigurablePromptTemplate createAndSubscribe(String name, Supplier<ConfigurablePromptTemplate> supplier) {
-		ConfigurablePromptTemplate template = templates.computeIfAbsent(name, key -> supplier.get());
+		ConfigurablePromptTemplate fallbackTemplate = fallbackTemplates.computeIfAbsent(name, key -> supplier.get());
+		ConfigurablePromptTemplate template = templates.computeIfAbsent(name, key -> fallbackTemplate);
 		subscribe(name);
 		return templates.getOrDefault(name, template);
 	}
@@ -124,17 +127,35 @@ public class ConfigurablePromptTemplateFactory {
 
 	private void updateTemplate(String name, Prompt prompt) {
 		if (prompt == null) {
+			ConfigurablePromptTemplate fallbackTemplate = fallbackTemplates.get(name);
+			if (fallbackTemplate == null) {
+				templates.remove(name);
+			}
+			else {
+				templates.put(name, fallbackTemplate);
+			}
 			return;
 		}
 		Map<String, Object> model = new HashMap<>();
+		String template = prompt.getTemplate();
 		if (!CollectionUtils.isEmpty(prompt.getVariables())) {
 			for (PromptVariable variable : prompt.getVariables()) {
-				if (StringUtils.hasText(variable.getName()) && variable.getDefaultValue() != null) {
-					model.put(variable.getName(), variable.getDefaultValue());
+				if (StringUtils.hasText(variable.getName())) {
+					template = normalizeVariablePlaceholder(template, variable.getName());
+					if (variable.getDefaultValue() != null) {
+						model.put(variable.getName(), variable.getDefaultValue());
+					}
 				}
 			}
 		}
-		updateTemplate(name, prompt.getTemplate(), model);
+		updateTemplate(name, template, model);
+	}
+
+	private String normalizeVariablePlaceholder(String template, String variableName) {
+		if (template == null) {
+			return null;
+		}
+		return template.replace("{{" + variableName + "}}", "{" + variableName + "}");
 	}
 
 	private void updateTemplate(String name, String template, Map<String, Object> model) {

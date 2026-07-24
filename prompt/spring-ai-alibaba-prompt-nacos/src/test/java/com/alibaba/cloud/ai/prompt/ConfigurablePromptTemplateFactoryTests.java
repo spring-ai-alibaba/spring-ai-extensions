@@ -229,7 +229,7 @@ class ConfigurablePromptTemplateFactoryTests {
 	@Test
 	void testCreateLoadsPromptFromNacosPromptRegistry() throws Exception {
 		AiService aiService = mock(AiService.class);
-		Prompt prompt = createNacosPrompt(TEST_TEMPLATE_NAME, "Hello from Nacos, {name}!", "name", "Alice");
+		Prompt prompt = createNacosPrompt(TEST_TEMPLATE_NAME, "Hello from Nacos, {{name}}!", "name", "Alice");
 		when(aiService.subscribePrompt(eq(TEST_TEMPLATE_NAME), isNull(), isNull(), any())).thenReturn(prompt);
 		factory = new ConfigurablePromptTemplateFactory(new PromptTemplateBuilderConfigure(), aiService);
 
@@ -242,7 +242,7 @@ class ConfigurablePromptTemplateFactoryTests {
 	@Test
 	void testPromptRegistrySubscriptionUpdatesTemplate() throws Exception {
 		AiService aiService = mock(AiService.class);
-		Prompt initialPrompt = createNacosPrompt(TEST_TEMPLATE_NAME, "Hello, {name}!", "name", "Alice");
+		Prompt initialPrompt = createNacosPrompt(TEST_TEMPLATE_NAME, "Hello, {{name}}!", "name", "Alice");
 		ArgumentCaptor<AbstractNacosPromptListener> listenerCaptor = ArgumentCaptor
 			.forClass(AbstractNacosPromptListener.class);
 		when(aiService.subscribePrompt(eq(TEST_TEMPLATE_NAME), isNull(), isNull(), listenerCaptor.capture()))
@@ -250,10 +250,26 @@ class ConfigurablePromptTemplateFactoryTests {
 		factory = new ConfigurablePromptTemplateFactory(new PromptTemplateBuilderConfigure(), aiService);
 		factory.create(TEST_TEMPLATE_NAME, TEST_TEMPLATE_CONTENT);
 
-		Prompt updatedPrompt = createNacosPrompt(TEST_TEMPLATE_NAME, "Welcome, {name}!", "name", "Bob");
+		Prompt updatedPrompt = createNacosPrompt(TEST_TEMPLATE_NAME, "Welcome, {{name}}!", "name", "Bob");
 		listenerCaptor.getValue().onEvent(new NacosPromptEvent(TEST_TEMPLATE_NAME, updatedPrompt));
 
 		assertThat(factory.getTemplate(TEST_TEMPLATE_NAME).render()).isEqualTo("Welcome, Bob!");
+	}
+
+	@Test
+	void testPromptRegistryDeletionRestoresLocalTemplate() throws Exception {
+		AiService aiService = mock(AiService.class);
+		Prompt remotePrompt = createNacosPrompt(TEST_TEMPLATE_NAME, "Hello from Nacos, {{name}}!", "name", "Alice");
+		ArgumentCaptor<AbstractNacosPromptListener> listenerCaptor = ArgumentCaptor
+			.forClass(AbstractNacosPromptListener.class);
+		when(aiService.subscribePrompt(eq(TEST_TEMPLATE_NAME), isNull(), isNull(), listenerCaptor.capture()))
+			.thenReturn(remotePrompt);
+		factory = new ConfigurablePromptTemplateFactory(new PromptTemplateBuilderConfigure(), aiService);
+		factory.create(TEST_TEMPLATE_NAME, TEST_TEMPLATE_CONTENT, Map.of("name", "Local"));
+
+		listenerCaptor.getValue().onEvent(new NacosPromptEvent(TEST_TEMPLATE_NAME, null));
+
+		assertThat(factory.getTemplate(TEST_TEMPLATE_NAME).render()).isEqualTo("Hello, Local!");
 	}
 
 	private Prompt createNacosPrompt(String name, String template, String variableName, String defaultValue) {
