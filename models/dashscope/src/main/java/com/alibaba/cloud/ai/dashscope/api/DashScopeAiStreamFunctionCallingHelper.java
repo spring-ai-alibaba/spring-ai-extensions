@@ -125,48 +125,47 @@ public class DashScopeAiStreamFunctionCallingHelper {
         String phase = (current.phase() != null ? current.phase() : previous.phase());
 
 		List<ToolCall> toolCalls = new ArrayList<>();
-		ToolCall lastPreviousToolCall = null;
 		if (!CollectionUtils.isEmpty(previous.toolCalls())) {
-			lastPreviousToolCall = previous.toolCalls().get(previous.toolCalls().size() - 1);
-			if (previous.toolCalls().size() > 1) {
-				toolCalls.addAll(previous.toolCalls().subList(0, previous.toolCalls().size() - 1));
-			}
+			toolCalls.addAll(previous.toolCalls());
 		}
 
 		if (!CollectionUtils.isEmpty(current.toolCalls())) {
-			if (current.toolCalls().size() > 1) {
-				throw new IllegalStateException("Currently only one tool call is supported per message!");
-			}
-			var currentToolCall = current.toolCalls().iterator().next();
-			if (isSameStreamingToolCall(lastPreviousToolCall, currentToolCall)) {
-				toolCalls.add(merge(lastPreviousToolCall, currentToolCall));
-			}
-			else {
-				if (lastPreviousToolCall != null) {
-					toolCalls.add(lastPreviousToolCall);
+			for (ToolCall currentToolCall : current.toolCalls()) {
+				int matchingIndex = findMatchingToolCallIndex(toolCalls, currentToolCall);
+				if (matchingIndex >= 0) {
+					toolCalls.set(matchingIndex, merge(toolCalls.get(matchingIndex), currentToolCall));
 				}
-				toolCalls.add(currentToolCall);
-			}
-		}
-		else {
-			if (lastPreviousToolCall != null) {
-				toolCalls.add(lastPreviousToolCall);
+				else {
+					toolCalls.add(currentToolCall);
+				}
 			}
 		}
 		return new ChatCompletionMessage(content, role, name, toolCallId, toolCalls, reasoningContent, partial, phase, annotations, status);
 	}
 
-	private boolean isSameStreamingToolCall(ToolCall previous, ToolCall current) {
-		if (previous == null || current == null) {
-			return false;
+	private int findMatchingToolCallIndex(List<ToolCall> previousToolCalls, ToolCall currentToolCall) {
+		if (currentToolCall.index() != null) {
+			for (int i = 0; i < previousToolCalls.size(); i++) {
+				ToolCall previousToolCall = previousToolCalls.get(i);
+				if (currentToolCall.index().equals(previousToolCall.index())) {
+					return i;
+				}
+			}
 		}
-		if (StringUtils.hasText(previous.id()) && StringUtils.hasText(current.id())) {
-			return previous.id().equals(current.id());
+		if (StringUtils.hasText(currentToolCall.id())) {
+			for (int i = 0; i < previousToolCalls.size(); i++) {
+				ToolCall previousToolCall = previousToolCalls.get(i);
+				if ((currentToolCall.index() == null || previousToolCall.index() == null)
+						&& currentToolCall.id().equals(previousToolCall.id())) {
+					return i;
+				}
+			}
 		}
-        if (previous.index() != null && current.index() != null) {
-            return previous.index().equals(current.index());
-        }
-        return !StringUtils.hasText(current.id());
+		if (currentToolCall.index() == null && !StringUtils.hasText(currentToolCall.id())
+				&& !previousToolCalls.isEmpty()) {
+			return previousToolCalls.size() - 1;
+		}
+		return -1;
 	}
 
 	private ToolCall merge(ToolCall previous, ToolCall current) {
@@ -180,7 +179,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 
         String id = (StringUtils.hasText(current.id()) ? current.id() : previous.id());
 		String type = (StringUtils.hasText(current.type()) ? current.type() : previous.type());
-		Integer index = (current.index() != null && current.index() != 0 ? current.index() : previous.index());
+		Integer index = (current.index() != null ? current.index() : previous.index());
 
 
 		ChatCompletionFunction function = merge(previous.function(), current.function());

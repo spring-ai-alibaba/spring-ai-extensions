@@ -117,6 +117,38 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 	}
 
 	@Test
+	void testMergeToolCallChunksByIndexInsteadOfId() {
+		ChatCompletionChunk previous = createChunkWithIndexedToolCall("request-1", "tool-1", "get_weather", "{\"location",
+				0);
+		ChatCompletionChunk current = createChunkWithIndexedToolCall("request-1", "tool-2", null, "\":\"Beijing\"}", 0);
+
+		ChatCompletionChunk result = helperWithIncrementalOutput.merge(previous, current);
+
+		List<ToolCall> toolCalls = result.output().choices().get(0).message().toolCalls();
+		assertEquals(1, toolCalls.size());
+		assertEquals(0, toolCalls.get(0).index());
+		assertEquals("get_weather", toolCalls.get(0).function().name());
+		assertEquals("{\"location\":\"Beijing\"}", toolCalls.get(0).function().arguments());
+	}
+
+	@Test
+	void testMergeInterleavedToolCallChunksByIndex() {
+		ChatCompletionChunk previous = createChunkWithToolCalls("request-1",
+				new ToolCall("tool-1", "function", new ChatCompletionFunction("get_weather", "{\"location"), 0),
+				new ToolCall("tool-2", "function", new ChatCompletionFunction("get_time", "{\"timezone"), 1));
+		ChatCompletionChunk current = createChunkWithIndexedToolCall("request-1", null, null, "\":\"Beijing\"}", 0);
+
+		ChatCompletionChunk result = helperWithIncrementalOutput.merge(previous, current);
+
+		List<ToolCall> toolCalls = result.output().choices().get(0).message().toolCalls();
+		assertEquals(2, toolCalls.size());
+		assertEquals(0, toolCalls.get(0).index());
+		assertEquals("{\"location\":\"Beijing\"}", toolCalls.get(0).function().arguments());
+		assertEquals(1, toolCalls.get(1).index());
+		assertEquals("{\"timezone", toolCalls.get(1).function().arguments());
+	}
+
+	@Test
 	void testIsStreamingToolFunctionCall() {
 		// Test isStreamingToolFunctionCall method
 		ChatCompletionChunk chunkWithTool = createChunkWithToolCall("request-1", "tool-1", "function-1",
@@ -242,9 +274,28 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 	// Helper method: Create a ChatCompletionChunk with tool call and finish reason
 	private ChatCompletionChunk createChunkWithToolCall(String requestId, String toolId, String functionName,
 			String arguments, ChatCompletionFinishReason finishReason) {
+		return createChunkWithToolCall(requestId, toolId, functionName, arguments, finishReason, null);
+	}
+
+	private ChatCompletionChunk createChunkWithIndexedToolCall(String requestId, String toolId, String functionName,
+			String arguments, Integer index) {
+		return createChunkWithToolCall(requestId, toolId, functionName, arguments, null, index);
+	}
+
+	private ChatCompletionChunk createChunkWithToolCall(String requestId, String toolId, String functionName,
+			String arguments, ChatCompletionFinishReason finishReason, Integer index) {
 		ChatCompletionFunction function = new ChatCompletionFunction(functionName, arguments);
-		ToolCall toolCall = new ToolCall(toolId, "function", function, null);
-		ChatCompletionMessage message = new ChatCompletionMessage("", Role.ASSISTANT, null, null, List.of(toolCall),
+		ToolCall toolCall = new ToolCall(toolId, "function", function, index);
+		return createChunkWithToolCalls(requestId, finishReason, toolCall);
+	}
+
+	private ChatCompletionChunk createChunkWithToolCalls(String requestId, ToolCall... toolCalls) {
+		return createChunkWithToolCalls(requestId, null, toolCalls);
+	}
+
+	private ChatCompletionChunk createChunkWithToolCalls(String requestId, ChatCompletionFinishReason finishReason,
+			ToolCall... toolCalls) {
+		ChatCompletionMessage message = new ChatCompletionMessage("", Role.ASSISTANT, null, null, List.of(toolCalls),
 				null, null, null, null, null);
 		Choice choice = new Choice(finishReason, message, null, 0);
 		ChatCompletionOutput output = new ChatCompletionOutput(null, List.of(choice), null);
