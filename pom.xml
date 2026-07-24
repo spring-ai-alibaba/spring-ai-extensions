@@ -215,6 +215,7 @@
 
         <!-- Nacos -->
         <nacos3.version>3.1.0</nacos3.version>
+        <nacos-prompt-client.version>3.2.1</nacos-prompt-client.version>
         <nacos-client-mse-extension.version>1.0.6</nacos-client-mse-extension.version>
         <spring-alibaba-nacos-config.version>2023.0.1.3</spring-alibaba-nacos-config.version>
 

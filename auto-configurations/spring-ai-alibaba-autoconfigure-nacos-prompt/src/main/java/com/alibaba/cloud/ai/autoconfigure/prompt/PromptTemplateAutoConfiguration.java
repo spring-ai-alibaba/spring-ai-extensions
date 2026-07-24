@@ -16,11 +16,18 @@
 package com.alibaba.cloud.ai.autoconfigure.prompt;
 
 import com.alibaba.cloud.ai.prompt.ConfigurablePromptTemplateFactory;
-
 import com.alibaba.cloud.ai.prompt.PromptTemplateBuilderConfigure;
 import com.alibaba.cloud.ai.prompt.PromptTemplateCustomizer;
+import com.alibaba.cloud.nacos.NacosConfigAutoConfiguration;
+import com.alibaba.cloud.nacos.NacosConfigProperties;
+import com.alibaba.nacos.api.ai.AiFactory;
+import com.alibaba.nacos.api.ai.AiService;
+import com.alibaba.nacos.api.exception.NacosException;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +39,7 @@ import org.springframework.context.annotation.Conditional;
  */
 
 @AutoConfiguration
+@AutoConfigureAfter(NacosConfigAutoConfiguration.class)
 @Conditional(PromptTmplNacosConfigCondition.class)
 @EnableConfigurationProperties(NacosPromptTmplProperties.class)
 public class PromptTemplateAutoConfiguration {
@@ -45,12 +53,20 @@ public class PromptTemplateAutoConfiguration {
 		return promptTemplateBuilderConfigure;
 	}
 
+	@Bean(destroyMethod = "shutdown")
+	@ConditionalOnBean(NacosConfigProperties.class)
+	@ConditionalOnMissingBean
+	public AiService nacosAiService(NacosConfigProperties nacosConfigProperties) throws NacosException {
+		return AiFactory.createAiService(nacosConfigProperties.assembleConfigServiceProperties());
+	}
+
 	// @formatter:off
 	@Bean
 	@ConditionalOnMissingBean
-	public ConfigurablePromptTemplateFactory configurablePromptTemplateFactory(PromptTemplateBuilderConfigure promptTemplateBuilderConfigure) {
+	public ConfigurablePromptTemplateFactory configurablePromptTemplateFactory(PromptTemplateBuilderConfigure promptTemplateBuilderConfigure,
+			ObjectProvider<AiService> aiServiceProvider) {
 
-		return new ConfigurablePromptTemplateFactory(promptTemplateBuilderConfigure);
+		return new ConfigurablePromptTemplateFactory(promptTemplateBuilderConfigure, aiServiceProvider.getIfAvailable());
 	}
 	// @formatter:on
 
