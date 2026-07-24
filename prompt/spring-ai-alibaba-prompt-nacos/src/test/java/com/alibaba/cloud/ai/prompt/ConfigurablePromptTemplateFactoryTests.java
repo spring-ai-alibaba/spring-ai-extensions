@@ -15,8 +15,14 @@
  */
 package com.alibaba.cloud.ai.prompt;
 
+import com.alibaba.nacos.api.ai.AiService;
+import com.alibaba.nacos.api.ai.listener.AbstractNacosPromptListener;
+import com.alibaba.nacos.api.ai.listener.NacosPromptEvent;
+import com.alibaba.nacos.api.ai.model.prompt.Prompt;
+import com.alibaba.nacos.api.ai.model.prompt.PromptVariable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.template.st.StTemplateRenderer;
 import org.springframework.core.io.ByteArrayResource;
@@ -25,6 +31,12 @@ import org.springframework.core.io.Resource;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Test cases for ConfigurablePromptTemplateFactory. Tests template creation, retrieval,
@@ -212,6 +224,58 @@ class ConfigurablePromptTemplateFactoryTests {
 		ConfigurablePromptTemplate template = factory.getTemplate(TEST_TEMPLATE_NAME);
 		assertThat(template.render()).isNotEqualTo("Hello, John!");
 		assertThat(template.render()).isEqualTo("Hello, yuhuangbin!");
+	}
+
+	@Test
+	void testCreateLoadsPromptFromNacosPromptRegistry() throws Exception {
+		AiService aiService = mock(AiService.class);
+		Prompt prompt = createNacosPrompt(TEST_TEMPLATE_NAME, "Hello from Nacos, {{name}}!", "name", "Alice");
+		when(aiService.subscribePrompt(eq(TEST_TEMPLATE_NAME), isNull(), isNull(), any())).thenReturn(prompt);
+		factory = new ConfigurablePromptTemplateFactory(new PromptTemplateBuilderConfigure(), aiService);
+
+		ConfigurablePromptTemplate template = factory.create(TEST_TEMPLATE_NAME, TEST_TEMPLATE_CONTENT);
+
+		assertThat(template.render()).isEqualTo("Hello from Nacos, Alice!");
+		verify(aiService).subscribePrompt(eq(TEST_TEMPLATE_NAME), isNull(), isNull(), any());
+	}
+
+	@Test
+	void testPromptRegistrySubscriptionUpdatesTemplate() throws Exception {
+		AiService aiService = mock(AiService.class);
+		Prompt initialPrompt = createNacosPrompt(TEST_TEMPLATE_NAME, "Hello, {{name}}!", "name", "Alice");
+		ArgumentCaptor<AbstractNacosPromptListener> listenerCaptor = ArgumentCaptor
+			.forClass(AbstractNacosPromptListener.class);
+		when(aiService.subscribePrompt(eq(TEST_TEMPLATE_NAME), isNull(), isNull(), listenerCaptor.capture()))
+			.thenReturn(initialPrompt);
+		factory = new ConfigurablePromptTemplateFactory(new PromptTemplateBuilderConfigure(), aiService);
+		factory.create(TEST_TEMPLATE_NAME, TEST_TEMPLATE_CONTENT);
+
+		Prompt updatedPrompt = createNacosPrompt(TEST_TEMPLATE_NAME, "Welcome, {{name}}!", "name", "Bob");
+		listenerCaptor.getValue().onEvent(new NacosPromptEvent(TEST_TEMPLATE_NAME, updatedPrompt));
+
+		assertThat(factory.getTemplate(TEST_TEMPLATE_NAME).render()).isEqualTo("Welcome, Bob!");
+	}
+
+	@Test
+	void testPromptRegistryDeletionRestoresLocalTemplate() throws Exception {
+		AiService aiService = mock(AiService.class);
+		Prompt remotePrompt = createNacosPrompt(TEST_TEMPLATE_NAME, "Hello from Nacos, {{name}}!", "name", "Alice");
+		ArgumentCaptor<AbstractNacosPromptListener> listenerCaptor = ArgumentCaptor
+			.forClass(AbstractNacosPromptListener.class);
+		when(aiService.subscribePrompt(eq(TEST_TEMPLATE_NAME), isNull(), isNull(), listenerCaptor.capture()))
+			.thenReturn(remotePrompt);
+		factory = new ConfigurablePromptTemplateFactory(new PromptTemplateBuilderConfigure(), aiService);
+		factory.create(TEST_TEMPLATE_NAME, TEST_TEMPLATE_CONTENT, Map.of("name", "Local"));
+
+		listenerCaptor.getValue().onEvent(new NacosPromptEvent(TEST_TEMPLATE_NAME, null));
+
+		assertThat(factory.getTemplate(TEST_TEMPLATE_NAME).render()).isEqualTo("Hello, Local!");
+	}
+
+	private Prompt createNacosPrompt(String name, String template, String variableName, String defaultValue) {
+		Prompt prompt = new Prompt(name, "1.0.0", template);
+		prompt.setVariables(List.of(new PromptVariable(variableName, defaultValue, null)));
+		return prompt;
 	}
 
 }
