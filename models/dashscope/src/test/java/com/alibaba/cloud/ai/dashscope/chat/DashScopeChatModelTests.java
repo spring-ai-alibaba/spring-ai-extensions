@@ -1304,4 +1304,20 @@ class DashScopeChatModelTests {
         assertThat(request).isNotNull();
         assertThat(request.parameters().enableCodeInterpreter()).isNull();
     }
+
+    @Test
+    void testParallelToolCallIndexOrderPreserved() {
+		// Issue #291: parallel tool calls carry an explicit `index`. sortToolCallsByIndex
+		// must preserve index order so that interleaved stream chunks aggregate into the
+		// correct positions downstream. Feed them reversed (index=1 before index=0) and
+		// assert they come back ordered by index.
+		ToolCall tcIndex1 = new ToolCall("call-1", "function", new ChatCompletionFunction("get_time", "city=Shanghai"), 1);
+		ToolCall tcIndex0 = new ToolCall("call-0", "function", new ChatCompletionFunction("get_weather", "location=Beijing"), 0);
+
+		List<ToolCall> sorted = DashScopeChatModel.sortToolCallsByIndex(List.of(tcIndex1, tcIndex0));
+		assertThat(sorted).hasSize(2);
+		// After sorting by index, index=0 (get_weather) must precede index=1 (get_time).
+		assertThat(sorted.get(0).function().name()).isEqualTo("get_weather");
+		assertThat(sorted.get(1).function().name()).isEqualTo("get_time");
+	}
 }

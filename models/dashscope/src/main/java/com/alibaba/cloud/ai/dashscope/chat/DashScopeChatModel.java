@@ -87,6 +87,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Comparator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -405,13 +406,23 @@ public class DashScopeChatModel implements ChatModel {
 		this.defaultOptions = options;
 	}
 
-	private Generation buildGeneration(Choice choice, Map<String, Object> metadata,
+	static List<DashScopeApiSpec.ChatCompletionMessage.ToolCall> sortToolCallsByIndex(
+		List<DashScopeApiSpec.ChatCompletionMessage.ToolCall> toolCalls) {
+		// Preserve tool-call order by their `index` so that parallel tool calls
+		// delivered as interleaved stream chunks are aggregated into the correct
+		// positions downstream (see issue #291). Tool calls without an index sort last.
+		return toolCalls.stream()
+				.sorted(Comparator.comparingInt(tc -> tc.index() == null ? Integer.MAX_VALUE : tc.index()))
+				.toList();
+	}
+
+private Generation buildGeneration(Choice choice, Map<String, Object> metadata,
 			ChatCompletionRequest request) {
 		// Use the validator to filter and validate tool calls
 		List<DashScopeApiSpec.ChatCompletionMessage.ToolCall> validatedToolCalls =
 				toolCallingValidator.validate(choice.message().toolCalls(), choice.finishReason());
 
-		List<AssistantMessage.ToolCall> toolCalls = validatedToolCalls.stream()
+		List<AssistantMessage.ToolCall> toolCalls = sortToolCallsByIndex(validatedToolCalls).stream()
 				.map(toolCall -> new AssistantMessage.ToolCall(toolCall.id(), "function",
 						toolCall.function().name(), toolCall.function().arguments()))
 				.toList();
