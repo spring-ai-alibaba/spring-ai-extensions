@@ -93,10 +93,25 @@ public class DashScopeAiStreamFunctionCallingHelper {
 				if (!insideToolCall.getAndSet(false)) {
 					return Flux.empty();
 				}
-				ChatCompletionChunk merged = mergedToolCall.getAndSet(null);
+				ChatCompletionChunk merged = withFinishReason(mergedToolCall.getAndSet(null),
+						ChatCompletionFinishReason.TOOL_CALLS);
 				return shouldEmitMerged(lastChunk.get(), merged) ? Flux.just(merged) : Flux.empty();
 			}));
 		});
+	}
+
+	private ChatCompletionChunk withFinishReason(ChatCompletionChunk chunk,
+			ChatCompletionFinishReason finishReason) {
+		Choice choice = checkChatCompletionChunk(chunk);
+		if (choice == null) {
+			return chunk;
+		}
+
+		Choice completedChoice = new Choice(finishReason, choice.message(), choice.logprobs(), choice.index());
+		ChatCompletionOutput output = chunk.output();
+		return new ChatCompletionChunk(chunk.requestId(),
+				new ChatCompletionOutput(output.text(), List.of(completedChoice), output.searchInfo()), chunk.usage(),
+				chunk.o());
 	}
 
 	private Flux<ChatCompletionChunk> emitRawAndMerged(ChatCompletionChunk raw, ChatCompletionChunk merged) {

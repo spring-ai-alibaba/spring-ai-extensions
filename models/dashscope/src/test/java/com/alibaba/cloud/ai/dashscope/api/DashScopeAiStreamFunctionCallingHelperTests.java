@@ -137,8 +137,28 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 
 		StepVerifier.create(helperWithIncrementalOutput.mergeStreamingToolCallChunks(Flux.just(first, second)))
 			.expectNext(first, second)
-			.assertNext(merged -> assertEquals("{\"city\":\"Beijing\"}", merged.output().choices().get(0)
-				.message().toolCalls().get(0).function().arguments()))
+			.assertNext(merged -> {
+				assertEquals(ChatCompletionFinishReason.TOOL_CALLS,
+						merged.output().choices().get(0).finishReason());
+				assertEquals("{\"city\":\"Beijing\"}",
+						merged.output().choices().get(0).message().toolCalls().get(0).function().arguments());
+			})
+			.verifyComplete();
+	}
+
+	@Test
+	void mergeStreamingToolCallChunksMarksSingleChunkCompleteWhenStreamEnds() {
+		ChatCompletionChunk complete = createChunkWithToolCall("request-1", "tool-1", "get_weather",
+				"{\"city\":\"Beijing\"}");
+
+		StepVerifier.create(helperWithIncrementalOutput.mergeStreamingToolCallChunks(Flux.just(complete)))
+			.expectNext(complete)
+			.assertNext(merged -> {
+				assertEquals(ChatCompletionFinishReason.TOOL_CALLS,
+						merged.output().choices().get(0).finishReason());
+				assertEquals("{\"city\":\"Beijing\"}",
+						merged.output().choices().get(0).message().toolCalls().get(0).function().arguments());
+			})
 			.verifyComplete();
 	}
 
