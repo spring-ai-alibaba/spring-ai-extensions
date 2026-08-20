@@ -28,9 +28,14 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Helper class to support Streaming function calling. It can merge the streamed
@@ -47,6 +52,65 @@ public class DashScopeAiStreamFunctionCallingHelper {
 
 	public DashScopeAiStreamFunctionCallingHelper(Boolean incrementalOutput) {
 		this.incrementalOutput = incrementalOutput;
+	}
+
+	/**
+	 * Emits each streaming tool-call chunk as received, followed by the merged tool
+	 * call when the sequence finishes. Non-tool chunks pass through unchanged.
+	 * @param chunks source completion chunks
+	 * @return raw chunks with a merged tool-call chunk appended when available
+	 */
+	Flux<ChatCompletionChunk> mergeStreamingToolCallChunks(Flux<ChatCompletionChunk> chunks) {
+		return Flux.defer(() -> {
+			AtomicBoolean insideToolCall = new AtomicBoolean(false);
+			AtomicReference<ChatCompletionChunk> mergedToolCall = new AtomicReference<>();
+			AtomicReference<ChatCompletionChunk> lastChunk = new AtomicReference<>();
+
+			return chunks.concatMap(chunk -> {
+				lastChunk.set(chunk);
+				if (isStreamingToolFunctionCall(chunk)) {
+					if (!insideToolCall.getAndSet(true)) {
+						mergedToolCall.set(null);
+					}
+					mergedToolCall.set(merge(mergedToolCall.get(), chunk));
+
+					if (isStreamingToolFunctionCallFinish(chunk)) {
+						insideToolCall.set(false);
+						return emitRawAndMerged(chunk, mergedToolCall.getAndSet(null));
+					}
+					return Mono.just(chunk);
+				}
+
+				if (insideToolCall.get()) {
+					mergedToolCall.set(merge(mergedToolCall.get(), chunk));
+					if (hasTerminalFinishReason(chunk)) {
+						insideToolCall.set(false);
+						return emitRawAndMerged(chunk, mergedToolCall.getAndSet(null));
+					}
+				}
+				return Mono.just(chunk);
+			}).concatWith(Flux.defer(() -> {
+				if (!insideToolCall.getAndSet(false)) {
+					return Flux.empty();
+				}
+				ChatCompletionChunk merged = mergedToolCall.getAndSet(null);
+				return shouldEmitMerged(lastChunk.get(), merged) ? Flux.just(merged) : Flux.empty();
+			}));
+		});
+	}
+
+	private Flux<ChatCompletionChunk> emitRawAndMerged(ChatCompletionChunk raw, ChatCompletionChunk merged) {
+		return shouldEmitMerged(raw, merged) ? Flux.just(raw, merged) : Flux.just(raw);
+	}
+
+	private boolean shouldEmitMerged(ChatCompletionChunk raw, ChatCompletionChunk merged) {
+		return isStreamingToolFunctionCall(merged) && !Objects.equals(raw, merged);
+	}
+
+	private boolean hasTerminalFinishReason(ChatCompletionChunk chunk) {
+		Choice choice = checkChatCompletionChunk(chunk);
+		return choice != null && choice.finishReason() != null
+				&& choice.finishReason() != ChatCompletionFinishReason.NULL;
 	}
 
 	/**

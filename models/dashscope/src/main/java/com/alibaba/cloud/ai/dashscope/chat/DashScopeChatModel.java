@@ -36,6 +36,7 @@ import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.tool.observation.inner.ToolCallReactiveContextHolder;
 import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
 import com.alibaba.cloud.ai.tool.validator.ToolCallValidator;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
@@ -70,6 +71,7 @@ import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.support.UsageCalculator;
 import org.springframework.ai.tool.definition.ToolDefinition;
+import org.springframework.ai.util.json.JsonParser;
 import org.springframework.http.ResponseEntity;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.Assert;
@@ -297,7 +299,8 @@ public class DashScopeChatModel implements ChatModel {
             );
 
 			Flux<ChatResponse> flux = chatResponse.flatMap(response -> {
-					if (toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
+					if (isStreamingToolExecutionReady(response)
+							&& toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
 
 						return Flux.deferContextual((ctx) -> {
 
@@ -336,6 +339,31 @@ public class DashScopeChatModel implements ChatModel {
 
 			return new MessageAggregator().aggregate(flux, observationContext::setResponse);
 		});
+	}
+
+	private boolean isStreamingToolExecutionReady(ChatResponse response) {
+		if (!response.hasToolCalls()) {
+			return true;
+		}
+
+		return response.getResults().stream()
+			.filter(generation -> generation.getOutput().hasToolCalls())
+			.allMatch(generation -> StringUtils.hasText(generation.getMetadata().getFinishReason())
+					&& generation.getOutput().getToolCalls().stream().allMatch(this::hasValidJsonArguments));
+	}
+
+	private boolean hasValidJsonArguments(AssistantMessage.ToolCall toolCall) {
+		if (!StringUtils.hasText(toolCall.arguments())) {
+			return true;
+		}
+
+		try {
+			JsonParser.getObjectMapper().readTree(toolCall.arguments());
+			return true;
+		}
+		catch (JsonProcessingException ex) {
+			return false;
+		}
 	}
 
 	private static String finishReasonToMetadataValue(DashScopeApiSpec.ChatCompletionFinishReason finishReason) {

@@ -26,6 +26,8 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionOutput
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 import java.util.List;
 
@@ -54,6 +56,90 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 		helper = new DashScopeAiStreamFunctionCallingHelper();
 		// Create helper with incrementalOutput = true
 		helperWithIncrementalOutput = new DashScopeAiStreamFunctionCallingHelper(true);
+	}
+
+	@Test
+	void mergeStreamingToolCallChunksEmitsFragmentsAndMergedChunk() {
+		ChatCompletionChunk first = createChunkWithToolCall("request-1", "tool-1", "get_weather",
+				"{\"city\":\"Bei");
+		ChatCompletionChunk second = createChunkWithToolCall("request-1", null, null, "jing\"}",
+				ChatCompletionFinishReason.TOOL_CALLS);
+
+		StepVerifier.create(helperWithIncrementalOutput.mergeStreamingToolCallChunks(Flux.just(first, second)))
+			.expectNext(first, second)
+			.assertNext(merged -> {
+				ToolCall toolCall = merged.output().choices().get(0).message().toolCalls().get(0);
+				assertEquals("tool-1", toolCall.id());
+				assertEquals("get_weather", toolCall.function().name());
+				assertEquals("{\"city\":\"Beijing\"}", toolCall.function().arguments());
+				assertEquals(ChatCompletionFinishReason.TOOL_CALLS,
+						merged.output().choices().get(0).finishReason());
+			})
+			.verifyComplete();
+	}
+
+	@Test
+	void mergeStreamingToolCallChunksLeavesTextChunksUnchanged() {
+		ChatCompletionChunk first = createSimpleChunk("request-1", "Bei", Role.ASSISTANT, null);
+		ChatCompletionChunk second = createSimpleChunk("request-1", "jing", Role.ASSISTANT,
+				ChatCompletionFinishReason.STOP);
+
+		StepVerifier.create(helperWithIncrementalOutput.mergeStreamingToolCallChunks(Flux.just(first, second)))
+			.expectNext(first, second)
+			.verifyComplete();
+	}
+
+	@Test
+	void mergeStreamingToolCallChunksDoesNotDuplicateSingleFinishedChunk() {
+		ChatCompletionChunk finished = createChunkWithToolCall("request-1", "tool-1", "get_weather",
+				"{\"city\":\"Beijing\"}", ChatCompletionFinishReason.TOOL_CALLS);
+
+		StepVerifier.create(helperWithIncrementalOutput.mergeStreamingToolCallChunks(Flux.just(finished)))
+			.expectNext(finished)
+			.verifyComplete();
+	}
+
+	@Test
+	void mergeStreamingToolCallChunksPreservesNonIncrementalFinalChunk() {
+		ChatCompletionChunk partial = createChunkWithToolCall("request-1", "tool-1", "get_weather",
+				"{\"city\":\"Bei");
+		ChatCompletionChunk complete = createChunkWithToolCall("request-1", "tool-1", "get_weather",
+				"{\"city\":\"Beijing\"}", ChatCompletionFinishReason.TOOL_CALLS);
+
+		StepVerifier.create(helper.mergeStreamingToolCallChunks(Flux.just(partial, complete)))
+			.expectNext(partial, complete)
+			.verifyComplete();
+	}
+
+	@Test
+	void mergeStreamingToolCallChunksFlushesMergedChunkOnStop() {
+		ChatCompletionChunk first = createChunkWithToolCall("request-1", "tool-1", "get_weather",
+				"{\"city\":\"Bei");
+		ChatCompletionChunk second = createChunkWithToolCall("request-1", null, null, "jing\"}");
+		ChatCompletionChunk stop = createSimpleChunk("request-1", "", Role.ASSISTANT,
+				ChatCompletionFinishReason.STOP);
+
+		StepVerifier.create(helperWithIncrementalOutput.mergeStreamingToolCallChunks(Flux.just(first, second, stop)))
+			.expectNext(first, second, stop)
+			.assertNext(merged -> {
+				assertEquals(ChatCompletionFinishReason.STOP, merged.output().choices().get(0).finishReason());
+				assertEquals("{\"city\":\"Beijing\"}", merged.output().choices().get(0).message().toolCalls()
+					.get(0).function().arguments());
+			})
+			.verifyComplete();
+	}
+
+	@Test
+	void mergeStreamingToolCallChunksFlushesMergedChunkOnCompletion() {
+		ChatCompletionChunk first = createChunkWithToolCall("request-1", "tool-1", "get_weather",
+				"{\"city\":\"Bei");
+		ChatCompletionChunk second = createChunkWithToolCall("request-1", null, null, "jing\"}");
+
+		StepVerifier.create(helperWithIncrementalOutput.mergeStreamingToolCallChunks(Flux.just(first, second)))
+			.expectNext(first, second)
+			.assertNext(merged -> assertEquals("{\"city\":\"Beijing\"}", merged.output().choices().get(0)
+				.message().toolCalls().get(0).function().arguments()))
+			.verifyComplete();
 	}
 
 	@Test
