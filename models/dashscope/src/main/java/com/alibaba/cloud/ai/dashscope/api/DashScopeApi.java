@@ -61,7 +61,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -606,7 +605,6 @@ public class DashScopeApi {
 		Assert.notNull(chatRequest, "The request body can not be null.");
 		Assert.isTrue(chatRequest.stream(), "Request must set the stream property to true.");
 
-		AtomicBoolean isInsideTool = new AtomicBoolean(false);
 		boolean incrementalOutput = chatRequest.parameters() != null
 				&& chatRequest.parameters().incrementalOutput() != null && chatRequest.parameters().incrementalOutput();
 		DashScopeAiStreamFunctionCallingHelper chunkMerger = new DashScopeAiStreamFunctionCallingHelper(
@@ -640,27 +638,7 @@ public class DashScopeApi {
 				}
 				return chunk;
 			})
-			.map(chunk -> {
-				if (chunkMerger.isStreamingToolFunctionCall(chunk)) {
-					isInsideTool.set(true);
-				}
-				return chunk;
-			})
-			.windowUntil(chunk -> {
-				if (isInsideTool.get() && chunkMerger.isStreamingToolFunctionCallFinish(chunk)) {
-					isInsideTool.set(false);
-					return true;
-				}
-				return !isInsideTool.get();
-			})
-			.concatMapIterable(window -> {
-				Mono<DashScopeApiSpec.ChatCompletionChunk> monoChunk = window.reduce(
-                        new DashScopeApiSpec.ChatCompletionChunk(null, null, null, null),
-						chunkMerger::merge
-                );
-				return List.of(monoChunk);
-			})
-			.flatMap(mono -> mono);
+			.transform(chunkMerger::mergeStreamingToolCallChunks);
 	}
 
 	/**

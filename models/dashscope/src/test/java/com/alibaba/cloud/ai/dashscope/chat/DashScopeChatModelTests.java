@@ -51,6 +51,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
+import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
@@ -64,6 +65,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -297,6 +301,108 @@ class DashScopeChatModelTests {
     }
 
     @Test
+    void incompleteStreamingToolCallsDoNotBecomeEligibleForInternalExecution() {
+        ToolCallingManager toolCallingManager = mock(ToolCallingManager.class);
+        DashScopeChatModel toolChatModel = DashScopeChatModel.builder()
+                .dashScopeApi(dashScopeApi)
+                .defaultOptions(defaultOptions)
+                .toolCallingManager(toolCallingManager)
+                .build();
+
+        ToolCall firstToolCall = new ToolCall("tool-1", "function",
+                new ChatCompletionFunction("get_weather", "{\"city\":\"Bei"), 0);
+        ToolCall terminalButInvalidToolCall = new ToolCall("tool-1", "function",
+                new ChatCompletionFunction("get_weather", "jing\"}"), 0);
+        ChatCompletionChunk first = createToolCallChunk(firstToolCall, null);
+        ChatCompletionChunk terminalButInvalid = createToolCallChunk(terminalButInvalidToolCall,
+                ChatCompletionFinishReason.TOOL_CALLS);
+
+        when(dashScopeApi.chatCompletionStream(any(), any()))
+                .thenReturn(Flux.just(first, terminalButInvalid));
+
+        List<ChatResponse> responses = toolChatModel.stream(new Prompt(new UserMessage(TEST_PROMPT)))
+                .collectList().block();
+
+        assertThat(responses).hasSize(2)
+                .allSatisfy(response -> assertThat(response.hasToolCalls()).isTrue());
+        verify(toolCallingManager, never()).executeToolCalls(any(), any());
+    }
+
+    @Test
+    void completeTerminalToolCallRemainsEligibleForInternalExecution() {
+        ToolCallingManager toolCallingManager = mock(ToolCallingManager.class);
+        ToolResponseMessage toolResponse = ToolResponseMessage.builder()
+                .responses(List.of(new ToolResponseMessage.ToolResponse("tool-1", "get_weather", "sunny")))
+                .build();
+        ToolExecutionResult toolExecutionResult = ToolExecutionResult.builder()
+                .conversationHistory(List.of(toolResponse))
+                .returnDirect(true)
+                .build();
+        when(toolCallingManager.executeToolCalls(any(), any())).thenReturn(toolExecutionResult);
+        DashScopeChatModel toolChatModel = DashScopeChatModel.builder()
+                .dashScopeApi(dashScopeApi)
+                .defaultOptions(defaultOptions)
+                .toolCallingManager(toolCallingManager)
+                .build();
+
+        ToolCall firstFragment = new ToolCall("tool-1", "function",
+                new ChatCompletionFunction("get_weather", "{\"city\":\"Bei"), 0);
+        ToolCall secondFragment = new ToolCall("tool-1", "function",
+                new ChatCompletionFunction("get_weather", "jing\"}"), 0);
+        ToolCall completeToolCall = new ToolCall("tool-1", "function",
+                new ChatCompletionFunction("get_weather", "{\"city\":\"Beijing\"}"), 0);
+        ChatCompletionChunk first = createToolCallChunk(firstFragment, null);
+        ChatCompletionChunk second = createToolCallChunk(secondFragment, null);
+        ChatCompletionChunk complete = createToolCallChunk(completeToolCall,
+                ChatCompletionFinishReason.TOOL_CALLS);
+        when(dashScopeApi.chatCompletionStream(any(), any())).thenReturn(Flux.just(first, second, complete));
+
+        List<ChatResponse> responses = toolChatModel.stream(new Prompt(new UserMessage(TEST_PROMPT)))
+                .collectList().block();
+
+        assertThat(responses).hasSize(3);
+        assertThat(responses.get(0).hasToolCalls()).isTrue();
+        assertThat(responses.get(1).hasToolCalls()).isTrue();
+        verify(toolCallingManager).executeToolCalls(any(), any());
+    }
+
+	@Test
+	void lengthTerminatedStreamingToolCallExecutesMergedCallOnce() {
+		ToolCallingManager toolCallingManager = mock(ToolCallingManager.class);
+		ToolResponseMessage toolResponse = ToolResponseMessage.builder()
+			.responses(List.of(new ToolResponseMessage.ToolResponse("tool-1", "get_weather", "sunny")))
+			.build();
+		ToolExecutionResult toolExecutionResult = ToolExecutionResult.builder()
+			.conversationHistory(List.of(toolResponse))
+			.returnDirect(true)
+			.build();
+		when(toolCallingManager.executeToolCalls(any(), any())).thenReturn(toolExecutionResult);
+		DashScopeChatModel toolChatModel = DashScopeChatModel.builder()
+			.dashScopeApi(dashScopeApi)
+			.defaultOptions(defaultOptions)
+			.toolCallingManager(toolCallingManager)
+			.build();
+
+		ToolCall firstFragment = new ToolCall("tool-1", "function",
+				new ChatCompletionFunction("get_weather", "{\"city\":\"Bei"), 0);
+		ToolCall terminalFragment = new ToolCall("tool-1", "function",
+				new ChatCompletionFunction("get_weather", "jing\"}"), 0);
+		ToolCall mergedToolCall = new ToolCall("tool-1", "function",
+				new ChatCompletionFunction("get_weather", "{\"city\":\"Beijing\"}"), 0);
+		ChatCompletionChunk first = createToolCallChunk(firstFragment, null);
+		ChatCompletionChunk terminal = createToolCallChunk(terminalFragment, ChatCompletionFinishReason.LENGTH);
+		ChatCompletionChunk merged = createToolCallChunk(mergedToolCall, ChatCompletionFinishReason.LENGTH);
+		when(dashScopeApi.chatCompletionStream(any(), any())).thenReturn(Flux.just(first, terminal, merged));
+
+		List<ChatResponse> responses = toolChatModel.stream(new Prompt(new UserMessage(TEST_PROMPT)))
+			.collectList()
+			.block();
+
+		assertThat(responses).hasSize(3);
+		verify(toolCallingManager, times(1)).executeToolCalls(any(), any());
+	}
+
+    @Test
     void testErrorHandling() {
         // Test error handling
         when(dashScopeApi.chatCompletionEntity(any(), any())).thenThrow(new RuntimeException("API Error"));
@@ -305,6 +411,15 @@ class DashScopeChatModelTests {
         Prompt prompt = new Prompt(List.of(message));
 
         assertThatThrownBy(() -> chatModel.call(prompt)).isInstanceOf(RuntimeException.class).hasMessage("API Error");
+    }
+
+    private ChatCompletionChunk createToolCallChunk(ToolCall toolCall,
+            ChatCompletionFinishReason finishReason) {
+        ChatCompletionMessage message = new ChatCompletionMessage("", ChatCompletionMessage.Role.ASSISTANT,
+                null, null, List.of(toolCall), null, null, null, null, null);
+        Choice choice = new Choice(finishReason, message, null, 0);
+        return new ChatCompletionChunk(TEST_REQUEST_ID,
+                new ChatCompletionOutput("", List.of(choice), null), null, null);
     }
 
     @Test
