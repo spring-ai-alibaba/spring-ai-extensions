@@ -66,6 +66,7 @@ import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -364,6 +365,42 @@ class DashScopeChatModelTests {
         assertThat(responses.get(1).hasToolCalls()).isTrue();
         verify(toolCallingManager).executeToolCalls(any(), any());
     }
+
+	@Test
+	void lengthTerminatedStreamingToolCallExecutesMergedCallOnce() {
+		ToolCallingManager toolCallingManager = mock(ToolCallingManager.class);
+		ToolResponseMessage toolResponse = ToolResponseMessage.builder()
+			.responses(List.of(new ToolResponseMessage.ToolResponse("tool-1", "get_weather", "sunny")))
+			.build();
+		ToolExecutionResult toolExecutionResult = ToolExecutionResult.builder()
+			.conversationHistory(List.of(toolResponse))
+			.returnDirect(true)
+			.build();
+		when(toolCallingManager.executeToolCalls(any(), any())).thenReturn(toolExecutionResult);
+		DashScopeChatModel toolChatModel = DashScopeChatModel.builder()
+			.dashScopeApi(dashScopeApi)
+			.defaultOptions(defaultOptions)
+			.toolCallingManager(toolCallingManager)
+			.build();
+
+		ToolCall firstFragment = new ToolCall("tool-1", "function",
+				new ChatCompletionFunction("get_weather", "{\"city\":\"Bei"), 0);
+		ToolCall terminalFragment = new ToolCall("tool-1", "function",
+				new ChatCompletionFunction("get_weather", "jing\"}"), 0);
+		ToolCall mergedToolCall = new ToolCall("tool-1", "function",
+				new ChatCompletionFunction("get_weather", "{\"city\":\"Beijing\"}"), 0);
+		ChatCompletionChunk first = createToolCallChunk(firstFragment, null);
+		ChatCompletionChunk terminal = createToolCallChunk(terminalFragment, ChatCompletionFinishReason.LENGTH);
+		ChatCompletionChunk merged = createToolCallChunk(mergedToolCall, ChatCompletionFinishReason.LENGTH);
+		when(dashScopeApi.chatCompletionStream(any(), any())).thenReturn(Flux.just(first, terminal, merged));
+
+		List<ChatResponse> responses = toolChatModel.stream(new Prompt(new UserMessage(TEST_PROMPT)))
+			.collectList()
+			.block();
+
+		assertThat(responses).hasSize(3);
+		verify(toolCallingManager, times(1)).executeToolCalls(any(), any());
+	}
 
     @Test
     void testErrorHandling() {

@@ -74,7 +74,7 @@ public class DashScopeAiStreamFunctionCallingHelper {
 					}
 					mergedToolCall.set(merge(mergedToolCall.get(), chunk));
 
-					if (isStreamingToolFunctionCallFinish(chunk)) {
+					if (hasTerminalFinishReason(chunk)) {
 						insideToolCall.set(false);
 						return emitRawAndMerged(chunk, mergedToolCall.getAndSet(null));
 					}

@@ -130,6 +130,40 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 	}
 
 	@Test
+	void mergeStreamingToolCallChunksClosesOnToolCallStop() {
+		ChatCompletionChunk first = createChunkWithToolCall("request-1", "tool-1", "get_weather",
+				"{\"city\":\"Bei");
+		ChatCompletionChunk stop = createChunkWithToolCall("request-1", null, null, "jing\"}",
+				ChatCompletionFinishReason.STOP);
+
+		StepVerifier.create(helperWithIncrementalOutput.mergeStreamingToolCallChunks(Flux.just(first, stop)))
+			.expectNext(first, stop)
+			.assertNext(merged -> {
+				assertEquals(ChatCompletionFinishReason.STOP, merged.output().choices().get(0).finishReason());
+				assertEquals("{\"city\":\"Beijing\"}",
+						merged.output().choices().get(0).message().toolCalls().get(0).function().arguments());
+			})
+			.verifyComplete();
+	}
+
+	@Test
+	void mergeStreamingToolCallChunksClosesOnToolCallLength() {
+		ChatCompletionChunk first = createChunkWithToolCall("request-1", "tool-1", "get_weather",
+				"{\"city\":\"Bei");
+		ChatCompletionChunk length = createChunkWithToolCall("request-1", null, null, "jing\"}",
+				ChatCompletionFinishReason.LENGTH);
+
+		StepVerifier.create(helperWithIncrementalOutput.mergeStreamingToolCallChunks(Flux.just(first, length)))
+			.expectNext(first, length)
+			.assertNext(merged -> {
+				assertEquals(ChatCompletionFinishReason.LENGTH, merged.output().choices().get(0).finishReason());
+				assertEquals("{\"city\":\"Beijing\"}",
+						merged.output().choices().get(0).message().toolCalls().get(0).function().arguments());
+			})
+			.verifyComplete();
+	}
+
+	@Test
 	void mergeStreamingToolCallChunksFlushesMergedChunkOnCompletion() {
 		ChatCompletionChunk first = createChunkWithToolCall("request-1", "tool-1", "get_weather",
 				"{\"city\":\"Bei");
