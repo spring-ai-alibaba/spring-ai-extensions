@@ -54,7 +54,7 @@ public class DefaultFileStatusHandler implements FileStatusHandler {
 
         if (fileStatus == null) {
             logger.warn("Received null status for file: {}, treating as PARSING",
-                        context.getFileId());
+                        sanitizeForLog(context.getFileId()));
             return handleParsing(context);
         }
 
@@ -64,7 +64,7 @@ public class DefaultFileStatusHandler implements FileStatusHandler {
             case PARSING, UPLOADED -> FileStatusResult.inProgress();
             default -> {
                 logger.warn("Unknown file status: {} for file: {}, treating as PARSING",
-                            statusValue, context.getFileId());
+                            sanitizeForLog(statusValue), sanitizeForLog(context.getFileId()));
                 yield handleParsing(context);
             }
         };
@@ -77,7 +77,7 @@ public class DefaultFileStatusHandler implements FileStatusHandler {
      * @return success result
      */
     private FileStatusResult handleParseSuccess(DocumentProcessContext context) {
-        logger.debug("File parsing succeeded for fileId: {}", context.getFileId());
+        logger.debug("File parsing succeeded for fileId: {}", sanitizeForLog(context.getFileId()));
         return FileStatusResult.success();
     }
 
@@ -96,7 +96,8 @@ public class DefaultFileStatusHandler implements FileStatusHandler {
                                                ResponseEntity<CommonResponse<QueryFileResponseData>> response) {
         CommonResponse<QueryFileResponseData> body = response.getBody();
         if (body == null) {
-            logger.error("File parsing failed. FileId: {}. Response body is null.", context.getFileId());
+            logger.error("File parsing failed. FileId: {}. Response body is null.",
+                         sanitizeForLog(context.getFileId()));
             String message = String.format(
                     "File parsing failed - FileId: %s. Response body is null.",
                     context.getFileId());
@@ -106,7 +107,8 @@ public class DefaultFileStatusHandler implements FileStatusHandler {
         String errorMessage = body.message();
 
         logger.error("File parsing failed. FileId: {}, ErrorCode: {}, ErrorMessage: {}",
-                     context.getFileId(), errorCode, errorMessage);
+                     sanitizeForLog(context.getFileId()), sanitizeForLog(errorCode),
+                     sanitizeForLog(errorMessage));
 
         String message = String.format(
                 "File parsing failed - FileId: %s, ErrorCode: %s, ErrorMessage: %s",
@@ -122,7 +124,14 @@ public class DefaultFileStatusHandler implements FileStatusHandler {
      * @return in-progress result
      */
     private FileStatusResult handleParsing(DocumentProcessContext context) {
-        logger.debug("File is still parsing. FileId: {}", context.getFileId());
+        logger.debug("File is still parsing. FileId: {}", sanitizeForLog(context.getFileId()));
         return FileStatusResult.inProgress();
+    }
+
+    static String sanitizeForLog(Object value) {
+        if (value == null) {
+            return null;
+        }
+        return value.toString().replace("\r", "\\r").replace("\n", "\\n");
     }
 }
