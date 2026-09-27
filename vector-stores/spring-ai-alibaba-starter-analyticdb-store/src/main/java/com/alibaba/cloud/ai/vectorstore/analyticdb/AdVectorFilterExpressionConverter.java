@@ -36,10 +36,21 @@ public class AdVectorFilterExpressionConverter extends AbstractFilterExpressionC
 			handleNotIn(expression, context);
 		}
 		else {
-			this.convertOperand(expression.left(), context);
+			StringBuilder leftContext = new StringBuilder();
+			this.convertOperand(expression.left(), leftContext);
+			context.append(applyNumericCast(expression, leftContext.toString()));
 			context.append(getOperationSymbol(expression));
 			this.convertOperand(expression.right(), context);
 		}
+	}
+
+	// ->> extracts jsonb values as text, so comparing against a number requires an
+	// explicit cast to numeric on ADB PG.
+	private String applyNumericCast(Expression expression, String leftSql) {
+		if (expression.right() instanceof Filter.Value value && value.value() instanceof Number) {
+			return "(" + leftSql + ")::numeric";
+		}
+		return leftSql;
 	}
 
 	private void handleIn(Expression expression, StringBuilder context) {
@@ -100,7 +111,7 @@ public class AdVectorFilterExpressionConverter extends AbstractFilterExpressionC
 
 	@Override
 	protected void doKey(Key key, StringBuilder context) {
-		context.append("$." + key.key());
+		context.append("metadata->>'" + key.key() + "'");
 	}
 
 	@Override
