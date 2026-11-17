@@ -242,4 +242,45 @@ class DashScopeChatOptionsTests {
                 .contains("enable_code_interpreter")
                 .contains(TEST_TEMPERATURE.toString());
     }
+    @Test
+    void copiesAllDashScopeSpecificOptions() {
+        var ocr = new DashScopeApiSpec.OCROption("text_recognition", List.of());
+        var translation = new DashScopeApiSpec.TranslationOptions("en", "zh", List.of(), List.of(), "general");
+        var original = DashScopeChatOptions.builder()
+                .maxToken(100)
+                .toolChoice(Map.of("type", "auto"))
+                .maxInputTokens(4096)
+                .asrOptions(Map.of("language", "en"))
+                .ocrOptions(ocr)
+                .topLogProbs(3)
+                .logprobs(true)
+                .translationOptions(translation)
+                .outputFormat("model_summary_report")
+                .vlEnableImageHwOutput(true)
+                .build();
+
+        var copy = (DashScopeChatOptions) original.copy();
+        assertThat(copy).isNotSameAs(original);
+        assertThat(copy).usingRecursiveComparison().isEqualTo(original);
+        assertThat(copy).isEqualTo(original);
+        assertThat(copy.hashCode()).isEqualTo(original.hashCode());
+    }
+
+    @Test
+    void equalityIncludesPreviouslyOmittedOptions() {
+        var baseline = DashScopeChatOptions.builder().build();
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder().maxToken(1).build());
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder().maxInputTokens(1).build());
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder().asrOptions("asr").build());
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder()
+                .ocrOptions(new DashScopeApiSpec.OCROption("text_recognition", List.of())).build());
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder().topLogProbs(1).build());
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder().logprobs(true).build());
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder()
+                .translationOptions(new DashScopeApiSpec.TranslationOptions("en", "zh", List.of(), List.of(), null))
+                .build());
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder().outputFormat("summary").build());
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder().vlEnableImageHwOutput(true).build());
+    }
+
 }
