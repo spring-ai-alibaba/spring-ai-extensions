@@ -974,6 +974,46 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
             return this;
         }
 
+        public DashScopeChatOptionsBuilder maxInputTokens(Integer maxInputTokens) {
+            this.options.maxInputTokens = maxInputTokens;
+            return this;
+        }
+
+        public DashScopeChatOptionsBuilder asrOptions(Object asrOptions) {
+            this.options.asrOptions = asrOptions;
+            return this;
+        }
+
+        public DashScopeChatOptionsBuilder ocrOptions(DashScopeApiSpec.OCROption ocrOptions) {
+            this.options.ocrOptions = ocrOptions;
+            return this;
+        }
+
+        public DashScopeChatOptionsBuilder topLogProbs(Integer topLogProbs) {
+            this.options.topLogProbs = topLogProbs;
+            return this;
+        }
+
+        public DashScopeChatOptionsBuilder logprobs(Boolean logprobs) {
+            this.options.logprobs = logprobs;
+            return this;
+        }
+
+        public DashScopeChatOptionsBuilder translationOptions(DashScopeApiSpec.TranslationOptions translationOptions) {
+            this.options.translationOptions = translationOptions;
+            return this;
+        }
+
+        public DashScopeChatOptionsBuilder outputFormat(String outputFormat) {
+            this.options.outputFormat = outputFormat;
+            return this;
+        }
+
+        public DashScopeChatOptionsBuilder vlEnableImageHwOutput(Boolean vlEnableImageHwOutput) {
+            this.options.vlEnableImageHwOutput = vlEnableImageHwOutput;
+            return this;
+        }
+
         public DashScopeChatOptionsBuilder extraBody(Map<String, Object> extraBody) {
             this.options.extraBody = extraBody;
             return this;
@@ -1004,6 +1044,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 .internalToolExecutionEnabled(fromOptions.internalToolExecutionEnabled)
                 .repetitionPenalty(fromOptions.repetitionPenalty)
                 .tools(fromOptions.tools)
+                .toolChoice(fromOptions.toolChoice)
                 .toolContext(fromOptions.toolContext)
                 .multiModel(fromOptions.multiModel)
                 .vlHighResolutionImages(fromOptions.vlHighResolutionImages)
@@ -1015,6 +1056,14 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 .modalities(fromOptions.modalities)
                 .audio(fromOptions.audio)
                 .streamOptions(fromOptions.streamOptions)
+                .maxInputTokens(fromOptions.maxInputTokens)
+                .asrOptions(fromOptions.asrOptions)
+                .ocrOptions(fromOptions.ocrOptions)
+                .topLogProbs(fromOptions.topLogProbs)
+                .logprobs(fromOptions.logprobs)
+                .translationOptions(fromOptions.translationOptions)
+                .outputFormat(fromOptions.outputFormat)
+                .vlEnableImageHwOutput(fromOptions.vlEnableImageHwOutput)
                 .extraBody(fromOptions.extraBody)
                 .build();
     }
@@ -1032,6 +1081,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 && Objects.equals(this.stop, that.stop) && Objects.equals(this.enableSearch, that.enableSearch)
                 && Objects.equals(this.enableCodeInterpreter, that.enableCodeInterpreter)
                 && Objects.equals(this.responseFormat, that.responseFormat)
+                && Objects.equals(this.maxTokens, that.maxTokens)
                 && Objects.equals(this.incrementalOutput, that.incrementalOutput)
                 && Objects.equals(this.repetitionPenalty, that.repetitionPenalty)
                 && Objects.equals(this.tools, that.tools) && Objects.equals(this.toolChoice, that.toolChoice)
@@ -1048,7 +1098,15 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 && Objects.equals(this.toolContext, that.toolContext)
                 && Objects.equals(this.modalities, that.modalities) && Objects.equals(this.audio, that.audio)
                 && Objects.equals(this.streamOptions, that.streamOptions)
-                && Objects.equals(this.extraBody, that.extraBody);
+                && Objects.equals(this.extraBody, that.extraBody)
+                && Objects.equals(this.maxInputTokens, that.maxInputTokens)
+                && Objects.equals(this.asrOptions, that.asrOptions)
+                && Objects.equals(this.ocrOptions, that.ocrOptions)
+                && Objects.equals(this.topLogProbs, that.topLogProbs)
+                && Objects.equals(this.logprobs, that.logprobs)
+                && Objects.equals(this.translationOptions, that.translationOptions)
+                && Objects.equals(this.outputFormat, that.outputFormat)
+                && Objects.equals(this.vlEnableImageHwOutput, that.vlEnableImageHwOutput);
     }
 
     @Override
@@ -1058,7 +1116,9 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 this.repetitionPenalty, this.tools, this.toolChoice, this.vlHighResolutionImages, this.enableThinking,
                 this.thinkingBudget, this.toolCallbacks, this.toolNames, this.internalToolExecutionEnabled,
                 this.multiModel, this.searchOptions, this.parallelToolCalls, this.httpHeaders, this.toolContext,
-                this.modalities, this.audio, this.streamOptions, this.extraBody);
+                this.modalities, this.audio, this.streamOptions, this.extraBody, this.maxTokens,
+                this.maxInputTokens, this.asrOptions, this.ocrOptions, this.topLogProbs, this.logprobs,
+                this.translationOptions, this.outputFormat, this.vlEnableImageHwOutput);
     }
 
     @Override
