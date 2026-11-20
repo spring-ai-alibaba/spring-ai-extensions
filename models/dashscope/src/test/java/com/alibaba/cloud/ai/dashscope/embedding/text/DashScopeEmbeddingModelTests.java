@@ -296,6 +296,12 @@ class DashScopeEmbeddingModelTests {
     }
 
     @Test
+    void dimensionsUsesConfiguredSizeForKnownModel() {
+        assertThat(embeddingModel.dimensions()).isEqualTo(TEST_DIMENSION);
+        Mockito.verifyNoInteractions(dashScopeApi);
+    }
+
+    @Test
     void testDimensions() {
         DashScopeApi api = DashScopeApi.builder().apiKey("sk-123").build();
         DashScopeEmbeddingModel model = DashScopeEmbeddingModel.builder()

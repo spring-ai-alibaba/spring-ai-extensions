@@ -314,6 +314,10 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 
     @Override
     public int dimensions() {
+        Integer configuredDimensions = this.defaultOptions.getDimensions();
+        if (configuredDimensions != null) {
+            return configuredDimensions;
+        }
         if (KNOWN_EMBEDDING_DIMENSIONS.containsKey(this.defaultOptions.getModel())) {
             return KNOWN_EMBEDDING_DIMENSIONS.get(this.defaultOptions.getModel());
         }
