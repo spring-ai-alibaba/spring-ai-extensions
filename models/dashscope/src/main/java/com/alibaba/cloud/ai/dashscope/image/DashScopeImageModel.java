@@ -314,18 +314,17 @@ public class DashScopeImageModel implements ImageModel {
 
     private ImagePrompt buildRequestImagePrompt(ImagePrompt imagePrompt) {
         DashScopeImageOptions runtimeOptions = null;
-        if (imagePrompt.getOptions() != null) {
+        if (imagePrompt.getOptions() instanceof DashScopeImageOptions dashScopeOptions) {
+            runtimeOptions = dashScopeOptions;
+        }
+        else if (imagePrompt.getOptions() != null) {
             runtimeOptions = ModelOptionsUtils.copyToTarget(imagePrompt.getOptions(), ImageOptions.class,
                     DashScopeImageOptions.class);
         }
 
         DashScopeImageOptions requestOptions = ModelOptionsUtils.merge(runtimeOptions, this.defaultOptions, DashScopeImageOptions.class);
 
-        // Merge @JsonIgnore annotated options
-        if (runtimeOptions != null) {
-            requestOptions.setInvokeMode(ModelOptionsUtils.mergeOption(runtimeOptions.getInvokeMode(), this.defaultOptions.getInvokeMode()));
-            requestOptions.setRequestType(ModelOptionsUtils.mergeOption(runtimeOptions.getRequestType(), this.defaultOptions.getRequestType()));
-        }
+        requestOptions.mergeRoutingOptions(runtimeOptions, this.defaultOptions);
 
         return new ImagePrompt(imagePrompt.getInstructions(), requestOptions);
     }
