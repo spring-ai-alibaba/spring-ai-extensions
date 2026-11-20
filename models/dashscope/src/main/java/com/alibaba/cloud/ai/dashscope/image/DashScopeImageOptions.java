@@ -584,7 +584,7 @@ public class DashScopeImageOptions implements ImageOptions {
      * - ASYNC: asynchronous call (with async header, returns task_id for polling)
      */
     @JsonIgnore
-    private InvokeMode invokeMode = InvokeMode.AUTO;
+    private InvokeMode invokeMode;
 
     /**
      * Request type for the API call.
@@ -593,7 +593,7 @@ public class DashScopeImageOptions implements ImageOptions {
      * - STANDARD: standard request
      */
     @JsonIgnore
-    private RequestType requestType = RequestType.AUTO;
+    private RequestType requestType;
 
     @Override
     public String getModel() {
@@ -1374,8 +1374,16 @@ public class DashScopeImageOptions implements ImageOptions {
         this.trainingFileIds = trainingFileIds;
     }
 
+    // These local routing options are excluded from the JSON-based request merge.
+    void mergeRoutingOptions(DashScopeImageOptions runtimeOptions, DashScopeImageOptions defaults) {
+        this.invokeMode = runtimeOptions != null && runtimeOptions.invokeMode != null
+                ? runtimeOptions.invokeMode : defaults.getInvokeMode();
+        this.requestType = runtimeOptions != null && runtimeOptions.requestType != null
+                ? runtimeOptions.requestType : defaults.getRequestType();
+    }
+
     public InvokeMode getInvokeMode() {
-        return this.invokeMode;
+        return this.invokeMode != null ? this.invokeMode : InvokeMode.AUTO;
     }
 
     public void setInvokeMode(InvokeMode invokeMode) {
@@ -1383,7 +1391,7 @@ public class DashScopeImageOptions implements ImageOptions {
     }
 
     public RequestType getRequestType() {
-        return this.requestType;
+        return this.requestType != null ? this.requestType : RequestType.AUTO;
     }
 
     public void setRequestType(RequestType requestType) {

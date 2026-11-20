@@ -30,7 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.ai.image.ImageMessage;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
 import org.springframework.ai.retry.RetryUtils;
@@ -88,6 +90,37 @@ class DashScopeImageModelTests {
 
 		assertThat(response.getResults()).hasSize(1);
 		assertThat(response.getResult().getOutput().getUrl()).isEqualTo(TEST_IMAGE_URL);
+	}
+
+	@Test
+	void inheritsRoutingDefaultsWhenPromptOmitsThem() {
+		defaultOptions.setInvokeMode(DashScopeImageApiSpec.InvokeMode.ASYNC);
+		defaultOptions.setRequestType(DashScopeImageApiSpec.RequestType.GENERATION);
+		for (ImagePrompt prompt : List.of(new ImagePrompt(TEST_PROMPT),
+				new ImagePrompt(List.of(new ImageMessage(TEST_PROMPT))),
+				new ImagePrompt(TEST_PROMPT, DashScopeImageOptions.builder().n(2).build()))) {
+			imageModel.call(prompt);
+		}
+
+		var requests = ArgumentCaptor.forClass(DashScopeImageApiSpec.ImageRequest.class);
+		Mockito.verify(dashScopeImageApi, Mockito.times(3)).submitImageGenTask(requests.capture(),
+				Mockito.eq(DashScopeImageApiSpec.InvokeMode.ASYNC));
+		assertThat(requests.getAllValues()).allSatisfy(request ->
+				assertThat(request.input()).isInstanceOf(DashScopeImageApiSpec.ImageRequest.GenerationInput.class));
+	}
+
+	@Test
+	void explicitAutoOverridesRoutingDefaults() {
+		defaultOptions.setInvokeMode(DashScopeImageApiSpec.InvokeMode.ASYNC);
+		defaultOptions.setRequestType(DashScopeImageApiSpec.RequestType.GENERATION);
+		var options = DashScopeImageOptions.builder().invokeMode(DashScopeImageApiSpec.InvokeMode.AUTO)
+				.requestType(DashScopeImageApiSpec.RequestType.AUTO).build();
+
+		imageModel.call(new ImagePrompt(TEST_PROMPT, options));
+
+		var request = ArgumentCaptor.forClass(DashScopeImageApiSpec.ImageRequest.class);
+		Mockito.verify(dashScopeImageApi).submitImageGenTask(request.capture(), Mockito.eq(DashScopeImageApiSpec.InvokeMode.AUTO));
+		assertThat(request.getValue().input()).isNotInstanceOf(DashScopeImageApiSpec.ImageRequest.GenerationInput.class);
 	}
 
 	@Test
