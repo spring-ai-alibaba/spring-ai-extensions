@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.parser.tika;
 
 import com.alibaba.cloud.ai.document.DocumentParser;
+import org.apache.tika.exception.WriteLimitReachedException;
 import org.apache.tika.exception.ZeroByteFileException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
@@ -25,6 +26,7 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.ExtractedTextFormatter;
+import org.springframework.util.Assert;
 import org.xml.sax.ContentHandler;
 
 import java.io.InputStream;
@@ -45,7 +47,8 @@ import java.util.function.Supplier;
 
 public class TikaDocumentParser implements DocumentParser {
 
-	private static final int NO_WRITE_LIMIT = -1;
+	/** Maximum number of characters extracted per document when using the default handler. */
+	public static final int DEFAULT_MAX_CHARACTERS = 10_000_000;
 
 	public static final Supplier<Parser> DEFAULT_PARSER_SUPPLIER = AutoDetectParser::new;
 
@@ -54,7 +57,7 @@ public class TikaDocumentParser implements DocumentParser {
 	public static final Supplier<ParseContext> DEFAULT_PARSE_CONTEXT_SUPPLIER = ParseContext::new;
 
 	public static final Supplier<ContentHandler> DEFAULT_CONTENT_HANDLER_SUPPLIER = () -> new BodyContentHandler(
-			NO_WRITE_LIMIT);
+			DEFAULT_MAX_CHARACTERS);
 
 	private final Supplier<Parser> parserSupplier;
 
@@ -74,6 +77,17 @@ public class TikaDocumentParser implements DocumentParser {
 		this((Supplier<Parser>) null, null, null, null, textFormatter);
 	}
 
+	/**
+	 * Uses a caller-supplied extraction limit. Disable it with {@code -1} only for
+	 * trusted documents because the extracted text is held in memory.
+	 * @param maxCharacters maximum extracted characters, or {@code -1} for no limit
+	 * @param textFormatter formatter for the extracted text
+	 */
+	public TikaDocumentParser(int maxCharacters, ExtractedTextFormatter textFormatter) {
+		this(() -> new BodyContentHandler(maxCharacters), textFormatter);
+		Assert.isTrue(maxCharacters >= -1, "maxCharacters must be -1 or greater");
+	}
+
 	public TikaDocumentParser(@Nullable Supplier<ContentHandler> contentHandlerSupplier,
 			ExtractedTextFormatter textFormatter) {
 		this((Supplier<Parser>) null, contentHandlerSupplier, null, null, textFormatter);
@@ -87,13 +101,13 @@ public class TikaDocumentParser implements DocumentParser {
 	}
 
 	/**
-	 * Creates an instance of an {@code ApacheTikaDocumentParser} with the provided
+	 * Creates an instance of a {@code TikaDocumentParser} with the provided
 	 * suppliers for Tika components. If some of the suppliers are not provided
 	 * ({@code null}), the defaults will be used.
 	 * @param parserSupplier Supplier for Tika parser to use. Default:
 	 * {@link AutoDetectParser}
 	 * @param contentHandlerSupplier Supplier for Tika content handler. Default:
-	 * {@link BodyContentHandler} without write limit
+	 * {@link BodyContentHandler} with {@link #DEFAULT_MAX_CHARACTERS} as the write limit
 	 * @param metadataSupplier Supplier for Tika metadata. Default: empty {@link Metadata}
 	 * @param parseContextSupplier Supplier for Tika parse context. Default: empty
 	 * {@link ParseContext}
@@ -128,6 +142,9 @@ public class TikaDocumentParser implements DocumentParser {
 			return Collections.singletonList(toDocument(text));
 		}
 		catch (Exception e) {
+			if (WriteLimitReachedException.isWriteLimitReached(e)) {
+				throw new TikaTextExtractionLimitException(e);
+			}
 			throw new RuntimeException(e);
 		}
 	}

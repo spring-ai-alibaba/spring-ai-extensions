@@ -28,6 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingManager;
@@ -291,6 +293,38 @@ class DashScopeSdkChatModelTests {
 		ChatResponse response = this.chatModel.call(new Prompt(List.of(new UserMessage("Hello"))));
 
 		assertThat(response.getResults()).isEmpty();
+	}
+
+	@Test
+	void internalCallIncludesPreviousUsageWhenProvided() {
+		this.generationClient.callResult = createResult("answer", "stop", false);
+		var prompt = new Prompt("hello", DashScopeSdkChatOptions.builder().model(TEST_MODEL).build());
+		var previous = new ChatResponse(List.of(), ChatResponseMetadata.builder()
+			.usage(new DefaultUsage(20, 3, 23)).build());
+
+		var usage = this.chatModel.internalCall(prompt, previous).getMetadata().getUsage();
+		assertThat(usage.getPromptTokens()).isEqualTo(30);
+		assertThat(usage.getCompletionTokens()).isEqualTo(8);
+		assertThat(usage.getTotalTokens()).isEqualTo(38);
+		assertThat(usage.getCacheReadInputTokens()).isNull();
+	}
+
+	@Test
+	void internalStreamCountsTrailingUsageOnlyChunk() {
+		GenerationResult lastChunk = instantiateGenerationResult();
+		lastChunk.setRequestId(TEST_REQUEST_ID);
+		lastChunk.setUsage(GenerationUsage.builder().inputTokens(10).outputTokens(5).totalTokens(15).build());
+		this.generationClient.streamResult = Flowable.just(lastChunk);
+		var prompt = new Prompt("hello", DashScopeSdkChatOptions.builder().model(TEST_MODEL).build());
+		var previous = new ChatResponse(List.of(), ChatResponseMetadata.builder()
+			.usage(new DefaultUsage(20, 3, 23)).build());
+
+		StepVerifier.create(this.chatModel.internalStream(prompt, previous))
+			.assertNext(response -> {
+				assertThat(response.getResults()).isEmpty();
+				assertThat(response.getMetadata().getUsage().getTotalTokens()).isEqualTo(38);
+			})
+			.verifyComplete();
 	}
 
 	private GenerationResult createResult(String content, String finishReason, boolean withToolCall) {

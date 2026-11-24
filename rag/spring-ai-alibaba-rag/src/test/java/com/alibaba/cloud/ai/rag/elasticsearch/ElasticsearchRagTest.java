@@ -25,9 +25,11 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeChatAutoConfiguration;
 import com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeEmbeddingAutoConfiguration;
+import com.alibaba.cloud.ai.rag.ElasticsearchTestBackend;
 import com.alibaba.cloud.ai.rag.retrieval.search.HybridElasticsearchRetriever;
 import com.alibaba.cloud.ai.rag.retrieval.search.RetrieverType;
 import jakarta.annotation.Resource;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
 import org.springframework.ai.rag.Query;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStore;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStoreOptions;
@@ -48,10 +51,6 @@ import org.springframework.boot.elasticsearch.autoconfigure.ElasticsearchRestCli
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 /**
  * Integration tests for Elasticsearch RAG components.
@@ -59,6 +58,7 @@ import org.testcontainers.utility.DockerImageName;
  * @author benym
  */
 @ImportAutoConfiguration(classes = {
+        ToolCallingAutoConfiguration.class,
         ElasticsearchVectorStoreAutoConfiguration.class,
         ElasticsearchClientAutoConfiguration.class,
         DashScopeChatAutoConfiguration.class,
@@ -66,20 +66,16 @@ import org.testcontainers.utility.DockerImageName;
         DashScopeEmbeddingAutoConfiguration.class
 })
 @SpringBootTest(classes = ElasticsearchRagTest.class)
-@Testcontainers
 public class ElasticsearchRagTest {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchRagTest.class);
 
-    private static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
-            .parse("docker.elastic.co/elasticsearch/elasticsearch:8.11.0");
+    private static final ElasticsearchTestBackend BACKEND = new ElasticsearchTestBackend();
 
-    @Container
-    private static final ElasticsearchContainer elasticsearchContainer = new ElasticsearchContainer(ELASTICSEARCH_IMAGE)
-            .withEnv("discovery.type", "single-node")
-            .withEnv("xpack.security.enabled", "false")
-            .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
-            .withStartupAttempts(3);
+    @AfterAll
+    static void stopBackend() {
+        BACKEND.close();
+    }
 
     /**
      * Dynamically configure Elasticsearch properties
@@ -88,12 +84,11 @@ public class ElasticsearchRagTest {
     static void registerProperties(DynamicPropertyRegistry registry) {
         // vector store properties
         registry.add("spring.ai.vectorstore.elasticsearch.initialize-schema", () -> true);
-        registry.add("spring.ai.vectorstore.elasticsearch.index-name", () -> "spring_ai_alibaba_rag_index");
+        registry.add("spring.ai.vectorstore.elasticsearch.index-name", () -> "spring_ai_alibaba_rag_search_test");
         registry.add("spring.ai.vectorstore.elasticsearch.similarity", () -> "cosine");
         registry.add("spring.ai.vectorstore.elasticsearch.dimensions", () -> 1536);
         // spring es properties
-        String uris = "http://" + elasticsearchContainer.getHost() + ":" + elasticsearchContainer.getMappedPort(9200);
-        registry.add("spring.elasticsearch.uris", () -> uris);
+        registry.add("spring.elasticsearch.uris", BACKEND::uri);
         // dashscope
         registry.add("spring.ai.dashscope.api-key", () -> System.getenv("AI_DASHSCOPE_API_KEY"));
         registry.add("spring.ai.dashscope.chat.options.model", () -> "qwen3-235b-a22b");

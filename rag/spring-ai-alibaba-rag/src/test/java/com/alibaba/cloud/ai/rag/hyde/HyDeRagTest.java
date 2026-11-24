@@ -24,9 +24,11 @@ import java.util.Map;
 
 import com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeChatAutoConfiguration;
 import com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeEmbeddingAutoConfiguration;
+import com.alibaba.cloud.ai.rag.ElasticsearchTestBackend;
 import com.alibaba.cloud.ai.rag.preretrieval.transformation.HyDeTransformer;
 import com.alibaba.cloud.ai.rag.retrieval.search.HyDeRetriever;
 import jakarta.annotation.Resource;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.model.chat.client.autoconfigure.ChatClientAutoConfiguration;
+import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
 import org.springframework.ai.rag.Query;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStore;
 import org.springframework.ai.vectorstore.elasticsearch.autoconfigure.ElasticsearchVectorStoreAutoConfiguration;
@@ -46,10 +49,6 @@ import org.springframework.boot.elasticsearch.autoconfigure.ElasticsearchRestCli
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 /**
  * Integration test for HyDe RAG.
@@ -57,6 +56,7 @@ import org.testcontainers.utility.DockerImageName;
  * @author benym
  */
 @ImportAutoConfiguration(classes = {
+        ToolCallingAutoConfiguration.class,
         ElasticsearchVectorStoreAutoConfiguration.class,
         ElasticsearchClientAutoConfiguration.class,
         DashScopeChatAutoConfiguration.class,
@@ -65,20 +65,16 @@ import org.testcontainers.utility.DockerImageName;
         ChatClientAutoConfiguration.class
 })
 @SpringBootTest(classes = HyDeRagTest.class)
-@Testcontainers
 public class HyDeRagTest {
 
     private static final Logger logger = LoggerFactory.getLogger(HyDeRagTest.class);
 
-    private static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
-            .parse("docker.elastic.co/elasticsearch/elasticsearch:8.11.0");
+    private static final ElasticsearchTestBackend BACKEND = new ElasticsearchTestBackend();
 
-    @Container
-    private static final ElasticsearchContainer elasticsearchContainer = new ElasticsearchContainer(ELASTICSEARCH_IMAGE)
-            .withEnv("discovery.type", "single-node")
-            .withEnv("xpack.security.enabled", "false")
-            .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
-            .withStartupAttempts(3);
+    @AfterAll
+    static void stopBackend() {
+        BACKEND.close();
+    }
 
     /**
      * Dynamically configure Elasticsearch properties
@@ -87,15 +83,14 @@ public class HyDeRagTest {
     static void registerProperties(DynamicPropertyRegistry registry) {
         // vector store properties
         registry.add("spring.ai.vectorstore.elasticsearch.initialize-schema", () -> true);
-        registry.add("spring.ai.vectorstore.elasticsearch.index-name", () -> "spring_ai_alibaba_rag_index");
+        registry.add("spring.ai.vectorstore.elasticsearch.index-name", () -> "spring_ai_alibaba_rag_hyde_test");
         registry.add("spring.ai.vectorstore.elasticsearch.similarity", () -> "cosine");
         registry.add("spring.ai.vectorstore.elasticsearch.dimensions", () -> 1536);
         // spring es properties
-        String uris = "http://" + elasticsearchContainer.getHost() + ":" + elasticsearchContainer.getMappedPort(9200);
-        registry.add("spring.elasticsearch.uris", () -> uris);
+        registry.add("spring.elasticsearch.uris", BACKEND::uri);
         // dashscope
         registry.add("spring.ai.dashscope.api-key", () -> System.getenv("AI_DASHSCOPE_API_KEY"));
-        registry.add("spring.ai.dashscope.chat.options.model", () -> "qwen-plus-2025-07-28");
+        registry.add("spring.ai.dashscope.chat.options.model", () -> "qwen-plus");
         registry.add("spring.ai.dashscope.embedding.options.model", () -> "text-embedding-v1");
         registry.add("spring.ai.dashscope.chat.options.incremental-output", () -> false);
     }
@@ -156,14 +151,15 @@ public class HyDeRagTest {
         Query query = new Query("什么是hybridSearch");
         List<Document> retrieveList = hyDeRetriever.retrieve(query);
         Assertions.assertNotNull(retrieveList);
-        // sort by id
-        retrieveList.sort(Comparator.comparing(doc -> Integer.valueOf(doc.getId())));
-        Document document = retrieveList.get(0);
+        List<Document> sortedDocuments = retrieveList.stream()
+                .sorted(Comparator.comparingInt(doc -> Integer.parseInt(doc.getId())))
+                .toList();
+        Document document = sortedDocuments.get(0);
         Map<String, Object> meta = document.getMetadata();
         Assertions.assertTrue(meta.containsKey("word"));
         String expectedContent = "什么是hybridSearch？它是一种混合检索技术";
         Assertions.assertEquals(expectedContent, meta.get("word"));
-        Document document1 = retrieveList.get(1);
+        Document document1 = sortedDocuments.get(1);
         Map<String, Object> meta2 = document1.getMetadata();
         Assertions.assertTrue(meta2.containsKey("word"));
         String expectedContent2 = "HybridSearch结合了向量搜索和传统文本检索的优势";

@@ -21,12 +21,16 @@ import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.audio.transcription.TranscriptionModel;
 import org.springframework.core.io.Resource;
 import org.jspecify.annotations.Nullable;
+import reactor.core.publisher.Flux;
 
 /**
  * @author kevinlin09
  * @author xuguan
  */
 public interface AudioTranscriptionModel extends TranscriptionModel, StreamingTranscriptionModel {
+
+	@Override
+	Flux<AudioTranscriptionResponse> stream(AudioTranscriptionPrompt prompt);
 
 	@Nullable
 	default String call(Resource resource) {

@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.chat;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -261,18 +262,20 @@ public final class DashScopeChatModel implements ChatModel {
 
 		TokenUsage usage = chatCompletion.usage();
 		Usage currentChatResponseUsage = usage != null ? DashScopeAiUsage.from(usage) : new EmptyUsage();
-		UsageCalculator.getCumulativeUsage(currentChatResponseUsage, previousChatResponse);
+		Usage cumulativeUsage = UsageCalculator.getCumulativeUsage(currentChatResponseUsage, previousChatResponse);
 
 		ChatCompletionOutput output = chatCompletion.output();
 		if (output == null) {
-			logger.warn("No output returned");
-			return new ChatResponse(List.of(), from(chatCompletion, currentChatResponseUsage));
+			if (usage == null) {
+				logger.warn("No output returned");
+			}
+			return new ChatResponse(List.of(), from(chatCompletion, cumulativeUsage));
 		}
 
 		List<Choice> choices = output.choices();
 		if (choices == null || choices.isEmpty()) {
 			logger.warn("No choices returned");
-			return new ChatResponse(List.of(), from(chatCompletion, currentChatResponseUsage));
+			return new ChatResponse(List.of(), from(chatCompletion, cumulativeUsage));
 		}
 
 		ConcurrentHashMap<String, String> finalRoleMap = roleMap == null ? new ConcurrentHashMap<>() : roleMap;
@@ -294,7 +297,7 @@ public final class DashScopeChatModel implements ChatModel {
 			return buildGeneration(choice, metadata);
 		}).toList();
 
-		return new ChatResponse(generations, from(chatCompletion, currentChatResponseUsage));
+		return new ChatResponse(generations, from(chatCompletion, cumulativeUsage));
 	}
 
 	public void setDashScopeChatOptions(DashScopeChatOptions options) {
@@ -332,7 +335,7 @@ public final class DashScopeChatModel implements ChatModel {
 	}
 
 	private ChatCompletion chunkToChatCompletion(ChatCompletionChunk chunk) {
-		if (Objects.isNull(chunk.output())) {
+		if (chunk.output() == null && chunk.usage() == null) {
 			throw new DashScopeException("LLM response chunk is null.");
 		}
 		return new ChatCompletion(chunk.requestId(), chunk.output(), chunk.usage());
@@ -562,6 +565,9 @@ public final class DashScopeChatModel implements ChatModel {
 		}
 		if (mediaContentData instanceof String text) {
 			return text;
+		}
+		if (mediaContentData instanceof URL url) {
+			return url.toExternalForm();
 		}
 		throw new IllegalArgumentException(
 				"Unsupported media data type: " + mediaContentData.getClass().getSimpleName());

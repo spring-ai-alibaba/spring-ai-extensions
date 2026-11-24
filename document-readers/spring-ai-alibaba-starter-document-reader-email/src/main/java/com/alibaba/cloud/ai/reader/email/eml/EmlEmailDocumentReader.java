@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.reader.email.eml;
 
 import com.alibaba.cloud.ai.parser.bshtml.BsHtmlDocumentParser;
 import com.alibaba.cloud.ai.parser.tika.TikaDocumentParser;
+import com.alibaba.cloud.ai.parser.tika.TikaTextExtractionLimitException;
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;
 import jakarta.mail.Session;
@@ -90,12 +91,17 @@ public class EmlEmailDocumentReader implements DocumentReader {
    * @param preferHtml Whether to prefer HTML content over plain text
    */
   public EmlEmailDocumentReader(String filePath, boolean processAttachments, boolean preferHtml) {
+    this(filePath, processAttachments, preferHtml, new TikaDocumentParser());
+  }
+
+  EmlEmailDocumentReader(String filePath, boolean processAttachments, boolean preferHtml,
+      TikaDocumentParser tikaDocumentParser) {
     Assert.hasText(filePath, "File path must not be empty");
     this.emailResource = new org.springframework.core.io.FileSystemResource(filePath);
     this.processAttachments = processAttachments;
     this.preferHtml = preferHtml;
     this.emailParser = new EmailParser();
-    this.tikaDocumentParser = new TikaDocumentParser();
+    this.tikaDocumentParser = tikaDocumentParser;
     this.bsHtmlDocumentParser = new BsHtmlDocumentParser(org.jsoup.parser.Parser.htmlParser());
   }
 
@@ -215,7 +221,13 @@ public class EmlEmailDocumentReader implements DocumentReader {
         parsedDocuments = bsHtmlDocumentParser.parse(is);
       } else {
         // Use TikaDocumentParser for other content types
-        parsedDocuments = tikaDocumentParser.parse(is);
+        try {
+          parsedDocuments = tikaDocumentParser.parse(is);
+        } catch (TikaTextExtractionLimitException e) {
+          log.warn("Skipping attachment '{}' in email '{}' because it exceeds the text extraction limit",
+              filename, emailResource.getFilename());
+          return;
+        }
       }
 
       if (!parsedDocuments.isEmpty()) {

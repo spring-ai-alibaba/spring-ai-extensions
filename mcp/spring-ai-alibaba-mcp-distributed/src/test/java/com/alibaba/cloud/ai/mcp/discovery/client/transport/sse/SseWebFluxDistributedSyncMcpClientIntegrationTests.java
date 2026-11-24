@@ -31,8 +31,8 @@ import com.alibaba.nacos.api.ai.model.mcp.registry.ServerVersionDetail;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.ai.mcp.client.common.autoconfigure.configurer.McpSyncClientConfigurer;
 import org.springframework.ai.mcp.client.common.autoconfigure.properties.McpClientCommonProperties;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -59,15 +59,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * The current integration test requires dependency on Nacos server 3.1.
- * If you have a running Nacos Server locally, you can remove @Disabled and run it.
+ * Run against a local Nacos server with -Dtest.nacos.enabled=true.
+ * Override its address with -Dtest.nacos.host and -Dtest.nacos.port.
  * TODO: Set up the Nacos server for integration testing in GitHub Actions.
  */
-@Disabled
+@EnabledIfSystemProperty(named = "test.nacos.enabled", matches = "true")
 class SseWebFluxDistributedSyncMcpClientIntegrationTests {
 
-    private static final String NACOS_HOST = "localhost";
+    private static final String NACOS_HOST = System.getProperty("test.nacos.host", "localhost");
 
-    private static final int NACOS_PORT = 8848;
+    private static final int NACOS_PORT = Integer.getInteger("test.nacos.port", 8848);
 
     private static final String NACOS_USERNAME = "nacos";
 

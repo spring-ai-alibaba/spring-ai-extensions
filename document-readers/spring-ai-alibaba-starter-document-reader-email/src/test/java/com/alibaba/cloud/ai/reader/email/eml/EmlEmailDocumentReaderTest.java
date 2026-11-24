@@ -15,13 +15,17 @@
  */
 package com.alibaba.cloud.ai.reader.email.eml;
 
+import com.alibaba.cloud.ai.parser.tika.TikaDocumentParser;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.reader.ExtractedTextFormatter;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +39,43 @@ import static org.junit.jupiter.api.Assertions.*;
  * @since 2024-01-19
  */
 class EmlEmailDocumentReaderTest {
+
+	@Test
+	void skipsOnlyOversizedTikaAttachment(@TempDir Path dir) throws IOException {
+		Path email = dir.resolve("attachments.eml");
+		Files.writeString(email, """
+				From: sender@example.com
+				To: receiver@example.com
+				Subject: Attachment limits
+				MIME-Version: 1.0
+				Content-Type: multipart/mixed; boundary="test-boundary"
+
+				--test-boundary
+				Content-Type: text/plain; charset=UTF-8
+
+				Keep the message body.
+				--test-boundary
+				Content-Type: text/plain; charset=UTF-8
+				Content-Disposition: attachment; filename="large.txt"
+
+				%s
+				--test-boundary
+				Content-Type: text/plain; charset=UTF-8
+				Content-Disposition: attachment; filename="small.txt"
+
+				Keep this attachment.
+				--test-boundary--
+				""".formatted("attachment content ".repeat(15)));
+		var tika = new TikaDocumentParser(96, ExtractedTextFormatter.defaults());
+		var reader = new EmlEmailDocumentReader(email.toString(), true, false, tika);
+
+		List<Document> documents = reader.get();
+
+		assertTrue(documents.stream().anyMatch(doc -> doc.getText().contains("Keep the message body.")));
+		assertTrue(documents.stream().anyMatch(doc -> "small.txt".equals(doc.getMetadata().get("filename"))
+				&& doc.getText().contains("Keep this attachment.")));
+		assertFalse(documents.stream().anyMatch(doc -> "large.txt".equals(doc.getMetadata().get("filename"))));
+	}
 
 	@Test
 	void should_read_pull_request_email() throws IOException {

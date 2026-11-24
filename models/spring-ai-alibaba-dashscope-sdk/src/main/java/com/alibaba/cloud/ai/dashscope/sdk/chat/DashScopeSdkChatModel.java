@@ -288,30 +288,30 @@ public final class DashScopeSdkChatModel implements ChatModel {
 
 	private ChatResponse toChatResponse(GenerationResult generationResult, @Nullable ChatResponse previousChatResponse,
 			String requestModel) {
-		if (generationResult == null || generationResult.getOutput() == null) {
+		if (generationResult == null) {
 			return new ChatResponse(List.of());
 		}
 
 		GenerationOutput output = generationResult.getOutput();
-		List<GenerationOutput.Choice> choices = output.getChoices();
+		List<GenerationOutput.Choice> choices = output != null ? output.getChoices() : null;
 		List<Generation> generations = new ArrayList<>();
 
-		if (!CollectionUtils.isEmpty(choices)) {
+		if (output != null && !CollectionUtils.isEmpty(choices)) {
 			for (GenerationOutput.Choice choice : choices) {
 				generations.add(buildGeneration(generationResult.getRequestId(), choice, output));
 			}
 		}
-		else if (StringUtils.hasText(output.getText())) {
+		else if (output != null && StringUtils.hasText(output.getText())) {
 			generations.add(buildTextOnlyGeneration(generationResult.getRequestId(), output.getText(),
 					output.getFinishReason()));
 		}
 
 		GenerationUsage usage = generationResult.getUsage();
 		Usage currentUsage = usage != null ? DashScopeSdkUsage.from(usage) : new EmptyUsage();
-		UsageCalculator.getCumulativeUsage(currentUsage, previousChatResponse);
+		Usage cumulativeUsage = UsageCalculator.getCumulativeUsage(currentUsage, previousChatResponse);
 
 		return new ChatResponse(generations,
-				ChatResponseMetadata.builder().id(generationResult.getRequestId()).usage(currentUsage).model(requestModel)
+				ChatResponseMetadata.builder().id(generationResult.getRequestId()).usage(cumulativeUsage).model(requestModel)
 					.build());
 	}
 

@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.metadata;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.util.Assert;
 
@@ -26,7 +27,7 @@ import org.springframework.util.Assert;
  */
 public class DashScopeAiUsage implements Usage {
 
-	private final Object usage;
+	private final TokenUsage usage;
 
 	private final Integer inputTokens;
 
@@ -71,6 +72,28 @@ public class DashScopeAiUsage implements Usage {
 			return 0;
 		}
 		return promptTokens + completionTokens;
+	}
+
+	@Override
+	public @Nullable Long getCacheReadInputTokens() {
+		if (this.usage.promptTokenDetailed() != null) {
+			Integer tokens = this.usage.promptTokenDetailed().cachedTokens();
+			return tokens != null ? tokens.longValue() : null;
+		}
+		return null;
+	}
+
+	@Override
+	public @Nullable Long getCacheWriteInputTokens() {
+		if (this.usage.promptTokenDetailed() != null) {
+			var details = this.usage.promptTokenDetailed();
+			Integer tokens = details.cacheCreationInputTokens();
+			if (tokens == null && details.cacheCreation() != null) {
+				tokens = details.cacheCreation().ephemeral5mInputTokens();
+			}
+			return tokens != null ? tokens.longValue() : null;
+		}
+		return null;
 	}
 
 	/**

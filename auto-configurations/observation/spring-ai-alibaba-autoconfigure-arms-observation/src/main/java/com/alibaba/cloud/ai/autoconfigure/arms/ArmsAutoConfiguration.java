@@ -15,16 +15,22 @@
  */
 package com.alibaba.cloud.ai.autoconfigure.arms;
 
+import java.util.Set;
+
 import com.alibaba.cloud.ai.observation.client.prompt.PromptMetadataAwareChatClientObservationConvention;
 import com.alibaba.cloud.ai.observation.model.ChatModelInputObservationHandler;
 import com.alibaba.cloud.ai.observation.model.ChatModelOutputObservationHandler;
 import com.alibaba.cloud.ai.observation.model.PromptMetadataAwareChatModelObservationConvention;
 import com.alibaba.cloud.ai.tool.ObservableToolCallingManager;
+import com.alibaba.cloud.ai.tool.ToolCallLimitPolicy;
+import com.alibaba.cloud.ai.tool.observation.ArmsToolCallingObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.chat.client.observation.ChatClientObservationConvention;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.model.tool.ToolCallingManager;
+import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
+import org.springframework.ai.model.tool.autoconfigure.ToolCallingProperties;
 import org.springframework.ai.tool.execution.ToolExecutionExceptionProcessor;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.beans.factory.ObjectProvider;
@@ -38,19 +44,33 @@ import org.springframework.context.annotation.Bean;
 /**
  * @author Lumian
  */
-@AutoConfiguration
+@AutoConfiguration(before = ToolCallingAutoConfiguration.class)
 @ConditionalOnClass(ChatModel.class)
 @ConditionalOnProperty(prefix = ArmsCommonProperties.CONFIG_PREFIX, name = "enabled", havingValue = "true")
-@EnableConfigurationProperties(ArmsCommonProperties.class)
+@EnableConfigurationProperties({ ArmsCommonProperties.class, ToolCallingProperties.class })
 public class ArmsAutoConfiguration {
 
 	@Bean
 	@ConditionalOnProperty(prefix = ArmsCommonProperties.CONFIG_PREFIX, name = "tool.enabled", havingValue = "true")
+	@ConditionalOnMissingBean
+	ArmsToolCallingObservationConvention armsToolCallingObservationConvention() {
+		return new ArmsToolCallingObservationConvention();
+	}
+
+	@Bean
+	@ConditionalOnProperty(prefix = ArmsCommonProperties.CONFIG_PREFIX, name = "tool.enabled", havingValue = "true")
+	@ConditionalOnMissingBean(ToolCallingManager.class)
 	ToolCallingManager toolCallingManager(ToolCallbackResolver toolCallbackResolver,
 			ToolExecutionExceptionProcessor toolExecutionExceptionProcessor,
-			ObjectProvider<ObservationRegistry> observationRegistry) {
+			ObjectProvider<ObservationRegistry> observationRegistry,
+			ToolCallingProperties toolCallingProperties) {
+		var limits = toolCallingProperties.getLimits();
+		var limitPolicy = new ToolCallLimitPolicy(limits.getMaxCallsPerToolDefault(), limits.getMaxCallsPerTool(),
+			Set.copyOf(limits.getExcludedTools()), limits.getMaxTotalToolCalls(), limits.getOnLimitExceeded());
 		return ObservableToolCallingManager.builder()
 			.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
+			.resolutionFallbackEnabled(toolCallingProperties.getResolution().getFallback().isEnabled())
+			.limitPolicy(limitPolicy)
 			.toolCallbackResolver(toolCallbackResolver)
 			.toolExecutionExceptionProcessor(toolExecutionExceptionProcessor)
 			.build();

@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.dashscope.chat;
 
+import java.net.URI;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,17 +44,26 @@ import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.DefaultUsage;
+import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.content.Media;
 import org.springframework.ai.model.tool.ToolCallingManager;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
@@ -82,6 +93,21 @@ import static org.mockito.Mockito.when;
  * @since 1.0.0-M5.1
  */
 class DashScopeChatModelTests {
+
+    @Test
+    void createRequestSupportsUrlMediaFromSpringAiTypedBuilder() throws Exception {
+        String imageUrl = "https://example.com/image.png";
+        UserMessage message = UserMessage.builder()
+                .text("Describe this image")
+                .media(Media.builder().mimeType(MimeTypeUtils.IMAGE_PNG)
+                        .data(URI.create(imageUrl).toURL()).build())
+                .metadata(Map.of(DashScopeApiConstants.MESSAGE_FORMAT,
+                        MessageFormat.IMAGE))
+                .build();
+        ChatCompletionRequest request = chatModel.createRequest(new Prompt(message,
+                DashScopeChatOptions.builder().model("qwen-vl-plus").multiModel(true).build()));
+        assertThat(request.input().messages().get(0).rawContent().toString()).contains(imageUrl);
+    }
 
     // Test constants
     private static final String TEST_MODEL = "qwen-turbo";
@@ -1307,6 +1333,66 @@ class DashScopeChatModelTests {
         assertThat(nativeUsage.promptTokenDetailed().cacheType()).isEqualTo("ephemeral_5m");
         assertThat(nativeUsage.promptTokenDetailed().cacheCreationInputTokens()).isEqualTo(1024);
         assertThat(nativeUsage.promptTokenDetailed().cacheCreation().ephemeral5mInputTokens()).isEqualTo(1024);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void chatClientAccumulatesToolRoundsAndCacheUsageOnce(boolean streaming) {
+        ToolCallback tool = mock(ToolCallback.class);
+        when(tool.getToolDefinition()).thenReturn(DefaultToolDefinition.builder().name("weather")
+                .description("Get weather").inputSchema(EMPTY_INPUT_SCHEMA).build());
+        when(tool.getToolMetadata()).thenCallRealMethod();
+        when(tool.call(eq("{}"), any(ToolContext.class))).thenReturn("sunny");
+
+        var toolCall = new ToolCall("call-1", "function", new ChatCompletionFunction("weather", "{}"), null);
+        var toolMessage = new ChatCompletionMessage(null, Role.ASSISTANT, null, null,
+                List.of(toolCall), null, null, null, null, null);
+        var toolOutput = new ChatCompletionOutput(null,
+                List.of(new Choice(ChatCompletionFinishReason.TOOL_CALLS, toolMessage, null, 0)), null);
+        var answerMessage = new ChatCompletionMessage("It is sunny", Role.ASSISTANT);
+        var answerOutput = new ChatCompletionOutput("It is sunny",
+                List.of(new Choice(ChatCompletionFinishReason.STOP, answerMessage, null, 0)), null);
+        var firstUsage = new TokenUsage(3, 10, 13, null, null, null, null, null, null,
+                new PromptTokenDetailed(2, new CacheCreation(4), 4, null));
+        var lastUsage = new TokenUsage(5, 20, 25, null, null, null, null, null, null,
+                new PromptTokenDetailed(6, new CacheCreation(7), null, null));
+
+        if (streaming) {
+            when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false)))
+                    .thenReturn(Flux.just(new ChatCompletionChunk("tool-round", toolOutput, firstUsage, null)),
+                            Flux.just(new ChatCompletionChunk("answer-round", answerOutput, null, null),
+                                    new ChatCompletionChunk("answer-round", null, lastUsage, null)));
+        }
+        else {
+            when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false)))
+                    .thenReturn(ResponseEntity.ok(new ChatCompletion("tool-round", toolOutput, firstUsage)),
+                            ResponseEntity.ok(new ChatCompletion("answer-round", answerOutput, lastUsage)));
+        }
+
+        var request = ChatClient.builder(chatModel, ObservationRegistry.NOOP, null, null,
+                DashScopeToolCallingAdvisor.builder()).build().prompt().user(TEST_PROMPT).toolCallbacks(tool);
+        Usage usage = streaming ? request.stream().chatResponse().filter(response -> response.getMetadata()
+                .getUsage().getTotalTokens() > 0).blockLast(Duration.ofSeconds(5)).getMetadata().getUsage()
+                : request.call().chatResponse().getMetadata().getUsage();
+
+        assertThat(usage.getPromptTokens()).isEqualTo(30);
+        assertThat(usage.getCompletionTokens()).isEqualTo(8);
+        assertThat(usage.getTotalTokens()).isEqualTo(38);
+        assertThat(usage.getCacheReadInputTokens()).isEqualTo(8L);
+        assertThat(usage.getCacheWriteInputTokens()).isEqualTo(11L);
+        verify(tool).call(eq("{}"), any(ToolContext.class));
+    }
+
+    @Test
+    void internalCallIncludesPreviousUsageWhenProvided() {
+        var previous = new ChatResponse(List.of(), ChatResponseMetadata.builder()
+                .usage(new DefaultUsage(10, 3, 13)).build());
+        var usage = new TokenUsage(5, 20, 25, null, null, null, null, null, null, null);
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false)))
+                .thenReturn(ResponseEntity.ok(new ChatCompletion(TEST_REQUEST_ID, null, usage)));
+        var prompt = new Prompt(TEST_PROMPT, defaultOptions);
+
+        assertThat(chatModel.internalCall(prompt, previous).getMetadata().getUsage().getTotalTokens()).isEqualTo(38);
     }
 
     @Test

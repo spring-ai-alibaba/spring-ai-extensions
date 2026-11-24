@@ -38,6 +38,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.model.tool.ToolCallLimitBehavior;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.model.tool.ToolExecutionResult;
@@ -81,6 +82,10 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 
 	private final ToolCallbackResolver toolCallbackResolver;
 
+	private final boolean resolutionFallbackEnabled;
+
+	private final ToolCallLimitPolicy limitPolicy;
+
 	private final ToolExecutionExceptionProcessor toolExecutionExceptionProcessor;
 
 	// TODO Mandatory Convention as ARMS implementation until the Spring AI project
@@ -90,12 +95,20 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 	public ObservableToolCallingManager(ObservationRegistry observationRegistry,
 			ToolCallbackResolver toolCallbackResolver,
 			ToolExecutionExceptionProcessor toolExecutionExceptionProcessor) {
+		this(observationRegistry, toolCallbackResolver, toolExecutionExceptionProcessor, false, ToolCallLimitPolicy.DEFAULT);
+	}
+
+	private ObservableToolCallingManager(ObservationRegistry observationRegistry, ToolCallbackResolver toolCallbackResolver,
+			ToolExecutionExceptionProcessor toolExecutionExceptionProcessor, boolean resolutionFallbackEnabled,
+			ToolCallLimitPolicy limitPolicy) {
 		Assert.notNull(observationRegistry, "observationRegistry cannot be null");
 		Assert.notNull(toolCallbackResolver, "toolCallbackResolver cannot be null");
 		Assert.notNull(toolExecutionExceptionProcessor, "toolCallExceptionConverter cannot be null");
 
 		this.observationRegistry = observationRegistry;
 		this.toolCallbackResolver = toolCallbackResolver;
+		this.resolutionFallbackEnabled = resolutionFallbackEnabled;
+		this.limitPolicy = limitPolicy;
 		this.toolExecutionExceptionProcessor = toolExecutionExceptionProcessor;
 	}
 
@@ -166,23 +179,35 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 		List<ToolResponseMessage.ToolResponse> toolResponses = new ArrayList<>();
 
 		boolean returnDirect = true;
+		boolean anyExecuted = false;
+		var turn = this.limitPolicy.startTurn(prompt.getInstructions());
 
 		for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
+			var breach = turn.check(toolCall);
+			if (breach != null) {
+				toolResponses.add(breach.response());
+				if (this.limitPolicy.onLimitExceeded() == ToolCallLimitBehavior.THROW) {
+					throw breach.exception(prompt, assistantMessage, toolResponses, anyExecuted && returnDirect);
+				}
+				continue;
+			}
 
 			logger.debug("Executing tool call: {}", toolCall.name());
 
 			String toolName = toolCall.name();
-			String toolInputArguments = toolCall.arguments();
+			String arguments = toolCall.arguments();
+			String toolInputArguments = StringUtils.hasText(arguments) ? arguments : "{}";
 
 			ToolCallback toolCallback = toolCallbacks.stream()
 				.filter(tool -> toolName.equals(tool.getToolDefinition().name()))
 				.findFirst()
-				.orElseGet(() -> this.toolCallbackResolver.resolve(toolName));
+				.orElseGet(() -> this.resolutionFallbackEnabled ? this.toolCallbackResolver.resolve(toolName) : null);
 
 			if (toolCallback == null) {
 				throw new IllegalStateException("No ToolCallback found for tool name: " + toolName);
 			}
 
+			anyExecuted = true;
 			returnDirect = returnDirect && toolCallback.getToolMetadata().returnDirect();
 
 			ArmsToolCallingObservationContext observationContext = ArmsToolCallingObservationContext.builder()
@@ -191,10 +216,11 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 				.returnDirect(returnDirect)
 				.build();
 
+			observationContext.setParentObservation(this.observationRegistry.getCurrentObservation());
 			ContextView contextView = ToolCallReactiveContextHolder.getContext();
 			if (contextView != null) {
 				observationContext
-					.setParentObservation(contextView.getOrDefault(ObservationThreadLocalAccessor.KEY, null));
+					.setParentObservation(contextView.getOrDefault(ObservationThreadLocalAccessor.KEY, this.observationRegistry.getCurrentObservation()));
 			}
 
 			String toolResult = ArmsToolCallingObservationDocumentation.EXECUTE_TOOL_OPERATION
@@ -218,7 +244,7 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 		}
 
 		return new InternalToolExecutionResult(ToolResponseMessage.builder()
-			.responses(toolResponses).metadata(Map.of()).build(), returnDirect);
+			.responses(toolResponses).metadata(Map.of()).build(), anyExecuted && returnDirect);
 	}
 
 	/**
@@ -283,6 +309,24 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 
 		private ToolExecutionExceptionProcessor toolExecutionExceptionProcessor = DEFAULT_TOOL_EXECUTION_EXCEPTION_PROCESSOR;
 
+		private boolean resolutionFallbackEnabled;
+
+		private ToolCallLimitPolicy limitPolicy = ToolCallLimitPolicy.DEFAULT;
+
+		public Builder limitPolicy(ToolCallLimitPolicy limitPolicy) {
+			Assert.notNull(limitPolicy, "limitPolicy must not be null");
+			this.limitPolicy = limitPolicy;
+			return this;
+		}
+
+		/**
+		 * Allow resolving tools that are not attached to the request. Disabled by default.
+		 */
+		public Builder resolutionFallbackEnabled(boolean enabled) {
+			this.resolutionFallbackEnabled = enabled;
+			return this;
+		}
+
 		private Builder() {
 		}
 
@@ -303,8 +347,8 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 		}
 
 		public ObservableToolCallingManager build() {
-			return new ObservableToolCallingManager(observationRegistry, toolCallbackResolver,
-					toolExecutionExceptionProcessor);
+			return new ObservableToolCallingManager(this.observationRegistry, this.toolCallbackResolver,
+					this.toolExecutionExceptionProcessor, this.resolutionFallbackEnabled, this.limitPolicy);
 		}
 
 	}

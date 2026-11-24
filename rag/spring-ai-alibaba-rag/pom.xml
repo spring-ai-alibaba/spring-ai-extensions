@@ -35,6 +35,7 @@
     </scm>
 
     <properties>
+        <rag.tests.skip>true</rag.tests.skip>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -99,7 +100,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <skipTests>true</skipTests>
+                    <skipTests>${rag.tests.skip}</skipTests>
                 </configuration>
             </plugin>
         </plugins>

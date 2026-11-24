@@ -17,11 +17,16 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeToolCallingAdvisor;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
 import io.micrometer.observation.ObservationRegistry;
+import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor;
 import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.model.SpringAIModelProperties;
+import org.springframework.ai.model.chat.client.autoconfigure.ChatClientAutoConfiguration;
+import org.springframework.ai.model.chat.client.autoconfigure.ChatClientBuilderProperties;
 import org.springframework.ai.model.tool.ToolCallingManager;
+import org.springframework.ai.model.tool.ToolExecutionEligibilityChecker;
 import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
@@ -50,12 +55,15 @@ import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUt
  */
 
 @AutoConfiguration(after = { RestClientAutoConfiguration.class, WebClientAutoConfiguration.class,
-        SpringAiRetryAutoConfiguration.class, ToolCallingAutoConfiguration.class })
+        SpringAiRetryAutoConfiguration.class, ToolCallingAutoConfiguration.class },
+        before = ChatClientAutoConfiguration.class,
+        afterName = "org.springframework.ai.chat.client.advisor.toolsearch.autoconfigure.ToolSearchAdvisorAutoConfiguration")
 @ConditionalOnDashScopeEnabled
 @ConditionalOnClass(DashScopeApi.class)
 @ConditionalOnProperty(name = SpringAIModelProperties.CHAT_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
 		matchIfMissing = true)
-@EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeChatProperties.class})
+@EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeChatProperties.class,
+        ChatClientBuilderProperties.class })
 public class DashScopeChatAutoConfiguration {
 
 		@Bean
@@ -92,6 +100,17 @@ public class DashScopeChatAutoConfiguration {
 			observationConvention.ifAvailable(dashscopeModel::setObservationConvention);
 
 			return dashscopeModel;
+		}
+
+		@Bean
+		@ConditionalOnMissingBean(ToolCallingAdvisor.Builder.class)
+		ToolCallingAdvisor.Builder<?> toolCallingAdvisorBuilder(ChatClientBuilderProperties properties,
+				ToolCallingManager manager, ObjectProvider<ToolExecutionEligibilityChecker> eligibilityChecker) {
+			var builder = DashScopeToolCallingAdvisor.builder()
+				.toolCallingManager(manager)
+				.advisorOrder(properties.getToolCalling().getAdvisorOrder());
+			eligibilityChecker.ifAvailable(builder::toolExecutionEligibilityChecker);
+			return builder;
 		}
 
 		private DashScopeApi dashscopeChatApi(

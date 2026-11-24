@@ -15,11 +15,17 @@
  */
 package com.alibaba.cloud.ai.tool;
 
+import com.alibaba.cloud.ai.tool.observation.ArmsToolCallingObservationContext;
+import com.alibaba.cloud.ai.tool.observation.ArmsToolCallingObservationConvention;
+import com.alibaba.cloud.ai.tool.observation.ArmsToolCallingObservationDocumentation;
+import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.AssistantMessage.ToolCall;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -27,6 +33,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.DefaultToolCallingManager;
+import org.springframework.ai.model.tool.ToolCallLimitBehavior;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.model.tool.ToolExecutionResult;
@@ -39,10 +46,12 @@ import org.springframework.ai.tool.observation.DefaultToolCallingObservationConv
 import org.springframework.ai.tool.observation.ToolCallingObservationContext;
 import org.springframework.ai.tool.observation.ToolCallingObservationConvention;
 import org.springframework.ai.tool.observation.ToolCallingObservationDocumentation;
+import org.springframework.ai.model.tool.internal.ToolCallReactiveContextHolder;
 import org.springframework.ai.tool.resolution.DelegatingToolCallbackResolver;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -81,14 +90,27 @@ public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
 
     private ToolCallbackResolver toolCallbackResolver = DEFAULT_TOOL_CALLBACK_RESOLVER;
 
+    private final boolean resolutionFallbackEnabled;
+
+    private final ToolCallLimitPolicy limitPolicy;
+
     private ToolExecutionExceptionProcessor toolExecutionExceptionProcessor = DEFAULT_TOOL_EXECUTION_EXCEPTION_PROCESSOR;
 
     private ToolCallingObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
+
+    private @Nullable ArmsToolCallingObservationConvention armsObservationConvention;
 
     private ThreadPoolExecutor asyncToolCallingTaskExecutor;
 
     public DashScopeAsyncToolCallingManager(ObservationRegistry observationRegistry, ToolCallbackResolver toolCallbackResolver,
                                    ToolExecutionExceptionProcessor toolExecutionExceptionProcessor, ThreadPoolExecutor taskExecutor) {
+        this(observationRegistry, toolCallbackResolver, toolExecutionExceptionProcessor, taskExecutor, false,
+                ToolCallLimitPolicy.DEFAULT);
+    }
+
+    private DashScopeAsyncToolCallingManager(ObservationRegistry observationRegistry, ToolCallbackResolver toolCallbackResolver,
+            ToolExecutionExceptionProcessor toolExecutionExceptionProcessor, ThreadPoolExecutor taskExecutor,
+            boolean resolutionFallbackEnabled, ToolCallLimitPolicy limitPolicy) {
         Assert.notNull(observationRegistry, "observationRegistry cannot be null");
         Assert.notNull(toolCallbackResolver, "toolCallbackResolver cannot be null");
         Assert.notNull(toolExecutionExceptionProcessor, "toolCallExceptionConverter cannot be null");
@@ -96,6 +118,8 @@ public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
 
         this.observationRegistry = observationRegistry;
         this.toolCallbackResolver = toolCallbackResolver;
+        this.resolutionFallbackEnabled = resolutionFallbackEnabled;
+        this.limitPolicy = limitPolicy;
         this.toolExecutionExceptionProcessor = toolExecutionExceptionProcessor;
         this.asyncToolCallingTaskExecutor = taskExecutor;
     }
@@ -182,63 +206,112 @@ public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
         final List<ToolCallback> toolCallbacks = promptToolCallbacks;
 
         final Queue<Boolean> toolsReturnDirect = new ConcurrentLinkedDeque<>();
+        @Nullable Observation parentObservation = ToolCallReactiveContextHolder.getContext()
+                .getOrDefault(ObservationThreadLocalAccessor.KEY, this.observationRegistry.getCurrentObservation());
 
-        List<CompletableFuture<ToolResponseMessage.ToolResponse>> futuresToolResponses = assistantMessage.getToolCalls()
-                .stream()
-                .map(toolCall -> CompletableFuture.supplyAsync(() -> {
-                    logger.debug("Executing tool call: {}", toolCall.name());
+        List<CompletableFuture<ToolResponseMessage.ToolResponse>> futuresToolResponses = new ArrayList<>();
+        var turn = this.limitPolicy.startTurn(prompt.getInstructions());
+        ToolCallLimitPolicy.@Nullable Breach terminalBreach = null;
+        for (ToolCall toolCall : assistantMessage.getToolCalls()) {
+            var breach = turn.check(toolCall);
+            if (breach != null) {
+                futuresToolResponses.add(CompletableFuture.completedFuture(breach.response()));
+                if (this.limitPolicy.onLimitExceeded() == ToolCallLimitBehavior.THROW) {
+                    terminalBreach = breach;
+                    break;
+                }
+                continue;
+            }
+            futuresToolResponses.add(CompletableFuture.supplyAsync(() -> {
+                logger.debug("Executing tool call: {}", toolCall.name());
 
-                    String toolName = toolCall.name();
-                    String toolInputArguments = toolCall.arguments();
+                String toolName = toolCall.name();
+                String arguments = toolCall.arguments();
+                String toolInputArguments = StringUtils.hasText(arguments) ? arguments : "{}";
 
-                    ToolCallback toolCallback = toolCallbacks.stream()
-                            .filter(tool -> toolName.equals(tool.getToolDefinition().name()))
-                            .findFirst()
-                            .orElseGet(() -> this.toolCallbackResolver.resolve(toolName));
+                ToolCallback toolCallback = toolCallbacks.stream()
+                        .filter(tool -> toolName.equals(tool.getToolDefinition().name()))
+                        .findFirst()
+                        .orElseGet(() -> this.resolutionFallbackEnabled ? this.toolCallbackResolver.resolve(toolName) : null);
 
-                    if (toolCallback == null) {
-                        throw new IllegalStateException("No ToolCallback found for tool name: " + toolName);
-                    }
+                if (toolCallback == null) {
+                    throw new IllegalStateException("No ToolCallback found for tool name: " + toolName);
+                }
 
-                    toolsReturnDirect.add(toolCallback.getToolMetadata().returnDirect());
+                toolsReturnDirect.add(toolCallback.getToolMetadata().returnDirect());
 
-                    ToolCallingObservationContext observationContext = ToolCallingObservationContext.builder()
-                            .toolDefinition(toolCallback.getToolDefinition())
-                            .toolMetadata(toolCallback.getToolMetadata())
-                            .toolCallArguments(toolInputArguments)
-                            .build();
+                String toolCallResult = observeToolCall(toolCall, toolCallback, toolInputArguments, toolContext,
+                        parentObservation);
 
-                    String toolCallResult = ToolCallingObservationDocumentation.TOOL_CALL
-                            .observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
-                                    this.observationRegistry)
-                            .observe(() -> {
-                                String toolResult;
-                                try {
-                                    toolResult = toolCallback.call(toolInputArguments, toolContext);
-                                }
-                                catch (ToolExecutionException ex) {
-                                    toolResult = this.toolExecutionExceptionProcessor.process(ex);
-                                }
-                                observationContext.setToolCallResult(toolResult);
-                                return toolResult;
-                            });
+                logger.debug("Async Tool call end! toolCall = {}, toolInputArguments = {}, result: {}",
+                        toolCall.name(), toolInputArguments, toolCallResult);
 
-                    logger.debug("Async Tool call end! toolCall = {}, toolInputArguments = {}, result: {}",
-                            toolCall.name(), toolInputArguments, toolCallResult);
-
-                    return new ToolResponseMessage.ToolResponse(toolCall.id(), toolName,
-                            toolCallResult != null ? toolCallResult : "");
-                }, this.asyncToolCallingTaskExecutor))
-                .toList();
+                return new ToolResponseMessage.ToolResponse(toolCall.id(), toolName,
+                        toolCallResult != null ? toolCallResult : "");
+            }, this.asyncToolCallingTaskExecutor));
+        }
 
         final List<ToolResponseMessage.ToolResponse> toolResponses = CompletableFuture
                 .allOf(futuresToolResponses.toArray(new CompletableFuture[0]))
                 .thenApply(result -> futuresToolResponses.stream().map(CompletableFuture::join).toList())
                 .join();
 
+        boolean returnDirect = !toolsReturnDirect.isEmpty() && toolsReturnDirect.stream().allMatch(Boolean::booleanValue);
+        if (terminalBreach != null) {
+            throw terminalBreach.exception(prompt, assistantMessage, toolResponses, returnDirect);
+        }
         return new InternalToolExecutionResult(
-                ToolResponseMessage.builder().responses(toolResponses).metadata(Map.of()).build(),
-                toolsReturnDirect.stream().allMatch(Boolean::booleanValue));
+                ToolResponseMessage.builder().responses(toolResponses).metadata(Map.of()).build(), returnDirect);
+    }
+
+    private String observeToolCall(ToolCall toolCall, ToolCallback toolCallback, String arguments,
+                                   ToolContext toolContext, @Nullable Observation parent) {
+        ArmsToolCallingObservationConvention armsConvention = this.armsObservationConvention;
+        if (armsConvention != null) {
+            var context = ArmsToolCallingObservationContext.builder()
+                    .toolCall(toolCall)
+                    .description(toolCallback.getToolDefinition().description())
+                    .returnDirect(toolCallback.getToolMetadata().returnDirect())
+                    .build();
+            return ArmsToolCallingObservationDocumentation.EXECUTE_TOOL_OPERATION
+                    .observation(armsConvention, armsConvention, () -> context, this.observationRegistry)
+                    .parentObservation(parent)
+                    .observe(() -> {
+                        String result = executeCallback(toolCallback, arguments, toolContext, context);
+                        context.setToolResult(result);
+                        return result;
+                    });
+        }
+
+        var context = ToolCallingObservationContext.builder()
+                .toolDefinition(toolCallback.getToolDefinition())
+                .toolMetadata(toolCallback.getToolMetadata())
+                .toolCallArguments(arguments)
+                .build();
+        return ToolCallingObservationDocumentation.TOOL_CALL
+                .observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> context,
+                        this.observationRegistry)
+                .parentObservation(parent)
+                .observe(() -> {
+                    String result = executeCallback(toolCallback, arguments, toolContext, context);
+                    context.setToolCallResult(result);
+                    return result;
+                });
+    }
+
+    private String executeCallback(ToolCallback callback, String arguments, ToolContext toolContext,
+                                   Observation.Context observationContext) {
+        try {
+            return callback.call(arguments, toolContext);
+        }
+        catch (ToolExecutionException ex) {
+            observationContext.setError(ex);
+            return this.toolExecutionExceptionProcessor.process(ex);
+        }
+    }
+
+    public void setArmsObservationConvention(ArmsToolCallingObservationConvention armsObservationConvention) {
+        this.armsObservationConvention = armsObservationConvention;
     }
 
     private List<Message> buildConversationHistoryAfterToolExecution(List<Message> previousMessages,
@@ -270,6 +343,24 @@ public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
 
         private @Nullable ThreadPoolExecutor taskExecutor;
 
+        private boolean resolutionFallbackEnabled;
+
+        private ToolCallLimitPolicy limitPolicy = ToolCallLimitPolicy.DEFAULT;
+
+        public Builder limitPolicy(ToolCallLimitPolicy limitPolicy) {
+            Assert.notNull(limitPolicy, "limitPolicy must not be null");
+            this.limitPolicy = limitPolicy;
+            return this;
+        }
+
+        /**
+         * Allow resolving tools that are not attached to the request. Disabled by default.
+         */
+        public Builder resolutionFallbackEnabled(boolean enabled) {
+            this.resolutionFallbackEnabled = enabled;
+            return this;
+        }
+
         private Builder() {
         }
 
@@ -297,7 +388,7 @@ public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
         public DashScopeAsyncToolCallingManager build() {
             Assert.notNull(this.taskExecutor, "taskExecutor cannot be null");
             return new DashScopeAsyncToolCallingManager(this.observationRegistry, this.toolCallbackResolver,
-                    this.toolExecutionExceptionProcessor, this.taskExecutor);
+                    this.toolExecutionExceptionProcessor, this.taskExecutor, this.resolutionFallbackEnabled, this.limitPolicy);
         }
 
     }

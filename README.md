@@ -12,7 +12,10 @@ Based on these components, developers can use Spring AI [ChatClient](https://jav
 
 1. Requires JDK 17+.
 2. If there are any `spring-ai` dependency issue, please lean how to configure the `spring-milestones` Maven repository on [FAQ page](https://java2ai.com/docs/1.0.0.2/faq).
-3. The current release uses `spring-ai-extensions-bom` `2.0.0.0-RC1`, Spring AI `2.0.0`, and Spring Boot `4.1.0`.
+3. The current release uses `spring-ai-extensions-bom` `2.0.0.0-RC1`, Spring AI `2.0.3`, and Spring Boot `4.1.3`.
+
+When upgrading from Spring AI 2.0.0, attach tools explicitly to each request. The DashScope async and ARMS tool calling managers now disable resolver fallback by default, matching Spring AI 2.0.3. To opt into the previous behavior, set `spring.ai.tools.resolution.fallback.enabled=true` (or `.resolutionFallbackEnabled(true)` when building a manager directly). Both managers also honor the per-turn limits configured under `spring.ai.tools.limits`.
+DashScope’s Spring Boot starter retains cache token counts across streaming tool rounds. When constructing the chat client directly, pass `DashScopeToolCallingAdvisor.builder()` to the `ChatClient.builder` overload that accepts a tool advisor builder.
 
 ### Use `ChatClient` to Develop a Chatbot
 

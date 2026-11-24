@@ -17,12 +17,16 @@ package com.alibaba.cloud.ai.parser.tika;
 
 import com.alibaba.cloud.ai.document.DocumentParser;
 import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.sax.BodyContentHandler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.reader.ExtractedTextFormatter;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -110,6 +114,37 @@ class ApacheTikaDocumentParserTest {
 		Document document = parser.parse(inputStream).get(0);
 		System.out.println(document.getText());
 		assertThat(document.getMetadata()).isEmpty();
+	}
+
+	@Test
+	void defaultParserEnforcesTheExtractionLimit() {
+		String line = "test content\n";
+		byte[] text = line.repeat(TikaDocumentParser.DEFAULT_MAX_CHARACTERS / line.length() + 1)
+			.getBytes(StandardCharsets.UTF_8);
+
+		assertThatThrownBy(() -> new TikaDocumentParser().parse(new ByteArrayInputStream(text)))
+			.isInstanceOf(IllegalStateException.class);
+	}
+
+	@Test
+	void failsInsteadOfReturningTruncatedTextWhenExtractionLimitIsExceeded() {
+		var parser = new TikaDocumentParser(5, ExtractedTextFormatter.defaults());
+
+		assertThatThrownBy(() -> parser.parse(textInput()))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessageContaining("exceeds the content handler write limit");
+	}
+
+	@Test
+	void usesTheWriteLimitOfACustomContentHandler() {
+		var parser = new TikaDocumentParser(() -> new BodyContentHandler(100), ExtractedTextFormatter.defaults());
+
+		assertThat(parser.parse(textInput())).singleElement()
+			.satisfies(document -> assertThat(document.getText()).isEqualToIgnoringWhitespace("test content"));
+	}
+
+	private InputStream textInput() {
+		return new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8));
 	}
 
 	/**
