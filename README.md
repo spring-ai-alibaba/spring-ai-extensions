@@ -12,7 +12,7 @@ Based on these components, developers can use Spring AI [ChatClient](https://jav
 
 1. Requires JDK 17+.
 2. If there are any `spring-ai` dependency issue, please lean how to configure the `spring-milestones` Maven repository on [FAQ page](https://java2ai.com/docs/1.0.0.2/faq).
-3. The `2.1.x` branch uses Spring AI `2.1.0` and Spring Boot `4.2.0`. Run `mvn install -DskipTests` to install the `2.1.0.0-SNAPSHOT` extension artifacts locally before trying the example below.
+3. Extensions `2.1.0.0` uses Spring AI `2.1.0` and Spring Boot `4.2.0`. To use a local build with the example below, run `mvn install -DskipTests`.
 
 ### Use `ChatClient` to Develop a Chatbot
 
@@ -25,7 +25,7 @@ To quickly get started with Spring AI Alibaba, add 'spring-ai-alibaba-starter-da
     <dependency>
       <groupId>com.alibaba.cloud.ai</groupId>
       <artifactId>spring-ai-alibaba-extensions-bom</artifactId>
-      <version>2.1.0.0-SNAPSHOT</version>
+      <version>2.1.0.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
