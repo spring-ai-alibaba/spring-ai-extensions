@@ -12,7 +12,7 @@
 
 1. 需要 JDK 17+
 2. 如果遇到任何 `spring-ai` 依赖问题，请查看 [FAQ 页面](https://java2ai.com/docs/1.0.0.2/faq) 了解如何配置 `spring-milestones` Maven 仓库
-3. 当前版本使用 `spring-ai-extensions-bom` `2.0.0.0-RC1`、Spring AI `2.0.3` 和 Spring Boot `4.1.3`
+3. 当前版本使用 `spring-ai-alibaba-extensions-bom` `2.0.3.0`、Spring AI `2.0.3` 和 Spring Boot `4.1.3`
 
 从 Spring AI 2.0.0 升级时，请将工具显式绑定到请求。DashScope 异步和 ARMS 工具调用管理器现已默认关闭工具解析器回退，与 Spring AI 2.0.3 保持一致。如需恢复原有行为，可设置 `spring.ai.tools.resolution.fallback.enabled=true`，或在手动构建管理器时使用 `.resolutionFallbackEnabled(true)`。两套管理器也支持 `spring.ai.tools.limits` 下的每轮调用上限配置。
 DashScope Spring Boot Starter 会保留流式工具循环中的缓存 token 统计。手动构建聊天客户端时，请将 `DashScopeToolCallingAdvisor.builder()` 传给接受工具 Advisor 构建器的 `ChatClient.builder` 重载。
@@ -27,8 +27,8 @@ DashScope Spring Boot Starter 会保留流式工具循环中的缓存 token 统�
   <dependencies>
     <dependency>
       <groupId>com.alibaba.cloud.ai</groupId>
-      <artifactId>spring-ai-extensions-bom</artifactId>
-      <version>2.0.0.0-RC1</version>
+      <artifactId>spring-ai-alibaba-extensions-bom</artifactId>
+      <version>2.0.3.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
