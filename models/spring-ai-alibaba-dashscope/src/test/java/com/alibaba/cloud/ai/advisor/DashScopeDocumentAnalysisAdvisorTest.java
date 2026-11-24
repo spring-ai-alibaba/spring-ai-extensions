@@ -27,7 +27,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.SimpleApiKey;
-import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 
@@ -107,7 +107,7 @@ class DashScopeDocumentAnalysisAdvisorTest {
 		ApiKey apiKey = new SimpleApiKey(System.getenv("AI_DASHSCOPE_API_KEY"));
 		DashScopeDocumentAnalysisAdvisor advisor = new DashScopeDocumentAnalysisAdvisor(apiKey);
 
-		Resource testFile = new DefaultResourceLoader().getResource("classpath:/test-file.pdf");
+		Resource testFile = new ClassPathResource("document-analysis.txt");
 
 		ResponseEntity<DashScopeDocumentAnalysisAdvisor.UploadResponse> uploadResponse = advisor.upload(testFile);
 
@@ -124,7 +124,7 @@ class DashScopeDocumentAnalysisAdvisorTest {
 		ApiKey apiKey = new SimpleApiKey(System.getenv("AI_DASHSCOPE_API_KEY"));
 		DashScopeDocumentAnalysisAdvisor advisor = new DashScopeDocumentAnalysisAdvisor(apiKey);
 
-		Resource testFile = new DefaultResourceLoader().getResource("classpath:/test-file.pdf");
+		Resource testFile = new ClassPathResource("document-analysis.txt");
 
 		UserMessage userMessage = UserMessage.builder().text("What is the content of this document?").build();
 		SystemMessage systemMessage = SystemMessage.builder().text("You are a helpful assistant.").build();

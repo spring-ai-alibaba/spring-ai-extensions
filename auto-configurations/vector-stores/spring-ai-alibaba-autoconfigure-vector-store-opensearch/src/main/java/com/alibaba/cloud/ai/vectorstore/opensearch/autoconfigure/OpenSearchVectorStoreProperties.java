@@ -49,6 +49,8 @@ public class OpenSearchVectorStoreProperties extends CommonVectorStoreProperties
 
 	private @Nullable String primaryKeyField;
 
+	private @Nullable String vectorField;
+
 	private @Nullable String index;
 
 	private @Nullable String similarityFunction;
@@ -120,6 +122,14 @@ public class OpenSearchVectorStoreProperties extends CommonVectorStoreProperties
 
 	public void setPrimaryKeyField(String primaryKeyField) {
 		this.primaryKeyField = primaryKeyField;
+	}
+
+	public @Nullable String getVectorField() {
+		return this.vectorField;
+	}
+
+	public void setVectorField(String vectorField) {
+		this.vectorField = vectorField;
 	}
 
 	public @Nullable String getIndex() {

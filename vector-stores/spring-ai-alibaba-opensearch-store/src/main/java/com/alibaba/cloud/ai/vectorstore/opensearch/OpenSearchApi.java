@@ -158,7 +158,8 @@ public class OpenSearchApi {
 	 */
 	public <T> List<T> search(QueryRequest queryRequest, Converter<JsonNode, T> itemConverter) {
 		try {
-			SearchResponse searchResponse = client.inferenceQuery(queryRequest);
+			SearchResponse searchResponse = queryRequest.getVector() == null
+					? this.client.inferenceQuery(queryRequest) : this.client.query(queryRequest);
 			SearchResponseBody responseBody = getSearchResponseBody(searchResponse);
 			List<T> documents = new ArrayList<>();
 			Integer totalCount = responseBody.totalCount;
@@ -195,7 +196,7 @@ public class OpenSearchApi {
 			String errorCode = responseBody.errorCode;
 			String errorMsg = Optional.ofNullable(responseBody.errorMessage).orElse("No error message provided");
 			throw new RuntimeException(String.format(
-					"OpenSearch inferenceQuery failed. " + "Error code: %s. Error message: %s", errorCode, errorMsg));
+					"OpenSearch query failed. Error code: %s. Error message: %s", errorCode, errorMsg));
 		}
 
 		return responseBody;
@@ -286,7 +287,7 @@ public class OpenSearchApi {
 
 			Integer totalCount,
 
-			ArrayNode result) {
+			@Nullable ArrayNode result) {
 
 		private static final String TOTAL_COUNT_KEY = "totalCount";
 
@@ -302,7 +303,8 @@ public class OpenSearchApi {
 
 		public SearchResponseBody(JsonNode jsonObject) {
 			this(jsonObject.path(ERROR_CODE_KEY).asString(), jsonObject.path(ERROR_MESSAGE_KEY).asString(),
-					jsonObject.path(TOTAL_COUNT_KEY).asInt(), (ArrayNode) jsonObject.path(RESULT_KEY));
+					jsonObject.path(TOTAL_COUNT_KEY).asInt(),
+					jsonObject.path(RESULT_KEY) instanceof ArrayNode array ? array : null);
 		}
 
 		private static JsonNode parseJson(String jsonString) {

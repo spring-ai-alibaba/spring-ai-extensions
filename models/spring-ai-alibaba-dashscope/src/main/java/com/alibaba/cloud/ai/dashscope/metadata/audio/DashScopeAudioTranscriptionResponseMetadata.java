@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.metadata.audio;
 
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Translation.Word;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
@@ -23,6 +24,7 @@ import org.springframework.ai.audio.transcription.AudioTranscriptionResponseMeta
 import org.springframework.ai.chat.metadata.RateLimit;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Audio transcription metadata implementation for {@literal DashScope}.
@@ -36,8 +38,6 @@ public class DashScopeAudioTranscriptionResponseMetadata extends AudioTranscript
 
     private final @Nullable Sentence sentence;
 
-    private final @Nullable Usage usage;
-
 	public static final DashScopeAudioTranscriptionResponseMetadata NULL = new DashScopeAudioTranscriptionResponseMetadata() {
 
 	};
@@ -45,19 +45,19 @@ public class DashScopeAudioTranscriptionResponseMetadata extends AudioTranscript
     protected DashScopeAudioTranscriptionResponseMetadata() {
         this.translations = null;
         this.sentence = null;
-        this.usage = null;
     }
 
     public DashScopeAudioTranscriptionResponseMetadata(List<Translation> translations) {
         this.translations = translations;
         this.sentence = null;
-        this.usage = null;
     }
 
     public DashScopeAudioTranscriptionResponseMetadata(Sentence sentence, Usage usage) {
         this.translations = null;
         this.sentence = sentence;
-        this.usage = usage;
+        if (usage != null) {
+            setUsage(usage);
+        }
     }
 
     public @Nullable List<Translation> getTranslations() {
@@ -68,8 +68,12 @@ public class DashScopeAudioTranscriptionResponseMetadata extends AudioTranscript
         return sentence;
     }
 
-    public @Nullable Usage getUsage() {
-        return usage;
+    /**
+     * Returns the DashScope duration-based usage when the transcription provides it.
+     */
+    @JsonIgnore
+    public @Nullable Usage getDashScopeUsage() {
+        return getUsage() instanceof Usage dashScopeUsage ? dashScopeUsage : null;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -88,8 +92,33 @@ public class DashScopeAudioTranscriptionResponseMetadata extends AudioTranscript
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Usage(
-            @JsonProperty("duration") Integer duration
-    ) {}
+            @JsonProperty("duration") @Nullable Integer duration
+    ) implements org.springframework.ai.chat.metadata.Usage {
+
+        @Override
+        @JsonIgnore
+        public Integer getPromptTokens() {
+            return 0;
+        }
+
+        @Override
+        @JsonIgnore
+        public Integer getCompletionTokens() {
+            return 0;
+        }
+
+        @Override
+        @JsonIgnore
+        public Integer getTotalTokens() {
+            return 0;
+        }
+
+        @Override
+        @JsonIgnore
+        public Object getNativeUsage() {
+            return duration == null ? Map.of() : Map.of("duration", duration);
+        }
+    }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Translation(

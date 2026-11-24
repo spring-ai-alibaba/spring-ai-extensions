@@ -52,31 +52,22 @@ import static org.mockito.ArgumentMatchers.any;
  */
 class DashScopeImageModelObservationTests {
 
-  private final DashScopeImageModel imageModel;
-
-  private final TestObservationRegistry observationRegistry;
-
-  public DashScopeImageModelObservationTests() {
-    this.observationRegistry = TestObservationRegistry.create();
-      DashScopeImageApi api = DashScopeImageApi.builder()
-              .apiKey("sk" + "-7a74bd9492b24f6f835a03e01affe294")
-              .restClientBuilder(RestClient.builder())
-              .baseUrl(DEFAULT_BASE_URL)
-              .responseErrorHandler(RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER)
-              .build();
-      this.imageModel = DashScopeImageModel.builder()
-              .dashScopeApi(api)
-              .observationRegistry(observationRegistry)
-              .build();
-    DefaultImageModelObservationConvention defaultImageModelObservationConvention =
-        new DefaultImageModelObservationConvention();
-    this.imageModel.setObservationConvention(defaultImageModelObservationConvention);
-  }
-
   @Test
   @Tag("observation")
   @EnabledIfEnvironmentVariable(named = "AI_DASHSCOPE_API_KEY", matches = "sk.+")
   void imageModelObservationTest() {
+    var observationRegistry = TestObservationRegistry.create();
+    var api = DashScopeImageApi.builder()
+        .apiKey(System.getenv("AI_DASHSCOPE_API_KEY"))
+        .restClientBuilder(RestClient.builder())
+        .baseUrl(DEFAULT_BASE_URL)
+        .responseErrorHandler(RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER)
+        .build();
+    var imageModel = DashScopeImageModel.builder()
+        .dashScopeApi(api)
+        .observationRegistry(observationRegistry)
+        .build();
+    imageModel.setObservationConvention(new DefaultImageModelObservationConvention());
 
     DashScopeImageOptions options =
         DashScopeImageOptions.builder()
@@ -104,7 +95,7 @@ class DashScopeImageModelObservationTests {
     Image image = generation.getOutput();
     assertThat(image.getUrl()).isNotEmpty();
 
-    TestObservationRegistryAssert.assertThat(this.observationRegistry)
+    TestObservationRegistryAssert.assertThat(observationRegistry)
         .doesNotHaveAnyRemainingCurrentObservation()
         .hasObservationWithNameEqualTo(DefaultImageModelObservationConvention.DEFAULT_NAME)
         .that()

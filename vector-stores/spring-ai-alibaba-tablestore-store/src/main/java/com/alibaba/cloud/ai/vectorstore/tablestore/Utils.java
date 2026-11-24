@@ -19,6 +19,7 @@ import com.aliyun.openservices.tablestore.agent.model.Document;
 import com.aliyun.openservices.tablestore.agent.model.DocumentHit;
 import com.aliyun.openservices.tablestore.agent.model.Metadata;
 
+import java.util.HashMap;
 import java.util.Map;
 
 class Utils {
@@ -28,7 +29,7 @@ class Utils {
 		if (springAiDocument.getMedia() != null) {
 			throw new UnsupportedOperationException("Media is not supported yet.");
 		}
-		Map<String, Object> springMetadata = springAiDocument.getMetadata();
+		Map<String, Object> springMetadata = new HashMap<>(springAiDocument.getMetadata());
 		String documentId = springAiDocument.getId();
 		String tenantId = Document.DOCUMENT_DEFAULT_TENANT_ID;
 		if (enableMultiTenant) {

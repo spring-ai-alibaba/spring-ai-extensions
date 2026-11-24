@@ -100,6 +100,27 @@ public class DashScopeAiStreamFunctionCallingHelperTests {
 	}
 
 	@Test
+	void testMergePreservesReasoningDeltasAlongsideToolCalls() {
+		var firstToolCall = new ToolCall("tool-1", "function", new ChatCompletionFunction("weather", "{"), 0);
+		var secondToolCall = new ToolCall("tool-1", "function", new ChatCompletionFunction(null, "}"), 0);
+		var first = new ChatCompletionMessage("", Role.ASSISTANT, null, null, List.of(firstToolCall), "first",
+				null, null, null, null);
+		var second = new ChatCompletionMessage("", Role.ASSISTANT, null, null, List.of(secondToolCall), " second",
+				null, null, null, null);
+		var firstChunk = new ChatCompletionChunk("request-1",
+				new ChatCompletionOutput(null, List.of(new Choice(ChatCompletionFinishReason.NULL, first, null, 0)),
+						null), null, null);
+		var secondChunk = new ChatCompletionChunk("request-1",
+				new ChatCompletionOutput(null, List.of(new Choice(ChatCompletionFinishReason.TOOL_CALLS, second, null, 0)),
+						null), null, null);
+
+		var merged = helperWithIncrementalOutput.merge(firstChunk, secondChunk).output().choices().get(0).message();
+
+		assertEquals("first second", merged.reasoningContent());
+		assertEquals("{}", merged.toolCalls().get(0).function().arguments());
+	}
+
+	@Test
 	void testMergeWithSameToolCallIdAndMissingFunctionName() {
 		ChatCompletionChunk previous = createChunkWithToolCall("request-1", "tool-1", "get_weather", null);
 		ChatCompletionChunk current = createChunkWithToolCall("request-1", "tool-1", null,

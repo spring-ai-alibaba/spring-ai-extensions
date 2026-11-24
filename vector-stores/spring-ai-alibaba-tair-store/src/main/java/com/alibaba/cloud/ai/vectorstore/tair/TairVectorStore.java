@@ -26,6 +26,7 @@ import org.springframework.ai.embedding.BatchingStrategy;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.TokenCountBatchingStrategy;
 import org.springframework.ai.vectorstore.AbstractVectorStoreBuilder;
+import org.springframework.ai.vectorstore.EmbeddedDocument;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.observation.AbstractObservationVectorStore;
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationContext;
@@ -35,6 +36,7 @@ import org.springframework.beans.factory.InitializingBean;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -181,18 +183,30 @@ public class TairVectorStore extends AbstractObservationVectorStore implements I
 
 		for (Document document : documents) {
 			logger.info("Calling EmbeddingModel for document id = {}", document.getId());
-			float[] embedding = this.embeddingModel.embed(document);
-			String embeddingString = jsonMapper.writeValueAsString(embedding);
-            List<String> params = new ArrayList<>();
-            params.add(ID_FIELD_NAME);
-            params.add(document.getId());
-            params.add(CONTENT_FIELD_NAME);
-            params.add(document.getText());
-            params.add(METADATA_FIELD_NAME);
-            params.add(jsonMapper.writeValueAsString(document.getMetadata()));
-            this.tairVectorApi.tvshset(options.getIndexName(), document.getId(), embeddingString,
-                    params.toArray(new String[0]));
+			writeDocument(document, this.embeddingModel.embed(document));
 		}
+	}
+
+	@Override
+	protected boolean supportsUpsert() {
+		return true;
+	}
+
+	@Override
+	protected void doUpsert(List<EmbeddedDocument> documents) {
+		for (EmbeddedDocument embedded : documents) {
+			checkDimensions(embedded.document().getId(), embedded.embedding().length, this.options.getDimensions());
+		}
+		for (EmbeddedDocument embedded : documents) {
+			writeDocument(embedded.document(), embedded.embedding());
+		}
+	}
+
+	private void writeDocument(Document document, float[] embedding) {
+		String embeddingString = this.jsonMapper.writeValueAsString(embedding);
+		String metadata = this.jsonMapper.writeValueAsString(document.getMetadata());
+		this.tairVectorApi.tvshset(this.options.getIndexName(), document.getId(), embeddingString,
+				ID_FIELD_NAME, document.getId(), CONTENT_FIELD_NAME, document.getText(), METADATA_FIELD_NAME, metadata);
 	}
 
 	@Override
@@ -202,17 +216,46 @@ public class TairVectorStore extends AbstractObservationVectorStore implements I
 
 	@Override
 	public List<Document> doSimilaritySearch(SearchRequest request) {
-		float[] userQueryEmbedding = getUserQueryEmbedding(request.getQuery());
-		String embeddingString = jsonMapper.writeValueAsString(userQueryEmbedding);
-		VectorBuilderFactory.Knn<String> result = this.tairVectorApi.tvsknnsearch(options.getIndexName(),
-				(long) request.getTopK(), embeddingString);
-
-		return result.getKnnResults()
-			.stream()
+		return search(getUserQueryEmbedding(request.getQuery()), request.getTopK()).stream()
 			.filter(item -> item.getScore() >= request.getSimilarityThreshold())
 			.map(this::mapToDocument)
 			.limit(request.getTopK())
 			.toList();
+	}
+
+	@Override
+	protected boolean supportsQueryEmbeddingSearch() {
+		return true;
+	}
+
+	@Override
+	protected List<Document> doSimilaritySearch(float[] queryEmbedding, SearchRequest request) {
+		checkDimensions("query", queryEmbedding.length, this.options.getDimensions());
+		if (request.hasFilterExpression()) {
+			throw new UnsupportedOperationException("Tair vector search does not support metadata filters");
+		}
+		var documents = new ArrayList<Document>();
+		for (KnnItem<String> item : search(queryEmbedding, request.getTopK())) {
+			double distance = item.getScore();
+			double similarity = switch (this.options.getDistanceMethod()) {
+				case L2 -> 1.0 / (1.0 + distance);
+				case IP, COSINE, JACCARD -> 1.0 - distance;
+			};
+			if (similarity >= request.getSimilarityThreshold()) {
+				documents.add(mapToDocument(item).mutate().score(similarity).build());
+			}
+			if (documents.size() >= request.getTopK()) {
+				break;
+			}
+		}
+		return documents;
+	}
+
+	private Collection<KnnItem<String>> search(float[] queryEmbedding, int topK) {
+		String embeddingString = this.jsonMapper.writeValueAsString(queryEmbedding);
+		VectorBuilderFactory.Knn<String> result = this.tairVectorApi.tvsknnsearch(this.options.getIndexName(),
+				(long) topK, embeddingString);
+		return result.getKnnResults();
 	}
 
 	/**

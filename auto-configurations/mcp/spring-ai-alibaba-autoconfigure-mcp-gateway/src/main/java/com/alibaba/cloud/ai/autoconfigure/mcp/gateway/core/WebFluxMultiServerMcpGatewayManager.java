@@ -20,18 +20,24 @@ import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayMultiServerProperties;
 import com.alibaba.cloud.ai.mcp.gateway.core.MultiServerMcpGatewayManager;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.properties.NacosMcpGatewayProperties;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.provider.NacosMcpAsyncGatewayToolsProvider;
+import com.alibaba.cloud.ai.mcp.gateway.nacos.provider.NacosModernMcpGatewayToolsProvider;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.tools.NacosMcpGatewayToolsInitializer;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.watcher.NacosMcpGatewayToolsWatcher;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
 import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
+import io.modelcontextprotocol.modern.McpSchema.Implementation;
+import io.modelcontextprotocol.modern.server.McpServer;
+import io.modelcontextprotocol.modern.server.feature.ToolsFeature;
 import io.modelcontextprotocol.server.McpAsyncServer;
-import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures.AsyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.mcp.McpToolUtils;
+import org.springframework.ai.mcp.modern.InMemoryAsyncToolRepository;
+import org.springframework.ai.mcp.modern.McpModernToolUtils;
+import org.springframework.ai.mcp.server.webflux.transport.modern.WebFluxMcpTransport;
 import org.springframework.ai.mcp.server.webflux.transport.WebFluxSseServerTransportProvider;
 import org.springframework.ai.mcp.server.webflux.transport.WebFluxStreamableServerTransportProvider;
 import org.springframework.ai.tool.ToolCallback;
@@ -83,15 +89,22 @@ public class WebFluxMultiServerMcpGatewayManager extends MultiServerMcpGatewayMa
 		// 1. Create transport and resolve server builder by transport type (MCP SDK 0.14+).
 		// WebFlux transports return RouterFunction<?> so we cast with suppressed warning.
 		var mcpJsonMapper = new JacksonMcpJsonMapper(jsonMapper);
+		var perEntryProps = createNacosProperties(cfg.getServiceNames());
+		var initializer = new NacosMcpGatewayToolsInitializer(nacosService, perEntryProps);
+		List<ToolCallback> initialCallbacks = initializer.initializeTools();
+		if (cfg.getTransport() == McpGatewayMultiServerProperties.TransportType.MODERN) {
+			addRoute(initModernEntry(cfg, nacosService, perEntryProps, initialCallbacks, mcpJsonMapper));
+			return;
+		}
 		RouterFunction<ServerResponse> routerFunction;
-		McpServer.AsyncSpecification<?> serverBuilder;
+		io.modelcontextprotocol.server.McpServer.AsyncSpecification<?> serverBuilder;
 
 		if (cfg.getTransport() == McpGatewayMultiServerProperties.TransportType.STREAMABLE) {
 			WebFluxStreamableServerTransportProvider transport = WebFluxStreamableServerTransportProvider.builder()
 				.jsonMapper(mcpJsonMapper)
 				.messageEndpoint(cfg.getMcpEndpoint())
 				.build();
-			serverBuilder = McpServer.async(transport);
+			serverBuilder = io.modelcontextprotocol.server.McpServer.async(transport);
 			routerFunction = (RouterFunction<ServerResponse>) transport.getRouterFunction();
 		}
 		else {
@@ -100,14 +113,11 @@ public class WebFluxMultiServerMcpGatewayManager extends MultiServerMcpGatewayMa
 				.sseEndpoint(cfg.getSseEndpoint())
 				.messageEndpoint(cfg.getMessageEndpoint())
 				.build();
-			serverBuilder = McpServer.async(transport);
+			serverBuilder = io.modelcontextprotocol.server.McpServer.async(transport);
 			routerFunction = (RouterFunction<ServerResponse>) transport.getRouterFunction();
 		}
 
 		// 2. Load initial tools from Nacos
-		NacosMcpGatewayProperties perEntryProps = createNacosProperties(cfg.getServiceNames());
-		NacosMcpGatewayToolsInitializer initializer = new NacosMcpGatewayToolsInitializer(nacosService, perEntryProps);
-		List<ToolCallback> initialCallbacks = initializer.initializeTools();
 		List<AsyncToolSpecification> initialSpecs = initialCallbacks.stream()
 			.map(McpToolUtils::toAsyncToolSpecification)
 			.toList();
@@ -129,13 +139,47 @@ public class WebFluxMultiServerMcpGatewayManager extends MultiServerMcpGatewayMa
 		}
 
 		// 5. Accumulate router functions
-		combinedRouterFunction = (combinedRouterFunction == null) ? routerFunction
-				: combinedRouterFunction.and(routerFunction);
+		addRoute(routerFunction);
 
 		logger.info("Initialized WebFlux multi-server entry '{}' [{}] with {} initial tool(s) at: {}",
 				cfg.getName(), cfg.getTransport(), initialCallbacks.size(),
 				cfg.getTransport() == McpGatewayMultiServerProperties.TransportType.SSE ? cfg.getSseEndpoint()
 						: cfg.getMcpEndpoint());
+	}
+
+	private RouterFunction<ServerResponse> initModernEntry(McpGatewayMultiServerProperties.ServerConfig cfg,
+			NacosMcpOperationService nacosService, NacosMcpGatewayProperties properties,
+			List<ToolCallback> callbacks, JacksonMcpJsonMapper mapper) {
+		var repository = InMemoryAsyncToolRepository.builder().build();
+		McpModernToolUtils.toAsyncTools(callbacks).forEach(repository::add);
+		var server = McpServer.builder()
+			.serverInfo(Implementation.builder(cfg.getServerName(), cfg.getServerVersion()).build())
+			.jsonMapper(mapper)
+			.feature(ToolsFeature.ofAsync(repository))
+			.build();
+		var transport = WebFluxMcpTransport.builder(server)
+			.endpoint(cfg.getMcpEndpoint())
+			.jsonMapper(mapper)
+			.build();
+		var toolManager = new NacosModernMcpGatewayToolsProvider(repository);
+		if (!properties.getServiceNames().isEmpty()) {
+			watchers.add(new NacosMcpGatewayToolsWatcher(toolManager, nacosService, properties));
+		}
+		modernServerShutdown.add(() -> {
+			try {
+				transport.closeGracefully();
+			}
+			finally {
+				server.closeGracefully();
+				toolManager.close();
+			}
+		});
+		return transport.getRouterFunction();
+	}
+
+	private void addRoute(RouterFunction<ServerResponse> routerFunction) {
+		combinedRouterFunction = (combinedRouterFunction == null) ? routerFunction
+				: combinedRouterFunction.and(routerFunction);
 	}
 
 	/**

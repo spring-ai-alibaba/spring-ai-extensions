@@ -222,7 +222,7 @@
     <properties>
 
         <!-- Spring AI Alibaba Version -->
-        <revision>2.0.0.0-RC1</revision>
+        <revision>2.1.0.0-SNAPSHOT</revision>
 
         <!-- Maven project basic config -->
         <java.version>17</java.version>
@@ -232,15 +232,15 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <!-- Spring version -->
-        <spring-ai.version>2.0.0</spring-ai.version>
-        <spring-boot.version>4.1.0</spring-boot.version>
+        <spring-ai.version>2.1.0</spring-ai.version>
+        <spring-boot.version>4.2.0</spring-boot.version>
         <springdoc-openapi.version>2.8.15</springdoc-openapi.version>
 
         <!-- MCP -->
-        <mcp.sdk.version>2.0.0</mcp.sdk.version>
+        <mcp.sdk.version>2.2.0</mcp.sdk.version>
 
         <!-- DashScope SDK Version -->
-        <dashscope-sdk-java.version>2.15.1</dashscope-sdk-java.version>
+        <dashscope-sdk-java.version>2.23.6</dashscope-sdk-java.version>
 
         <!-- Nacos -->
         <nacos3.version>3.1.0</nacos3.version>

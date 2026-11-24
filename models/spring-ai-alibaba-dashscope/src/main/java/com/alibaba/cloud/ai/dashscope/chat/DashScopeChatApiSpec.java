@@ -140,6 +140,9 @@ public class DashScopeChatApiSpec {
 				@JsonProperty("tool_call_id")
 				private String toolCallId;
 
+				@JsonProperty("reasoning_content")
+				private String reasoningContent;
+
 				private ChatCompletionMessage() {
 				}
 
@@ -167,6 +170,10 @@ public class DashScopeChatApiSpec {
 					return this.toolCallId;
 				}
 
+				public String reasoningContent() {
+					return this.reasoningContent;
+				}
+
 				public static Builder builder() {
 					return new Builder();
 				}
@@ -182,6 +189,8 @@ public class DashScopeChatApiSpec {
 					private List<ToolCall> toolCalls;
 
 					private String toolCallId;
+
+					private String reasoningContent;
 
 					private Builder() {
 					}
@@ -211,6 +220,11 @@ public class DashScopeChatApiSpec {
 						return this;
 					}
 
+					public Builder reasoningContent(String reasoningContent) {
+						this.reasoningContent = reasoningContent;
+						return this;
+					}
+
 					public ChatCompletionMessage build() {
 						ChatCompletionMessage message = new ChatCompletionMessage();
 						message.role = this.role;
@@ -218,6 +232,7 @@ public class DashScopeChatApiSpec {
 						message.partial = this.partial;
 						message.toolCalls = this.toolCalls;
 						message.toolCallId = this.toolCallId;
+						message.reasoningContent = this.reasoningContent;
 						return message;
 					}
 

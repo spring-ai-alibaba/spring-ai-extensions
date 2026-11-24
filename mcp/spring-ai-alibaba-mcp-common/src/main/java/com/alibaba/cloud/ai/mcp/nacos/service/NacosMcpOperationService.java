@@ -17,6 +17,7 @@
 package com.alibaba.cloud.ai.mcp.nacos.service;
 
 import com.alibaba.cloud.ai.mcp.nacos.service.model.NacosMcpServerEndpoint;
+import com.alibaba.cloud.ai.mcp.utils.NacosMcpProtocol;
 import com.alibaba.nacos.api.NacosFactory;
 import com.alibaba.nacos.api.PropertyKeyConst;
 import com.alibaba.nacos.api.ai.model.mcp.McpEndpointInfo;
@@ -112,7 +113,7 @@ public class NacosMcpOperationService {
 		List<McpEndpointInfo> mcpEndpointInfoList = mcpServerDetailInfo.getBackendEndpoints() == null
 				? new ArrayList<>() : mcpServerDetailInfo.getBackendEndpoints();
 		String exportPath = mcpServerDetailInfo.getRemoteServerConfig().getExportPath();
-		String protocol = mcpServerDetailInfo.getProtocol();
+		String protocol = NacosMcpProtocol.resolve(mcpServerDetailInfo);
 		String realVersion = mcpServerDetailInfo.getVersionDetail().getVersion();
 		return new NacosMcpServerEndpoint(mcpEndpointInfoList, exportPath, protocol, realVersion);
 	}
@@ -127,7 +128,7 @@ public class NacosMcpOperationService {
 		List<McpEndpointInfo> mcpEndpointInfoList = mcpServerDetailInfo.getBackendEndpoints() == null
 				? new ArrayList<>() : mcpServerDetailInfo.getBackendEndpoints();
 		String exportPath = mcpServerDetailInfo.getRemoteServerConfig().getExportPath();
-		String protocol = mcpServerDetailInfo.getProtocol();
+		String protocol = NacosMcpProtocol.resolve(mcpServerDetailInfo);
 		String realVersion = mcpServerDetailInfo.getVersionDetail().getVersion();
 		return new NacosMcpServerEndpoint(mcpEndpointInfoList, exportPath, protocol, realVersion);
 	}
@@ -172,6 +173,7 @@ public class NacosMcpOperationService {
 		McpEndpointInfo mcpEndpointInfo = new McpEndpointInfo();
 		mcpEndpointInfo.setAddress(instance.getIp());
 		mcpEndpointInfo.setPort(instance.getPort());
+		mcpEndpointInfo.setProtocol(mcpServiceRef.getTransportProtocol());
 		return mcpEndpointInfo;
 	}
 
@@ -185,6 +187,13 @@ public class NacosMcpOperationService {
 			McpEndpointSpec endpointSpec) throws NacosException {
 		endpointSpec.getData().put("namespaceId", this.namespace);
 		return aiMaintainerService.updateMcpServer(this.namespace, mcpName, true, serverSpec, toolSpec, endpointSpec);
+	}
+
+	public boolean addMcpServerVersion(String mcpName, McpServerBasicInfo serverSpec, McpToolSpecification toolSpec,
+			McpEndpointSpec endpointSpec) throws NacosException {
+		endpointSpec.getData().put("namespaceId", this.namespace);
+		return this.aiMaintainerService.updateMcpServer(this.namespace, mcpName, false, serverSpec, toolSpec,
+				endpointSpec);
 	}
 
 	public void registerService(String serviceName, String groupName, Instance instance) throws NacosException {

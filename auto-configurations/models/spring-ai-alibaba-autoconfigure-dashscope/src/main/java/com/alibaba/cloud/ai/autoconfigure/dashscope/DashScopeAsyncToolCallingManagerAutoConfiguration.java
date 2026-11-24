@@ -16,15 +16,19 @@
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import com.alibaba.cloud.ai.tool.DashScopeAsyncToolCallingManager;
+import com.alibaba.cloud.ai.tool.ToolCallExecutionOptions;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.model.tool.ToolCallingManager;
+import org.springframework.ai.model.tool.ToolCallConfirmationPolicy;
 import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
+import org.springframework.ai.model.tool.autoconfigure.ToolCallingProperties;
 import org.springframework.ai.tool.execution.ToolExecutionExceptionProcessor;
 import org.springframework.ai.tool.observation.ToolCallingObservationConvention;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -42,23 +46,32 @@ import java.util.concurrent.TimeUnit;
 @ConditionalOnDashScopeEnabled
 @ConditionalOnProperty(prefix = DashScopeAsyncToolCallingProperties.CONFIG_PREFIX, name = "enabled", havingValue = "true")
 @ConditionalOnClass(DashScopeAsyncToolCallingManager.class)
-@EnableConfigurationProperties(DashScopeAsyncToolCallingProperties.class)
+@EnableConfigurationProperties({ DashScopeAsyncToolCallingProperties.class, ToolCallingProperties.class })
 public class DashScopeAsyncToolCallingManagerAutoConfiguration {
 
     // @formatter:off
     @Bean
+    @ConditionalOnMissingBean(ToolCallingManager.class)
     ToolCallingManager toolCallingManager(
             ToolCallbackResolver toolCallbackResolver,
             ToolExecutionExceptionProcessor toolExecutionExceptionProcessor,
             ObjectProvider<ObservationRegistry> observationRegistry,
             ObjectProvider<ToolCallingObservationConvention> observationConvention,
+            ToolCallingProperties toolProperties,
+            ObjectProvider<ToolCallConfirmationPolicy> confirmationPolicies,
             DashScopeAsyncToolCallingProperties dashScopeAsyncToolCallingProperties) {
 
-        // init toolCallingManager
+        var limits = toolProperties.getLimits();
+        var confirmation = toolProperties.getConfirmation();
+        var executionOptions = ToolCallExecutionOptions.configured(confirmation.isEnabled(), confirmation.getTools(),
+                confirmationPolicies.orderedStream().toList(), toolProperties.getResolution().getFallback().isEnabled(),
+                limits.getMaxCallsPerToolDefault(), limits.getMaxCallsPerTool(), limits.getExcludedTools(),
+                limits.getMaxTotalToolCalls(), limits.getOnLimitExceeded());
         var toolCallingManager = DashScopeAsyncToolCallingManager.builder()
                 .observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
                 .toolCallbackResolver(toolCallbackResolver)
                 .toolExecutionExceptionProcessor(toolExecutionExceptionProcessor)
+                .executionOptions(executionOptions)
                 .taskExecutor(buildAsyncToolCallThreadPool(dashScopeAsyncToolCallingProperties))
                 .build();
         observationConvention.ifAvailable(toolCallingManager::setObservationConvention);

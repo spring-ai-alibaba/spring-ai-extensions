@@ -12,7 +12,7 @@ Based on these components, developers can use Spring AI [ChatClient](https://jav
 
 1. Requires JDK 17+.
 2. If there are any `spring-ai` dependency issue, please lean how to configure the `spring-milestones` Maven repository on [FAQ page](https://java2ai.com/docs/1.0.0.2/faq).
-3. The current release uses `spring-ai-extensions-bom` `2.0.0.0-RC1`, Spring AI `2.0.0`, and Spring Boot `4.1.0`.
+3. The `2.1.x` branch uses Spring AI `2.1.0` and Spring Boot `4.2.0`. Run `mvn install -DskipTests` to install the `2.1.0.0-SNAPSHOT` extension artifacts locally before trying the example below.
 
 ### Use `ChatClient` to Develop a Chatbot
 
@@ -24,8 +24,8 @@ To quickly get started with Spring AI Alibaba, add 'spring-ai-alibaba-starter-da
   <dependencies>
     <dependency>
       <groupId>com.alibaba.cloud.ai</groupId>
-      <artifactId>spring-ai-extensions-bom</artifactId>
-      <version>2.0.0.0-RC1</version>
+      <artifactId>spring-ai-alibaba-extensions-bom</artifactId>
+      <version>2.1.0.0-SNAPSHOT</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -245,6 +245,20 @@ All vector stores provide consistent APIs for:
 
 ### ChatMemory
 
+For new conversations on Spring AI 2.1, use Session Memory. With
+`spring-ai-alibaba-starter-model-chat-memory`, set `spring.ai.alibaba.session.enabled=true`
+and register `SessionAdvisors.builder(sessionService).build()` on the chat client. Pass
+`SessionAdvisors.session(sessionId)` on every request. The starter provides an in-memory
+session repository when there is no configured store. Add Spring AI's
+`spring-ai-starter-model-session-jdbc` for a persistent JDBC store.
+
+To migrate an existing conversation, call
+`LegacyChatMemorySessionImporter.importConversation(repository, conversationId, target)`
+with a `CreateSessionRequest` containing an explicit target session ID. The importer copies
+the stored messages in order and can be retried with the same source and target. The
+session can then continue with the new advisors. See the
+[Spring AI migration guide](https://docs.spring.io/spring-ai/reference/2.1-SNAPSHOT/upgrading/session-memory.html).
+
 Multiple storage backends for managing conversation history and long-term memory:
 
 **Short-term Memory:**
@@ -259,8 +273,8 @@ Multiple storage backends for managing conversation history and long-term memory
 - **Mem0**: Advanced long-term memory with intelligent summarization and retrieval
 
 Available starters:
-- `spring-ai-alibaba-starter-memory` (short-term memory)
-- `spring-ai-alibaba-starter-memory-long` (long-term memory)
+- `spring-ai-alibaba-starter-model-chat-memory` (short-term memory)
+- `spring-ai-alibaba-starter-model-chat-memory-long` (long-term memory)
 - Individual storage backend starters (e.g., `spring-ai-alibaba-starter-model-chat-memory-repository-redis`)
 
 ### RAG

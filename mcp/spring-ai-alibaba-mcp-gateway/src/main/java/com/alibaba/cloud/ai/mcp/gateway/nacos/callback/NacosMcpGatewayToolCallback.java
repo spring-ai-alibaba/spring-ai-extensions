@@ -25,6 +25,9 @@ import com.alibaba.cloud.ai.mcp.gateway.core.security.McpGatewayOAuthInterceptor
 import com.alibaba.cloud.ai.mcp.gateway.core.security.McpGatewayOAuthTokenManager;
 import com.alibaba.cloud.ai.mcp.gateway.core.security.McpGatewayOAuthProperties;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.definition.NacosMcpGatewayToolDefinition;
+import com.alibaba.cloud.ai.mcp.common.transport.builder.ModernMcpToolTransport;
+import com.alibaba.cloud.ai.mcp.utils.NacosMcpProtocol;
+import com.alibaba.cloud.ai.mcp.utils.NacosMcpClientUtil;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
 import com.alibaba.nacos.api.ai.model.mcp.McpEndpointInfo;
 import com.alibaba.nacos.api.ai.model.mcp.McpServerRemoteServiceConfig;
@@ -40,6 +43,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
 import io.modelcontextprotocol.client.McpClient;
+import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -727,7 +731,7 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
             // Dispatch to different handling methods based on protocol type
             if ("http".equalsIgnoreCase(protocol) || "https".equalsIgnoreCase(protocol)) {
                 return handleHttpHttpsProtocol(args, remoteServerConfig, protocol);
-            } else if ("mcp-sse".equalsIgnoreCase(protocol) || "mcp-streamable".equalsIgnoreCase(protocol)) {
+            } else if ("mcp-sse".equalsIgnoreCase(protocol) || NacosMcpProtocol.isStreamable(protocol)) {
                 return handleMcpStreamProtocol(args, remoteServerConfig, protocol);
             } else {
                 logger.error("[call] Unsupported protocol: {}", protocol);
@@ -809,40 +813,33 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
         String exportPath = remoteServerConfig.getExportPath();
 
         // Build base URL
-        String baseUrl = "http://" + mcpEndpointInfo.getAddress() + ":" + mcpEndpointInfo.getPort();
+        String baseUrl = NacosMcpClientUtil.checkProtocol(mcpEndpointInfo) + "://" + mcpEndpointInfo.getAddress() + ":" + mcpEndpointInfo.getPort();
 
         logger.info("[handleMcpStreamProtocol] Processing {} protocol with args: {} and baseUrl: {}", protocol,
                 args, baseUrl);
 
         try {
-            // Get tool name - extract actual tool name from tool definition name
-            String toolDefinitionName = this.toolDefinition.name();
-            if (toolDefinitionName.isEmpty()) {
-                throw new RuntimeException("Tool definition name is not available");
+            String toolName = this.toolDefinition.getRemoteToolName();
+            if (toolName == null) {
+                String name = this.toolDefinition.name();
+                int separator = name.lastIndexOf("_tools_");
+                toolName = separator >= 0 ? name.substring(separator + "_tools_".length()) : name;
             }
-
-            // Tool definition name format: serverName_tools_toolName
-            // Need to extract the last toolName part
-            String toolName;
-            if (toolDefinitionName.contains("_tools_")) {
-                toolName = toolDefinitionName.substring(toolDefinitionName.lastIndexOf("_tools_") + 7);
-            } else {
-                // If no _tools_ separator, use the whole name
-                toolName = toolDefinitionName;
-            }
-
             if (toolName.isEmpty()) {
                 throw new RuntimeException("Extracted tool name is empty");
             }
 
             // Build transport layer
-            String sseEndpoint = "/sse";
+            String sseEndpoint = NacosMcpProtocol.isStreamable(protocol) ? "/mcp" : "/sse";
             if (exportPath != null && !exportPath.isEmpty()) {
                 sseEndpoint = exportPath;
             }
 
             McpClientTransport transport;
-            if ("mcp-streamable".equalsIgnoreCase(protocol)) {
+            if (NacosMcpProtocol.isModern(protocol)) {
+                transport = new ModernMcpToolTransport(mcpEndpointInfo, exportPath,
+                        serviceRef.getServiceName(), new JacksonMcpJsonMapper(jsonMapper), getTimeoutDuration());
+            } else if (NacosMcpProtocol.isStreamable(protocol)) {
                 // Use WebClientStreamableHttpTransport for streamable protocol
                 WebClient.Builder webClientBuilder = this.webClientBuilder.clone().baseUrl(baseUrl);
                 transport = WebClientStreamableHttpTransport.builder(webClientBuilder)

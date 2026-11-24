@@ -14,3 +14,4 @@
 # limitations under the License.
 #
 com.alibaba.cloud.ai.model.chat.memory.autoconfigure.ChatMemoryAutoConfiguration
+com.alibaba.cloud.ai.model.chat.memory.autoconfigure.AlibabaSessionMemoryAutoConfiguration

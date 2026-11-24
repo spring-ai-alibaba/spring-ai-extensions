@@ -15,21 +15,23 @@
  */
 package com.alibaba.cloud.ai.tool;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
+
+import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.tool.DefaultToolCallingManager;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
+import org.springframework.ai.model.tool.ToolCallDecisions;
 import org.springframework.ai.model.tool.ToolExecutionResult;
+import org.springframework.ai.model.tool.internal.ToolCallReactiveContextHolder;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.execution.DefaultToolExecutionExceptionProcessor;
@@ -42,263 +44,143 @@ import org.springframework.ai.tool.observation.ToolCallingObservationDocumentati
 import org.springframework.ai.tool.resolution.DelegatingToolCallbackResolver;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-
 
 public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultToolCallingManager.class);
+	private static final ToolCallingObservationConvention DEFAULT_OBSERVATION_CONVENTION =
+			new DefaultToolCallingObservationConvention();
 
-    private static final ObservationRegistry DEFAULT_OBSERVATION_REGISTRY
-            = ObservationRegistry.NOOP;
+	private final ObservationRegistry observationRegistry;
 
-    private static final ToolCallingObservationConvention DEFAULT_OBSERVATION_CONVENTION
-            = new DefaultToolCallingObservationConvention();
+	private final ToolExecutionExceptionProcessor exceptionProcessor;
 
-    private static final ToolCallbackResolver DEFAULT_TOOL_CALLBACK_RESOLVER
-            = new DelegatingToolCallbackResolver(List.of());
+	private final ThreadPoolExecutor taskExecutor;
 
-    private static final ToolExecutionExceptionProcessor DEFAULT_TOOL_EXECUTION_EXCEPTION_PROCESSOR
-            = DefaultToolExecutionExceptionProcessor.builder().build();
+	private final ToolCallBatchExecutor batchExecutor;
 
-    private static final String POSSIBLE_LLM_TOOL_NAME_CHANGE_WARNING
-            = "LLM may have adapted the tool name '{}', especially if the name was truncated due to length limits. If this is the case, you can customize the prefixing and processing logic using McpToolNamePrefixGenerator";
+	private ToolCallingObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
 
+	public DashScopeAsyncToolCallingManager(ObservationRegistry observationRegistry, ToolCallbackResolver resolver,
+			ToolExecutionExceptionProcessor exceptionProcessor, ThreadPoolExecutor taskExecutor) {
+		this(observationRegistry, resolver, exceptionProcessor, taskExecutor, ToolCallExecutionOptions.defaults());
+	}
 
-    // @formatter:on
+	private DashScopeAsyncToolCallingManager(ObservationRegistry observationRegistry, ToolCallbackResolver resolver,
+			ToolExecutionExceptionProcessor exceptionProcessor, ThreadPoolExecutor taskExecutor,
+			ToolCallExecutionOptions executionOptions) {
+		this.observationRegistry = Objects.requireNonNull(observationRegistry);
+		this.exceptionProcessor = Objects.requireNonNull(exceptionProcessor);
+		this.taskExecutor = Objects.requireNonNull(taskExecutor);
+		this.batchExecutor = new ToolCallBatchExecutor(Objects.requireNonNull(resolver),
+				Objects.requireNonNull(executionOptions));
+	}
 
-    private ObservationRegistry observationRegistry = DEFAULT_OBSERVATION_REGISTRY;
+	@Override
+	public List<ToolDefinition> resolveToolDefinitions(ToolCallingChatOptions options) {
+		return ToolCallBatchExecutor.resolveToolDefinitions(options);
+	}
 
-    private ToolCallbackResolver toolCallbackResolver = DEFAULT_TOOL_CALLBACK_RESOLVER;
+	@Override
+	public ToolExecutionResult executeToolCalls(Prompt prompt, ChatResponse response) {
+		return execute(prompt, response, null);
+	}
 
-    private ToolExecutionExceptionProcessor toolExecutionExceptionProcessor = DEFAULT_TOOL_EXECUTION_EXCEPTION_PROCESSOR;
+	@Override
+	public ToolExecutionResult executeToolCalls(Prompt prompt, ChatResponse response, ToolCallDecisions decisions) {
+		Assert.notNull(decisions, "decisions cannot be null");
+		return execute(prompt, response, decisions);
+	}
 
-    private ToolCallingObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
+	private ToolExecutionResult execute(Prompt prompt, ChatResponse response, @Nullable ToolCallDecisions decisions) {
+		Observation parent = ToolCallReactiveContextHolder.getContext()
+			.getOrDefault(ObservationThreadLocalAccessor.KEY, this.observationRegistry.getCurrentObservation());
+		return this.batchExecutor.execute(prompt, response, decisions, (invocation, context) ->
+			CompletableFuture.supplyAsync(() -> invoke(invocation, context, parent), this.taskExecutor));
+	}
 
-    private ThreadPoolExecutor asyncToolCallingTaskExecutor;
+	private String invoke(ToolCallBatchExecutor.Invocation invocation, ToolContext context, @Nullable Observation parent) {
+		ToolCallback callback = invocation.callback();
+		String arguments = invocation.arguments();
+		var observationContext = ToolCallingObservationContext.builder()
+			.toolDefinition(callback.getToolDefinition())
+			.toolMetadata(callback.getToolMetadata())
+			.toolCallId(invocation.call().id())
+			.toolType(invocation.call().type())
+			.toolCallArguments(arguments)
+			.build();
+		String result = ToolCallingObservationDocumentation.TOOL_CALL
+			.observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
+					this.observationRegistry)
+			.parentObservation(parent)
+			.observe(() -> {
+				String output;
+				try {
+					output = callback.call(arguments, context);
+				}
+				catch (ToolExecutionException ex) {
+					output = this.exceptionProcessor.process(ex);
+				}
+				observationContext.setToolCallResult(output);
+				return output;
+			});
+		return Objects.requireNonNullElse(result, "");
+	}
 
-    public DashScopeAsyncToolCallingManager(ObservationRegistry observationRegistry, ToolCallbackResolver toolCallbackResolver,
-                                   ToolExecutionExceptionProcessor toolExecutionExceptionProcessor, ThreadPoolExecutor taskExecutor) {
-        Assert.notNull(observationRegistry, "observationRegistry cannot be null");
-        Assert.notNull(toolCallbackResolver, "toolCallbackResolver cannot be null");
-        Assert.notNull(toolExecutionExceptionProcessor, "toolCallExceptionConverter cannot be null");
-        Assert.notNull(taskExecutor, "taskExecutor cannot be null");
+	public void setObservationConvention(ToolCallingObservationConvention observationConvention) {
+		this.observationConvention = observationConvention;
+	}
 
-        this.observationRegistry = observationRegistry;
-        this.toolCallbackResolver = toolCallbackResolver;
-        this.toolExecutionExceptionProcessor = toolExecutionExceptionProcessor;
-        this.asyncToolCallingTaskExecutor = taskExecutor;
-    }
+	public static Builder builder() {
+		return new Builder();
+	}
 
-    @Override
-    public List<ToolDefinition> resolveToolDefinitions(ToolCallingChatOptions chatOptions) {
-        Assert.notNull(chatOptions, "chatOptions cannot be null");
+	public static final class Builder {
 
-        List<ToolCallback> toolCallbacks = new ArrayList<>(
-                !CollectionUtils.isEmpty(chatOptions.getToolCallbacks()) ? chatOptions.getToolCallbacks() : List.of());
-//        for (String toolName : chatOptions.getToolNames()) {
-//            // Skip the tool if it is already present in the request toolCallbacks.
-//            // That might happen if a tool is defined in the options
-//            // both as a ToolCallback and as a tool name.
-//            if (chatOptions.getToolCallbacks()
-//                    .stream()
-//                    .anyMatch(tool -> tool.getToolDefinition().name().equals(toolName))) {
-//                continue;
-//            }
-//            ToolCallback toolCallback = this.toolCallbackResolver.resolve(toolName);
-//            if (toolCallback == null) {
-//                logger.warn(POSSIBLE_LLM_TOOL_NAME_CHANGE_WARNING, toolName);
-//                throw new IllegalStateException("No ToolCallback found for tool name: " + toolName);
-//            }
-//            toolCallbacks.add(toolCallback);
-//        }
+		private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
-        return toolCallbacks.stream().map(ToolCallback::getToolDefinition).toList();
-    }
+		private ToolCallbackResolver toolCallbackResolver = new DelegatingToolCallbackResolver(List.of());
 
-    @Override
-    public ToolExecutionResult executeToolCalls(Prompt prompt, ChatResponse chatResponse) {
-        Assert.notNull(prompt, "prompt cannot be null");
-        Assert.notNull(chatResponse, "chatResponse cannot be null");
+		private ToolExecutionExceptionProcessor toolExecutionExceptionProcessor =
+				DefaultToolExecutionExceptionProcessor.builder().build();
 
-        Optional<Generation> toolCallGeneration = chatResponse.getResults()
-                .stream()
-                .filter(g -> !CollectionUtils.isEmpty(g.getOutput().getToolCalls()))
-                .findFirst();
+		private ToolCallExecutionOptions executionOptions = ToolCallExecutionOptions.defaults();
 
-        if (toolCallGeneration.isEmpty()) {
-            throw new IllegalStateException("No tool call requested by the chat model");
-        }
+		private @Nullable ThreadPoolExecutor taskExecutor;
 
-        AssistantMessage assistantMessage = toolCallGeneration.get().getOutput();
+		private Builder() {
+		}
 
-        ToolContext toolContext = buildToolContext(prompt, assistantMessage);
+		public Builder observationRegistry(ObservationRegistry observationRegistry) {
+			this.observationRegistry = observationRegistry;
+			return this;
+		}
 
-        InternalToolExecutionResult internalToolExecutionResult = executeToolCall(prompt, assistantMessage,
-                toolContext);
+		public Builder toolCallbackResolver(ToolCallbackResolver toolCallbackResolver) {
+			this.toolCallbackResolver = toolCallbackResolver;
+			return this;
+		}
 
-        List<Message> conversationHistory = buildConversationHistoryAfterToolExecution(prompt.getInstructions(),
-                assistantMessage, internalToolExecutionResult.toolResponseMessage());
+		public Builder toolExecutionExceptionProcessor(ToolExecutionExceptionProcessor toolExecutionExceptionProcessor) {
+			this.toolExecutionExceptionProcessor = toolExecutionExceptionProcessor;
+			return this;
+		}
 
-        return ToolExecutionResult.builder()
-                .conversationHistory(conversationHistory)
-                .returnDirect(internalToolExecutionResult.returnDirect())
-                .build();
-    }
+		public Builder executionOptions(ToolCallExecutionOptions executionOptions) {
+			this.executionOptions = executionOptions;
+			return this;
+		}
 
-    private static ToolContext buildToolContext(Prompt prompt, AssistantMessage assistantMessage) {
-        Map<String, Object> toolContextMap = Map.of();
+		public Builder taskExecutor(ThreadPoolExecutor taskExecutor) {
+			this.taskExecutor = taskExecutor;
+			return this;
+		}
 
-        if (prompt.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions
-                && !CollectionUtils.isEmpty(toolCallingChatOptions.getToolContext())) {
-            toolContextMap = new HashMap<>(toolCallingChatOptions.getToolContext());
-        }
+		public DashScopeAsyncToolCallingManager build() {
+			Assert.notNull(this.taskExecutor, "taskExecutor cannot be null");
+			return new DashScopeAsyncToolCallingManager(this.observationRegistry, this.toolCallbackResolver,
+					this.toolExecutionExceptionProcessor, this.taskExecutor, this.executionOptions);
+		}
 
-        return new ToolContext(toolContextMap);
-    }
+	}
 
-    /**
-     * Execute the tool call and return the response message.
-     */
-    private InternalToolExecutionResult executeToolCall(Prompt prompt, AssistantMessage assistantMessage,
-                                                        ToolContext toolContext) {
-
-        List<ToolCallback> promptToolCallbacks = List.of();
-        if (prompt.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions) {
-            if (!CollectionUtils.isEmpty(toolCallingChatOptions.getToolCallbacks())) {
-                promptToolCallbacks = toolCallingChatOptions.getToolCallbacks();
-            }
-        }
-        final List<ToolCallback> toolCallbacks = promptToolCallbacks;
-
-        final Queue<Boolean> toolsReturnDirect = new ConcurrentLinkedDeque<>();
-
-        List<CompletableFuture<ToolResponseMessage.ToolResponse>> futuresToolResponses = assistantMessage.getToolCalls()
-                .stream()
-                .map(toolCall -> CompletableFuture.supplyAsync(() -> {
-                    logger.debug("Executing tool call: {}", toolCall.name());
-
-                    String toolName = toolCall.name();
-                    String toolInputArguments = toolCall.arguments();
-
-                    ToolCallback toolCallback = toolCallbacks.stream()
-                            .filter(tool -> toolName.equals(tool.getToolDefinition().name()))
-                            .findFirst()
-                            .orElseGet(() -> this.toolCallbackResolver.resolve(toolName));
-
-                    if (toolCallback == null) {
-                        throw new IllegalStateException("No ToolCallback found for tool name: " + toolName);
-                    }
-
-                    toolsReturnDirect.add(toolCallback.getToolMetadata().returnDirect());
-
-                    ToolCallingObservationContext observationContext = ToolCallingObservationContext.builder()
-                            .toolDefinition(toolCallback.getToolDefinition())
-                            .toolMetadata(toolCallback.getToolMetadata())
-                            .toolCallArguments(toolInputArguments)
-                            .build();
-
-                    String toolCallResult = ToolCallingObservationDocumentation.TOOL_CALL
-                            .observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
-                                    this.observationRegistry)
-                            .observe(() -> {
-                                String toolResult;
-                                try {
-                                    toolResult = toolCallback.call(toolInputArguments, toolContext);
-                                }
-                                catch (ToolExecutionException ex) {
-                                    toolResult = this.toolExecutionExceptionProcessor.process(ex);
-                                }
-                                observationContext.setToolCallResult(toolResult);
-                                return toolResult;
-                            });
-
-                    logger.debug("Async Tool call end! toolCall = {}, toolInputArguments = {}, result: {}",
-                            toolCall.name(), toolInputArguments, toolCallResult);
-
-                    return new ToolResponseMessage.ToolResponse(toolCall.id(), toolName,
-                            toolCallResult != null ? toolCallResult : "");
-                }, this.asyncToolCallingTaskExecutor))
-                .toList();
-
-        final List<ToolResponseMessage.ToolResponse> toolResponses = CompletableFuture
-                .allOf(futuresToolResponses.toArray(new CompletableFuture[0]))
-                .thenApply(result -> futuresToolResponses.stream().map(CompletableFuture::join).toList())
-                .join();
-
-        return new InternalToolExecutionResult(
-                ToolResponseMessage.builder().responses(toolResponses).metadata(Map.of()).build(),
-                toolsReturnDirect.stream().allMatch(Boolean::booleanValue));
-    }
-
-    private List<Message> buildConversationHistoryAfterToolExecution(List<Message> previousMessages,
-                                                                     AssistantMessage assistantMessage, ToolResponseMessage toolResponseMessage) {
-        List<Message> messages = new ArrayList<>(previousMessages);
-        messages.add(assistantMessage);
-        messages.add(toolResponseMessage);
-        return messages;
-    }
-
-    public void setObservationConvention(ToolCallingObservationConvention observationConvention) {
-        this.observationConvention = observationConvention;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    private record InternalToolExecutionResult(ToolResponseMessage toolResponseMessage, boolean returnDirect) {
-    }
-
-    public final static class Builder {
-
-        private ObservationRegistry observationRegistry = DEFAULT_OBSERVATION_REGISTRY;
-
-        private ToolCallbackResolver toolCallbackResolver = DEFAULT_TOOL_CALLBACK_RESOLVER;
-
-        private ToolExecutionExceptionProcessor toolExecutionExceptionProcessor = DEFAULT_TOOL_EXECUTION_EXCEPTION_PROCESSOR;
-
-        private @Nullable ThreadPoolExecutor taskExecutor;
-
-        private Builder() {
-        }
-
-        public Builder observationRegistry(ObservationRegistry observationRegistry) {
-            this.observationRegistry = observationRegistry;
-            return this;
-        }
-
-        public Builder toolCallbackResolver(ToolCallbackResolver toolCallbackResolver) {
-            this.toolCallbackResolver = toolCallbackResolver;
-            return this;
-        }
-
-        public Builder toolExecutionExceptionProcessor(
-                ToolExecutionExceptionProcessor toolExecutionExceptionProcessor) {
-            this.toolExecutionExceptionProcessor = toolExecutionExceptionProcessor;
-            return this;
-        }
-
-        public Builder taskExecutor(ThreadPoolExecutor taskExecutor) {
-            this.taskExecutor = taskExecutor;
-            return this;
-        }
-
-        public DashScopeAsyncToolCallingManager build() {
-            Assert.notNull(this.taskExecutor, "taskExecutor cannot be null");
-            return new DashScopeAsyncToolCallingManager(this.observationRegistry, this.toolCallbackResolver,
-                    this.toolExecutionExceptionProcessor, this.taskExecutor);
-        }
-
-    }
 }

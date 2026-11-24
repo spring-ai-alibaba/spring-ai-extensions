@@ -94,7 +94,7 @@ public class DashScopeMultiModalChatTests {
 
     private static final String MULTIMODAL_IMAGE_MODEL = "qwen3-vl-plus";
 
-    private static final String MULTIMODAL_VIDEO_MODEL = "qwen-vl-max";
+    private static final String MULTIMODAL_VIDEO_MODEL = "qwen3-vl-plus";
 
     private static final String MULTIMODAL_IMAGE_URL = "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241022/emyrja/dog_and_girl.jpeg";
 
@@ -374,8 +374,8 @@ public class DashScopeMultiModalChatTests {
         assertThat(request.input().messages().get(0).role()).isEqualTo(Role.USER);
 
         List<?> content = assertMediaContentList(request.input().messages().get(0).rawContent());
-        MediaContent imageContent = (MediaContent) content.get(0);
-        MediaContent textContent = (MediaContent) content.get(1);
+        MediaContent textContent = (MediaContent) content.get(0);
+        MediaContent imageContent = (MediaContent) content.get(1);
         assertThat(imageContent.type()).isEqualTo("image");
         assertThat(imageContent.image()).isEqualTo(MULTIMODAL_IMAGE_URL);
         assertThat(textContent.type()).isEqualTo("text");
@@ -421,8 +421,8 @@ public class DashScopeMultiModalChatTests {
         assertThat(request.input().messages().get(0).role()).isEqualTo(Role.USER);
 
         List<?> content = assertMediaContentList(request.input().messages().get(0).rawContent());
-        MediaContent videoContent = (MediaContent) content.get(0);
-        MediaContent textContent = (MediaContent) content.get(1);
+        MediaContent textContent = (MediaContent) content.get(0);
+        MediaContent videoContent = (MediaContent) content.get(1);
         assertThat(videoContent.type()).isEqualTo("video");
         assertThat(videoContent.video()).asInstanceOf(InstanceOfAssertFactories.LIST)
                 .containsExactlyElementsOf(MULTIMODAL_VIDEO_FRAME_URLS);
@@ -471,7 +471,7 @@ public class DashScopeMultiModalChatTests {
 
     @Test
     @Tag("integration")
-    void integrationTestVideoWithUrlFramesQwenVlMax() {
+    void integrationTestVideoWithUrlFrames() {
         DashScopeChatModel realChatModel = realChatModel();
 
         UserMessage message = multimodalMessage(MULTIMODAL_VIDEO_PROMPT, MessageFormat.VIDEO, MULTIMODAL_VIDEO_FRAME_URLS.stream()
@@ -637,13 +637,12 @@ public class DashScopeMultiModalChatTests {
     }
 
     /**
-     * Integration test for audio processing with multiple frames This test will only run if
-     * DASHSCOPE_API_KEY environment variable is set
+     * Integration test for audio input with text output.
      */
     @Test
     @Tag("integration")
     @EnabledIfEnvironmentVariable(named = "AI_DASHSCOPE_API_KEY", matches = "sk.+")
-    void integrationTestAudioWithMultipleFrames() {
+    void integrationTestAudioInput() {
         // Create real API client
         String apiKey = System.getenv("AI_DASHSCOPE_API_KEY");
         DashScopeApi realApi = DashScopeApi.builder().apiKey(apiKey).build();
@@ -651,7 +650,7 @@ public class DashScopeMultiModalChatTests {
         // Create real chat model
         DashScopeChatModel realChatModel = DashScopeChatModel.builder().dashScopeApi(realApi).build();
 
-        // Create media with multiple frames (simulating audio frames)
+        // Use an audio URL as the input.
         Media media = new Media(MediaType.parseMediaType("audio/mpeg"), URI.create("https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3"));
 
         // Create user message with media
@@ -660,7 +659,7 @@ public class DashScopeMultiModalChatTests {
 
         // Create prompt
         Prompt prompt = new Prompt(message, DashScopeChatOptions.builder()
-                .model("qwen-audio-turbo-latest")
+                .model("qwen3-omni-flash")
                 .multiModel(true)
                 .build());
 
@@ -670,7 +669,7 @@ public class DashScopeMultiModalChatTests {
         // Verify response
         assertThat(response).isNotNull();
         assertThat(response.getResult().getOutput().getText()).isNotEmpty();
-        System.out.println("Audio Frames Response: " + response.getResult().getOutput().getText());
+        System.out.println("Audio Input Response: " + response.getResult().getOutput().getText());
     }
 
     /**

@@ -15,12 +15,11 @@
  */
 package com.alibaba.cloud.ai.vectorstore.opensearch;
 
+import com.alibaba.cloud.ai.vectorstore.opensearch.OpenSearchApi.SimilarityResult;
 import com.aliyun.ha3engine.vector.models.QueryRequest;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import io.micrometer.observation.ObservationRegistry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.BatchingStrategy;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -28,7 +27,9 @@ import org.springframework.ai.embedding.TokenCountBatchingStrategy;
 import org.springframework.ai.observation.conventions.VectorStoreProvider;
 import org.springframework.ai.observation.conventions.VectorStoreSimilarityMetric;
 import org.springframework.ai.vectorstore.AbstractVectorStoreBuilder;
+import org.springframework.ai.vectorstore.EmbeddedDocument;
 import org.springframework.ai.vectorstore.SearchRequest;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.vectorstore.observation.AbstractObservationVectorStore;
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationContext;
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationConvention;
@@ -42,7 +43,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of the VectorStore interface for Alibaba OpenSearch. This class provides
@@ -53,8 +53,6 @@ import java.util.stream.Collectors;
  * @since 1.0.0-M3
  */
 public class OpenSearchVectorStore extends AbstractObservationVectorStore implements InitializingBean {
-
-	private static final Logger logger = LoggerFactory.getLogger(OpenSearchVectorStore.class);
 
 	/**
 	 * The field name for the document ID.
@@ -74,7 +72,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	/**
 	 * The API client used to interact with OpenSearch.
 	 */
-	private final com.alibaba.cloud.ai.vectorstore.opensearch.OpenSearchApi openSearchApi;
+	private final OpenSearchApi openSearchApi;
 
 	/**
 	 * Configuration options for the OpenSearch vector store.
@@ -87,11 +85,6 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	private final boolean initializeSchema;
 
 	/**
-	 * The embedding model used for vector operations.
-	 */
-	private final EmbeddingModel embeddingModel;
-
-	/**
 	 * The batching strategy used for processing documents.
 	 */
 	private final BatchingStrategy batchingStrategy;
@@ -100,7 +93,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	 * Converter that transforms a JSON object representing a document into a
 	 * {@link OpenSearchApi.SimilarityResult} object.
 	 */
-	private final Converter<JsonNode, com.alibaba.cloud.ai.vectorstore.opensearch.OpenSearchApi.SimilarityResult> itemConverter = new SimilarityResultConverter();
+	private final Converter<JsonNode, SimilarityResult> itemConverter = new SimilarityResultConverter();
 
 	private final JsonMapper jsonMapper = JsonMapper.shared();
 
@@ -125,7 +118,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	 * @param openSearchApi The API client used to interact with OpenSearch.
 	 * @param embeddingModel The embedding model used for vector operations.
 	 */
-	public OpenSearchVectorStore(com.alibaba.cloud.ai.vectorstore.opensearch.OpenSearchApi openSearchApi,
+	public OpenSearchVectorStore(OpenSearchApi openSearchApi,
 			EmbeddingModel embeddingModel) {
 		this(builder(openSearchApi, embeddingModel));
 	}
@@ -145,7 +138,6 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 		this.options = builder.options;
 		this.initializeSchema = builder.initializeSchema;
 		this.openSearchApi = builder.openSearchApi;
-		this.embeddingModel = builder.getEmbeddingModel();
 		this.batchingStrategy = builder.batchingStrategy;
 	}
 
@@ -162,29 +154,45 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	@Override
 	public void doAdd(List<Document> documents) {
 		for (Document document : documents) {
-			/*
-			 * Document push outer structure, can add document operation structures. The
-			 * structure supports one or more document operations.
-			 */
-			List<Map<String, ?>> documentToAdd = new ArrayList<>();
-			Map<String, Object> documentMap = new HashMap<>();
-			Map<String, Object> documentFields = new HashMap<>();
-
-			// Insert document content information, key-value pairs matching.
-			// The field_pk field must be consistent with the pkField configuration.
-			documentFields.put(ID_FIELD_NAME, document.getId());
-			documentFields.put(CONTENT_FIELD_NAME, document.getText());
-			// Convert metadata to JSON
-            documentFields.put(METADATA_FIELD_NAME, jsonMapper.writeValueAsString(document.getMetadata()));
-
-			// Add document content to documentEntry structure.
-			documentMap.put("fields", documentFields);
-			// New document command: add
-			documentMap.put("cmd", "add");
-			documentToAdd.add(documentMap);
-
-			openSearchApi.uploadDocument(this.options.getTableName(), this.options.getPrimaryKeyField(), documentToAdd);
+			this.openSearchApi.uploadDocument(this.options.getTableName(), this.options.getPrimaryKeyField(),
+					List.of(toAddOperation(document, null)));
 		}
+	}
+
+	@Override
+	protected boolean supportsUpsert() {
+		return true;
+	}
+
+	@Override
+	protected void doUpsert(List<EmbeddedDocument> documents) {
+		Assert.hasText(this.options.getVectorField(), "OpenSearch vector field must be configured");
+		List<Map<String, ?>> rows = documents.stream().<Map<String, ?>>map(embedded -> {
+			Document document = embedded.document();
+			float[] embedding = embedded.embedding();
+			checkDimensions(document.getId(), embedding.length, this.options.getDimensions());
+			return toAddOperation(document, toVector(embedding));
+		}).toList();
+		this.openSearchApi.uploadDocument(this.options.getTableName(), this.options.getPrimaryKeyField(), rows);
+	}
+
+	private Map<String, ?> toAddOperation(Document document, @Nullable List<Float> embedding) {
+		Map<String, Object> fields = new HashMap<>();
+		fields.put(this.options.getPrimaryKeyField(), document.getId());
+		fields.put(CONTENT_FIELD_NAME, document.getText());
+		fields.put(METADATA_FIELD_NAME, this.jsonMapper.writeValueAsString(document.getMetadata()));
+		if (embedding != null) {
+			fields.put(this.options.getVectorField(), embedding);
+		}
+		return Map.of("cmd", "add", "fields", fields);
+	}
+
+	private static List<Float> toVector(float[] embedding) {
+		var vector = new ArrayList<Float>(embedding.length);
+		for (float value : embedding) {
+			vector.add(value);
+		}
+		return vector;
 	}
 
 	/**
@@ -215,31 +223,43 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	@Override
 	public List<Document> doSimilaritySearch(SearchRequest request) {
 		Assert.notNull(request, "The search request must not be null.");
+		QueryRequest query = queryRequest(request).setContent(request.getQuery()).setModal("text");
+		return search(query, request, false);
+	}
 
-		// set similarityThreshold
-		var similarityThreshold = request.getSimilarityThreshold();
+	@Override
+	protected boolean supportsQueryEmbeddingSearch() {
+		return true;
+	}
 
-		QueryRequest queryRequest = new QueryRequest();
-		queryRequest.setTableName(this.options.getTableName()); // Required, the name of
-		// the table to
-		// query
-		queryRequest.setContent(request.getQuery());
-		queryRequest.setModal("text"); // Required, used for vectorizing the query term
-		queryRequest.setTopK(request.getTopK()); // number of results to return
-		queryRequest.setOutputFields(this.options.getOutputFields());
-
-		try {
-			List<com.alibaba.cloud.ai.vectorstore.opensearch.OpenSearchApi.SimilarityResult> similarityResults = openSearchApi
-				.search(queryRequest, itemConverter);
-
-			return similarityResults.stream()
-				.filter(result -> result.score() >= similarityThreshold)
-				.map(result -> new Document(result.id(), result.content(), result.metadata()))
-				.collect(Collectors.toList());
+	@Override
+	protected List<Document> doSimilaritySearch(float[] queryEmbedding, SearchRequest request) {
+		checkDimensions("query", queryEmbedding.length, this.options.getDimensions());
+		if (request.hasFilterExpression()) {
+			throw new UnsupportedOperationException("OpenSearch vector search does not support packed metadata filters");
 		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
+		boolean euclidean = "l2".equalsIgnoreCase(this.options.getSimilarityFunction())
+				|| "SquaredEuclidean".equalsIgnoreCase(this.options.getSimilarityFunction());
+		QueryRequest query = queryRequest(request).setVector(toVector(queryEmbedding))
+			.setIndexName(this.options.getIndex()).setOrder(euclidean ? "ASC" : "DESC").setIncludeVector(false);
+		return search(query, request, euclidean);
+	}
+
+	private QueryRequest queryRequest(SearchRequest request) {
+		return new QueryRequest().setTableName(this.options.getTableName()).setTopK(request.getTopK())
+			.setOutputFields(this.options.getOutputFields());
+	}
+
+	private List<Document> search(QueryRequest query, SearchRequest request, boolean euclidean) {
+		var documents = new ArrayList<Document>();
+		for (SimilarityResult result : this.openSearchApi.search(query, this.itemConverter)) {
+			double score = euclidean ? 1.0 / (1.0 + result.score()) : result.score();
+			if (score >= request.getSimilarityThreshold()) {
+				documents.add(Document.builder().id(result.id()).text(result.content()).metadata(result.metadata())
+					.score(score).build());
+			}
 		}
+		return documents;
 	}
 
 	/**
@@ -250,7 +270,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
 		return VectorStoreObservationContext.builder(VectorStoreProvider.OPENSEARCH.value(), operationName)
 			.collectionName(this.options.getIndex())
-			.dimensions(this.embeddingModel.dimensions())
+			.dimensions(this.options.getDimensions())
 			.similarityMetric(getSimilarityFunction());
 	}
 
@@ -295,7 +315,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	 */
 	public static class Builder extends AbstractVectorStoreBuilder<Builder> {
 
-		private final com.alibaba.cloud.ai.vectorstore.opensearch.OpenSearchApi openSearchApi;
+		private final OpenSearchApi openSearchApi;
 
 		private OpenSearchVectorStoreOptions options = new OpenSearchVectorStoreOptions();
 
@@ -308,7 +328,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 		 * @param openSearchApi The API client used to interact with OpenSearch.
 		 * @param embeddingModel The embedding model used for vector operations.
 		 */
-		public Builder(com.alibaba.cloud.ai.vectorstore.opensearch.OpenSearchApi openSearchApi,
+		public Builder(OpenSearchApi openSearchApi,
 				EmbeddingModel embeddingModel) {
 			super(embeddingModel);
 			this.openSearchApi = openSearchApi;
@@ -362,7 +382,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	 * usable format.
 	 */
 	public static class SimilarityResultConverter
-			implements Converter<JsonNode, com.alibaba.cloud.ai.vectorstore.opensearch.OpenSearchApi.SimilarityResult> {
+			implements Converter<JsonNode, SimilarityResult> {
 
 		private static final String EMPTY_TEXT = "";
 
@@ -441,14 +461,14 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 		 * document.
 		 */
 		@Override
-		public com.alibaba.cloud.ai.vectorstore.opensearch.OpenSearchApi.SimilarityResult convert(
+		public SimilarityResult convert(
 				JsonNode jsonDocument) {
 			String id = extractId(jsonDocument);
 			String content = extractContent(jsonDocument);
 			double score = extractScore(jsonDocument);
 			Map<String, Object> metadata = extractMetadata(jsonDocument);
 
-			return new com.alibaba.cloud.ai.vectorstore.opensearch.OpenSearchApi.SimilarityResult(id, score, content,
+			return new SimilarityResult(id, score, content,
 					metadata);
 		}
 

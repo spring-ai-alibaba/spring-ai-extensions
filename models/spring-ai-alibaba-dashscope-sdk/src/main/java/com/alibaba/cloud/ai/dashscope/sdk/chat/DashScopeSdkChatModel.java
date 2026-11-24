@@ -39,6 +39,9 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.messages.part.ReasoningPart;
+import org.springframework.ai.chat.messages.part.StreamingParts;
+import org.springframework.ai.chat.messages.part.TextPart;
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.EmptyUsage;
@@ -69,6 +72,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * {@link ChatModel} implementation backed by DashScope Java SDK.
@@ -156,7 +160,7 @@ public final class DashScopeSdkChatModel implements ChatModel {
 					this.observationRegistry)
 			.observe(() -> {
 				GenerationResult result = RetryUtils.execute(this.retryTemplate, () -> executeCall(request));
-				ChatResponse chatResponse = toChatResponse(result, previousChatResponse, request.getModel());
+				ChatResponse chatResponse = toChatResponse(result, previousChatResponse, request.getModel(), null, false);
 				observationContext.setResponse(chatResponse);
 				return chatResponse;
 			});
@@ -183,8 +187,10 @@ public final class DashScopeSdkChatModel implements ChatModel {
 
 			observation.parentObservation(contextView.getOrDefault(ObservationThreadLocalAccessor.KEY, null)).start();
 
+			var toolStreams = new HashMap<Integer, DashScopeSdkToolCallStream>();
+			boolean incremental = Boolean.TRUE.equals(request.getIncrementalOutput());
 			Flux<ChatResponse> chatResponse = flowableToFlux(generationResults)
-				.map(result -> toChatResponse(result, previousChatResponse, request.getModel()));
+				.map(result -> toChatResponse(result, previousChatResponse, request.getModel(), toolStreams, incremental));
 
 			Flux<ChatResponse> flux = chatResponse.doOnError(observation::error)
 				.doFinally(s -> observation.stop())
@@ -287,7 +293,7 @@ public final class DashScopeSdkChatModel implements ChatModel {
 	}
 
 	private ChatResponse toChatResponse(GenerationResult generationResult, @Nullable ChatResponse previousChatResponse,
-			String requestModel) {
+			String requestModel, @Nullable Map<Integer, DashScopeSdkToolCallStream> toolStreams, boolean incremental) {
 		if (generationResult == null || generationResult.getOutput() == null) {
 			return new ChatResponse(List.of());
 		}
@@ -297,8 +303,12 @@ public final class DashScopeSdkChatModel implements ChatModel {
 		List<Generation> generations = new ArrayList<>();
 
 		if (!CollectionUtils.isEmpty(choices)) {
-			for (GenerationOutput.Choice choice : choices) {
-				generations.add(buildGeneration(generationResult.getRequestId(), choice, output));
+			for (int position = 0; position < choices.size(); position++) {
+				GenerationOutput.Choice choice = choices.get(position);
+				int index = Objects.requireNonNullElse(choice.getIndex(), position);
+				var toolStream = toolStreams != null
+						? toolStreams.computeIfAbsent(index, key -> new DashScopeSdkToolCallStream()) : null;
+				generations.add(buildGeneration(generationResult.getRequestId(), choice, output, toolStream, incremental));
 			}
 		}
 		else if (StringUtils.hasText(output.getText())) {
@@ -315,7 +325,8 @@ public final class DashScopeSdkChatModel implements ChatModel {
 					.build());
 	}
 
-	private Generation buildGeneration(String requestId, GenerationOutput.Choice choice, GenerationOutput output) {
+	private Generation buildGeneration(String requestId, GenerationOutput.Choice choice, GenerationOutput output,
+			@Nullable DashScopeSdkToolCallStream toolStream, boolean incremental) {
 		Message sdkMessage = choice.getMessage();
 		String content = sdkMessage != null ? sdkMessage.getContent() : output.getText();
 		String role = sdkMessage != null ? sdkMessage.getRole() : "assistant";
@@ -326,15 +337,32 @@ public final class DashScopeSdkChatModel implements ChatModel {
 				"role", role == null ? "" : role,
 				"finishReason", finishReason == null ? "" : finishReason);
 
-		List<AssistantMessage.ToolCall> toolCalls = toSpringToolCalls(sdkMessage);
+		var message = AssistantMessage.builder().properties(metadata);
+		String reasoning = sdkMessage != null ? sdkMessage.getReasoningContent() : null;
+		if (reasoning != null && !reasoning.isEmpty()) {
+			ReasoningPart part = ReasoningPart.of(reasoning);
+			if (toolStream == null) {
+				message.reasoning(part);
+			}
+			else {
+				message.part(incremental ? StreamingParts.partial(part, 0) : StreamingParts.complete(part, 0));
+			}
+		}
+		if (toolStream == null) {
+			message.content(content).toolCalls(toSpringToolCalls(sdkMessage));
+		}
+		else {
+			if (content != null && !content.isEmpty()) {
+				TextPart part = TextPart.of(content);
+				message.part(incremental ? StreamingParts.partial(part, 1) : StreamingParts.complete(part, 1));
+			}
+			else {
+				message.content("");
+			}
+			message.parts(toolStream.accept(sdkMessage, finishReason, incremental));
+		}
 
-		AssistantMessage assistantMessage = AssistantMessage.builder()
-			.content(content)
-			.properties(metadata)
-			.toolCalls(toolCalls)
-			.build();
-
-		return new Generation(assistantMessage,
+		return new Generation(message.build(),
 				ChatGenerationMetadata.builder().finishReason(finishReason == null ? "" : finishReason).build());
 	}
 
@@ -346,7 +374,7 @@ public final class DashScopeSdkChatModel implements ChatModel {
 				ChatGenerationMetadata.builder().finishReason(finishReason == null ? "" : finishReason).build());
 	}
 
-	private List<AssistantMessage.ToolCall> toSpringToolCalls(Message sdkMessage) {
+	private List<AssistantMessage.ToolCall> toSpringToolCalls(@Nullable Message sdkMessage) {
 		if (sdkMessage == null || CollectionUtils.isEmpty(sdkMessage.getToolCalls())) {
 			return List.of();
 		}
@@ -381,6 +409,13 @@ public final class DashScopeSdkChatModel implements ChatModel {
 					.build();
 				if (!CollectionUtils.isEmpty(assistantMessage.getToolCalls())) {
 					sdkMessage.setToolCalls(toDashScopeToolCalls(assistantMessage.getToolCalls()));
+				}
+				String reasoning = assistantMessage.getReasoning().stream()
+					.filter(part -> part.payload() == null)
+					.map(part -> Objects.requireNonNullElse(part.text(), ""))
+					.collect(Collectors.joining());
+				if (StringUtils.hasText(reasoning)) {
+					sdkMessage.setReasoningContent(reasoning);
 				}
 				sdkMessages.add(sdkMessage);
 			}

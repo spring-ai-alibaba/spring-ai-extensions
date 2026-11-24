@@ -22,6 +22,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingOptions;
 import org.springframework.ai.vectorstore.AbstractVectorStoreBuilder;
+import org.springframework.ai.vectorstore.EmbeddedDocument;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.observation.AbstractObservationVectorStore;
@@ -57,11 +58,31 @@ public class TablestoreVectorStore extends AbstractObservationVectorStore implem
 				this.batchingStrategy);
 
 		for (int i = 0; i < documents.size(); i++) {
-			Document document = documents.get(i);
-			float[] embedding = embeddings.get(i);
-			knowledgeStore
-				.putDocument(Utils.toTablestoreDocument(knowledgeStore.enableMultiTenant(), embedding, document));
+			writeDocument(documents.get(i), embeddings.get(i));
 		}
+	}
+
+
+	@Override
+	protected boolean supportsUpsert() {
+		return true;
+	}
+
+	@Override
+	protected void doUpsert(List<EmbeddedDocument> documents) {
+		int dimensions = this.knowledgeStore.getEmbeddingDimension();
+		boolean multiTenant = this.knowledgeStore.enableMultiTenant();
+		var rows = documents.stream().map(embedded -> {
+			float[] embedding = embedded.embedding();
+			checkDimensions(embedded.document().getId(), embedding.length, dimensions);
+			return Utils.toTablestoreDocument(multiTenant, embedding, embedded.document());
+		}).toList();
+		rows.forEach(this.knowledgeStore::putDocument);
+	}
+
+	private void writeDocument(Document document, float[] embedding) {
+		this.knowledgeStore.putDocument(Utils.toTablestoreDocument(this.knowledgeStore.enableMultiTenant(), embedding,
+				document));
 	}
 
 	@Override
@@ -82,8 +103,21 @@ public class TablestoreVectorStore extends AbstractObservationVectorStore implem
 	@Override
 	public List<Document> doSimilaritySearch(SearchRequest request) {
 		Assert.notNull(request, "The search request must not be null.");
-		String queryText = request.getQuery();
-		float[] queryEmbed = embeddingModel.embed(queryText);
+		return search(this.embeddingModel.embed(request.getQuery()), request);
+	}
+
+	@Override
+	protected boolean supportsQueryEmbeddingSearch() {
+		return true;
+	}
+
+	@Override
+	protected List<Document> doSimilaritySearch(float[] queryEmbedding, SearchRequest request) {
+		checkDimensions("query", queryEmbedding.length, this.knowledgeStore.getEmbeddingDimension());
+		return search(queryEmbedding, request);
+	}
+
+	private List<Document> search(float[] queryEmbedding, SearchRequest request) {
 		int topK = request.getTopK();
 		double similarityThreshold = request.getSimilarityThreshold();
 		Set<String> tenantIds = new HashSet<>();
@@ -91,7 +125,7 @@ public class TablestoreVectorStore extends AbstractObservationVectorStore implem
 				knowledgeStore.enableMultiTenant());
 		Map<String, Object> varArgs = new HashMap<>();
 		varArgs.put(KnowledgeStoreImpl.FLAG_SKIP_WRAP_TENANT_IDS, true);
-		Response<DocumentHit> hitResponse = knowledgeStore.vectorSearch(queryEmbed, topK, (float) similarityThreshold,
+		Response<DocumentHit> hitResponse = knowledgeStore.vectorSearch(queryEmbedding, topK, (float) similarityThreshold,
 				tenantIds, metadataFilter, null, varArgs);
 		List<DocumentHit> hits = hitResponse.getHits();
 		List<Document> documents = new ArrayList<>(hits.size());

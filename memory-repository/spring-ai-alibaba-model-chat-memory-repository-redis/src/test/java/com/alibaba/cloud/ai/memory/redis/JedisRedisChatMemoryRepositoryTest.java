@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.memory.redis;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
@@ -28,10 +29,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.util.MimeTypeUtils;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import java.net.URI;
 import java.util.List;
@@ -44,23 +41,18 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration test using Testcontainers to automatically manage Redis test environment
  */
 @SpringBootTest(classes = JedisRedisChatMemoryRepositoryTest.TestConfiguration.class)
-@Testcontainers(disabledWithoutDocker = true)
 class JedisRedisChatMemoryRepositoryTest {
 
-	private static final int REDIS_PORT = 6379;
-
-	// Define and start Redis container
-	@Container
-	private static final GenericContainer<?> redisContainer = new GenericContainer<>(DockerImageName.parse("redis:7.0"))
-		.withExposedPorts(REDIS_PORT);
+	@RegisterExtension
+	static final RedisTestServer redis = new RedisTestServer(false);
 
 	/**
 	 * Dynamically configure Redis properties
 	 */
 	@DynamicPropertySource
 	static void registerProperties(DynamicPropertyRegistry registry) {
-		registry.add("spring.redis.host", redisContainer::getHost);
-		registry.add("spring.redis.port", () -> redisContainer.getMappedPort(REDIS_PORT));
+		registry.add("spring.redis.host", redis::getHost);
+		registry.add("spring.redis.port", redis::getPort);
 	}
 
 	@Autowired
@@ -285,13 +277,13 @@ class JedisRedisChatMemoryRepositoryTest {
     void testDatabaseIsolation() {
         var conversationId = UUID.randomUUID().toString();
         var db0Repository = JedisRedisChatMemoryRepository.builder()
-                .host(redisContainer.getHost())
-                .port(redisContainer.getMappedPort(REDIS_PORT))
+                .host(redis.getHost())
+                .port(redis.getPort())
                 .database(0)
                 .build();
         var db1Repository = JedisRedisChatMemoryRepository.builder()
-                .host(redisContainer.getHost())
-                .port(redisContainer.getMappedPort(REDIS_PORT))
+                .host(redis.getHost())
+                .port(redis.getPort())
                 .database(1)
                 .build();
         var db0Messages = List.<Message>of(new UserMessage("Message in DB0 - " + conversationId));
@@ -312,12 +304,12 @@ class JedisRedisChatMemoryRepositoryTest {
     void testDefaultDatabaseIsZero() {
         var conversationId = UUID.randomUUID().toString();
         var defaultRepository = JedisRedisChatMemoryRepository.builder()
-                .host(redisContainer.getHost())
-                .port(redisContainer.getMappedPort(REDIS_PORT))
+                .host(redis.getHost())
+                .port(redis.getPort())
                 .build();
         var db0Repository = JedisRedisChatMemoryRepository.builder()
-                .host(redisContainer.getHost())
-                .port(redisContainer.getMappedPort(REDIS_PORT))
+                .host(redis.getHost())
+                .port(redis.getPort())
                 .database(0)
                 .build();
         var messages = List.<Message>of(new UserMessage("Test default database - " + conversationId));
@@ -335,8 +327,8 @@ class JedisRedisChatMemoryRepositoryTest {
 		ChatMemoryRepository chatMemoryRepository() {
 			// Use Redis connection information from container to create Redis repository
 			return JedisRedisChatMemoryRepository.builder()
-				.host(redisContainer.getHost())
-				.port(redisContainer.getMappedPort(REDIS_PORT))
+				.host(redis.getHost())
+				.port(redis.getPort())
 				.build();
 		}
 

@@ -126,7 +126,7 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 		return this.order;
 	}
 
-	protected Filter.@Nullable Expression doGetFilterExpression(Map<String, @Nullable Object> context) {
+	protected Filter.@Nullable Expression doGetFilterExpression(Map<String, ?> context) {
 
 		Object filterExpressionValue = context.get(FILTER_EXPRESSION);
 		if (filterExpressionValue == null
@@ -164,9 +164,10 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 
 		var context = request.context();
 		var userMessage = request.prompt().getUserMessage();
+		String query = Objects.requireNonNullElse(userMessage.getText(), "");
 
 		var searchRequestToUse = SearchRequest.from(this.searchRequest)
-			.query(Objects.requireNonNullElse(userMessage.getText(), ""))
+			.query(query)
 			.filterExpression(doGetFilterExpression(context))
 			.build();
 
@@ -180,7 +181,7 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 			.collect(Collectors.joining(System.lineSeparator()));
 
 		String augmentedUserText = this.promptTemplate
-			.render(Map.of("query", userMessage.getText(), "question_answer_context", documentContext));
+			.render(Map.of("query", query, "question_answer_context", documentContext));
 
 		// Update ChatClientRequest with augmented prompt.
 		return request.mutate().prompt(request.prompt().augmentUserMessage(augmentedUserText)).context(context).build();

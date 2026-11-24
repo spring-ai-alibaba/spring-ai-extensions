@@ -128,6 +128,9 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		String toolCallId = (StringUtils.hasText(current.toolCallId()) ? current.toolCallId() : previous.toolCallId());
 		String reasoningContent = (current.reasoningContent() != null ? current.reasoningContent()
 				: previous.reasoningContent());
+		if (this.incrementalOutput && previous.reasoningContent() != null && current.reasoningContent() != null) {
+			reasoningContent = previous.reasoningContent() + current.reasoningContent();
+		}
 		Boolean partial = (current.partial() != null ? current.partial() : previous.partial());
         List<ChatCompletionAnnotations> annotations = (current.annotations() != null ? current.annotations() : previous.annotations());
         String status = (current.status() != null ? current.status() : previous.status());

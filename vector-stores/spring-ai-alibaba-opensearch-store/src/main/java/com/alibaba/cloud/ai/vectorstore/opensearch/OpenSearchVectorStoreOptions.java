@@ -71,6 +71,8 @@ public class OpenSearchVectorStoreOptions {
 	 */
 	private String primaryKeyField = "id";
 
+	private String vectorField = "source_image_vector";
+
 	/**
 	 * The index name for the vector store.
 	 */
@@ -118,6 +120,17 @@ public class OpenSearchVectorStoreOptions {
 
 	public void setPrimaryKeyField(String primaryKeyField) {
 		this.primaryKeyField = primaryKeyField;
+	}
+
+	/**
+	 * Field in the OpenSearch table schema that accepts precomputed vectors.
+	 */
+	public String getVectorField() {
+		return this.vectorField;
+	}
+
+	public void setVectorField(String vectorField) {
+		this.vectorField = vectorField;
 	}
 
 	public List<String> getOutputFields() {

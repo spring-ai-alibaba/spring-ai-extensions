@@ -27,6 +27,7 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingOptions;
 import org.springframework.ai.util.JacksonUtils;
 import org.springframework.ai.vectorstore.AbstractVectorStoreBuilder;
+import org.springframework.ai.vectorstore.EmbeddedDocument;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionConverter;
@@ -50,6 +51,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 import static org.springframework.ai.vectorstore.SearchRequest.DEFAULT_TOP_K;
@@ -73,6 +75,8 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 	private static final Double DEFAULT_SIMILARITY_THRESHOLD = 0.0;
 	private static final int DEFAULT_DIMENSION = 384;
 
+	private static final Pattern VECTOR_COLUMN_TYPE = Pattern.compile("vector\\((\\d+)\\)", Pattern.CASE_INSENSITIVE);
+
 	public static final String HYBRID_SEARCH_TYPE_FULLTEXT = "fulltext";
 
 	public static final String INDEX_TYPE_HNSW = "HNSW";
@@ -94,7 +98,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 	private final Double defaultSimilarityThreshold;
 	private final DataSource dataSource;
 	private final JsonMapper jsonMapper;
-	private final @Nullable Integer dimension;
+	private volatile @Nullable Integer dimension;
 	private final @Nullable String hybridSearchType;
 	private final String indexType;
 	private final String indexMetricType;
@@ -353,6 +357,56 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		List<float[]> embeddings = this.embeddingModel.embed(documents, EmbeddingOptions.builder().build(),
 				this.batchingStrategy);
 
+		writeDocuments(documents, embeddings);
+	}
+
+	@Override
+	protected boolean supportsUpsert() {
+		return true;
+	}
+
+	@Override
+	protected void doUpsert(List<EmbeddedDocument> documents) {
+		int vectorDimension = getVectorDimension();
+		var content = new ArrayList<Document>(documents.size());
+		var embeddings = new ArrayList<float[]>(documents.size());
+		for (EmbeddedDocument embedded : documents) {
+			Document document = embedded.document();
+			float[] embedding = embedded.embedding();
+			checkDimensions(document.getId(), embedding.length, vectorDimension);
+			content.add(document);
+			embeddings.add(embedding);
+		}
+		writeDocuments(content, embeddings);
+	}
+
+	private synchronized int getVectorDimension() {
+		Integer configured = this.dimension;
+		if (configured != null) {
+			return configured;
+		}
+		try (Connection connection = this.dataSource.getConnection();
+				PreparedStatement statement = connection.prepareStatement("SHOW COLUMNS FROM " + this.tableName);
+				ResultSet columns = statement.executeQuery()) {
+			while (columns.next()) {
+				if (EMBEDDING_FIELD.equalsIgnoreCase(columns.getString("Field"))) {
+					var matcher = VECTOR_COLUMN_TYPE.matcher(columns.getString("Type"));
+					if (matcher.matches()) {
+						int resolved = Integer.parseInt(matcher.group(1));
+						this.dimension = resolved;
+						return resolved;
+					}
+					break;
+				}
+			}
+		}
+		catch (SQLException ex) {
+			throw new IllegalStateException("Failed to read vector dimensions for table " + this.tableName, ex);
+		}
+		throw new IllegalStateException("Cannot determine vector dimensions for table " + this.tableName);
+	}
+
+	private void writeDocuments(List<Document> documents, List<float[]> embeddings) {
 		String sql = buildInsertOrUpdateSql();
 		try (Connection connection = dataSource.getConnection();
 				PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -439,16 +493,31 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 	}
 
 	private List<Document> doVectorSimilaritySearch(SearchRequest searchRequest) {
+		return searchByVector(convertQueryToVectorBytes(searchRequest.getQuery()), searchRequest);
+	}
+
+	@Override
+	protected boolean supportsQueryEmbeddingSearch() {
+		return true;
+	}
+
+	@Override
+	protected List<Document> doSimilaritySearch(float[] queryEmbedding, SearchRequest request) {
+		checkDimensions("query", queryEmbedding.length, getVectorDimension());
+		return searchByVector(Arrays.toString(queryEmbedding), request);
+	}
+
+	private List<Document> searchByVector(String vector, SearchRequest searchRequest) {
 		boolean indexExists = checkIndexExists(indexName) || hasVectorIndexOnColumn();
 		boolean useApproximateLimit = indexExists;
 
 		try {
-			return executeVectorSimilaritySearch(searchRequest, useApproximateLimit);
+			return executeVectorSimilaritySearch(vector, searchRequest, useApproximateLimit);
 		}
 		catch (Exception e) {
 			if (useApproximateLimit) {
 				logger.info("APPROXIMATE LIMIT failed (index may not exist), retrying with regular LIMIT: {}", e.getMessage());
-				return executeVectorSimilaritySearch(searchRequest, false);
+				return executeVectorSimilaritySearch(vector, searchRequest, false);
 			}
 			logger.error("Failed to perform similarity search", e);
 			throw new RuntimeException("Failed to perform similarity search in OceanBase", e);
@@ -456,7 +525,8 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 	}
 
 
-	private List<Document> executeVectorSimilaritySearch(SearchRequest searchRequest, boolean useApproximateLimit) {
+	private List<Document> executeVectorSimilaritySearch(String vector, SearchRequest searchRequest,
+			boolean useApproximateLimit) {
 		String distanceFunc = getDistanceFunctionName(indexMetricType);
 		StringBuilder sql = buildVectorSimilaritySearchSql(searchRequest, distanceFunc, useApproximateLimit);
 
@@ -464,7 +534,6 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		try (Connection connection = dataSource.getConnection();
 				PreparedStatement pstmt = connection.prepareStatement(sql.toString())) {
 			int paramIndex = 1;
-			String vector = convertQueryToVectorBytes(searchRequest.getQuery());
 			pstmt.setString(paramIndex++, vector);
 			if (searchRequest.getSimilarityThreshold() > 0.0) {
 				pstmt.setString(paramIndex++, vector);
@@ -722,9 +791,13 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 
 	@Override
 	public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
-		return VectorStoreObservationContext.builder(DATA_BASE_SYSTEM, operationName)
-			.collectionName(this.tableName)
-			.dimensions(this.embeddingModel.dimensions());
+		var builder = VectorStoreObservationContext.builder(DATA_BASE_SYSTEM, operationName)
+			.collectionName(this.tableName);
+		Integer dimensions = this.dimension;
+		if (dimensions != null) {
+			builder.dimensions(dimensions);
+		}
+		return builder;
 	}
 
 	public static class Builder extends AbstractVectorStoreBuilder<Builder> {

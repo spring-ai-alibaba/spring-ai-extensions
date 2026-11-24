@@ -12,7 +12,7 @@
 
 1. 需要 JDK 17+
 2. 如果遇到任何 `spring-ai` 依赖问题，请查看 [FAQ 页面](https://java2ai.com/docs/1.0.0.2/faq) 了解如何配置 `spring-milestones` Maven 仓库
-3. 当前版本使用 `spring-ai-extensions-bom` `2.0.0.0-RC1`、Spring AI `2.0.0` 和 Spring Boot `4.1.0`
+3. `2.1.x` 分支使用 Spring AI `2.1.0` 和 Spring Boot `4.2.0`。使用下方示例前，先运行 `mvn install -DskipTests`，将 `2.1.0.0-SNAPSHOT` 扩展构件安装到本地。
 
 ### 使用 `ChatClient` 开发聊天机器人
 
@@ -24,8 +24,8 @@
   <dependencies>
     <dependency>
       <groupId>com.alibaba.cloud.ai</groupId>
-      <artifactId>spring-ai-extensions-bom</artifactId>
-      <version>2.0.0.0-RC1</version>
+      <artifactId>spring-ai-alibaba-extensions-bom</artifactId>
+      <version>2.1.0.0-SNAPSHOT</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -244,6 +244,16 @@ MCP 提供了一个标准化协议，用于管理和路由 AI 模型上下文。
 - 批量操作
 
 ### 聊天记忆
+
+Spring AI 2.1 的新会话可以使用 Session Memory。引入
+`spring-ai-alibaba-starter-model-chat-memory` 后，将 `spring.ai.alibaba.session.enabled` 设为
+`true`，给 ChatClient 注册 `SessionAdvisors.builder(sessionService).build()`，并在每次请求中传入
+`SessionAdvisors.session(sessionId)`。缺少其他会话存储时使用内存仓库。需要 JDBC 持久化时，引入
+Spring AI 的 `spring-ai-starter-model-session-jdbc`。
+
+迁移已有会话时，调用 `LegacyChatMemorySessionImporter.importConversation(repository, conversationId, target)`，
+并在 `CreateSessionRequest` 中指定目标会话 ID。导入器按旧仓库的存储顺序复制消息，使用同一来源和目标可安全重试。
+导入后可使用新的 Advisor 继续会话。详见 [Spring AI 迁移指南](https://docs.spring.io/spring-ai/reference/2.1-SNAPSHOT/upgrading/session-memory.html)。
 
 多种存储后端，用于管理对话历史和长期记忆：
 

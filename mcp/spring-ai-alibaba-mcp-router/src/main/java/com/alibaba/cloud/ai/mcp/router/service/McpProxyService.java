@@ -15,6 +15,9 @@
  */
 package com.alibaba.cloud.ai.mcp.router.service;
 
+import com.alibaba.cloud.ai.mcp.common.transport.builder.ModernMcpToolTransport;
+import com.alibaba.cloud.ai.mcp.utils.NacosMcpProtocol;
+import com.alibaba.cloud.ai.mcp.utils.NacosMcpClientUtil;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
 import com.alibaba.nacos.api.ai.model.mcp.McpEndpointInfo;
 import com.alibaba.nacos.api.ai.model.mcp.McpServerDetailInfo;
@@ -25,6 +28,9 @@ import com.alibaba.nacos.common.utils.JacksonUtils;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
+import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
+import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.InitializeResult;
@@ -35,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -74,7 +81,7 @@ public class McpProxyService {
 				throw new RuntimeException("Service not found: " + serviceName);
 			}
 
-			String protocol = serverDetail.getProtocol();
+			String protocol = NacosMcpProtocol.resolve(serverDetail);
 			McpServerRemoteServiceConfig remoteConfig = serverDetail.getRemoteServerConfig();
 
 			// 2. 将工具名称添加到参数中
@@ -88,7 +95,8 @@ public class McpProxyService {
 					return handleHttpHttpsProtocol(enrichedArgs, remoteConfig, protocol);
 				case "mcp-sse":
 				case "mcp-streamable":
-					return handleMcpStreamProtocol(enrichedArgs, remoteConfig, protocol);
+				case NacosMcpProtocol.MODERN:
+					return handleMcpStreamProtocol(toolName, args, remoteConfig, protocol);
 				default:
 					throw new RuntimeException("Unsupported protocol: " + protocol);
 			}
@@ -125,8 +133,8 @@ public class McpProxyService {
 	/**
 	 * 处理 MCP 流式协议 (mcp-sse, mcp-stream)
 	 */
-	private String handleMcpStreamProtocol(Map<String, Object> args, McpServerRemoteServiceConfig remoteServerConfig,
-			String protocol) throws NacosException {
+	private String handleMcpStreamProtocol(String toolName, Map<String, Object> args,
+			McpServerRemoteServiceConfig remoteServerConfig, String protocol) throws NacosException {
 		McpServiceRef serviceRef = remoteServerConfig.getServiceRef();
 		if (serviceRef == null) {
 			throw new RuntimeException("Service reference is null");
@@ -141,14 +149,15 @@ public class McpProxyService {
 		String exportPath = remoteServerConfig.getExportPath();
 
 		// 构建基础URL
-		String baseUrl = "http://" + mcpEndpointInfo.getAddress() + ":" + mcpEndpointInfo.getPort();
-		String sseEndpoint = exportPath != null && !exportPath.isEmpty() ? exportPath : "/sse";
+		String baseUrl = NacosMcpClientUtil.checkProtocol(mcpEndpointInfo) + "://" + mcpEndpointInfo.getAddress() + ":" + mcpEndpointInfo.getPort();
+		String sseEndpoint = exportPath != null && !exportPath.isEmpty() ? exportPath
+				: (NacosMcpProtocol.isStreamable(protocol) ? "/mcp" : "/sse");
 
 		logger.info("Processing {} protocol with args: {} and baseUrl: {} endpoint: {}", protocol, args, baseUrl,
 				sseEndpoint);
 
 		// 验证连接可用性
-		if (!isEndpointReachable(baseUrl + sseEndpoint)) {
+		if ("mcp-sse".equalsIgnoreCase(protocol) && !isEndpointReachable(baseUrl + sseEndpoint)) {
 			String diagnosis = diagnoseEndpoint(baseUrl, sseEndpoint);
 			return String.format("Error: Cannot reach MCP Server endpoint at %s%s\n\n%s", baseUrl, sseEndpoint,
 					diagnosis);
@@ -156,25 +165,15 @@ public class McpProxyService {
 
 		McpSyncClient client = null;
 		try {
-			// 构建传输层
-			HttpClientSseClientTransport.Builder transportBuilder = HttpClientSseClientTransport.builder(baseUrl)
-				.sseEndpoint(sseEndpoint);
-
-			HttpClientSseClientTransport transport = transportBuilder.build();
-
-			// 创建MCP同步客户端
-			client = McpClient.sync(transport).build();
+			client = createClient(protocol, mcpEndpointInfo, remoteServerConfig);
+			if (client == null) {
+				return "Error: Unsupported MCP transport " + protocol;
+			}
 
 			// 初始化客户端
 			logger.info("MCP Client initializing: baseUrl {} sseEndpoint {}", baseUrl, sseEndpoint);
 			InitializeResult initializeResult = client.initialize();
 			logger.info("MCP Client initialized: {}", initializeResult);
-
-			// 从参数中提取工具名称，如果没有提供则使用默认值
-			String toolName = extractToolNameFromArgs(args);
-			if (toolName == null || toolName.isEmpty()) {
-				return "Error: Tool name not provided in arguments";
-			}
 
 			// 调用工具
 			McpSchema.CallToolRequest request = new McpSchema.CallToolRequest(toolName, args);
@@ -377,7 +376,7 @@ public class McpProxyService {
 				return false;
 			}
 
-			String protocol = serverDetail.getProtocol();
+			String protocol = NacosMcpProtocol.resolve(serverDetail);
 			McpServerRemoteServiceConfig remoteConfig = serverDetail.getRemoteServerConfig();
 
 			if (remoteConfig == null || remoteConfig.getServiceRef() == null) {
@@ -395,7 +394,17 @@ public class McpProxyService {
 			// 根据协议类型建立连接
 			McpSyncClient client = createClient(protocol, mcpEndpointInfo, remoteConfig);
 			if (client != null) {
-				clientConnections.put(serviceName, client);
+				try {
+					client.initialize();
+				}
+				catch (RuntimeException ex) {
+					client.close();
+					throw ex;
+				}
+				McpSyncClient previous = clientConnections.put(serviceName, client);
+				if (previous != null) {
+					previous.close();
+				}
 				logger.info("Successfully established connection to service: {}", serviceName);
 				return true;
 			}
@@ -414,9 +423,19 @@ public class McpProxyService {
 	private @Nullable McpSyncClient createClient(String protocol, McpEndpointInfo endpointInfo,
 			McpServerRemoteServiceConfig remoteConfig) {
 		try {
-			String baseUrl = "http://" + endpointInfo.getAddress() + ":" + endpointInfo.getPort();
+			String baseUrl = NacosMcpClientUtil.checkProtocol(endpointInfo) + "://" + endpointInfo.getAddress() + ":" + endpointInfo.getPort();
 			String exportPath = remoteConfig.getExportPath();
 
+			if (NacosMcpProtocol.isStreamable(protocol)) {
+				Duration timeout = Duration.ofSeconds(20);
+				McpClientTransport transport = NacosMcpProtocol.isModern(protocol)
+						? new ModernMcpToolTransport(endpointInfo, exportPath, "nacos-router",
+								new JacksonMcpJsonMapper(this.jsonMapper), timeout)
+						: HttpClientStreamableHttpTransport.builder(baseUrl)
+							.endpoint(exportPath == null || exportPath.isBlank() ? "/mcp" : exportPath)
+							.openConnectionOnStartup(false).build();
+				return McpClient.sync(transport).requestTimeout(timeout).build();
+			}
 			switch (protocol.toLowerCase()) {
 				case "mcp-sse":
 				case "mcp-stream":
@@ -505,7 +524,8 @@ public class McpProxyService {
 				return debugInfo.toString();
 			}
 			debugInfo.append("✅ Service found in Nacos\n");
-			debugInfo.append("Protocol: ").append(serverDetail.getProtocol()).append("\n");
+			String protocol = NacosMcpProtocol.resolve(serverDetail);
+			debugInfo.append("Protocol: ").append(protocol).append("\n");
 
 			// 2. 检查远程配置
 			McpServerRemoteServiceConfig remoteConfig = serverDetail.getRemoteServerConfig();
@@ -535,19 +555,22 @@ public class McpProxyService {
 			debugInfo.append("Port: ").append(mcpEndpointInfo.getPort()).append("\n");
 
 			// 5. 构建连接URL
-			String baseUrl = "http://" + mcpEndpointInfo.getAddress() + ":" + mcpEndpointInfo.getPort();
+			String baseUrl = NacosMcpClientUtil.checkProtocol(mcpEndpointInfo) + "://"
+					+ mcpEndpointInfo.getAddress() + ":" + mcpEndpointInfo.getPort();
 			String exportPath = remoteConfig.getExportPath();
-			String endpoint = exportPath != null && !exportPath.isEmpty() ? exportPath : "/sse";
+			boolean streamable = NacosMcpProtocol.isStreamable(protocol);
+			String endpoint = exportPath != null && !exportPath.isEmpty() ? exportPath : (streamable ? "/mcp" : "/sse");
 			String fullUrl = baseUrl + endpoint;
 
 			debugInfo.append("Full URL: ").append(fullUrl).append("\n");
 
 			// 6. 检查端点可达性
-			boolean reachable = isEndpointReachable(fullUrl);
+			boolean reachable = streamable ? canInitialize(protocol, mcpEndpointInfo, remoteConfig)
+					: isEndpointReachable(fullUrl);
 			debugInfo.append("Endpoint reachable: ").append(reachable ? "✅" : "❌").append("\n");
 
 			// 7. 如果端点不可达，提供详细诊断
-			if (!reachable) {
+			if (!reachable && !streamable) {
 				debugInfo.append("\n");
 				String diagnosis = diagnoseEndpoint(baseUrl, endpoint);
 				debugInfo.append(diagnosis);
@@ -562,6 +585,20 @@ public class McpProxyService {
 		}
 		catch (Exception e) {
 			return "Error during debug: " + e.getMessage();
+		}
+	}
+
+	private boolean canInitialize(String protocol, McpEndpointInfo endpoint, McpServerRemoteServiceConfig config) {
+		try (McpSyncClient client = createClient(protocol, endpoint, config)) {
+			if (client == null) {
+				return false;
+			}
+			client.initialize();
+			return true;
+		}
+		catch (Exception ex) {
+			logger.debug("MCP endpoint did not initialize", ex);
+			return false;
 		}
 	}
 

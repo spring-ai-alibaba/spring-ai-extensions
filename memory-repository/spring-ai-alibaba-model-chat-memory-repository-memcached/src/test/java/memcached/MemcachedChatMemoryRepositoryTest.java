@@ -19,6 +19,12 @@ import com.alibaba.cloud.ai.memory.memcached.MemcachedChatMemoryRepository;
 import com.alibaba.cloud.ai.toolcalling.memcached.MemcachedAutoConfiguration;
 import com.alibaba.cloud.ai.toolcalling.memcached.MemcachedService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ConditionEvaluationResult;
+import org.junit.jupiter.api.extension.ExecutionCondition;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
@@ -30,9 +36,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.util.List;
@@ -45,16 +50,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * environment
  */
 @SpringBootTest(classes = MemcachedTestConfiguration.class)
-@Testcontainers(disabledWithoutDocker = true)
 class MemcachedChatMemoryRepositoryTest {
 
 	private static final int MEMCACHED_PORT = 11211;
 
-	// Define and start Memcached container
-	@Container
-	private static final GenericContainer memcachedContainer = new GenericContainer(
-			DockerImageName.parse("memcached:1.6.38"))
-		.withExposedPorts(MEMCACHED_PORT);
+	@RegisterExtension
+	static final MemcachedTestServer memcached = new MemcachedTestServer();
 
 	@Autowired
 	private ChatMemoryRepository chatMemoryRepository;
@@ -64,9 +65,51 @@ class MemcachedChatMemoryRepositoryTest {
 	 */
 	@DynamicPropertySource
 	static void registerProperties(DynamicPropertyRegistry registry) {
-		registry.add("spring.ai.alibaba.toolcalling.memcached.ip", memcachedContainer::getHost);
-		registry.add("spring.ai.alibaba.toolcalling.memcached.port",
-				() -> memcachedContainer.getMappedPort(MEMCACHED_PORT));
+		registry.add("spring.ai.alibaba.toolcalling.memcached.ip", memcached::getHost);
+		registry.add("spring.ai.alibaba.toolcalling.memcached.port", memcached::getPort);
+	}
+
+	static final class MemcachedTestServer implements ExecutionCondition, BeforeAllCallback, AfterAllCallback {
+
+		private final String forwardedPort = System.getenv("SAA_TEST_MEMCACHED_PORT");
+
+		private GenericContainer<?> container;
+
+		@Override
+		public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
+			if (this.forwardedPort != null) {
+				return ConditionEvaluationResult.enabled("Memcached port forward configured");
+			}
+			return DockerClientFactory.instance().isDockerAvailable()
+					? ConditionEvaluationResult.enabled("Docker available")
+					: ConditionEvaluationResult.disabled("Memcached port forward and Docker are unavailable");
+		}
+
+		@Override
+		public void beforeAll(ExtensionContext context) {
+			if (this.forwardedPort == null) {
+				this.container = new GenericContainer<>(DockerImageName.parse("memcached:1.6.38"))
+					.withExposedPorts(MEMCACHED_PORT);
+				this.container.start();
+			}
+		}
+
+		@Override
+		public void afterAll(ExtensionContext context) {
+			if (this.container != null) {
+				this.container.stop();
+			}
+		}
+
+		String getHost() {
+			return this.forwardedPort == null ? this.container.getHost() : "127.0.0.1";
+		}
+
+		int getPort() {
+			return this.forwardedPort == null ? this.container.getMappedPort(MEMCACHED_PORT)
+					: Integer.parseInt(this.forwardedPort);
+		}
+
 	}
 
 	@Test

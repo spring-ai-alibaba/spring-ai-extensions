@@ -33,6 +33,8 @@ public class NacosMcpGatewayToolDefinition extends McpGatewayToolDefinition {
 
 	private @Nullable McpServerRemoteServiceConfig remoteServerConfig;
 
+	private @Nullable String remoteToolName;
+
 	private @Nullable Object inputSchema;
 
 	private @Nullable McpToolMeta toolMeta;
@@ -90,6 +92,10 @@ public class NacosMcpGatewayToolDefinition extends McpGatewayToolDefinition {
 
 	public void setName(final @Nullable String name) {
 		this.name = name;
+	}
+
+	public @Nullable String getRemoteToolName() {
+		return this.remoteToolName;
 	}
 
 	public @Nullable String getDescription() {
@@ -152,6 +158,8 @@ public class NacosMcpGatewayToolDefinition extends McpGatewayToolDefinition {
 
 		private @Nullable String name;
 
+		private @Nullable String remoteToolName;
+
 		private @Nullable String description;
 
 		private @Nullable String version;
@@ -171,6 +179,11 @@ public class NacosMcpGatewayToolDefinition extends McpGatewayToolDefinition {
 
 		public NacosMcpGatewayToolDefinition.Builder name(final String name) {
 			this.name = name;
+			return this;
+		}
+
+		public NacosMcpGatewayToolDefinition.Builder remoteToolName(String remoteToolName) {
+			this.remoteToolName = remoteToolName;
 			return this;
 		}
 
@@ -222,8 +235,10 @@ public class NacosMcpGatewayToolDefinition extends McpGatewayToolDefinition {
 			McpServerRemoteServiceConfig remoteServerConfig = Objects.requireNonNull(this.remoteServerConfig,
 					"remoteServerConfig cannot be null");
 
-			return new NacosMcpGatewayToolDefinition(name, resolvedDescription, inputSchema, this.version, protocol,
-					remoteServerConfig, this.toolsMeta, this.enabled);
+			var definition = new NacosMcpGatewayToolDefinition(name, resolvedDescription, inputSchema, this.version,
+					protocol, remoteServerConfig, this.toolsMeta, this.enabled);
+			definition.remoteToolName = this.remoteToolName;
+			return definition;
 		}
 
 	}

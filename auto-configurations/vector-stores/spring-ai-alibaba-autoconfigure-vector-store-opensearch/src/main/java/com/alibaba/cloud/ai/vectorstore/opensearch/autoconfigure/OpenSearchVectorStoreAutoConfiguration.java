@@ -79,6 +79,7 @@ public class OpenSearchVectorStoreAutoConfiguration {
 		mapper.from(properties::getSimilarityFunction).whenHasText().to(options::setSimilarityFunction);
 		mapper.from(properties::getTableName).whenHasText().to(options::setTableName);
 		mapper.from(properties::getPrimaryKeyField).whenHasText().to(options::setPrimaryKeyField);
+		mapper.from(properties::getVectorField).whenHasText().to(options::setVectorField);
 		mapper.from(properties::getOutputFields).when(list->!list.isEmpty()).to(options::setOutputFields);
 
 		return OpenSearchVectorStore.builder(openSearchApi, embeddingModel)

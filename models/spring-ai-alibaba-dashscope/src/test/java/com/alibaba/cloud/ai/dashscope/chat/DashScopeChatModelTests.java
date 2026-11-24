@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.dashscope.chat;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.CacheCreation;
@@ -49,15 +50,23 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.messages.part.MediaPart;
+import org.springframework.ai.chat.messages.part.ReasoningPart;
+import org.springframework.ai.chat.messages.part.StreamingParts;
+import org.springframework.ai.chat.messages.part.TextPart;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.MessageAggregator;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.content.Media;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MimeTypeUtils;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 import tools.jackson.databind.json.JsonMapper;
@@ -1095,7 +1104,7 @@ class DashScopeChatModelTests {
     }
 
     @Test
-    void testCallPreservesReasoningContentInGenerationMetadataOnly() {
+    void testCallExposesReasoningPartAndPreservesGenerationMetadata() {
         ChatCompletionMessage responseMessage = new ChatCompletionMessage(
                 TEST_RESPONSE,
                 Role.ASSISTANT,
@@ -1120,7 +1129,70 @@ class DashScopeChatModelTests {
 
         Object reasoningContent = response.getResult().getMetadata().get("reasoningContent");
         assertThat(reasoningContent).isEqualTo("thinking");
+        assertThat(response.getResult().getOutput().getReasoning()).containsExactly(ReasoningPart.of("thinking"));
         assertThat(response.getResult().getOutput().getMetadata()).doesNotContainKey("reasoningContent");
+    }
+
+    @Test
+    void testRequestKeepsInterleavedTextAndMediaParts() {
+        var user = UserMessage.builder()
+                .part(TextPart.of("before"))
+                .part(MediaPart.of(new Media(MimeTypeUtils.IMAGE_PNG, new ByteArrayResource(new byte[] { 1 }))))
+                .part(TextPart.of("after"))
+                .metadata(Map.of("cache_control", Map.of("type", "ephemeral")))
+                .build();
+        var request = chatModel.createRequest(new Prompt(user, defaultOptions));
+
+        assertThat(request.input().messages().get(0).rawContent()).isEqualTo(List.of(
+                MediaContent.builder().text("before").build(),
+                MediaContent.builder().image("data:image/png;base64,AQ==").build(),
+                MediaContent.builder().text("after").cacheControl(Map.of("type", "ephemeral")).build()));
+    }
+
+    @Test
+    void testStreamAggregatesReasoningDeltasSeparatelyFromText() {
+        var first = reasoningChunk("first", "", ChatCompletionFinishReason.NULL);
+        var second = reasoningChunk(" second", TEST_RESPONSE, ChatCompletionFinishReason.STOP);
+        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.just(first, second));
+        var aggregated = new AtomicReference<ChatResponse>();
+
+        StepVerifier.create(new MessageAggregator().aggregate(chatModel.stream(new Prompt(TEST_PROMPT)), aggregated::set))
+                .assertNext(response -> {
+                    var reasoning = response.getResult().getOutput().getReasoning();
+                    assertThat(reasoning).extracting(ReasoningPart::text).containsExactly("first");
+                    assertThat(StreamingParts.isPartial(reasoning.get(0))).isTrue();
+                })
+                .assertNext(response -> assertThat(response.getResult().getOutput().getText()).isEqualTo(TEST_RESPONSE))
+                .verifyComplete();
+
+        assertThat(aggregated.get().getResult().getOutput().getReasoning())
+                .containsExactly(ReasoningPart.of("first second"));
+        assertThat(aggregated.get().getResult().getOutput().getText()).isEqualTo(TEST_RESPONSE);
+    }
+
+    @Test
+    void testStreamReplacesCumulativeReasoningSnapshots() {
+        var options = defaultOptions.mutate().incrementalOutput(false).build();
+        var first = reasoningChunk("first", "", ChatCompletionFinishReason.NULL);
+        var second = reasoningChunk("first second", TEST_RESPONSE, ChatCompletionFinishReason.STOP);
+        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.just(first, second));
+        var aggregated = new AtomicReference<ChatResponse>();
+
+        StepVerifier.create(new MessageAggregator().aggregate(chatModel.stream(new Prompt(TEST_PROMPT, options)),
+                aggregated::set))
+                .expectNextCount(2)
+                .verifyComplete();
+
+        assertThat(aggregated.get().getResult().getOutput().getReasoning())
+                .containsExactly(ReasoningPart.of("first second"));
+    }
+
+    private ChatCompletionChunk reasoningChunk(String reasoning, String content, ChatCompletionFinishReason finishReason) {
+        var message = new ChatCompletionMessage(content, Role.ASSISTANT, null, null, null, reasoning,
+                null, null, null, null);
+        var choice = new Choice(finishReason, message, null, 0);
+        return new ChatCompletionChunk(TEST_REQUEST_ID, new ChatCompletionOutput(content, List.of(choice), null),
+                null, null);
     }
 
     @Test

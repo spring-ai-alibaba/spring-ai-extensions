@@ -25,9 +25,14 @@ import com.alibaba.dashscope.tools.ToolCallFunction;
 import io.reactivex.Flowable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.messages.part.ReasoningPart;
+import org.springframework.ai.chat.messages.part.StreamingParts;
+import org.springframework.ai.chat.messages.part.ToolCallPart;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.MessageAggregator;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingManager;
@@ -38,6 +43,7 @@ import reactor.test.StepVerifier;
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -95,6 +101,58 @@ class DashScopeSdkChatModelTests {
 			.assertNext(response -> assertThat(response.getResult().getOutput().getText()).isEqualTo("I am "))
 			.assertNext(response -> assertThat(response.getResult().getOutput().getText()).isEqualTo("streaming"))
 			.verifyComplete();
+	}
+
+	@Test
+	void streamsArgumentDeltasAndCompletesTheToolCallOnce() {
+		var first = createResult("", null, true);
+		var lastDelta = createResult("", null, true);
+		var finish = createResult("", "tool_calls", false);
+		var firstMessage = first.getOutput().getChoices().get(0).getMessage();
+		var nextMessage = lastDelta.getOutput().getChoices().get(0).getMessage();
+		var firstTool = (ToolCallFunction) firstMessage.getToolCalls().get(0);
+		var nextTool = (ToolCallFunction) nextMessage.getToolCalls().get(0);
+		firstTool.setIndex(0);
+		nextTool.setIndex(0);
+		nextTool.setId(null);
+		nextTool.getFunction().setName(null);
+		firstTool.getFunction().setArguments("{\"city\":");
+		nextTool.getFunction().setArguments("\"Hangzhou\"}");
+		firstMessage.setReasoningContent("look");
+		nextMessage.setReasoningContent(" up");
+		this.generationClient.streamResult = Flowable.just(first, lastDelta, finish);
+		var aggregated = new AtomicReference<ChatResponse>();
+
+		StepVerifier.create(new MessageAggregator().aggregate(this.chatModel.stream(new Prompt("Hi")), aggregated::set))
+			.assertNext(response -> {
+				var output = response.getResult().getOutput();
+				assertThat(output.getToolCalls()).isEmpty();
+				assertThat(output.getParts()).anyMatch(part -> part instanceof ToolCallPart
+						&& StreamingParts.isPartial(part) && StreamingParts.partIndex(part) == 2);
+			})
+			.assertNext(response -> assertThat(response.hasToolCalls()).isFalse())
+			.assertNext(response -> assertThat(response.getResult().getOutput().getToolCalls())
+				.containsExactly(new AssistantMessage.ToolCall("tool-call-id-1", "function", "get_weather",
+						"{\"city\":\"Hangzhou\"}")))
+			.verifyComplete();
+		assertThat(aggregated.get().getResult().getOutput().getToolCalls()).hasSize(1);
+		assertThat(aggregated.get().getResult().getOutput().getReasoning())
+			.containsExactly(ReasoningPart.of("look up"));
+	}
+
+	@Test
+	void replaysReasoningFromThePreviousSdkReply() {
+		var result = createResult("first", "stop", false);
+		result.getOutput().getChoices().get(0).getMessage().setReasoningContent("prior reasoning");
+		this.generationClient.callResult = result;
+		UserMessage first = new UserMessage("first");
+		var previous = this.chatModel.call(new Prompt(first)).getResult().getOutput();
+
+		this.generationClient.callResult = createResult("second", "stop", false);
+		this.chatModel.call(new Prompt(List.of(first, previous, new UserMessage("follow up"))));
+
+		assertThat(this.generationClient.lastCallParam.getMessages().get(1).getReasoningContent())
+			.isEqualTo("prior reasoning");
 	}
 
 	@Test

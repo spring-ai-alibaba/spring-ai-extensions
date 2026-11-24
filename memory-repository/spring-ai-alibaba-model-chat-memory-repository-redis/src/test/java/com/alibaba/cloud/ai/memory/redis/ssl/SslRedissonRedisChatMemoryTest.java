@@ -16,7 +16,9 @@
 package com.alibaba.cloud.ai.memory.redis.ssl;
 
 import com.alibaba.cloud.ai.memory.redis.RedissonRedisChatMemoryRepository;
+import com.alibaba.cloud.ai.memory.redis.RedisTestServer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
@@ -32,11 +34,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.MountableFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -52,28 +49,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnableAutoConfiguration
 @Import(SslAutoConfiguration.class)
 @SpringBootTest(classes = SslRedissonRedisChatMemoryTest.TestConfiguration.class)
-@Testcontainers(disabledWithoutDocker = true)
 public class SslRedissonRedisChatMemoryTest {
 
-	private static final int REDIS_PORT = 6379;
-
-	// Define and start Redis container
-	@Container
-	private static final GenericContainer<?> redisContainer = new GenericContainer<>(DockerImageName.parse("redis:7.0"))
-		.withExposedPorts(REDIS_PORT)
-		.withCopyToContainer(MountableFile.forClasspathResource("ssl/cert.pem"), "/usr/local/etc/redis/redis.crt")
-		.withCopyToContainer(MountableFile.forClasspathResource("ssl/key.pem"), "/usr/local/etc/redis/redis.key")
-		.withCommand("redis-server", "--tls-port", "6379", "--port", "0", "--tls-cert-file",
-				"/usr/local/etc/redis/redis.crt", "--tls-key-file", "/usr/local/etc/redis/redis.key",
-				"--tls-ca-cert-file", "/usr/local/etc/redis/redis.crt", "--tls-auth-clients", "no");
+	@RegisterExtension
+	static final RedisTestServer redis = new RedisTestServer(true);
 
 	/**
 	 * Dynamically configure Redis properties
 	 */
 	@DynamicPropertySource
 	static void registerProperties(DynamicPropertyRegistry registry) {
-		registry.add("spring.ai.memory.redis.host", redisContainer::getHost);
-		registry.add("spring.ai.memory.redis.port", () -> redisContainer.getMappedPort(REDIS_PORT));
+		registry.add("spring.ai.memory.redis.host", redis::getHost);
+		registry.add("spring.ai.memory.redis.port", redis::getPort);
 		registry.add("spring.ai.memory.redis.ssl.enabled", () -> "true");
 		registry.add("spring.ai.memory.redis.ssl.bundle", () -> "myPemBundle");
 		registry.add("spring.ssl.bundle.pem.myPemBundle.keystore.certificate", () -> "classpath:ssl/cert.pem");
@@ -204,8 +191,8 @@ public class SslRedissonRedisChatMemoryTest {
 		ChatMemoryRepository chatMemoryRepository(ObjectProvider<SslBundles> sslBundlesProvider) {
 			// Use Redis connection information from container to create Redis repository
 			return RedissonRedisChatMemoryRepository.builder()
-				.host(redisContainer.getHost())
-				.port(redisContainer.getMappedPort(REDIS_PORT))
+				.host(redis.getHost())
+				.port(redis.getPort())
 				.sslBundles(sslBundlesProvider.getIfAvailable())
 				.useSsl(true)
 				.bundle("myPemBundle")

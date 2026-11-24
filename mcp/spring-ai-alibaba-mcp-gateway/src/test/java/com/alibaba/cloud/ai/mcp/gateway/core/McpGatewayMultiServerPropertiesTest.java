@@ -74,13 +74,15 @@ class McpGatewayMultiServerPropertiesTest {
 	}
 
 	@Test
-	void transportTypeEnumHasBothValues() {
+	void transportTypeEnumSupportsLegacyAndModern() {
 		McpGatewayMultiServerProperties.TransportType[] types = McpGatewayMultiServerProperties.TransportType.values();
-		assertEquals(2, types.length);
+		assertEquals(3, types.length);
 		assertEquals(McpGatewayMultiServerProperties.TransportType.SSE,
 				McpGatewayMultiServerProperties.TransportType.valueOf("SSE"));
 		assertEquals(McpGatewayMultiServerProperties.TransportType.STREAMABLE,
 				McpGatewayMultiServerProperties.TransportType.valueOf("STREAMABLE"));
+		assertEquals(McpGatewayMultiServerProperties.TransportType.MODERN,
+				McpGatewayMultiServerProperties.TransportType.valueOf("MODERN"));
 	}
 
 	@Test

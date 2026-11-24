@@ -36,7 +36,9 @@ import com.aliyun.gpdb20160503.models.QueryCollectionDataRequest;
 import com.aliyun.gpdb20160503.models.QueryCollectionDataResponse;
 import com.aliyun.gpdb20160503.models.QueryCollectionDataResponseBody;
 import com.aliyun.gpdb20160503.models.UpsertCollectionDataRequest;
+import com.aliyun.gpdb20160503.models.UpsertCollectionDataRequest.UpsertCollectionDataRequestRows;
 import com.aliyun.tea.TeaException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +47,7 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingOptions;
 import org.springframework.ai.util.JacksonUtils;
 import org.springframework.ai.vectorstore.AbstractVectorStoreBuilder;
+import org.springframework.ai.vectorstore.EmbeddedDocument;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionConverter;
@@ -53,6 +56,7 @@ import org.springframework.ai.vectorstore.observation.VectorStoreObservationCont
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -90,6 +94,8 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 	private final Client client;
 
 	private final JsonMapper jsonMapper;
+
+	private volatile @Nullable Integer collectionDimensions;
 
 	private final Integer defaultTopK;
 
@@ -160,14 +166,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 
 	private void createCollectionIfNotExists(Long embeddingDimension) throws Exception {
 		try {
-			// Describe the collection to check if it exists
-			DescribeCollectionRequest describeRequest = new DescribeCollectionRequest()
-				.setDBInstanceId(this.config.getDbInstanceId())
-				.setRegionId(this.config.getRegionId())
-				.setNamespace(this.config.getNamespace())
-				.setNamespacePassword(this.config.getNamespacePassword())
-				.setCollection(this.collectionName);
-			this.client.describeCollection(describeRequest);
+			this.collectionDimensions = this.client.describeCollection(describeCollectionRequest()).getBody().getDimension();
 			logger.debug("collection{}already exists", this.collectionName);
 		}
 		catch (TeaException e) {
@@ -190,6 +189,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 					.setMetadata(metadata)
 					.setFullTextRetrievalFields(CONTENT_FIELD_NAME);
 				this.client.createCollection(createRequest);
+				this.collectionDimensions = Math.toIntExact(embeddingDimension);
 				logger.debug("collection{}created", this.collectionName);
 			}
 			else {
@@ -208,28 +208,68 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 		List<float[]> embeddings = this.embeddingModel.embed(documents, EmbeddingOptions.builder().build(),
 				this.batchingStrategy);
 
-		List<UpsertCollectionDataRequest.UpsertCollectionDataRequestRows> rows = new ArrayList<>(10);
+		var rows = new ArrayList<UpsertCollectionDataRequestRows>(documents.size());
 		for (int i = 0; i < documents.size(); i++) {
-			Document doc = documents.get(i);
-			logger.info("Processing document id = {}", doc.getId());
-
-			Map<String, String> metadata = new HashMap<>();
-			String refDocId;
-			Map<String, Object> docMetadata = doc.getMetadata();
-			String docName = (String) docMetadata.get(DOC_NAME);
-			refDocId = docName != null && !docName.isEmpty() ? docName : doc.getId();
-			metadata.put(REF_DOC_NAME, refDocId);
-			metadata.put(CONTENT_FIELD_NAME, doc.getText());
-            metadata.put(METADATA_FIELD_NAME, jsonMapper.writeValueAsString(doc.getMetadata()));
-
-			float[] floatEmbeddings = embeddings.get(i);
-			List<Double> embedding = IntStream.range(0, floatEmbeddings.length)
-				.mapToObj(j -> (double) floatEmbeddings[j])
-				.toList();
-
-			rows.add(new UpsertCollectionDataRequest.UpsertCollectionDataRequestRows().setVector(embedding)
-				.setMetadata(metadata));
+			rows.add(toRow(documents.get(i), embeddings.get(i)));
 		}
+		writeRows(rows);
+	}
+
+	@Override
+	protected boolean supportsUpsert() {
+		return true;
+	}
+
+	@Override
+	protected void doUpsert(List<EmbeddedDocument> documents) {
+		int dimensions = getCollectionDimensions();
+		var rows = documents.stream().map(embedded -> {
+			Document document = embedded.document();
+			float[] embedding = embedded.embedding();
+			checkDimensions(document.getId(), embedding.length, dimensions);
+			return toRow(document, embedding).setId(document.getId());
+		}).toList();
+		writeRows(rows);
+	}
+
+	private UpsertCollectionDataRequestRows toRow(Document doc, float[] embedding) {
+		Map<String, String> metadata = new HashMap<>();
+		String docName = (String) doc.getMetadata().get(DOC_NAME);
+		metadata.put(REF_DOC_NAME, docName != null && !docName.isEmpty() ? docName : doc.getId());
+		metadata.put(CONTENT_FIELD_NAME, doc.getText());
+		metadata.put(METADATA_FIELD_NAME, this.jsonMapper.writeValueAsString(doc.getMetadata()));
+		return new UpsertCollectionDataRequestRows().setVector(toVector(embedding)).setMetadata(metadata);
+	}
+
+	private static List<Double> toVector(float[] embedding) {
+		return IntStream.range(0, embedding.length).mapToObj(i -> (double) embedding[i]).toList();
+	}
+
+	private DescribeCollectionRequest describeCollectionRequest() {
+		return new DescribeCollectionRequest().setDBInstanceId(this.config.getDbInstanceId())
+			.setRegionId(this.config.getRegionId())
+			.setNamespace(this.config.getNamespace())
+			.setNamespacePassword(this.config.getNamespacePassword())
+			.setCollection(this.collectionName);
+	}
+
+	private synchronized int getCollectionDimensions() {
+		if (this.collectionDimensions == null) {
+			try {
+				var response = this.client.describeCollection(describeCollectionRequest());
+				this.collectionDimensions = response.getBody().getDimension();
+			}
+			catch (Exception ex) {
+				throw new IllegalStateException("Failed to read dimensions for collection " + this.collectionName, ex);
+			}
+		}
+		Integer dimensions = this.collectionDimensions;
+		Assert.state(dimensions != null && dimensions > 0,
+				"AnalyticDB collection must have a positive vector dimension");
+		return dimensions;
+	}
+
+	private void writeRows(List<UpsertCollectionDataRequestRows> rows) {
 		UpsertCollectionDataRequest request = new UpsertCollectionDataRequest()
 			.setDBInstanceId(this.config.getDbInstanceId())
 			.setRegionId(this.config.getRegionId())
@@ -299,20 +339,30 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 
 	@Override
 	public List<Document> doSimilaritySearch(SearchRequest searchRequest) {
+		String query = searchRequest.getQuery();
+		return search(this.embeddingModel.embed(query), searchRequest, query);
+	}
+
+	@Override
+	protected boolean supportsQueryEmbeddingSearch() {
+		return true;
+	}
+
+	@Override
+	protected List<Document> doSimilaritySearch(float[] queryEmbedding, SearchRequest request) {
+		checkDimensions("query", queryEmbedding.length, getCollectionDimensions());
+		return search(queryEmbedding, request, null);
+	}
+
+	private List<Document> search(float[] queryEmbedding, SearchRequest searchRequest, @Nullable String query) {
 		double scoreThreshold = searchRequest.getSimilarityThreshold();
 		boolean includeValues = searchRequest.hasFilterExpression();
-        String query = searchRequest.getQuery();
 		int topK = searchRequest.getTopK();
 		String filterExpress = null;
 		if (includeValues) {
 			filterExpress = (searchRequest.getFilterExpression() != null)
 					? this.filterExpressionConverter.convertExpression(searchRequest.getFilterExpression()) : "";
 		}
-
-        float[] embeddings = this.embeddingModel.embed(query);
-        List<Double> vector = IntStream.range(0, embeddings.length)
-                .mapToObj(i -> (double) embeddings[i])
-                .toList();
 
 		QueryCollectionDataRequest request = new QueryCollectionDataRequest()
 			.setDBInstanceId(this.config.getDbInstanceId())
@@ -322,7 +372,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 			.setCollection(this.collectionName)
 			.setIncludeValues(includeValues)
 			.setMetrics(this.config.getMetrics())
-			.setVector(vector)
+			.setVector(toVector(queryEmbedding))
 			.setContent(query)
 			.setTopK((long) topK)
 			.setFilter(filterExpress);
@@ -332,18 +382,17 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 			for (QueryCollectionDataResponseBody.QueryCollectionDataResponseBodyMatchesMatch match : response.getBody()
 				.getMatches()
 				.getMatch()) {
-				if (match.getScore() != null && match.getScore() > scoreThreshold) {
+				if (match.getScore() != null && match.getScore() >= scoreThreshold) {
 					Map<String, String> metadata = match.getMetadata();
 					String pageContent = metadata.get(CONTENT_FIELD_NAME);
 					Map<String, Object> metadataJson = jsonMapper.readValue(metadata.get(METADATA_FIELD_NAME),
 							new TypeReference<HashMap<String, Object>>() {
 							});
-					Document doc = Document.builder()
-                            .text(pageContent)
-                            .metadata(metadataJson)
-                            .score(match.getScore())
-                            .build();
-					documents.add(doc);
+					var document = Document.builder().text(pageContent).metadata(metadataJson).score(match.getScore());
+					if (StringUtils.hasText(match.getId())) {
+						document.id(match.getId());
+					}
+					documents.add(document.build());
 				}
 			}
 			return documents;
@@ -365,11 +414,15 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 	@Override
 	public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
 
-        return VectorStoreObservationContext.builder(DATA_BASE_SYSTEM, operationName)
-                .collectionName(this.collectionName)
-                .dimensions(this.embeddingModel.dimensions())
-                .namespace(Objects.requireNonNullElse(this.config.getNamespace(), ""))
-                .similarityMetric(this.config.getMetrics());
+		var builder = VectorStoreObservationContext.builder(DATA_BASE_SYSTEM, operationName)
+			.collectionName(this.collectionName)
+			.namespace(Objects.requireNonNullElse(this.config.getNamespace(), ""))
+			.similarityMetric(this.config.getMetrics());
+		Integer dimensions = this.collectionDimensions;
+		if (dimensions != null) {
+			builder.dimensions(dimensions);
+		}
+		return builder;
 	}
 
 	/**

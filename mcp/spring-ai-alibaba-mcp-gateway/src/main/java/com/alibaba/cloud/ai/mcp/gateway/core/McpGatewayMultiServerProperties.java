@@ -77,7 +77,12 @@ public class McpGatewayMultiServerProperties {
 		 * Streamable HTTP transport (MCP spec 2025-03-26): unified GET/POST/DELETE
 		 * /xxx/mcp endpoint.
 		 */
-		STREAMABLE
+		STREAMABLE,
+
+		/**
+		 * Modern MCP transport (MCP spec 2026-07-28).
+		 */
+		MODERN
 
 	}
 

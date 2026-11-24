@@ -20,11 +20,14 @@ import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayMultiServerProperties;
 import com.alibaba.cloud.ai.mcp.gateway.core.MultiServerMcpGatewayManager;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.properties.NacosMcpGatewayProperties;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.provider.NacosMcpSyncGatewayToolsProvider;
+import com.alibaba.cloud.ai.mcp.gateway.nacos.provider.NacosModernMcpGatewayToolsProvider;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.tools.NacosMcpGatewayToolsInitializer;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.watcher.NacosMcpGatewayToolsWatcher;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
 import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
-import io.modelcontextprotocol.server.McpServer;
+import io.modelcontextprotocol.modern.McpSchema.Implementation;
+import io.modelcontextprotocol.modern.server.McpServer;
+import io.modelcontextprotocol.modern.server.feature.ToolsFeature;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -32,6 +35,9 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.mcp.McpToolUtils;
+import org.springframework.ai.mcp.modern.InMemorySyncToolRepository;
+import org.springframework.ai.mcp.modern.McpModernToolUtils;
+import org.springframework.ai.mcp.server.webmvc.transport.WebMvcModernServerTransport;
 import org.springframework.ai.mcp.server.webmvc.transport.WebMvcSseServerTransportProvider;
 import org.springframework.ai.mcp.server.webmvc.transport.WebMvcStreamableServerTransportProvider;
 import org.springframework.ai.tool.ToolCallback;
@@ -78,15 +84,22 @@ public class WebMvcMultiServerMcpGatewayManager extends MultiServerMcpGatewayMan
 		// 1. Create transport and resolve server builder by transport type (MCP SDK 0.14+).
 		// JacksonMcpJsonMapper wraps Spring's ObjectMapper (e.g. FAIL_ON_UNKNOWN_PROPERTIES=false).
 		var mcpJsonMapper = new JacksonMcpJsonMapper(jsonMapper);
+		var perEntryProps = createNacosProperties(cfg.getServiceNames());
+		var initializer = new NacosMcpGatewayToolsInitializer(nacosService, perEntryProps);
+		List<ToolCallback> initialCallbacks = initializer.initializeTools();
+		if (cfg.getTransport() == McpGatewayMultiServerProperties.TransportType.MODERN) {
+			addRoute(initModernEntry(cfg, nacosService, perEntryProps, initialCallbacks, mcpJsonMapper));
+			return;
+		}
 		RouterFunction<ServerResponse> routerFunction;
-		McpServer.SyncSpecification<?> serverBuilder;
+		io.modelcontextprotocol.server.McpServer.SyncSpecification<?> serverBuilder;
 
 		if (cfg.getTransport() == McpGatewayMultiServerProperties.TransportType.STREAMABLE) {
 			WebMvcStreamableServerTransportProvider transport = WebMvcStreamableServerTransportProvider.builder()
 				.jsonMapper(mcpJsonMapper)
 				.mcpEndpoint(cfg.getMcpEndpoint())
 				.build();
-			serverBuilder = McpServer.sync(transport);
+			serverBuilder = io.modelcontextprotocol.server.McpServer.sync(transport);
 			routerFunction = transport.getRouterFunction();
 		}
 		else {
@@ -95,14 +108,11 @@ public class WebMvcMultiServerMcpGatewayManager extends MultiServerMcpGatewayMan
 				.sseEndpoint(cfg.getSseEndpoint())
 				.messageEndpoint(cfg.getMessageEndpoint())
 				.build();
-			serverBuilder = McpServer.sync(transport);
+			serverBuilder = io.modelcontextprotocol.server.McpServer.sync(transport);
 			routerFunction = transport.getRouterFunction();
 		}
 
 		// 2. Load initial tools from Nacos
-		NacosMcpGatewayProperties perEntryProps = createNacosProperties(cfg.getServiceNames());
-		NacosMcpGatewayToolsInitializer initializer = new NacosMcpGatewayToolsInitializer(nacosService, perEntryProps);
-		List<ToolCallback> initialCallbacks = initializer.initializeTools();
 		List<SyncToolSpecification> initialSpecs = initialCallbacks.stream()
 			.map(McpToolUtils::toSyncToolSpecification)
 			.toList();
@@ -124,13 +134,47 @@ public class WebMvcMultiServerMcpGatewayManager extends MultiServerMcpGatewayMan
 		}
 
 		// 5. Accumulate router functions
-		combinedRouterFunction = (combinedRouterFunction == null) ? routerFunction
-				: combinedRouterFunction.and(routerFunction);
+		addRoute(routerFunction);
 
 		logger.info("Initialized WebMVC multi-server entry '{}' [{}] with {} initial tool(s) at: {}",
 				cfg.getName(), cfg.getTransport(), initialCallbacks.size(),
 				cfg.getTransport() == McpGatewayMultiServerProperties.TransportType.SSE ? cfg.getSseEndpoint()
 						: cfg.getMcpEndpoint());
+	}
+
+	private RouterFunction<ServerResponse> initModernEntry(McpGatewayMultiServerProperties.ServerConfig cfg,
+			NacosMcpOperationService nacosService, NacosMcpGatewayProperties properties,
+			List<ToolCallback> callbacks, JacksonMcpJsonMapper mapper) {
+		var repository = InMemorySyncToolRepository.builder().build();
+		McpModernToolUtils.toSyncTools(callbacks).forEach(repository::add);
+		var server = McpServer.builder()
+			.serverInfo(Implementation.builder(cfg.getServerName(), cfg.getServerVersion()).build())
+			.jsonMapper(mapper)
+			.feature(ToolsFeature.ofSync(repository))
+			.build();
+		var transport = WebMvcModernServerTransport.builder(server)
+			.messageEndpoint(cfg.getMcpEndpoint())
+			.jsonMapper(mapper)
+			.build();
+		var toolManager = new NacosModernMcpGatewayToolsProvider(repository);
+		if (!properties.getServiceNames().isEmpty()) {
+			watchers.add(new NacosMcpGatewayToolsWatcher(toolManager, nacosService, properties));
+		}
+		modernServerShutdown.add(() -> {
+			try {
+				transport.closeGracefully().block();
+			}
+			finally {
+				server.closeGracefully();
+				toolManager.close();
+			}
+		});
+		return transport.getRouterFunction();
+	}
+
+	private void addRoute(RouterFunction<ServerResponse> routerFunction) {
+		combinedRouterFunction = (combinedRouterFunction == null) ? routerFunction
+				: combinedRouterFunction.and(routerFunction);
 	}
 
 	/**

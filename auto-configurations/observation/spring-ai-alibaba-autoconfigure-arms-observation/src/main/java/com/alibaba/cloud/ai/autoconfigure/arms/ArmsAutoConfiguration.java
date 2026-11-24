@@ -20,11 +20,15 @@ import com.alibaba.cloud.ai.observation.model.ChatModelInputObservationHandler;
 import com.alibaba.cloud.ai.observation.model.ChatModelOutputObservationHandler;
 import com.alibaba.cloud.ai.observation.model.PromptMetadataAwareChatModelObservationConvention;
 import com.alibaba.cloud.ai.tool.ObservableToolCallingManager;
+import com.alibaba.cloud.ai.tool.ToolCallExecutionOptions;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.chat.client.observation.ChatClientObservationConvention;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.model.tool.ToolCallingManager;
+import org.springframework.ai.model.tool.ToolCallConfirmationPolicy;
+import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
+import org.springframework.ai.model.tool.autoconfigure.ToolCallingProperties;
 import org.springframework.ai.tool.execution.ToolExecutionExceptionProcessor;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.beans.factory.ObjectProvider;
@@ -38,21 +42,31 @@ import org.springframework.context.annotation.Bean;
 /**
  * @author Lumian
  */
-@AutoConfiguration
+@AutoConfiguration(before = ToolCallingAutoConfiguration.class,
+		afterName = "com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeAsyncToolCallingManagerAutoConfiguration")
 @ConditionalOnClass(ChatModel.class)
 @ConditionalOnProperty(prefix = ArmsCommonProperties.CONFIG_PREFIX, name = "enabled", havingValue = "true")
-@EnableConfigurationProperties(ArmsCommonProperties.class)
+@EnableConfigurationProperties({ ArmsCommonProperties.class, ToolCallingProperties.class })
 public class ArmsAutoConfiguration {
 
 	@Bean
+	@ConditionalOnMissingBean(ToolCallingManager.class)
 	@ConditionalOnProperty(prefix = ArmsCommonProperties.CONFIG_PREFIX, name = "tool.enabled", havingValue = "true")
 	ToolCallingManager toolCallingManager(ToolCallbackResolver toolCallbackResolver,
 			ToolExecutionExceptionProcessor toolExecutionExceptionProcessor,
-			ObjectProvider<ObservationRegistry> observationRegistry) {
+			ObjectProvider<ObservationRegistry> observationRegistry, ToolCallingProperties toolProperties,
+			ObjectProvider<ToolCallConfirmationPolicy> confirmationPolicies) {
+		var limits = toolProperties.getLimits();
+		var confirmation = toolProperties.getConfirmation();
+		var executionOptions = ToolCallExecutionOptions.configured(confirmation.isEnabled(), confirmation.getTools(),
+				confirmationPolicies.orderedStream().toList(), toolProperties.getResolution().getFallback().isEnabled(),
+				limits.getMaxCallsPerToolDefault(), limits.getMaxCallsPerTool(), limits.getExcludedTools(),
+				limits.getMaxTotalToolCalls(), limits.getOnLimitExceeded());
 		return ObservableToolCallingManager.builder()
 			.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
 			.toolCallbackResolver(toolCallbackResolver)
 			.toolExecutionExceptionProcessor(toolExecutionExceptionProcessor)
+			.executionOptions(executionOptions)
 			.build();
 	}
 
