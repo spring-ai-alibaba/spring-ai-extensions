@@ -23,8 +23,11 @@ import com.alibaba.cloud.ai.model.RerankModel;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
 import com.alibaba.cloud.ai.model.RerankResponseMetadata;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
@@ -56,7 +59,7 @@ public class DashScopeRerankModel implements RerankModel {
 	private final DashScopeRerankOptions defaultOptions;
 
 	public DashScopeRerankModel(DashScopeApi dashScopeApi) {
-		this(dashScopeApi, DashScopeRerankOptions.builder().model("gte-rerank").topN(3).returnDocuments(false).build());
+		this(dashScopeApi, DashScopeRerankOptions.builder().model("qwen3-rerank").topN(3).returnDocuments(false).build());
 	}
 
 	public DashScopeRerankModel(DashScopeApi dashScopeApi, DashScopeRerankOptions defaultOptions) {
@@ -84,10 +87,27 @@ public class DashScopeRerankModel implements RerankModel {
                 .from(defaultOptions)
                 .merge(request.getOptions())
                 .build();
-        DashScopeApiSpec.RerankRequest rerankRequest = createRequest(request, requestOptions);
-
-		ResponseEntity<DashScopeApiSpec.RerankResponse> responseEntity = RetryUtils.execute(this.retryTemplate,
-                () -> this.dashScopeApi.rerankEntity(rerankRequest));
+        boolean latestTextRerank = "qwen3.7-text-rerank".equals(requestOptions.getModel());
+        Assert.isTrue(!latestTextRerank || !Boolean.TRUE.equals(requestOptions.getReturnDocuments()),
+                "qwen3.7-text-rerank does not support return_documents");
+        var parameters = new DashScopeApiSpec.RerankRequestParameter(requestOptions.getTopN(),
+                latestTextRerank ? null : requestOptions.getReturnDocuments(),
+                requestOptions.getInstruct());
+        ResponseEntity<DashScopeApiSpec.RerankResponse> responseEntity;
+        if ("qwen3-vl-rerank".equals(requestOptions.getModel())) {
+            var documents = request.getInstructions().stream().map(DashScopeRerankModel::multimodalDocument).toList();
+            var input = new DashScopeApiSpec.MultimodalRerankInput(request.getQuery(), documents);
+            var payload = new DashScopeApiSpec.MultimodalRerankRequest(requestOptions.getModel(), input, parameters);
+            responseEntity = RetryUtils.execute(this.retryTemplate, () -> this.dashScopeApi.rerankMultimodalEntity(payload));
+        }
+        else {
+            var documents = request.getInstructions().stream()
+                    .map(document -> Objects.requireNonNull(document.getText(), "Media documents require qwen3-vl-rerank"))
+                    .toList();
+            var input = new DashScopeApiSpec.RerankRequestInput(request.getQuery(), documents);
+            var payload = new DashScopeApiSpec.RerankRequest(requestOptions.getModel(), input, parameters);
+            responseEntity = RetryUtils.execute(this.retryTemplate, () -> this.dashScopeApi.rerankEntity(payload));
+        }
 
 		var response = responseEntity.getBody();
 
@@ -109,14 +129,25 @@ public class DashScopeRerankModel implements RerankModel {
 		return new RerankResponse(documentWithScores, metadata);
 	}
 
-	private DashScopeApiSpec.RerankRequest createRequest(RerankRequest request, DashScopeRerankOptions requestOptions) {
-		List<String> docs = request.getInstructions().stream().map(Document::getText).toList();
-
-        DashScopeApiSpec.RerankRequestParameter parameter = new DashScopeApiSpec.RerankRequestParameter(
-				requestOptions.getTopN(), requestOptions.getReturnDocuments());
-		var input = new DashScopeApiSpec.RerankRequestInput(request.getQuery(), docs);
-		return new DashScopeApiSpec.RerankRequest(requestOptions.getModel(), input, parameter);
-	}
+    private static Object multimodalDocument(Document document) {
+        if (document.isText()) {
+            return Objects.requireNonNull(document.getText());
+        }
+        var media = Objects.requireNonNull(document.getMedia());
+        String modality = media.getMimeType().getType();
+        if (media.getData() instanceof String source) {
+            boolean url = source.startsWith("https://") || source.startsWith("http://");
+            if ("image".equals(modality) && (url || source.startsWith("data:image/"))
+                    || "video".equals(modality) && url) {
+                return Map.of(modality, source);
+            }
+        }
+        if ("image".equals(modality) && media.getData() instanceof byte[] bytes) {
+            return Map.of("image", "data:" + media.getMimeType() + ";base64,"
+                    + Base64.getEncoder().encodeToString(bytes));
+        }
+        throw new IllegalArgumentException("Reranking requires text, an image, or a video URL");
+    }
 
     /**
      * Returns a builder pre-populated with the current configuration for mutation.
@@ -139,7 +170,7 @@ public class DashScopeRerankModel implements RerankModel {
 	        private @Nullable DashScopeApi dashScopeApi;
 
         private DashScopeRerankOptions defaultOptions = DashScopeRerankOptions.builder()
-                .model("gte-rerank").topN(3).returnDocuments(false).build();
+                .model("qwen3-rerank").topN(3).returnDocuments(false).build();
 
         private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
 

@@ -42,7 +42,7 @@ public class TablestoreVectorStoreProperties extends CommonVectorStoreProperties
 
 	private String embeddingField = "embedding_1";
 
-	private Integer embeddingDimension = 1536;
+	private @Nullable Integer embeddingDimension;
 
 	private Boolean enableMultitenant = true;
 
@@ -110,7 +110,11 @@ public class TablestoreVectorStoreProperties extends CommonVectorStoreProperties
 	}
 
 	public Integer getEmbeddingDimension() {
-		return embeddingDimension;
+		return this.embeddingDimension != null ? this.embeddingDimension : 1536;
+	}
+
+	@Nullable Integer getConfiguredEmbeddingDimension() {
+		return this.embeddingDimension;
 	}
 
 	public void setEmbeddingDimension(Integer embeddingDimension) {

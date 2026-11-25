@@ -46,7 +46,7 @@ class DashScopeRerankOptionsTests {
 	void testDefaultValues() {
 		DashScopeRerankOptions options = DashScopeRerankOptions.builder().build();
 
-        assertThat(options.getModel()).isEqualTo("gte-rerank");
+        assertThat(options.getModel()).isEqualTo("qwen3-rerank");
 		assertThat(options.getTopN()).isEqualTo(3);
 		assertThat(options.getReturnDocuments()).isEqualTo(false);
 	}

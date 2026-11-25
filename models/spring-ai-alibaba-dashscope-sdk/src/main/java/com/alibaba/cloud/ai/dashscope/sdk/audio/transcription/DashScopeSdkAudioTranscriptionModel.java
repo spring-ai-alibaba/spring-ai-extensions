@@ -16,6 +16,17 @@
 
 package com.alibaba.cloud.ai.dashscope.sdk.audio.transcription;
 
+import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionPrompt;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage.Content;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage.InputAudio;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
+import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkMediaConnection;
+import org.springframework.ai.model.SimpleApiKey;
+import org.springframework.http.HttpHeaders;
+
 import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException;
 import com.alibaba.dashscope.audio.asr.transcription.TranscriptionParam;
 import com.alibaba.dashscope.audio.asr.transcription.TranscriptionQueryParam;
@@ -32,6 +43,7 @@ import org.springframework.ai.audio.transcription.AudioTranscriptionResponseMeta
 import org.springframework.ai.audio.transcription.TranscriptionModel;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -95,6 +107,10 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 					"No valid file URLs found. Configure spring.ai.dashscope.sdk.audio.transcription.file-urls or use URL resource.");
 		}
 
+		String model = Objects.requireNonNull(options.getModel(), "An ASR model is required");
+		if (DashScopeAudioApiConstants.isQwenFileTranscription(model) || DashScopeAudioApiConstants.isQwenAudioAsr(model)) {
+			return callQwenAsr(model, fileUrls, options);
+		}
 		TranscriptionParam request = createRequest(fileUrls, options);
 
 		TranscriptionResult submitResult = RetryUtils.execute(this.retryTemplate, () -> executeSubmit(request));
@@ -105,6 +121,24 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 		TranscriptionQueryParam query = TranscriptionQueryParam.FromTranscriptionParam(request, submitResult.getTaskId());
 		TranscriptionResult finalResult = RetryUtils.execute(this.retryTemplate, () -> executeWait(query));
 		return toAudioResponse(finalResult == null ? submitResult : finalResult);
+	}
+
+	private AudioTranscriptionResponse callQwenAsr(String model, List<String> fileUrls,
+			DashScopeSdkAudioTranscriptionOptions sdkOptions) {
+		HttpHeaders headers = new HttpHeaders();
+		mergeHeaders(sdkOptions.getHttpHeaders()).forEach((name, value) -> headers.set(name, value.toString()));
+		var api = DashScopeAudioTranscriptionApi.builder()
+			.apiKey(new SimpleApiKey(DashScopeSdkMediaConnection.apiKey(this.apiKey)))
+			.baseUrl(DashScopeSdkMediaConnection.baseUrl(this.workspaceId)).workSpaceId(this.workspaceId).headers(headers).build();
+		var options = DashScopeAudioTranscriptionOptions.builder().model(model).channelId(sdkOptions.getChannelId())
+			.diarizationEnabled(sdkOptions.getDiarizationEnabled()).speakerCount(sdkOptions.getSpeakerCount()).build();
+		if (DashScopeAudioApiConstants.isQwenFileTranscription(model)) {
+			return api.callAsr(new DashScopeAudioTranscriptionPrompt(options, fileUrls), options);
+		}
+		Assert.isTrue(fileUrls.size() == 1, "Qwen Audio ASR requires exactly one audio URL");
+		var message = new TranscriptionUserMessage(List.of(new Content("input_audio",
+				new InputAudio(fileUrls.get(0), ""))));
+		return api.callQwenAudioAsr(new DashScopeAudioTranscriptionPrompt(options, message), options);
 	}
 
 	private List<String> resolveFileUrls(AudioTranscriptionPrompt prompt, DashScopeSdkAudioTranscriptionOptions options) {

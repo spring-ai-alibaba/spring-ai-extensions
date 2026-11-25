@@ -143,6 +143,9 @@ public class DashScopeChatApiSpec {
 				@JsonProperty("reasoning_content")
 				private String reasoningContent;
 
+				@JsonProperty("encrypted_content")
+				private String encryptedContent;
+
 				private ChatCompletionMessage() {
 				}
 
@@ -174,6 +177,10 @@ public class DashScopeChatApiSpec {
 					return this.reasoningContent;
 				}
 
+				public String encryptedContent() {
+					return this.encryptedContent;
+				}
+
 				public static Builder builder() {
 					return new Builder();
 				}
@@ -191,6 +198,8 @@ public class DashScopeChatApiSpec {
 					private String toolCallId;
 
 					private String reasoningContent;
+
+					private String encryptedContent;
 
 					private Builder() {
 					}
@@ -225,6 +234,11 @@ public class DashScopeChatApiSpec {
 						return this;
 					}
 
+					public Builder encryptedContent(String encryptedContent) {
+						this.encryptedContent = encryptedContent;
+						return this;
+					}
+
 					public ChatCompletionMessage build() {
 						ChatCompletionMessage message = new ChatCompletionMessage();
 						message.role = this.role;
@@ -233,6 +247,7 @@ public class DashScopeChatApiSpec {
 						message.toolCalls = this.toolCalls;
 						message.toolCallId = this.toolCallId;
 						message.reasoningContent = this.reasoningContent;
+						message.encryptedContent = this.encryptedContent;
 						return message;
 					}
 
@@ -1057,10 +1072,18 @@ public class DashScopeChatApiSpec {
 			@JsonProperty("reasoning_content") @Nullable String reasoningContent,
 			@JsonProperty("partial") @Nullable Boolean partial, @JsonProperty("phase") @Nullable String phase,
 			@JsonProperty("annotations") @Nullable List<ChatCompletionAnnotations> annotations,
-			@JsonProperty("status") @Nullable String status) {
+			@JsonProperty("status") @Nullable String status,
+			@JsonProperty("encrypted_content") @Nullable String encryptedContent) {
 
 		public ChatCompletionMessage(Object content, Role role) {
-			this(content, role, null, null, null, null, null, null, null, null);
+			this(content, role, null, null, null, null, null, null, null, null, null);
+		}
+
+		public ChatCompletionMessage(@Nullable Object content, Role role, @Nullable String name,
+				@Nullable String toolCallId, @Nullable List<ToolCall> toolCalls, @Nullable String reasoningContent,
+				@Nullable Boolean partial, @Nullable String phase,
+				@Nullable List<ChatCompletionAnnotations> annotations, @Nullable String status) {
+			this(content, role, name, toolCallId, toolCalls, reasoningContent, partial, phase, annotations, status, null);
 		}
 
 		public String content() {
@@ -1104,7 +1127,13 @@ public class DashScopeChatApiSpec {
 		LENGTH,
 
 		@JsonProperty("tool_calls")
-		TOOL_CALLS
+		TOOL_CALLS,
+
+		@JsonProperty("content_filter")
+		CONTENT_FILTER,
+
+		@JsonProperty("sensitive")
+		SENSITIVE
 
 	}
 

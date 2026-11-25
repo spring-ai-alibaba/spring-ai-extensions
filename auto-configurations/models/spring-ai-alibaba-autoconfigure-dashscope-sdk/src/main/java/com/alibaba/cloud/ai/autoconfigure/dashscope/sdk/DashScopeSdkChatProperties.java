@@ -61,6 +61,26 @@ public class DashScopeSdkChatProperties extends DashScopeSdkParentProperties {
 
     private @Nullable Map<String, String> httpHeaders;
 
+    private @Nullable String baseUrl;
+
+    private @Nullable Boolean multiModel;
+
+    private @Nullable Boolean enableThinking;
+
+    private @Nullable Boolean preserveThinking;
+
+    private @Nullable Boolean clearThinking;
+
+    private @Nullable String thinkingDisplay;
+
+    private @Nullable Integer thinkingBudget;
+
+    private @Nullable Integer maxCompletionTokens;
+
+    private @Nullable String reasoningEffort;
+
+    private @Nullable Boolean toolStream;
+
     private @Nullable Map<String, Object> extraBody;
 
     public boolean isEnabled() {
@@ -175,6 +195,86 @@ public class DashScopeSdkChatProperties extends DashScopeSdkParentProperties {
         this.httpHeaders = httpHeaders;
     }
 
+    public @Nullable Boolean getToolStream() {
+        return this.toolStream;
+    }
+
+    public void setToolStream(@Nullable Boolean toolStream) {
+        this.toolStream = toolStream;
+    }
+
+    public @Nullable String getReasoningEffort() {
+        return this.reasoningEffort;
+    }
+
+    public void setReasoningEffort(@Nullable String reasoningEffort) {
+        this.reasoningEffort = reasoningEffort;
+    }
+
+    public @Nullable Integer getThinkingBudget() {
+        return this.thinkingBudget;
+    }
+
+    public void setThinkingBudget(@Nullable Integer thinkingBudget) {
+        this.thinkingBudget = thinkingBudget;
+    }
+
+    public @Nullable String getThinkingDisplay() {
+        return this.thinkingDisplay;
+    }
+
+    public void setThinkingDisplay(@Nullable String thinkingDisplay) {
+        this.thinkingDisplay = thinkingDisplay;
+    }
+
+    public @Nullable Boolean getClearThinking() {
+        return this.clearThinking;
+    }
+
+    public void setClearThinking(@Nullable Boolean clearThinking) {
+        this.clearThinking = clearThinking;
+    }
+
+    public @Nullable Boolean getPreserveThinking() {
+        return this.preserveThinking;
+    }
+
+    public void setPreserveThinking(@Nullable Boolean preserveThinking) {
+        this.preserveThinking = preserveThinking;
+    }
+
+    public @Nullable Boolean getEnableThinking() {
+        return this.enableThinking;
+    }
+
+    public void setEnableThinking(@Nullable Boolean enableThinking) {
+        this.enableThinking = enableThinking;
+    }
+
+    public @Nullable Boolean getMultiModel() {
+        return this.multiModel;
+    }
+
+    public void setMultiModel(@Nullable Boolean multiModel) {
+        this.multiModel = multiModel;
+    }
+
+    public @Nullable String getBaseUrl() {
+        return this.baseUrl;
+    }
+
+    public void setBaseUrl(@Nullable String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
+    public @Nullable Integer getMaxCompletionTokens() {
+        return this.maxCompletionTokens;
+    }
+
+    public void setMaxCompletionTokens(@Nullable Integer maxCompletionTokens) {
+        this.maxCompletionTokens = maxCompletionTokens;
+    }
+
     public @Nullable Map<String, Object> getExtraBody() {
         return this.extraBody;
     }
@@ -184,7 +284,7 @@ public class DashScopeSdkChatProperties extends DashScopeSdkParentProperties {
     }
 
     public DashScopeSdkChatOptions toOptions() {
-        return DashScopeSdkChatOptions.builder()
+        var builder = DashScopeSdkChatOptions.builder()
                 .model(this.model)
                 .stream(this.stream)
                 .temperature(this.temperature)
@@ -198,8 +298,35 @@ public class DashScopeSdkChatProperties extends DashScopeSdkParentProperties {
                 .repetitionPenalty(this.repetitionPenalty)
                 .toolChoice(this.toolChoice)
                 .httpHeaders(this.httpHeaders)
-                .extraBody(this.extraBody)
-                .build();
+                .extraBody(this.extraBody);
+        if (this.multiModel != null) {
+            builder.multiModel(this.multiModel);
+        }
+        if (this.enableThinking != null) {
+            builder.enableThinking(this.enableThinking);
+        }
+        if (this.preserveThinking != null) {
+            builder.preserveThinking(this.preserveThinking);
+        }
+        if (this.clearThinking != null) {
+            builder.clearThinking(this.clearThinking);
+        }
+        if (this.thinkingDisplay != null) {
+            builder.thinkingDisplay(this.thinkingDisplay);
+        }
+        if (this.thinkingBudget != null) {
+            builder.thinkingBudget(this.thinkingBudget);
+        }
+        if (this.reasoningEffort != null) {
+            builder.reasoningEffort(this.reasoningEffort);
+        }
+        if (this.toolStream != null) {
+            builder.toolStream(this.toolStream);
+        }
+        if (this.maxCompletionTokens != null) {
+            builder.maxCompletionTokens(this.maxCompletionTokens);
+        }
+        return builder.build();
     }
 
     private Options options = new Options();

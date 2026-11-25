@@ -347,7 +347,11 @@ public class DashScopeImageModel implements ImageModel {
                 }
                 for (Message.Content content : contents) {
                     if(StringUtils.hasText(content.image())){
-                        gens.add(new ImageGeneration(new Image(content.image(), null)));
+                        String image = content.image();
+                        int base64 = image.indexOf(";base64,");
+                        gens.add(new ImageGeneration(image.startsWith("data:") && base64 >= 0
+                                ? new Image(null, image.substring(base64 + ";base64,".length()))
+                                : new Image(image, null)));
                     }
                 }
             }

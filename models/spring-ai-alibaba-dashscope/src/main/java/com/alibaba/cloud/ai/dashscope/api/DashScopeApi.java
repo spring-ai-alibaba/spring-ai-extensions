@@ -261,6 +261,37 @@ public class DashScopeApi {
         DashScopeAiStreamFunctionCallingHelper chunkMerger = new DashScopeAiStreamFunctionCallingHelper(
                 incrementalOutput);
 
+        return chatCompletionStreamDeltas(chatRequest, additionalHttpHeader, isMultimodal)
+                .map(chunk -> {
+                    if (chunkMerger.isStreamingToolFunctionCall(chunk)) {
+                        isInsideTool.set(true);
+                    }
+                    return chunk;
+                })
+                .windowUntil(chunk -> {
+                    if (isInsideTool.get() && chunkMerger.isStreamingToolFunctionCallFinish(chunk)) {
+                        isInsideTool.set(false);
+                        return true;
+                    }
+                    return !isInsideTool.get();
+                })
+                .concatMapIterable(window -> {
+                    Mono<DashScopeChatApiSpec.ChatCompletionChunk> monoChunk = window.reduce(
+                            new DashScopeChatApiSpec.ChatCompletionChunk(null, null, null, null),
+                            chunkMerger::merge
+                    );
+                    return List.of(monoChunk);
+                })
+                .flatMap(mono -> mono);
+    }
+
+    /**
+     * Streams the provider's chunks, including partial tool arguments and reasoning payloads.
+     */
+    public Flux<DashScopeChatApiSpec.ChatCompletionChunk> chatCompletionStreamDeltas(
+            DashScopeChatApiSpec.ChatCompletionRequest chatRequest, @Nullable HttpHeaders additionalHttpHeader,
+            boolean isMultimodal) {
+        Assert.notNull(chatRequest, "The request body can not be null.");
         String chatCompletionUri;
         if (isMultimodal) {
             chatCompletionUri = DashScopeChatApiConstants.MULTIMODAL_GENERATION;
@@ -291,31 +322,10 @@ public class DashScopeApi {
                     }
                     DashScopeChatApiSpec.ChatCompletionChunk chunk = jsonHelper.fromJson(content, DashScopeChatApiSpec.ChatCompletionChunk.class);
                     if (chunk == null) {
-                        throw new DashScopeException("Failed to parse response content: " + content);
+                        throw new DashScopeException("Failed to parse DashScope response chunk");
                     }
                     return chunk;
-                })
-                .map(chunk -> {
-                    if (chunkMerger.isStreamingToolFunctionCall(chunk)) {
-                        isInsideTool.set(true);
-                    }
-                    return chunk;
-                })
-                .windowUntil(chunk -> {
-                    if (isInsideTool.get() && chunkMerger.isStreamingToolFunctionCallFinish(chunk)) {
-                        isInsideTool.set(false);
-                        return true;
-                    }
-                    return !isInsideTool.get();
-                })
-                .concatMapIterable(window -> {
-                    Mono<DashScopeChatApiSpec.ChatCompletionChunk> monoChunk = window.reduce(
-                            new DashScopeChatApiSpec.ChatCompletionChunk(null, null, null, null),
-                            chunkMerger::merge
-                    );
-                    return List.of(monoChunk);
-                })
-                .flatMap(mono -> mono);
+                });
     }
 
 	/*******************************************
@@ -605,7 +615,7 @@ public class DashScopeApi {
 
 	public List<Document> retriever(String pipelineId, String query, DashScopeDocumentRetrieverOptions searchOption) {
 		DashScopeApiSpec.DocumentRetrieveRequest request = new DashScopeApiSpec.DocumentRetrieveRequest(query, searchOption.getDenseSimilarityTopK(),
-				searchOption.getDenseSimilarityTopK(), searchOption.isEnableRewrite(),
+				searchOption.getSparseSimilarityTopK(), searchOption.isEnableRewrite(),
                 List.of(new DashScopeApiSpec.DocumentRetrieveRequest.DocumentRetrieveModelConfig(
                         searchOption.getRewriteModelName(), "DashScopeTextRewrite")),
 				searchOption.isEnableReranking(),
@@ -628,7 +638,8 @@ public class DashScopeApi {
 		List<Document> documents = new ArrayList<>();
 		nodeList.forEach(e -> {
 			DashScopeApiSpec.DocumentRetrieveResponse.DocumentRetrieveResponseNodeData nodeData = e.node();
-			Document toDocument = new Document(nodeData.id(), nodeData.text(), nodeData.metadata());
+			Document toDocument = Document.builder().id(nodeData.id()).text(nodeData.text())
+				.metadata(nodeData.metadata()).score(e.score()).build();
 			documents.add(toDocument);
 		});
 		return documents;
@@ -654,6 +665,12 @@ public class DashScopeApi {
 			.uri(this.rerankPath)
 			.body(rerankRequest)
 			.retrieve()
+			.toEntity(DashScopeApiSpec.RerankResponse.class);
+	}
+
+	public ResponseEntity<DashScopeApiSpec.RerankResponse> rerankMultimodalEntity(
+			DashScopeApiSpec.MultimodalRerankRequest request) {
+		return this.restClient.post().uri(this.rerankPath).body(request).retrieve()
 			.toEntity(DashScopeApiSpec.RerankResponse.class);
 	}
 

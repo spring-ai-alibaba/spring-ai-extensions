@@ -32,6 +32,8 @@ public class AnalyticDbVectorStoreProperties extends CommonVectorStoreProperties
 
 	private @Nullable String collectName;
 
+	private @Nullable Integer dimensions;
+
 	private @Nullable String accessKeyId;
 
 	private @Nullable String accessKeySecret;
@@ -57,6 +59,14 @@ public class AnalyticDbVectorStoreProperties extends CommonVectorStoreProperties
 	private Integer defaultTopK = -1;
 
 	private Double defaultSimilarityThreshold = -1.0;
+
+	public @Nullable Integer getDimensions() {
+		return this.dimensions;
+	}
+
+	public void setDimensions(@Nullable Integer dimensions) {
+		this.dimensions = dimensions;
+	}
 
 	public @Nullable String getCollectName() {
 		return collectName;

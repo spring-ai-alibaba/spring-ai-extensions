@@ -58,6 +58,9 @@ class TablestorePrecomputedVectorTests {
 
 		assertThatIllegalArgumentException().isThrownBy(
 				() -> store.upsert(List.of(embedded, new EmbeddedDocument(document, new float[] { 1 }))));
+		assertThatIllegalArgumentException().isThrownBy(
+				() -> store.similaritySearch(new float[] { 1 }, SearchRequest.builder().build()));
+
 		store.upsert(List.of(embedded));
 		store.upsert(List.of(embedded));
 		var row = ArgumentCaptor.forClass(Document.class);

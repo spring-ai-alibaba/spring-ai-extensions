@@ -22,8 +22,10 @@ import java.util.Objects;
 import com.alibaba.cloud.ai.dashscope.audio.AudioCommonType.TextType;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.tts.TextToSpeechOptions;
+import org.springframework.util.Assert;
 
 /**
  * DashScope Audio Speech Options.
@@ -44,6 +46,8 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 
 	@JsonProperty("voice")
 	private final String voice;
+
+	private final @Nullable String requestedVoice;
 
 	@JsonProperty("format")
 	private final @Nullable String format;
@@ -108,7 +112,8 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 			@Nullable String aigcPropagator, @Nullable String aigcPropagateId, @Nullable String languageType) {
 		this.model = model;
 		this.textType = textType != null ? textType : TextType.PLAIN_TEXT.getValue();
-		this.voice = voice != null ? voice : "longanyang";
+		this.requestedVoice = voice;
+		this.voice = voice != null ? voice : defaultVoice(this.model);
 		this.format = format;
 		this.sampleRate = sampleRate;
 		this.volume = volume;
@@ -134,8 +139,22 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 		return this.model;
 	}
 
+	private static String defaultVoice(@Nullable String model) {
+		if (model != null && model.startsWith("qwen-audio-3.1-tts-")) {
+			return "longanhuan_v3.1";
+		}
+		return DashScopeAudioApiConstants.isQwenAudioTts(model) ? "longanhuan_v3.6" : "longanyang";
+	}
+
 	@Override
 	public String getVoice() {
+		return this.voice;
+	}
+
+	public String requireVoice() {
+		if (this.model != null && this.model.startsWith("cosyvoice-v3.5-")) {
+			Assert.hasText(this.requestedVoice, "CosyVoice 3.5 requires a voice cloned or designed for the selected model");
+		}
 		return this.voice;
 	}
 
@@ -221,7 +240,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
         return builder()
                 .model(this.model)
                 .textType(this.textType)
-                .voice(this.voice)
+                .voice(this.requestedVoice)
                 .format(this.format)
                 .sampleRate(this.sampleRate)
                 .volume(this.volume)
@@ -482,7 +501,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 		public B from(DashScopeAudioSpeechOptions fromOptions) {
 			this.model = fromOptions.getModel();
 			this.textType = fromOptions.getTextType();
-			this.voice = fromOptions.getVoice();
+			this.voice = fromOptions.requestedVoice;
 			this.format = fromOptions.getFormat();
 			this.sampleRate = fromOptions.getSampleRate();
 			this.volume = fromOptions.getVolume();
@@ -512,8 +531,9 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 			if (from.getModel() != null) {
 				this.model = from.getModel();
 			}
-			if (from.getVoice() != null) {
-				this.voice = from.getVoice();
+			String voice = from instanceof DashScopeAudioSpeechOptions options ? options.requestedVoice : from.getVoice();
+			if (voice != null) {
+				this.voice = voice;
 			}
 			if (from.getFormat() != null) {
 				this.format = from.getFormat();

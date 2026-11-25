@@ -19,6 +19,8 @@ package com.alibaba.cloud.ai.dashscope.sdk.chat;
 import com.alibaba.dashscope.aigc.generation.Generation;
 import com.alibaba.dashscope.aigc.generation.GenerationParam;
 import com.alibaba.dashscope.aigc.generation.GenerationResult;
+import com.alibaba.dashscope.protocol.Protocol;
+import org.jspecify.annotations.Nullable;
 import io.reactivex.Flowable;
 
 /**
@@ -30,6 +32,10 @@ public class DefaultDashScopeSdkGenerationClient implements DashScopeSdkGenerati
 
 	public DefaultDashScopeSdkGenerationClient() {
 		this(new Generation());
+	}
+
+	DefaultDashScopeSdkGenerationClient(@Nullable String baseUrl) {
+		this(baseUrl != null ? new Generation(Protocol.HTTP.getValue(), baseUrl) : new Generation());
 	}
 
 	public DefaultDashScopeSdkGenerationClient(Generation generation) {

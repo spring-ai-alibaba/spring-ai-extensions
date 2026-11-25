@@ -23,6 +23,7 @@ import com.alibaba.cloud.ai.dashscope.video.DashScopeVideoOptions.ParametersOpti
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
+import org.springframework.util.StringUtils;
 
 /**
  * DashScope Video Generation Request.
@@ -187,11 +188,15 @@ public class DashScopeVideoRequest {
         }
 
         public static VideoInput optionsConvertReq(@Nullable InputOptions options) {
+            return optionsConvertReq(options, null);
+        }
+
+        public static VideoInput optionsConvertReq(@Nullable InputOptions options, @Nullable String fallbackPrompt) {
             if (options == null) {
-                return VideoInput.builder().build();
+                return VideoInput.builder().prompt(fallbackPrompt).build();
             }
             return VideoInput.builder()
-                    .prompt(options.getPrompt())
+                    .prompt(StringUtils.hasText(options.getPrompt()) ? options.getPrompt() : fallbackPrompt)
                     .imageUrl(options.getImageUrl())
                     .imgUrl(options.getImgUrl())
                     .audioUrl(options.getAudioUrl())

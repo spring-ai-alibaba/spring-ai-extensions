@@ -17,6 +17,8 @@
 package com.alibaba.cloud.ai.dashscope.video;
 
 import java.util.Objects;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeVideoApiConstants;
@@ -30,7 +32,6 @@ import org.springframework.ai.retry.TransientAiException;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 /**
  * DashScope Video Generation Model.
@@ -50,11 +51,20 @@ public class DashScopeVideoModel implements VideoModel {
 
     private final RetryTemplate retryTemplate;
 
+    private final Duration pollInterval;
+
+    private final Duration pollTimeout;
+
     public DashScopeVideoModel(
             DashScopeVideoApi dashScopeVideoApi,
             DashScopeVideoOptions defaultOptions,
             RetryTemplate retryTemplate) {
 
+        this(dashScopeVideoApi, defaultOptions, retryTemplate, Duration.ofSeconds(5), Duration.ofMinutes(5));
+    }
+
+    private DashScopeVideoModel(DashScopeVideoApi dashScopeVideoApi, DashScopeVideoOptions defaultOptions,
+            RetryTemplate retryTemplate, Duration pollInterval, Duration pollTimeout) {
         Assert.notNull(dashScopeVideoApi, "DashScopeVideoApi must not be null");
         Assert.notNull(defaultOptions, "DashScopeVideoOptions must not be null");
         Assert.notNull(retryTemplate, "RetryTemplate must not be null");
@@ -62,6 +72,10 @@ public class DashScopeVideoModel implements VideoModel {
         this.dashScopeVideoApi = dashScopeVideoApi;
         this.defaultOptions = defaultOptions;
         this.retryTemplate = retryTemplate;
+        Assert.isTrue(pollInterval.toMillis() > 0 && !pollTimeout.isNegative() && !pollTimeout.isZero(),
+                "Polling requires positive interval and timeout");
+        this.pollInterval = pollInterval;
+        this.pollTimeout = pollTimeout;
     }
 
     public static Builder builder() {
@@ -94,47 +108,55 @@ public class DashScopeVideoModel implements VideoModel {
         }
         DashScopeVideoResponse response = responseBody;
         if (Objects.isNull(response.getOutput()) || Objects.isNull(response.getOutput().taskId())) {
-            logger.error("Failed to submit video generation task: {}", response);
+            logger.error("Failed to submit video generation task, requestId: {}", response.requestId());
             throw new IllegalStateException("Failed to submit video generation task: invalid output");
         }
 
         String taskId = response.getOutput().taskId();
 
-		// todo: add observation
-		logger.warn("Video generation task submitted with taskId: {}", taskId);
-		return RetryUtils.execute(this.retryTemplate, () -> {
-            var resp = getVideoTask(taskId);
-            if (Objects.nonNull(resp)) {
-                logger.debug(String.valueOf(resp));
-                String status = resp.getOutput().taskStatus();
-                if (!StringUtils.hasText(status)) {
-                    throw new IllegalStateException("Video generation task status is empty");
+        String submissionStatus = response.getOutput().taskStatus();
+        if ("SUCCEEDED".equals(submissionStatus)) {
+            return toVideoResponse(response);
+        }
+        if ("FAILED".equals(submissionStatus) || "CANCELED".equals(submissionStatus)
+                || "UNKNOWN".equals(submissionStatus)) {
+            throw new IllegalStateException("Video generation task failed: " + taskId + " (" + submissionStatus + ")");
+        }
+
+        long start = System.nanoTime();
+        while (true) {
+            var result = RetryUtils.execute(this.retryTemplate, () -> getVideoTask(taskId));
+            if (result != null) {
+                String status = result.getOutput().taskStatus();
+                if ("SUCCEEDED".equals(status)) {
+                    return toVideoResponse(result);
                 }
-                switch (status) {
-                    // status enum SUCCEEDED, FAILED, PENDING, RUNNING
-                    case "SUCCEEDED" -> {
-                        logger.info("Video generation task completed successfully: {}", taskId);
-                        return toVideoResponse(resp);
-                    }
-                    case "FAILED" -> {
-                        logger.error("Video generation task failed: {}", resp.getOutput());
-                        throw new IllegalStateException("Video generation task failed: " + resp.getOutput());
-                    }
+                if (!"PENDING".equals(status) && !"RUNNING".equals(status)) {
+                    throw new IllegalStateException("Video generation task failed: " + taskId + " (" + status + ")");
                 }
             }
-            throw new TransientAiException("Video generation still pending, retry ...");
-        });
-	}
+            long remaining = this.pollTimeout.toNanos() - (System.nanoTime() - start);
+            if (remaining <= 0) {
+                throw new IllegalStateException("Timed out waiting for video generation task " + taskId);
+            }
+            try {
+                TimeUnit.NANOSECONDS.sleep(Math.min(remaining, this.pollInterval.toNanos()));
+            }
+            catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while waiting for video generation task " + taskId, exception);
+            }
+        }
+    }
 
-    private @Nullable DashScopeVideoResponse getVideoTask(String taskId) {
+    private DashScopeVideoResponse getVideoTask(String taskId) {
 
         ResponseEntity<DashScopeVideoResponse> videoGenerationResponseResponseEntity = this.dashScopeVideoApi.queryVideoGenTask(taskId);
-        if (videoGenerationResponseResponseEntity.getStatusCode().is2xxSuccessful()) {
-            return videoGenerationResponseResponseEntity.getBody();
-        } else {
-            logger.warn("Failed to query video task: {}", videoGenerationResponseResponseEntity.getStatusCode());
-            return null;
+        DashScopeVideoResponse body = videoGenerationResponseResponseEntity.getBody();
+        if (!videoGenerationResponseResponseEntity.getStatusCode().is2xxSuccessful() || body == null) {
+            throw new TransientAiException("No response for DashScope video task " + taskId);
         }
+        return body;
     }
 
     private VideoResponse toVideoResponse(DashScopeVideoResponse asyncResp) {
@@ -153,10 +175,17 @@ public class DashScopeVideoModel implements VideoModel {
         String model = options.getModel();
         Assert.hasText(model, "Video model must not be empty");
 
+        var input = DashScopeVideoRequest.VideoInput.optionsConvertReq(options.getInput(),
+                prompt.getInstructions().get(0).getText());
+        var parameterOptions = options.getParameters();
+        if ((model.startsWith("wan2.7-") || model.startsWith("wan3.0-video")) && parameterOptions != null) {
+            Assert.isTrue(parameterOptions.getSize() == null, "Wan 2.7 and 3.0 use resolution and ratio in place of size");
+        }
+        var parameters = DashScopeVideoRequest.VideoParameters.optionsConvertReq(parameterOptions);
         return DashScopeVideoRequest.builder()
                 .model(model)
-                .input(DashScopeVideoRequest.VideoInput.optionsConvertReq(options.getInput()))
-                .parameters(DashScopeVideoRequest.VideoParameters.optionsConvertReq(options.getParameters()))
+                .input(input)
+                .parameters(parameters)
                 .build();
     }
 
@@ -167,6 +196,10 @@ public class DashScopeVideoModel implements VideoModel {
         private DashScopeVideoOptions defaultOptions = DashScopeVideoOptions.builder().build();
 
         private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
+
+        private Duration pollInterval = Duration.ofSeconds(5);
+
+        private Duration pollTimeout = Duration.ofMinutes(5);
 
         private Builder() {
         }
@@ -186,10 +219,20 @@ public class DashScopeVideoModel implements VideoModel {
             return this;
         }
 
+        public Builder pollInterval(Duration pollInterval) {
+            this.pollInterval = pollInterval;
+            return this;
+        }
+
+        public Builder pollTimeout(Duration pollTimeout) {
+            this.pollTimeout = pollTimeout;
+            return this;
+        }
+
         public DashScopeVideoModel build() {
             DashScopeVideoApi videoApi = this.videoApi;
             Assert.notNull(videoApi, "videoApi must not be null");
-            return new DashScopeVideoModel(videoApi, this.defaultOptions, this.retryTemplate);
+            return new DashScopeVideoModel(videoApi, this.defaultOptions, this.retryTemplate, this.pollInterval, this.pollTimeout);
 		}
 
 	}

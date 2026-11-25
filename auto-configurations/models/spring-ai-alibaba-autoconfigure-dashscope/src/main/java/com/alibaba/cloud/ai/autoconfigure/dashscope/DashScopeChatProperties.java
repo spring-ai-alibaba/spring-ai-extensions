@@ -122,6 +122,10 @@ public class DashScopeChatProperties extends DashScopeParentProperties {
 
     private @Nullable List<Skill> skill;
 
+    private @Nullable Boolean clearThinking;
+
+    private @Nullable String thinkingDisplay;
+
     private @Nullable Map<String, Object> extraBody;
 
     private @Nullable Map<String, String> httpHeaders;
@@ -384,6 +388,22 @@ public class DashScopeChatProperties extends DashScopeParentProperties {
         this.skill = skill;
     }
 
+    public @Nullable String getThinkingDisplay() {
+        return this.thinkingDisplay;
+    }
+
+    public void setThinkingDisplay(@Nullable String thinkingDisplay) {
+        this.thinkingDisplay = thinkingDisplay;
+    }
+
+    public @Nullable Boolean getClearThinking() {
+        return this.clearThinking;
+    }
+
+    public void setClearThinking(@Nullable Boolean clearThinking) {
+        this.clearThinking = clearThinking;
+    }
+
     public @Nullable Map<String, Object> getExtraBody() {
         return this.extraBody;
     }
@@ -425,7 +445,7 @@ public class DashScopeChatProperties extends DashScopeParentProperties {
     }
 
     public DashScopeChatOptions toOptions() {
-        return DashScopeChatOptions.builder()
+        var builder = DashScopeChatOptions.builder()
                 .model(this.model)
                 .stream(this.stream)
                 .temperature(this.temperature)
@@ -459,8 +479,14 @@ public class DashScopeChatProperties extends DashScopeParentProperties {
                 .skill(this.skill)
                 .extraBody(this.extraBody)
                 .httpHeaders(this.httpHeaders)
-                .multiModel(this.multiModel)
-                .build();
+                .multiModel(this.multiModel);
+        if (this.clearThinking != null) {
+            builder.clearThinking(this.clearThinking);
+        }
+        if (this.thinkingDisplay != null) {
+            builder.thinkingDisplay(this.thinkingDisplay);
+        }
+        return builder.build();
     }
 
     private Options options = new Options();

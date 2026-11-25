@@ -16,13 +16,11 @@
 package com.alibaba.cloud.ai.dashscope.chat;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
@@ -44,6 +42,7 @@ import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ToolCall;
 import com.alibaba.cloud.ai.dashscope.chat.observation.DashScopeChatModelObservationConvention;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeChatEndpoints;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
@@ -64,10 +63,9 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.messages.part.MediaPart;
 import org.springframework.ai.chat.messages.part.MessagePart;
 import org.springframework.ai.chat.messages.part.ReasoningPart;
-import org.springframework.ai.chat.messages.part.StreamingParts;
 import org.springframework.ai.chat.messages.part.TextPart;
-import org.springframework.ai.chat.messages.part.ToolCallPart;
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
+import org.springframework.ai.chat.metadata.FinishReasonCategory;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.EmptyUsage;
 import org.springframework.ai.chat.metadata.Usage;
@@ -92,7 +90,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MimeType;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -183,7 +180,7 @@ public final class DashScopeChatModel implements ChatModel {
 						() -> this.dashscopeApi.chatCompletionEntity(request, getAdditionalHttpHeaders(prompt), isMultiModel(prompt.getOptions())));
 
 				ChatCompletion chatCompletion = completionEntity.getBody();
-				ChatResponse chatResponse = toChatResponse(chatCompletion, previousChatResponse, request, null);
+				ChatResponse chatResponse = toChatResponse(chatCompletion, previousChatResponse, request, null, null);
 				observationContext.setResponse(chatResponse);
 				return chatResponse;
 				});
@@ -197,8 +194,8 @@ public final class DashScopeChatModel implements ChatModel {
 	}
 
 	private boolean isMultiModel(@Nullable ChatOptions options) {
-		return options instanceof DashScopeChatOptions
-				&& Boolean.TRUE.equals(((DashScopeChatOptions) options).getMultiModel());
+		return options instanceof DashScopeChatOptions chatOptions
+				&& DashScopeChatEndpoints.isMultimodal(chatOptions.getModel(), chatOptions.getMultiModel());
 	}
 
 	@Override
@@ -215,10 +212,11 @@ public final class DashScopeChatModel implements ChatModel {
 			Prompt streamPrompt = withStreamDefaults(prompt);
 			ChatCompletionRequest request = createRequest(streamPrompt);
 			Flux<ChatCompletionChunk> completionChunks = RetryUtils.execute(this.retryTemplate,
-					() -> this.dashscopeApi.chatCompletionStream(request, getAdditionalHttpHeaders(streamPrompt),
+					() -> this.dashscopeApi.chatCompletionStreamDeltas(request, getAdditionalHttpHeaders(streamPrompt),
 							isMultiModel(streamPrompt.getOptions())));
 
 			ConcurrentHashMap<String, String> roleMap = new ConcurrentHashMap<>();
+			Map<Integer, StreamChoice> streamChoices = new HashMap<>();
 
 			ChatModelObservationContext observationContext = ChatModelObservationContext.builder()
 				.prompt(streamPrompt)
@@ -233,7 +231,7 @@ public final class DashScopeChatModel implements ChatModel {
 
 			Flux<ChatResponse> chatResponse = completionChunks.map(this::chunkToChatCompletion)
 				.switchMap(chatCompletion -> Mono.just(chatCompletion)
-					.map(chatCompletion2 -> toChatResponse(chatCompletion2, previousChatResponse, request, roleMap)));
+					.map(chatCompletion2 -> toChatResponse(chatCompletion2, previousChatResponse, request, roleMap, streamChoices)));
 
 			Flux<ChatResponse> flux = chatResponse.doOnError(observation::error)
 				.doFinally(s -> observation.stop())
@@ -259,7 +257,7 @@ public final class DashScopeChatModel implements ChatModel {
 
 	private ChatResponse toChatResponse(@Nullable ChatCompletion chatCompletion,
 			@Nullable ChatResponse previousChatResponse, ChatCompletionRequest request,
-			@Nullable ConcurrentHashMap<String, String> roleMap) {
+			@Nullable ConcurrentHashMap<String, String> roleMap, @Nullable Map<Integer, StreamChoice> streamChoices) {
 
 		if (chatCompletion == null) {
 			logger.warn("Null chat completion returned");
@@ -268,7 +266,7 @@ public final class DashScopeChatModel implements ChatModel {
 
 		TokenUsage usage = chatCompletion.usage();
 		Usage currentChatResponseUsage = usage != null ? DashScopeAiUsage.from(usage) : new EmptyUsage();
-		UsageCalculator.getCumulativeUsage(currentChatResponseUsage, previousChatResponse);
+		currentChatResponseUsage = UsageCalculator.getCumulativeUsage(currentChatResponseUsage, previousChatResponse);
 
 		ChatCompletionOutput output = chatCompletion.output();
 		if (output == null) {
@@ -286,7 +284,10 @@ public final class DashScopeChatModel implements ChatModel {
 		boolean incrementalOutput = request.parameters() != null
 				&& Boolean.TRUE.equals(request.parameters().incrementalOutput());
 
-		List<Generation> generations = choices.stream().map(choice -> {
+		boolean summarized = request.parameters() != null
+				&& "summarized".equals(request.parameters().extraBody().get("thinking_display"));
+		List<Generation> generations = IntStream.range(0, choices.size()).mapToObj(position -> {
+			Choice choice = choices.get(position);
 			ChatCompletionMessage choiceMessage = choice.message();
 			String requestId = chatCompletion.requestId() != null ? chatCompletion.requestId() : "";
 
@@ -300,7 +301,9 @@ public final class DashScopeChatModel implements ChatModel {
 					choiceMessage != null && StringUtils.hasText(choiceMessage.reasoningContent())
 							? choiceMessage.reasoningContent() : "",
 					"search_info", Objects.isNull(output.searchInfo()) ? "" : output.searchInfo());
-			return buildGeneration(choice, metadata, roleMap != null, incrementalOutput);
+			int index = Objects.requireNonNullElse(choice.index(), position);
+			StreamChoice state = streamChoices == null ? null : streamChoices.computeIfAbsent(index, key -> new StreamChoice());
+			return buildGeneration(choice, metadata, state, incrementalOutput, summarized);
 		}).toList();
 
 		return new ChatResponse(generations, from(chatCompletion, currentChatResponseUsage));
@@ -310,60 +313,68 @@ public final class DashScopeChatModel implements ChatModel {
 		this.defaultOptions = options;
 	}
 
-	private Generation buildGeneration(Choice choice, Map<String, Object> metadata, boolean streaming,
-			boolean incrementalOutput) {
-		ChatCompletionMessage choiceMessage = choice.message();
-
-		List<ToolCall> validatedToolCalls = List.of();
-		if (choiceMessage != null && choice.finishReason() == ChatCompletionFinishReason.TOOL_CALLS
-				&& !CollectionUtils.isEmpty(choiceMessage.toolCalls())) {
-			validatedToolCalls = choiceMessage.toolCalls()
-				.stream()
-				.filter(toolCall -> toolCall != null && toolCall.function() != null
-						&& StringUtils.hasText(toolCall.function().name()))
-				.toList();
-		}
-		List<AssistantMessage.ToolCall> toolCalls = validatedToolCalls.stream()
-			.map(toolCall -> new AssistantMessage.ToolCall(toolCall.id(), "function", toolCall.function().name(),
-					toolCall.function().arguments()))
-			.toList();
-
+	private Generation buildGeneration(Choice choice, Map<String, Object> metadata, @Nullable StreamChoice state,
+			boolean incremental, boolean summarized) {
+		ChatCompletionMessage message = choice.message();
+		Object content = message != null ? message.rawContent() : null;
+		String reasoning = message != null ? message.reasoningContent() : null;
+		String encrypted = message != null ? message.encryptedContent() : null;
+		boolean completeToolCall = choice.finishReason() == ChatCompletionFinishReason.TOOL_CALLS;
+		List<ToolCall> calls = message == null || message.toolCalls() == null ? List.of() : message.toolCalls();
 		String finishReason = finishReasonToMetadataValue(choice.finishReason());
-		ChatGenerationMetadata generationMetadata = ChatGenerationMetadata.builder().finishReason(finishReason)
-                .metadata(metadata)
-                .build();
-
-		var assistantMessage = AssistantMessage.builder();
-		String text = choiceMessage != null ? choiceMessage.content() : "";
-		String reasoningContent = choiceMessage != null ? choiceMessage.reasoningContent() : null;
-		if (reasoningContent != null && !reasoningContent.isEmpty()) {
-			ReasoningPart reasoning = ReasoningPart.of(reasoningContent);
-			if (streaming) {
-				assistantMessage.part(incrementalOutput ? StreamingParts.partial(reasoning, 0)
-						: StreamingParts.complete(reasoning, 0));
-			}
-			else {
-				assistantMessage.reasoning(reasoning);
-			}
+		var metadataBuilder = ChatGenerationMetadata.builder().finishReason(finishReason).metadata(metadata);
+		if (choice.finishReason() == ChatCompletionFinishReason.SENSITIVE) {
+			metadataBuilder.finishReasonCategory(FinishReasonCategory.FILTERED);
 		}
-		if (streaming) {
-			if (!text.isEmpty()) {
-				TextPart textPart = TextPart.of(text);
-				assistantMessage.part(incrementalOutput ? StreamingParts.partial(textPart, 1)
-						: StreamingParts.complete(textPart, 1));
+
+		var assistant = AssistantMessage.builder();
+		if (state == null) {
+			ReasoningPart part = DashScopeChatReasoning.fromResponse(reasoning, encrypted, summarized);
+			if (part != null) {
+				assistant.reasoning(part);
 			}
-			else {
-				assistantMessage.content("");
-			}
-			for (int index = 0; index < toolCalls.size(); index++) {
-				assistantMessage.part(StreamingParts.complete(ToolCallPart.of(toolCalls.get(index)), index + 2));
+			assistant.parts(DashScopeMessageParts.decode(content));
+			if (completeToolCall) {
+				assistant.toolCalls(calls.stream()
+					.filter(call -> call != null && call.function() != null && StringUtils.hasText(call.function().name()))
+					.map(call -> new AssistantMessage.ToolCall(call.id(), "function", call.function().name(),
+							call.function().arguments()))
+					.toList());
 			}
 		}
 		else {
-			assistantMessage.content(text).toolCalls(toolCalls);
+			var part = state.reasoning.accept(reasoning, encrypted, incremental, summarized);
+			if (part != null) {
+				assistant.part(part);
+			}
+			var contentParts = state.content.accept(content, incremental);
+			if (contentParts.isEmpty()) {
+				assistant.content("");
+			}
+			else {
+				assistant.parts(contentParts);
+			}
+			var deltas = IntStream.range(0, calls.size()).filter(position -> calls.get(position) != null)
+				.mapToObj(position -> {
+					ToolCall call = calls.get(position);
+					var function = call.function();
+					return new DashScopeToolCallStream.Delta(Objects.requireNonNullElse(call.index(), position), call.id(),
+							function != null ? function.name() : null, function != null ? function.arguments() : null);
+				}).toList();
+			assistant.parts(state.tools.accept(deltas, completeToolCall, incremental));
 		}
 
-		return new Generation(assistantMessage.build(), generationMetadata);
+		return new Generation(assistant.build(), metadataBuilder.build());
+	}
+
+	private static final class StreamChoice {
+
+		private final DashScopeMessageParts.Stream content = new DashScopeMessageParts.Stream();
+
+		private final DashScopeToolCallStream tools = new DashScopeToolCallStream(index -> this.content.nextIndex());
+
+		private final DashScopeChatReasoning.Stream reasoning = new DashScopeChatReasoning.Stream();
+
 	}
 
 	private ChatCompletion chunkToChatCompletion(ChatCompletionChunk chunk) {
@@ -397,7 +408,8 @@ public final class DashScopeChatModel implements ChatModel {
 			.input(new Input(prompt.getInstructions()
 				.stream()
 				.map(message -> toDashScopeMessage(message, multiModel,
-						!Boolean.FALSE.equals(requestOptions.getPreserveThinking())))
+						!Boolean.FALSE.equals(requestOptions.getPreserveThinking()),
+							multiModel && DashScopeChatEndpoints.supportsEncryptedThinking(requestOptions.getModel())))
 				.flatMap(List::stream)
 				.toList()))
 			.parameters(toDashScopeChatRequestParameter(requestOptions, toolDefinitions))
@@ -405,19 +417,15 @@ public final class DashScopeChatModel implements ChatModel {
 	}
 
 	private List<Input.ChatCompletionMessage> toDashScopeMessage(Message message, boolean multiModel,
-			boolean preserveThinking) {
+			boolean preserveThinking, boolean encryptedThinking) {
 		if (message.getMessageType() == MessageType.USER || message.getMessageType() == MessageType.SYSTEM) {
 			Object content = message.getText();
 			Map<String, String> cacheControl = extractCacheControl(message);
 
-			if (message instanceof UserMessage userMessage) {
-				if (!ObjectUtils.isEmpty(userMessage.getMedia())) {
-					content = convertMediaContent(userMessage, cacheControl);
-				}
-				else if (multiModel || cacheControl != null) {
-					Assert.notNull(message.getText(), "Text must not be null");
-					content = List.of(textMediaContent(message.getText(), cacheControl));
-				}
+			if (message instanceof UserMessage userMessage && (multiModel || cacheControl != null
+					|| DashScopeMessageParts.requiresBlocks(userMessage.getParts()))) {
+				content = convertMediaContent(userMessage.getParts(), userMessage.getMetadata().get(DashScopeApiConstants.MESSAGE_FORMAT),
+						cacheControl);
 			}
 			else if (message instanceof SystemMessage && cacheControl != null) {
 				Assert.notNull(message.getText(), "Text must not be null");
@@ -429,34 +437,27 @@ public final class DashScopeChatModel implements ChatModel {
 				.content(content)
 				.build());
 		}
-		if (message.getMessageType() == MessageType.TOOL) {
-            ToolResponseMessage toolMessage = (ToolResponseMessage) message;
-            Map<String, String> cacheControl = extractCacheControl(message);
-
-            toolMessage.getResponses().forEach(response -> {
-                Assert.isTrue(response.id() != null, "ToolResponseMessage must have an id");
-                Assert.isTrue(response.name() != null, "ToolResponseMessage must have a name");
-            });
-
-            List<ToolResponseMessage.ToolResponse> responses = toolMessage.getResponses();
-            return IntStream.range(0, responses.size()).mapToObj(i -> {
-                ToolResponseMessage.ToolResponse tr = responses.get(i);
-                Object content = tr.responseData();
-                if (cacheControl != null && i == responses.size() - 1) {
-                    content = List.of(new MediaContent(tr.responseData(), cacheControl));
-                }
-                return Input.ChatCompletionMessage.builder()
-                        .content(content)
-                        .role(Role.TOOL)
-                        .toolCallId(tr.id())
-                        .build();
-            }).toList();
+		if (message instanceof ToolResponseMessage toolMessage) {
+			var cacheControl = extractCacheControl(message);
+			var results = toolMessage.getResults();
+			return IntStream.range(0, results.size()).mapToObj(i -> {
+				var result = results.get(i);
+				String text = DashScopeMessageParts.toolResultText(result);
+				Object content = cacheControl != null && i == results.size() - 1
+						? List.of(new MediaContent(text, cacheControl)) : text;
+				return Input.ChatCompletionMessage.builder().role(Role.TOOL)
+					.toolCallId(DashScopeMessageParts.toolCallId(result)).content(content).build();
+			}).toList();
 		}
 		if (message.getMessageType() == MessageType.ASSISTANT) {
 			AssistantMessage assistantMessage = (AssistantMessage) message;
             Object content = assistantMessage.getText();
             Map<String, String> cacheControl = extractCacheControl(message);
-            if (cacheControl != null) {
+            if (DashScopeMessageParts.requiresBlocks(assistantMessage.getParts())) {
+                Assert.isTrue(multiModel, "DashScope assistant media and provider blocks require a multimodal endpoint");
+                content = convertMediaContent(assistantMessage.getParts(), null, cacheControl);
+            }
+            else if (cacheControl != null) {
                 content = List.of(new MediaContent(assistantMessage.getText(), cacheControl));
             }
 
@@ -475,25 +476,20 @@ public final class DashScopeChatModel implements ChatModel {
 				.toolCalls(toolCalls)
 				.partial(partial);
 			if (preserveThinking) {
-				String reasoning = replayReasoning(assistantMessage);
+				String reasoning = DashScopeChatReasoning.reasoningContent(assistantMessage);
 				if (StringUtils.hasText(reasoning)) {
 					builder.reasoningContent(reasoning);
+				}
+				if (encryptedThinking) {
+					String encrypted = DashScopeChatReasoning.encryptedContent(assistantMessage);
+					if (encrypted != null) {
+						builder.encryptedContent(encrypted);
+					}
 				}
 			}
 			return List.of(builder.build());
 		}
 		throw new IllegalArgumentException("Unsupported message type: " + message.getMessageType());
-	}
-
-	private String replayReasoning(AssistantMessage message) {
-		if (!message.getReasoning().isEmpty()) {
-			return message.getReasoning().stream()
-				.filter(part -> part.replayableTo(DashScopeApiConstants.PROVIDER_NAME))
-				.filter(part -> part.payload() == null)
-				.map(part -> Objects.requireNonNullElse(part.text(), ""))
-				.collect(Collectors.joining());
-		}
-		return message.getMetadata().get("reasoningContent") instanceof String legacy ? legacy : "";
 	}
 
 	private static @Nullable Boolean parsePartial(@Nullable Object partial) {
@@ -549,16 +545,21 @@ public final class DashScopeChatModel implements ChatModel {
 		return null;
 	}
 
-	private List<MediaContent> convertMediaContent(UserMessage message, @Nullable Map<String, String> cacheControl) {
-		List<MediaContent> content = new ArrayList<>();
+	private List<Object> convertMediaContent(List<MessagePart> parts, @Nullable Object configuredFormat,
+			@Nullable Map<String, String> cacheControl) {
+		List<Object> content = new ArrayList<>();
 		List<String> videoFrames = new ArrayList<>();
-		Object configuredFormat = message.getMetadata().get(DashScopeApiConstants.MESSAGE_FORMAT);
 		int lastText = -1;
-		for (MessagePart part : message.getParts()) {
-			if (part instanceof MediaPart mediaPart) {
+		for (MessagePart part : parts) {
+			var block = DashScopeMessageParts.replayBlock(part);
+			if (block != null) {
+				flushVideoFrames(content, videoFrames);
+				content.add(block);
+			}
+			else if (part instanceof MediaPart mediaPart) {
 				Media media = mediaPart.media();
 				MimeType mimeType = media.getMimeType();
-				String data = fromMediaData(mimeType, media.getData());
+				String data = DashScopeMessageParts.mediaData(media);
 				if (configuredFormat == MessageFormat.VIDEO && "image".equals(mimeType.getType())) {
 					videoFrames.add(data);
 					continue;
@@ -572,7 +573,8 @@ public final class DashScopeChatModel implements ChatModel {
 							case "audio" -> MessageFormat.AUDIO;
 							default -> null;
 						};
-				content.add(format == null ? builder.text(data).build() : switch (format) {
+				Assert.notNull(format, "Unsupported DashScope chat media type: " + mimeType);
+				content.add(switch (format) {
 					case IMAGE -> builder.image(data).build();
 					case VIDEO -> builder.video(data).build();
 					case AUDIO -> builder.audio(data).build();
@@ -587,14 +589,15 @@ public final class DashScopeChatModel implements ChatModel {
 		flushVideoFrames(content, videoFrames);
 		if (cacheControl != null && !content.isEmpty()) {
 			int index = lastText >= 0 ? lastText : content.size() - 1;
-			MediaContent part = content.get(index);
-			content.set(index, new MediaContent(part.type(), part.text(), part.image(), part.video(), part.audio(),
-					cacheControl));
+			if (content.get(index) instanceof MediaContent part) {
+				content.set(index, new MediaContent(part.type(), part.text(), part.image(), part.video(), part.audio(),
+						cacheControl));
+			}
 		}
 		return content;
 	}
 
-	private static void flushVideoFrames(List<MediaContent> content, List<String> videoFrames) {
+	private static void flushVideoFrames(List<Object> content, List<String> videoFrames) {
 		if (!videoFrames.isEmpty()) {
 			content.add(MediaContent.builder().video(List.copyOf(videoFrames)).build());
 			videoFrames.clear();
@@ -605,22 +608,12 @@ public final class DashScopeChatModel implements ChatModel {
 		return MediaContent.builder().text(text).cacheControl(cacheControl).build();
 	}
 
-	private String fromMediaData(MimeType mimeType, Object mediaContentData) {
-		if (mediaContentData instanceof byte[] bytes) {
-			return String.format("data:%s;base64,%s", mimeType, Base64.getEncoder().encodeToString(bytes));
-		}
-		if (mediaContentData instanceof String text) {
-			return text;
-		}
-		throw new IllegalArgumentException(
-				"Unsupported media data type: " + mediaContentData.getClass().getSimpleName());
-	}
-
 	private Parameters toDashScopeChatRequestParameter(DashScopeChatOptions options,
 			List<ToolDefinition> toolDefinitions) {
 		String resultFormat = options.getResultFormat();
-		if (resultFormat == null && !Boolean.TRUE.equals(options.getMultiModel())
-				&& CollectionUtils.isEmpty(options.getSkill())) {
+		if (resultFormat == null && CollectionUtils.isEmpty(options.getSkill())
+				&& (!isMultiModel(options) || !toolDefinitions.isEmpty() || !CollectionUtils.isEmpty(options.getTools())
+						|| options.getThinkingDisplay() != null)) {
 			resultFormat = DEFAULT_RESULT_FORMAT;
 		}
 

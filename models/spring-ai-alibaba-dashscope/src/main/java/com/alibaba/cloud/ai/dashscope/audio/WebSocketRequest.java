@@ -876,7 +876,7 @@ public class WebSocketRequest {
             return RequestPayloadParameters.builder()
                     .volume(options.getVolume())
                     .textType(options.getTextType())
-                    .voice(options.getVoice())
+                    .voice(options.requireVoice())
                     .sampleRate(options.getSampleRate())
                     .rate(options.getRate())
                     .format(options.getFormat())

@@ -42,6 +42,19 @@ public class DashScopeAudioTranscriptionPrompt extends AudioTranscriptionPrompt 
     }
 
     @SuppressWarnings("NullAway")
+    private DashScopeAudioTranscriptionPrompt(AudioTranscriptionOptions options,
+            List<TranscriptionUserMessage> messages, @Nullable List<String> fileUrls) {
+        super(null, options);
+        this.messages = List.copyOf(messages);
+        this.fileUrls = fileUrls;
+    }
+
+    public static DashScopeAudioTranscriptionPrompt withMessages(AudioTranscriptionOptions options,
+            List<TranscriptionUserMessage> messages) {
+        return new DashScopeAudioTranscriptionPrompt(options, messages, null);
+    }
+
+    @SuppressWarnings("NullAway")
     public DashScopeAudioTranscriptionPrompt(AudioTranscriptionOptions options, List<String> fileUrls) {
         super(null, options);
         this.messages = null;
@@ -59,13 +72,18 @@ public class DashScopeAudioTranscriptionPrompt extends AudioTranscriptionPrompt 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class TranscriptionUserMessage {
         @JsonProperty("role")
-        private String role = "user";
+        private final String role;
 
         @JsonProperty("content")
         private List<Content> content;
 
         public TranscriptionUserMessage(List<Content> content) {
-            this.content = content;
+            this("user", content);
+        }
+
+        public TranscriptionUserMessage(String role, List<Content> content) {
+            this.role = role;
+            this.content = List.copyOf(content);
         }
 
         public String getRole() {
@@ -86,6 +104,18 @@ public class DashScopeAudioTranscriptionPrompt extends AudioTranscriptionPrompt 
 
             @JsonProperty("video_url")
             private @Nullable VideoUrl videoUrl;
+
+            @JsonProperty("text")
+            private @Nullable String text;
+
+            public Content(String type, String text) {
+                this.type = type;
+                this.text = text;
+            }
+
+            public @Nullable String getText() {
+                return this.text;
+            }
 
             public Content(String type, InputAudio inputAudio) {
                 this.type = type;

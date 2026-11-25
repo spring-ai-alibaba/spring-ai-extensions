@@ -27,19 +27,29 @@ public class DashScopeModel {
 
     /**
      * Spring AI Alibaba DashScope implements all models that support the dashscope
-     * platform, and only the Qwen series models are listed here. For more model options,
+     * platform. For more model options,
      * refer to: <a href="https://help.aliyun.com/zh/model-studio/models">Model List</a>
      */
     public enum ChatModel implements ChatModelDescription {
 
         QWEN_PLUS("qwen-plus"),
         QWEN_MAX("qwen-max"),
+        QWEN4_MAX("qwen4-max"),
+        QWEN38_MAX("qwen3.8-max"),
+        QWEN38_FLASH("qwen3.8-flash"),
+        QWEN37_PLUS("qwen3.7-plus"),
+        QWEN37_FLASH("qwen3.7-flash"),
         QWEN37_MAX("qwen3.7-max"),
         QWEN36_PLUS("qwen3.6-plus"),
         QWEN36_FLASH("qwen3.6-flash"),
         DEEPSEEK_V4_PRO("deepseek-v4-pro"),
         DEEPSEEK_V4_FLASH("deepseek-v4-flash"),
+        GLM_53("glm-5.3"),
+        GLM_52("glm-5.2"),
         GLM_51("glm-5.1"),
+        KIMI_K31_PRO("kimi-k3.1-pro"),
+        KIMI_K3("kimi-k3"),
+        KIMI_K27_CODE("kimi-k2.7-code"),
         KIMI_K26("kimi-k2.6"),
         MINIMAX_M25("MinMax-M2.5"),
         MIMO_V25_PRO("mimo-v2.5-pro"),
@@ -76,6 +86,12 @@ public class DashScopeModel {
         COSYVOICE_V2("cosyvoice-v2"),
 		COSYVOICE_V3_FLASH("cosyvoice-v3-flash"),
 		COSYVOICE_V3_PLUS("cosyvoice-v3-plus"),
+        COSYVOICE_V35_PLUS("cosyvoice-v3.5-plus"),
+        COSYVOICE_V35_FLASH("cosyvoice-v3.5-flash"),
+        QWEN_AUDIO_31_TTS_FLASH("qwen-audio-3.1-tts-flash"),
+        QWEN_AUDIO_31_TTS_PLUS("qwen-audio-3.1-tts-plus"),
+        QWEN_AUDIO_30_TTS_FLASH("qwen-audio-3.0-tts-flash"),
+        QWEN_AUDIO_30_TTS_PLUS("qwen-audio-3.0-tts-plus"),
         // =============== COSY VOICE Model ===============
 
         // =============== SAMBERT Model ===============
@@ -163,6 +179,12 @@ public class DashScopeModel {
         // =============== 录音文件识别 Model ===============
 
         // =============== 千问ASR Model ===============
+        QWEN_AUDIO_31_ASR_FLASH_STREAMING("qwen-audio-3.1-asr-flash-streaming"),
+        QWEN_AUDIO_31_ASR_FLASH_MESSAGE("qwen-audio-3.1-asr-flash-message"),
+        QWEN_AUDIO_31_ASR_FLASH("qwen-audio-3.1-asr-flash"),
+        QWEN_AUDIO_31_ASR_FLASH_FILETRANS("qwen-audio-3.1-asr-flash-filetrans"),
+        QWEN_AUDIO_30_ASR_FLASH("qwen-audio-3.0-asr-flash"),
+        QWEN_AUDIO_30_ASR_FLASH_FILETRANS("qwen-audio-3.0-asr-flash-filetrans"),
         QWEN3_ASR_FLASH_FILETRANS("qwen3-asr-flash-filetrans"),
         QWEN3_ASR_FLASH("qwen3-asr-flash"),
         QWEN3_ASR_FLASH_US("qwen3-asr-flash-us"),
@@ -264,6 +286,10 @@ public class DashScopeModel {
     public enum ImageModel {
 
         // =============== Qwen Image Model ===============
+        QWEN_IMAGE_3_0_PRO("qwen-image-3.0-pro"),
+        QWEN_IMAGE_3_0("qwen-image-3.0"),
+        QWEN_IMAGE_2_1_PRO("qwen-image-2.1-pro"),
+        QWEN_IMAGE_2_1_TURBO("qwen-image-2.1-turbo"),
         QWEN_IMAGE_2_0_PRO("qwen-image-2.0-pro"),
         QWEN_IMAGE_2_0("qwen-image-2.0"),
         QWEN_IMAGE_MAX("qwen-image-max"),
@@ -349,6 +375,11 @@ public class DashScopeModel {
     }
 
     public enum VideoModel {
+        WAN30_VIDEO("wan3.0-video"),
+        WAN27_T2V("wan2.7-t2v"),
+        WAN27_I2V("wan2.7-i2v"),
+        WAN27_R2V("wan2.7-r2v"),
+        WAN27_VIDEO_EDIT("wan2.7-videoedit"),
 
         WANX21_I2V_TURBO("wanx2.1-i2v-turbo"),
         WANX21_I2V_PLUS("wanx2.1-i2v-plus"),

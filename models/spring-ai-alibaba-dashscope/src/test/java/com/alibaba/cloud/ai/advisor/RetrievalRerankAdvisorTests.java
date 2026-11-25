@@ -22,7 +22,6 @@ import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -60,7 +59,6 @@ import static org.mockito.Mockito.when;
  * @author brianxiadong
  * @since 1.0.0-M5.1
  */
-@Disabled("1.0.0-RC1 API removed, test class needs refactoring")
 @ExtendWith(MockitoExtension.class)
 class RetrievalRerankAdvisorTests {
 
@@ -266,6 +264,8 @@ class RetrievalRerankAdvisorTests {
 
 		// Set Mock behavior
 		when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of(testDocument));
+		when(rerankModel.call(any(RerankRequest.class))).thenReturn(new RerankResponse(List.of(
+			DocumentWithScore.builder().withDocument(testDocument).withScore(0.8).build())));
 		when(callChain.nextCall(any())).thenReturn(mockResponse);
 
 		// Execute test

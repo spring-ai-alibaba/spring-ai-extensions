@@ -95,6 +95,8 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 
 	private final JsonMapper jsonMapper;
 
+	private final @Nullable Integer configuredDimensions;
+
 	private volatile @Nullable Integer collectionDimensions;
 
 	private final Integer defaultTopK;
@@ -111,6 +113,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 		this.defaultSimilarityThreshold = builder.defaultSimilarityThreshold;
 		this.defaultTopK = builder.defaultTopK;
 		this.initializeSchema = builder.initializeSchema;
+		this.configuredDimensions = builder.dimensions;
 	}
 
 	public static Builder builder(String collectionName, AnalyticDbConfig config, Client client,
@@ -124,7 +127,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 	private void initialize() throws Exception {
 		initializeVectorDataBase();
 		createNameSpaceIfNotExists();
-		createCollectionIfNotExists((long) this.embeddingModel.dimensions());
+		createCollectionIfNotExists();
 	}
 
 	private void initializeVectorDataBase() throws Exception {
@@ -164,14 +167,16 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 		}
 	}
 
-	private void createCollectionIfNotExists(Long embeddingDimension) throws Exception {
+	private void createCollectionIfNotExists() throws Exception {
 		try {
 			this.collectionDimensions = this.client.describeCollection(describeCollectionRequest()).getBody().getDimension();
 			logger.debug("collection{}already exists", this.collectionName);
 		}
 		catch (TeaException e) {
 			if (Objects.equals(e.getStatusCode(), 404)) {
-				// Collection does not exist, create it
+				long embeddingDimension = this.configuredDimensions != null ? this.configuredDimensions
+						: this.embeddingModel.dimensions();
+				Assert.state(embeddingDimension > 0, "AnalyticDB collection must have a positive vector dimension");
 				ObjectNode metadataNode = jsonMapper.createObjectNode();
 				metadataNode.put(REF_DOC_NAME, "text");
 				metadataNode.put(CONTENT_FIELD_NAME, "text");
@@ -254,6 +259,9 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 	}
 
 	private synchronized int getCollectionDimensions() {
+		if (this.configuredDimensions != null) {
+			return this.configuredDimensions;
+		}
 		if (this.collectionDimensions == null) {
 			try {
 				var response = this.client.describeCollection(describeCollectionRequest());
@@ -418,7 +426,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 			.collectionName(this.collectionName)
 			.namespace(Objects.requireNonNullElse(this.config.getNamespace(), ""))
 			.similarityMetric(this.config.getMetrics());
-		Integer dimensions = this.collectionDimensions;
+		Integer dimensions = this.configuredDimensions != null ? this.configuredDimensions : this.collectionDimensions;
 		if (dimensions != null) {
 			builder.dimensions(dimensions);
 		}
@@ -443,6 +451,8 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 		private int defaultTopK = DEFAULT_TOP_K;
 
 		private Double defaultSimilarityThreshold = DEFAULT_SIMILARITY_THRESHOLD;
+
+		private @Nullable Integer dimensions;
 
 		private boolean initializeSchema = false;
 
@@ -479,6 +489,16 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 			Assert.isTrue(defaultSimilarityThreshold >= 0.0 && defaultSimilarityThreshold <= 1.0,
 					"The similarity threshold must be in range [0.0:1.00].");
 			this.defaultSimilarityThreshold = defaultSimilarityThreshold;
+			return this;
+		}
+
+		/**
+		 * Set the vector dimension for a preconfigured collection or a new schema.
+		 * Omit it to use an existing collection's dimension.
+		 */
+		public Builder dimensions(@Nullable Integer dimensions) {
+			Assert.isTrue(dimensions == null || dimensions > 0, "AnalyticDB collection must have a positive vector dimension");
+			this.dimensions = dimensions;
 			return this;
 		}
 

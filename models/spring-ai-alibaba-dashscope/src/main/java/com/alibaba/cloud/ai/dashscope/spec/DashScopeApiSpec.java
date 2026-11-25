@@ -1244,7 +1244,12 @@ public class DashScopeApiSpec {
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record RerankRequestParameter(@JsonProperty("top_n") Integer topN,
-                                         @JsonProperty("return_documents") Boolean returnDocuments) {
+                                         @JsonProperty("return_documents") @Nullable Boolean returnDocuments,
+                                         @JsonProperty("instruct") @Nullable String instruct) {
+
+        public RerankRequestParameter(Integer topN, Boolean returnDocuments) {
+            this(topN, returnDocuments, null);
+        }
     }
 
     /**
@@ -1258,6 +1263,11 @@ public class DashScopeApiSpec {
     public record RerankRequest(@JsonProperty("model") String model, @JsonProperty("input") RerankRequestInput input,
                                 @JsonProperty("parameters") RerankRequestParameter parameters) {
     }
+
+    public record MultimodalRerankRequest(String model, MultimodalRerankInput input,
+                                          RerankRequestParameter parameters) { }
+
+    public record MultimodalRerankInput(String query, List<Object> documents) { }
 
     /**
      * Represents rerank output result

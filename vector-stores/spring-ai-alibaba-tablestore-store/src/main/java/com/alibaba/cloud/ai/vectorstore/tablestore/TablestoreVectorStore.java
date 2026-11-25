@@ -70,7 +70,7 @@ public class TablestoreVectorStore extends AbstractObservationVectorStore implem
 
 	@Override
 	protected void doUpsert(List<EmbeddedDocument> documents) {
-		int dimensions = this.knowledgeStore.getEmbeddingDimension();
+		int dimensions = getVectorDimensions();
 		boolean multiTenant = this.knowledgeStore.enableMultiTenant();
 		var rows = documents.stream().map(embedded -> {
 			float[] embedding = embedded.embedding();
@@ -113,8 +113,14 @@ public class TablestoreVectorStore extends AbstractObservationVectorStore implem
 
 	@Override
 	protected List<Document> doSimilaritySearch(float[] queryEmbedding, SearchRequest request) {
-		checkDimensions("query", queryEmbedding.length, this.knowledgeStore.getEmbeddingDimension());
+		checkDimensions("query", queryEmbedding.length, getVectorDimensions());
 		return search(queryEmbedding, request);
+	}
+
+	private int getVectorDimensions() {
+		Integer dimensions = this.knowledgeStore.getEmbeddingDimension();
+		Assert.state(dimensions != null && dimensions > 0, "Tablestore index must have a positive vector dimension");
+		return dimensions;
 	}
 
 	private List<Document> search(float[] queryEmbedding, SearchRequest request) {
@@ -141,7 +147,10 @@ public class TablestoreVectorStore extends AbstractObservationVectorStore implem
 				operationName);
 		builder.namespace(knowledgeStore.getTableName());
 		builder.collectionName(knowledgeStore.getSearchIndexName());
-		builder.dimensions(knowledgeStore.getEmbeddingDimension());
+		Integer dimensions = this.knowledgeStore.getEmbeddingDimension();
+		if (dimensions != null && dimensions > 0) {
+			builder.dimensions(dimensions);
+		}
 		builder.fieldName(knowledgeStore.getEmbeddingField());
 		builder.similarityMetric(knowledgeStore.getEmbeddingMetricType().name());
 		return builder;

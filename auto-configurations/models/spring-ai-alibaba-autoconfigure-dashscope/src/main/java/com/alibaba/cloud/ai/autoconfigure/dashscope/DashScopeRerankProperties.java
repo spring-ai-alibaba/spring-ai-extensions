@@ -40,7 +40,17 @@ public class DashScopeRerankProperties extends DashScopeParentProperties {
     /**
      * Default DashScope rerank model.
      */
-    public static final String DEFAULT_RERANK_MODEL = "gte-rerank";
+    private @Nullable String instruct;
+
+    public @Nullable String getInstruct() {
+        return this.instruct;
+    }
+
+    public void setInstruct(@Nullable String instruct) {
+        this.instruct = instruct;
+    }
+
+    public static final String DEFAULT_RERANK_MODEL = "qwen3-rerank";
 
     /**
      * Default rerank path.
@@ -90,6 +100,7 @@ public class DashScopeRerankProperties extends DashScopeParentProperties {
                 .model(this.model)
                 .topN(this.topN)
                 .returnDocuments(this.returnDocuments)
+                .instruct(this.instruct)
                 .build();
     }
 

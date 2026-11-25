@@ -17,21 +17,17 @@
 package com.alibaba.cloud.ai.dashscope.api;
 
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.jspecify.annotations.Nullable;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.AsrOutPut;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.AsrResponse;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.AsrResponse.Output.Result;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.AsrTranscriptionRequest;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.DashScopeAudioAsrTranscriptionResponse;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions;
@@ -43,12 +39,15 @@ import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.alibaba.cloud.ai.dashscope.api.asr.DashScopeWebSocketAsrApi;
 import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.audio.transcription.AudioTranscription;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
+import org.springframework.ai.audio.transcription.AudioTranscriptionResponseMetadata;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.NoopApiKey;
 import org.springframework.ai.retry.RetryUtils;
@@ -56,6 +55,7 @@ import org.springframework.ai.util.JacksonUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
+import org.springframework.http.MediaType;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -64,6 +64,7 @@ import reactor.core.publisher.Mono;
 
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ENABLED;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_ASYNC;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_SSE;
 
 /**
  * Turn audio into text or text into audio. Based on <a href=
@@ -96,6 +97,8 @@ public class DashScopeAudioTranscriptionApi {
 	private final DashScopeWebSocketAsrApi webSocketAsrApi;
 
     private final RestClient restClient;
+
+    private final RestClient downloadClient = RestClient.create();
 
     private final WebClient webClient;
 
@@ -250,6 +253,7 @@ public class DashScopeAudioTranscriptionApi {
             DashScopeAudioTranscriptionPrompt prompt,
             DashScopeAudioTranscriptionOptions options) {
 
+        Assert.notEmpty(prompt.getFileUrls(), "At least one publicly accessible audio file URL is required");
         AsrTranscriptionRequest asrReq = AsrTranscriptionRequest.builder()
                 .model(options.getModel())
                 .input(AsrTranscriptionRequest.Input.builder()
@@ -267,10 +271,24 @@ public class DashScopeAudioTranscriptionApi {
                         .build())
                 .resources(options.getResources())
                 .build();
+        String model = Objects.requireNonNull(options.getModel(), "ASR model is required");
+        Object requestBody = asrReq;
+        if (DashScopeAudioApiConstants.isQwenFileTranscription(model)) {
+            var urls = Objects.requireNonNull(prompt.getFileUrls());
+            Assert.isTrue(urls.size() == 1, "Qwen file transcription requires exactly one URL");
+            var input = model.startsWith("qwen-audio-") ? Map.of("file_urls", urls)
+                    : Map.of("file_url", urls.get(0));
+            Map<String, Object> parameters = new LinkedHashMap<>();
+            parameters.put("channel_id", options.getChannelId());
+            parameters.put("diarization_enabled", options.getDiarizationEnabled());
+            parameters.put("speaker_count", options.getSpeakerCount());
+            parameters.values().removeIf(Objects::isNull);
+            requestBody = Map.of("model", model, "input", input, "parameters", parameters);
+        }
         ResponseEntity<AsrOutPut> response = this.restClient.post()
                 .uri(DashScopeAudioApiConstants.ASR_TRANSCRIPTION)
                 .header(HEADER_ASYNC, ENABLED)
-                .body(asrReq)
+                .body(requestBody)
                 .retrieve()
                 .toEntity(AsrOutPut.class);
         String taskId;
@@ -284,85 +302,110 @@ public class DashScopeAudioTranscriptionApi {
             throw new RuntimeException("Failed to call ASR transcription: " + response.getStatusCode());
         }
 
-        int attempts = 0;
-        while (attempts < MAX_POLL_ATTEMPTS) {
-            ResponseEntity<AsrResponse> asrResponse = this.restClient.post()
-                    .uri("/api/v1/tasks" + "/{taskId}", taskId)
-                    .body(Collections.emptyMap()) // 使用 Collections.emptyMap() 传递空请求体
-                    .retrieve()
-                    .toEntity(AsrResponse.class);
-
-
-            if (!asrResponse.getStatusCode().is2xxSuccessful()) {
-                throw new RuntimeException("Failed to get ASR transcription: " + asrResponse.getStatusCode());
+        Assert.hasText(taskId, "DashScope did not return a transcription task ID");
+        for (int attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+            JsonNode responseBody = this.restClient.get().uri("/api/v1/tasks/{taskId}", taskId)
+                    .retrieve().body(JsonNode.class);
+            Assert.notNull(responseBody, "ASR polling response body must not be null");
+            JsonNode output = responseBody.path("output");
+            String status = output.path("task_status").asString();
+            if ("SUCCEEDED".equals(status)) {
+                return transcriptionResult(output, taskId);
             }
-
-            AsrResponse body = asrResponse.getBody();
-            Assert.notNull(body, "ASR polling response body must not be null");
-            Assert.notNull(body.output(), "ASR polling response output must not be null");
-            String taskStatus = body.output().taskStatus();
-
-            if ("SUCCEEDED".equals(taskStatus)) {
-                return parseAsrResponse(body);
-            } else if ("FAILED".equals(taskStatus)) {
-                throw new RuntimeException("ASR transcription task failed");
-            } else if ("PENDING".equals(taskStatus) || "RUNNING".equals(taskStatus)) {
-                attempts++;
-                try {
-                    Thread.sleep(POLL_INTERVAL_MS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException("ASR transcription polling interrupted", e);
-                }
-            } else {
-                log.warn("Unknown task status: " + taskStatus);
-                attempts++;
-                try {
-                    Thread.sleep(POLL_INTERVAL_MS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException("ASR transcription polling interrupted", e);
-                }
+            if (!"PENDING".equals(status) && !"RUNNING".equals(status)) {
+                throw new IllegalStateException("ASR task " + taskId + " failed: " + status);
+            }
+            try {
+                Thread.sleep(POLL_INTERVAL_MS);
+            }
+            catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("ASR transcription polling interrupted. Task ID " + taskId, exception);
             }
         }
-
-        throw new RuntimeException("ASR transcription timeout after " + MAX_POLL_ATTEMPTS + " attempts");
+        throw new IllegalStateException("ASR transcription timed out. Task ID " + taskId);
     }
 
-    private DashScopeAudioAsrTranscriptionResponse parseAsrResponse(AsrResponse asrResponse) {
-        List<DashScopeAudioAsrTranscriptionResponse.TranscriptionResult> allResults = new ArrayList<>();
-
-        if (asrResponse.output() != null && asrResponse.output().results() != null) {
-            for (Result result : asrResponse.output().results()) {
-                log.debug("file_url: {}, subtask_status: {}", result.fileUrl(), result.subtaskStatus());
-
-                if ("SUCCEEDED".equals(result.subtaskStatus()) && result.transcriptionUrl() != null) {
-                    try {
-                        // Use Java's HttpClient directly to access signed OSS URL without extra headers
-                        HttpClient httpClient = HttpClient.newHttpClient();
-                        HttpRequest httpRequest = HttpRequest.newBuilder()
-                                .uri(URI.create(result.transcriptionUrl()))
-                                .GET()
-                                .build();
-
-                        HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-                        String responseBody = httpResponse.body();
-
-                        // Parse the JSON response using JsonMapper
-                        DashScopeAudioAsrTranscriptionResponse.TranscriptionResult transcriptionResult =
-                                jsonMapper.readValue(responseBody, DashScopeAudioAsrTranscriptionResponse.TranscriptionResult.class);
-
-                        if (transcriptionResult != null) {
-                            allResults.add(transcriptionResult);
-                        }
-                    } catch (Exception e) {
-                        log.error("Failed to parse transcription result from URL: {}", result.transcriptionUrl(), e);
-                    }
-                }
-            }
+    private AudioTranscriptionResponse transcriptionResult(JsonNode output, String taskId) {
+        var results = new ArrayList<DashScopeAudioAsrTranscriptionResponse.TranscriptionResult>();
+        var result = output.path("result");
+        if (result.hasNonNull("transcription_url")) {
+            results.add(downloadTranscription(result.path("transcription_url").asString(), taskId));
         }
+        for (JsonNode item : output.path("results")) {
+            if (!"SUCCEEDED".equals(item.path("subtask_status").asString())
+                    || !item.hasNonNull("transcription_url")) {
+                throw new IllegalStateException("ASR subtask failed for task " + taskId);
+            }
+            results.add(downloadTranscription(item.path("transcription_url").asString(), taskId));
+        }
+        if (results.isEmpty()) {
+            throw new IllegalStateException("No transcription result for task " + taskId);
+        }
+        return new DashScopeAudioAsrTranscriptionResponse(results);
+    }
 
-        return new DashScopeAudioAsrTranscriptionResponse(allResults);
+    private DashScopeAudioAsrTranscriptionResponse.TranscriptionResult downloadTranscription(String url, String taskId) {
+        return Objects.requireNonNull(this.downloadClient.get().uri(URI.create(url)).retrieve()
+                .body(DashScopeAudioAsrTranscriptionResponse.TranscriptionResult.class),
+                "Empty ASR transcription result. Task ID " + taskId);
+    }
+
+    public AudioTranscriptionResponse callQwenAudioAsr(DashScopeAudioTranscriptionPrompt prompt,
+            DashScopeAudioTranscriptionOptions options) {
+        JsonNode body = this.restClient.post().uri(DashScopeAudioApiConstants.MULTIMODAL_GENERATION)
+                .body(qwenAudioAsrRequest(prompt, options)).retrieve().body(JsonNode.class);
+        return qwenAudioTranscription(Objects.requireNonNull(body));
+    }
+
+    public Flux<AudioTranscriptionResponse> streamQwenAudioAsr(DashScopeAudioTranscriptionPrompt prompt,
+            DashScopeAudioTranscriptionOptions options) {
+        return this.webClient.post().uri(DashScopeAudioApiConstants.MULTIMODAL_GENERATION)
+                .accept(MediaType.TEXT_EVENT_STREAM).header(HEADER_SSE, ENABLED)
+                .bodyValue(qwenAudioAsrRequest(prompt, options)).retrieve().bodyToFlux(String.class)
+                .takeWhile(frame -> !"[DONE]".equals(frame))
+                .map(frame -> qwenAudioTranscription(this.jsonMapper.readTree(frame)));
+    }
+
+    private static Map<String, Object> qwenAudioAsrRequest(DashScopeAudioTranscriptionPrompt prompt,
+            DashScopeAudioTranscriptionOptions options) {
+        var messages = prompt.getMessages();
+        Assert.notEmpty(messages, "Qwen Audio ASR requires an input_audio message");
+        Map<String, Object> parameters = new LinkedHashMap<>();
+        parameters.put("format", options.getFormat());
+        Integer sampleRate = options.getSampleRate();
+        parameters.put("sample_rate", sampleRate == null ? null : sampleRate.toString());
+        parameters.put("diarization_enabled", options.getDiarizationEnabled());
+        parameters.values().removeIf(Objects::isNull);
+        var nativeMessages = messages.stream()
+                .map(message -> Map.of("role", message.getRole(), "content", message.getContent().stream()
+                        .map(part -> {
+                            var audio = part.getInputAudio();
+                            if (audio != null) {
+                                return Map.of("type", "input_audio", "input_audio", Map.of("data", audio.getData()));
+                            }
+                            Assert.hasText(part.getText(), "Qwen Audio ASR history must contain text");
+                            return Map.of("type", part.getType(), "text", Objects.requireNonNull(part.getText()));
+                        }).toList())).toList();
+        return Map.of("model", Objects.requireNonNull(options.getModel()), "input", Map.of("messages", nativeMessages),
+                "parameters", parameters);
+    }
+
+    private static AudioTranscriptionResponse qwenAudioTranscription(JsonNode payload) {
+        JsonNode output = payload.path("output");
+        if (!output.isObject() || payload.hasNonNull("code")) {
+            throw new IllegalStateException("DashScope Audio ASR failed: " + payload.path("code").asString()
+                    + " (request_id=" + payload.path("request_id").asString() + ")");
+        }
+        var metadata = new AudioTranscriptionResponseMetadata();
+        metadata.put("request_id", payload.path("request_id").asString());
+        if (output.hasNonNull("sentence")) {
+            metadata.put("sentence", output.path("sentence"));
+        }
+        if (output.hasNonNull("sentences")) {
+            metadata.put("sentences", output.path("sentences"));
+        }
+        return new AudioTranscriptionResponse(new AudioTranscription(output.path("text").asString("")), metadata);
     }
 
     public AudioTranscriptionResponse callQwenAsr(DashScopeAudioTranscriptionPrompt prompt, DashScopeAudioTranscriptionOptions options) {

@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.dashscope.rag;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -24,8 +25,13 @@ import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -36,13 +42,32 @@ public class DashScopeCloudStore implements VectorStore {
 
 	private final DashScopeStoreOptions options;
 
-	private final DashScopeApi dashScopeApi;
+	private final @Nullable DashScopeRagApi ragApi;
+
+	private final @Nullable DashScopeApi dashScopeApi;
+
+	private final @Nullable String indexId;
 
 	public DashScopeCloudStore(DashScopeApi dashScopeApi, DashScopeStoreOptions options) {
 		Assert.notNull(options, "DashScopeStoreOptions must not be null");
 		Assert.notNull(options.getIndexName(), "IndexName must not be null");
 		this.options = options;
 		this.dashScopeApi = dashScopeApi;
+		this.ragApi = null;
+		this.indexId = null;
+	}
+
+
+	/**
+	 * Connects to an existing knowledge base through the workspace RAG gateway.
+	 * Document IDs supplied to add must be data center file IDs.
+	 */
+	public DashScopeCloudStore(DashScopeRagApi ragApi, String indexId, DashScopeStoreOptions options) {
+		Assert.hasText(indexId, "A knowledge base ID is required");
+		this.options = options;
+		this.ragApi = ragApi;
+		this.indexId = indexId;
+		this.dashScopeApi = null;
 	}
 
 	@Override
@@ -66,20 +91,30 @@ public class DashScopeCloudStore implements VectorStore {
 		if (documentIdList == null || documentIdList.isEmpty()) {
 			throw new DashScopeException("document's id must not be null");
 		}
-		dashScopeApi.upsertPipeline(documents, options);
+		if (this.ragApi != null) {
+			var job = this.ragApi.submitImport(Objects.requireNonNull(this.indexId), documentIdList);
+			this.ragApi.awaitImport(Objects.requireNonNull(this.indexId), job.ingestionId(), Duration.ofMinutes(5), Duration.ofSeconds(2));
+			return;
+		}
+		legacyApi().upsertPipeline(documents, this.options);
 	}
 
 	@Override
 	public void delete(List<String> idList) {
-		String pipelineId = dashScopeApi.getPipelineIdByName(options.getIndexName());
+		if (this.ragApi != null) {
+			this.ragApi.deleteDocuments(Objects.requireNonNull(this.indexId), idList);
+			return;
+		}
+		String pipelineId = legacyApi().getPipelineIdByName(options.getIndexName());
 		if (pipelineId == null) {
 			throw new DashScopeException("Index:" + options.getIndexName() + " NotExist");
 		}
-		dashScopeApi.deletePipelineDocument(pipelineId, idList);
+		legacyApi().deletePipelineDocument(pipelineId, idList);
 	}
 
 	@Override
 	public void delete(Filter.Expression filterExpression) {
+		throw new UnsupportedOperationException("Bailian deletion requires explicit knowledge base document IDs");
 	}
 
 	@Override
@@ -96,7 +131,24 @@ public class DashScopeCloudStore implements VectorStore {
 
 	@Override
 	public List<Document> similaritySearch(SearchRequest request) {
-		String pipelineId = dashScopeApi.getPipelineIdByName(options.getIndexName());
+		if (this.ragApi != null) {
+			var filters = new ArrayList<Map<String, Object>>();
+			var configured = this.options.getRetrieverOptions();
+			if (configured != null && configured.getSearchFilters() != null) {
+				filters.addAll(configured.getSearchFilters());
+			}
+			if (request.getFilterExpression() != null) {
+				filters.add(searchFilter(request.getFilterExpression()));
+			}
+			return this.ragApi.retrieve(Objects.requireNonNull(this.indexId), request.getQuery(), request.getTopK(), filters).stream()
+				.filter(document -> request.getSimilarityThreshold() <= 0
+						|| document.getScore() != null && document.getScore() >= request.getSimilarityThreshold())
+				.limit(request.getTopK()).toList();
+		}
+		if (request.getFilterExpression() != null) {
+			throw new UnsupportedOperationException("Use the workspace RAG gateway for SearchRequest filters");
+		}
+		String pipelineId = legacyApi().getPipelineIdByName(options.getIndexName());
 		if (pipelineId == null) {
 			throw new DashScopeException("Index:" + options.getIndexName() + " NotExist");
 		}
@@ -105,7 +157,42 @@ public class DashScopeCloudStore implements VectorStore {
 			searchOption = new DashScopeDocumentRetrieverOptions();
 		}
 		searchOption.setRerankTopN(request.getTopK());
-		return dashScopeApi.retriever(pipelineId, request.getQuery(), searchOption);
+		return legacyApi().retriever(pipelineId, request.getQuery(), searchOption).stream()
+			.filter(document -> request.getSimilarityThreshold() <= 0
+					|| document.getScore() != null && document.getScore() >= request.getSimilarityThreshold())
+			.limit(request.getTopK()).toList();
+	}
+
+
+	private DashScopeApi legacyApi() {
+		return Objects.requireNonNull(this.dashScopeApi);
+	}
+
+	private static Map<String, Object> searchFilter(Filter.@Nullable Operand operand) {
+		if (operand instanceof Filter.Group group) {
+			return searchFilter(group.content());
+		}
+		if (operand instanceof Filter.Expression expr) {
+			return switch (expr.type()) {
+				case AND, OR -> Map.of("_operator", expr.type().name(), "_conditions",
+						List.of(searchFilter(expr.left()), searchFilter(expr.right())));
+				case EQ, GT, GTE, LT, LTE -> comparisonFilter(expr);
+				default -> throw new IllegalArgumentException("Unsupported Bailian search filter " + expr.type());
+			};
+		}
+		throw new IllegalArgumentException("Bailian search filters require an expression");
+	}
+
+	private static Map<String, Object> comparisonFilter(Filter.Expression expression) {
+		if (!(expression.left() instanceof Filter.Key key) || !(expression.right() instanceof Filter.Value value)
+				|| !(value.value() instanceof String || value.value() instanceof Number || value.value() instanceof Boolean)
+				|| key.key().startsWith("_")
+				|| expression.type() != Filter.ExpressionType.EQ && !(value.value() instanceof Number)) {
+			throw new IllegalArgumentException("Invalid Bailian search filter operands");
+		}
+		Object condition = expression.type() == Filter.ExpressionType.EQ ? value.value()
+				: Map.of(expression.type().name().toLowerCase(Locale.ROOT), value.value());
+		return Map.of(key.key(), condition);
 	}
 
 }

@@ -227,7 +227,17 @@ public class DashScopeImageApiConstants {
         return singleValueMap;
     }
 
+    public static boolean isCurrentQwenImage(String model) {
+        return ImageModel.QWEN_IMAGE_3_0_PRO.getValue().equals(model)
+                || ImageModel.QWEN_IMAGE_3_0.getValue().equals(model)
+                || ImageModel.QWEN_IMAGE_2_1_PRO.getValue().equals(model)
+                || ImageModel.QWEN_IMAGE_2_1_TURBO.getValue().equals(model);
+    }
+
     public static @Nullable String getImagePath(String model, InvokeMode mode) {
+        if (isCurrentQwenImage(model)) {
+            return mode == InvokeMode.ASYNC ? IMAGE_GENERATION_URL : MULTIMODAL_GENERATION_URL;
+        }
         return switch (mode) {
             case SYNC -> model2SyncUrl.get(model);
             case ASYNC -> model2AsyncUrl.get(model);
@@ -254,6 +264,9 @@ public class DashScopeImageApiConstants {
             case STANDARD -> false;
             case GENERATION -> true;
             case AUTO -> {
+                if (isCurrentQwenImage(model)) {
+                    yield true;
+                }
                 if (!generationModels.contains(model)) {
                     yield false;
                 }

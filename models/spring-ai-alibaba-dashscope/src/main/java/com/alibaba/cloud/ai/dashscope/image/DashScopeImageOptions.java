@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.alibaba.cloud.ai.dashscope.common.DashScopeImageApiConstants;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.ImageRequest;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.ImageRequest.ColorPaletteItem;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.ImageRequest.Element;
@@ -243,6 +244,10 @@ public class DashScopeImageOptions implements ImageOptions {
 
     @JsonProperty("prompt_extend")
     private final @Nullable Boolean promptExtend;
+
+    private final @Nullable String promptExtendMode;
+
+    private final @Nullable Boolean enableThinking;
 
     @JsonProperty("watermark")
     private final @Nullable Boolean watermark;
@@ -614,7 +619,8 @@ public class DashScopeImageOptions implements ImageOptions {
             @Nullable String facePrompt, @Nullable Float bgstyleScale, @Nullable Boolean realPerson,
             @Nullable Integer seed, @Nullable Float refStrength, @Nullable String responseFormat,
             @Nullable String refMode, @Nullable String negativePrompt, @Nullable String text,
-            @Nullable Boolean promptExtend, @Nullable Boolean watermark, @Nullable String function,
+            @Nullable Boolean promptExtend, @Nullable String promptExtendMode, @Nullable Boolean enableThinking,
+            @Nullable Boolean watermark, @Nullable String function,
             @Nullable Integer sketchWeight, @Nullable Boolean sketchExtraction, @Nullable Integer @Nullable [][] sketchColor,
             @Nullable Integer @Nullable [][] maskColor, @Nullable Integer @Nullable [][][] bboxList, @Nullable Integer maxImages,
             @Nullable Boolean enableInterleave, @Nullable Boolean enableSequential,
@@ -672,6 +678,8 @@ public class DashScopeImageOptions implements ImageOptions {
         this.negativePrompt = negativePrompt;
         this.text = text;
         this.promptExtend = promptExtend;
+        this.promptExtendMode = promptExtendMode;
+        this.enableThinking = enableThinking;
         this.watermark = watermark;
         this.function = function;
         this.sketchWeight = sketchWeight;
@@ -877,6 +885,14 @@ public class DashScopeImageOptions implements ImageOptions {
 
     public @Nullable String getText() {
         return this.text;
+    }
+
+    public @Nullable String getPromptExtendMode() {
+        return this.promptExtendMode;
+    }
+
+    public @Nullable Boolean getEnableThinking() {
+        return this.enableThinking;
     }
 
     public @Nullable Boolean getPromptExtend() {
@@ -1323,6 +1339,18 @@ public class DashScopeImageOptions implements ImageOptions {
 
     protected Parameters toImageRequestParameter() {
         Parameters.Builder paramBuilder = Parameters.builder();
+        if (this.model != null && DashScopeImageApiConstants.isCurrentQwenImage(this.model)) {
+            boolean base64 = "b64_json".equals(this.responseFormat);
+            Assert.isTrue(!base64 || (this.model.startsWith("qwen-image-3.0") && this.invokeMode != InvokeMode.ASYNC),
+                    "b64_json requires synchronous Qwen Image 3.0");
+            Assert.isTrue(this.negativePrompt == null || this.model.startsWith("qwen-image-3.0"),
+                    "negative_prompt requires Qwen Image 3.0");
+            return paramBuilder.size(this.getSize()).n(this.n).seed(this.seed)
+                    .negativePrompt(this.negativePrompt).watermark(this.watermark)
+                    .promptExtend(this.promptExtend).promptExtendMode(this.promptExtendMode)
+                    .enableThinking(this.enableThinking).responseFormat(this.responseFormat).build();
+        }
+
 
         if (ImageModel.IMAGE_OUT_PAINTING.getValue().equals(this.model) || ImageModel.IMAGE_ERASE_COMPLETION.getValue()
                 .equals(this.model)) {
@@ -1564,6 +1592,10 @@ public class DashScopeImageOptions implements ImageOptions {
 
         private @Nullable Boolean promptExtend;
 
+        private @Nullable String promptExtendMode;
+
+        private @Nullable Boolean enableThinking;
+
         private @Nullable Boolean watermark;
 
         private @Nullable String function;
@@ -1730,6 +1762,8 @@ public class DashScopeImageOptions implements ImageOptions {
             this.negativePrompt = fromOptions.getNegativePrompt();
             this.text = fromOptions.getText();
             this.promptExtend = fromOptions.getPromptExtend();
+            this.promptExtendMode = fromOptions.getPromptExtendMode();
+            this.enableThinking = fromOptions.getEnableThinking();
             this.watermark = fromOptions.getWatermark();
             this.function = fromOptions.getFunction();
             this.sketchWeight = fromOptions.getSketchWeight();
@@ -1902,6 +1936,12 @@ public class DashScopeImageOptions implements ImageOptions {
                 }
                 if (castFrom.getText() != null) {
                     this.text = castFrom.getText();
+                }
+                if (castFrom.getPromptExtendMode() != null) {
+                    this.promptExtendMode = castFrom.getPromptExtendMode();
+                }
+                if (castFrom.getEnableThinking() != null) {
+                    this.enableThinking = castFrom.getEnableThinking();
                 }
                 if (castFrom.getPromptExtend() != null) {
                     this.promptExtend = castFrom.getPromptExtend();
@@ -2268,6 +2308,16 @@ public class DashScopeImageOptions implements ImageOptions {
             return this;
         }
 
+        public Builder promptExtendMode(@Nullable String promptExtendMode) {
+            this.promptExtendMode = promptExtendMode;
+            return this;
+        }
+
+        public Builder enableThinking(@Nullable Boolean enableThinking) {
+            this.enableThinking = enableThinking;
+            return this;
+        }
+
         public Builder promptExtend(@Nullable Boolean promptExtend) {
             this.promptExtend = promptExtend;
             return this;
@@ -2605,6 +2655,7 @@ public class DashScopeImageOptions implements ImageOptions {
                     this.bottomGarmentUrl, this.coarseImageUrl, this.userUrls, this.refImg, this.predefinedFaceId,
                     this.facePrompt, this.bgstyleScale, this.realPerson, this.seed, this.refStrength,
                     this.responseFormat, this.refMode, this.negativePrompt, this.text, this.promptExtend,
+                    this.promptExtendMode, this.enableThinking,
                     this.watermark, this.function, this.sketchWeight, this.sketchExtraction, this.sketchColor,
                     this.maskColor, this.bboxList, this.maxImages, this.enableInterleave, this.enableSequential,
                     this.colorPalette, this.thinkingMode, this.outputRatio, this.xScale, this.yScale, this.angle,

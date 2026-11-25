@@ -140,14 +140,14 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel, StreamingIn
 					.map(byteBuffer -> toTextToSpeechResponse(byteBuffer));
 		}
 
-		if (DashScopeAudioApiConstants.isCosyVoiceModel(model)) {
+		if (DashScopeAudioApiConstants.isDuplexTts(model)) {
 			return audioSpeechApi.createWebSocketStreamingTask(textStream, dashScopeOptions)
 					.map(byteBuffer -> toTextToSpeechResponse(byteBuffer));
 		}
 
 		throw new IllegalArgumentException(
 					"Model " + model + " does not support streaming input. "
-							+ "Only CosyVoice and Qwen TTS Realtime models support streaming text input.");
+							+ "Use CosyVoice, Qwen Audio TTS, or Qwen TTS Realtime.");
 	}
 
 	// ========================= Internal helpers =========================

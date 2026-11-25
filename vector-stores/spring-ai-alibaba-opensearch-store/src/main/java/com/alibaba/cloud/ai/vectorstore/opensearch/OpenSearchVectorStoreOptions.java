@@ -15,6 +15,9 @@
  */
 package com.alibaba.cloud.ai.vectorstore.opensearch;
 
+import org.jspecify.annotations.Nullable;
+import org.springframework.util.Assert;
+
 import java.util.List;
 
 /**
@@ -96,7 +99,7 @@ public class OpenSearchVectorStoreOptions {
 	/**
 	 * The number of dimensions in the vector.
 	 */
-	private int dimensions = 1536;
+	private @Nullable Integer dimensions;
 
 	public String getIndex() {
 		return index;
@@ -142,11 +145,16 @@ public class OpenSearchVectorStoreOptions {
 	}
 
 	public int getDimensions() {
-		return this.dimensions;
+		return this.dimensions != null ? this.dimensions : 1536;
 	}
 
 	public void setDimensions(int dims) {
+		Assert.isTrue(dims > 0, "Invalid vector dimension");
 		this.dimensions = dims;
+	}
+
+	@Nullable Integer getConfiguredDimensions() {
+		return this.dimensions;
 	}
 
 }

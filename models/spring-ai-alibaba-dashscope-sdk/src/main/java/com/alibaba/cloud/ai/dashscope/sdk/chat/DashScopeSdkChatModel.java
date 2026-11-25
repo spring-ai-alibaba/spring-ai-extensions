@@ -16,11 +16,21 @@
 package com.alibaba.cloud.ai.dashscope.sdk.chat;
 
 import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionOutput;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ToolCall;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatReasoning;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeMessageParts;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeToolCallStream;
+import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeChatEndpoints;
 import com.alibaba.cloud.ai.dashscope.sdk.metadata.DashScopeSdkUsage;
 import com.alibaba.dashscope.aigc.generation.GenerationOutput;
 import com.alibaba.dashscope.aigc.generation.GenerationParam;
 import com.alibaba.dashscope.aigc.generation.GenerationResult;
 import com.alibaba.dashscope.aigc.generation.GenerationUsage;
+import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationParam;
+import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.tools.FunctionDefinition;
 import com.alibaba.dashscope.tools.ToolBase;
@@ -39,12 +49,13 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.messages.part.ReasoningPart;
-import org.springframework.ai.chat.messages.part.StreamingParts;
+import org.springframework.ai.chat.messages.part.MediaPart;
+import org.springframework.ai.chat.messages.part.MessagePart;
 import org.springframework.ai.chat.messages.part.TextPart;
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.EmptyUsage;
+import org.springframework.ai.chat.metadata.FinishReasonCategory;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -68,11 +79,14 @@ import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * {@link ChatModel} implementation backed by DashScope Java SDK.
@@ -89,6 +103,14 @@ public final class DashScopeSdkChatModel implements ChatModel {
 	private DashScopeSdkChatOptions defaultOptions;
 
 	private final DashScopeSdkGenerationClient generationClient;
+
+	private final DashScopeSdkMultimodalClient multimodalClient;
+
+	private final @Nullable String baseUrl;
+
+	private final boolean customGenerationClient;
+
+	private static final JsonMapper JSON = JsonMapper.shared();
 
 	private final RetryTemplate retryTemplate;
 
@@ -109,6 +131,14 @@ public final class DashScopeSdkChatModel implements ChatModel {
                                  @Nullable String apiKey, @Nullable String workspaceId,
                                  Map<String, String> connectionHeaders) {
 
+		this(generationClient, defaultOptions, toolCallingManager, retryTemplate, observationRegistry, apiKey,
+				workspaceId, connectionHeaders, new DashScopeSdkMultimodalClient(null), null, true);
+	}
+
+	private DashScopeSdkChatModel(DashScopeSdkGenerationClient generationClient, DashScopeSdkChatOptions defaultOptions,
+			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
+			@Nullable String apiKey, @Nullable String workspaceId, Map<String, String> connectionHeaders,
+			DashScopeSdkMultimodalClient multimodalClient, @Nullable String baseUrl, boolean customGenerationClient) {
 		Assert.notNull(generationClient, "generationClient cannot be null");
 		Assert.notNull(defaultOptions, "defaultOptions cannot be null");
 		Assert.notNull(toolCallingManager, "toolCallingManager cannot be null");
@@ -117,6 +147,9 @@ public final class DashScopeSdkChatModel implements ChatModel {
 		Assert.notNull(connectionHeaders, "connectionHeaders cannot be null");
 
 		this.generationClient = generationClient;
+		this.multimodalClient = multimodalClient;
+		this.baseUrl = baseUrl;
+		this.customGenerationClient = customGenerationClient;
 		this.defaultOptions = defaultOptions;
 		this.toolCallingManager = toolCallingManager;
 		this.retryTemplate = retryTemplate;
@@ -148,7 +181,7 @@ public final class DashScopeSdkChatModel implements ChatModel {
 	}
 
 	public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
-		GenerationParam request = createRequest(prompt, false);
+		DashScopeSdkChatOptions options = requestOptions(prompt);
 
 		ChatModelObservationContext observationContext = ChatModelObservationContext.builder()
 			.prompt(prompt)
@@ -159,8 +192,17 @@ public final class DashScopeSdkChatModel implements ChatModel {
 			.observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
 					this.observationRegistry)
 			.observe(() -> {
-				GenerationResult result = RetryUtils.execute(this.retryTemplate, () -> executeCall(request));
-				ChatResponse chatResponse = toChatResponse(result, previousChatResponse, request.getModel(), null, false);
+				ChatResponse chatResponse;
+				if (isMultimodal(options)) {
+					var request = createMultimodalRequest(prompt, options, false);
+					var result = RetryUtils.execute(this.retryTemplate, () -> executeMultimodalCall(request));
+					chatResponse = toChatResponse(result, previousChatResponse, request, null);
+				}
+				else {
+					GenerationParam request = createRequest(prompt, false);
+					var result = RetryUtils.execute(this.retryTemplate, () -> executeCall(request));
+					chatResponse = toChatResponse(result, previousChatResponse, request.getModel(), null, false);
+				}
 				observationContext.setResponse(chatResponse);
 				return chatResponse;
 			});
@@ -170,9 +212,23 @@ public final class DashScopeSdkChatModel implements ChatModel {
 
 	public Flux<ChatResponse> internalStream(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
 		return Flux.deferContextual(contextView -> {
-			GenerationParam request = createRequest(prompt, true);
+			DashScopeSdkChatOptions options = requestOptions(prompt);
 
-			Flowable<GenerationResult> generationResults = RetryUtils.execute(this.retryTemplate, () -> executeStream(request));
+			Map<Integer, StreamChoice> choices = new HashMap<>();
+			Flux<ChatResponse> chatResponse;
+			if (isMultimodal(options)) {
+				var request = createMultimodalRequest(prompt, options, true);
+				var results = RetryUtils.execute(this.retryTemplate, () -> executeMultimodalStream(request));
+				chatResponse = flowableToFlux(results)
+					.map(result -> toChatResponse(result, previousChatResponse, request, choices));
+			}
+			else {
+				GenerationParam request = createRequest(prompt, true);
+				var results = RetryUtils.execute(this.retryTemplate, () -> executeStream(request));
+				boolean incremental = Boolean.TRUE.equals(request.getIncrementalOutput());
+				chatResponse = flowableToFlux(results)
+					.map(result -> toChatResponse(result, previousChatResponse, request.getModel(), choices, incremental));
+			}
 
 			ChatModelObservationContext observationContext = ChatModelObservationContext.builder()
 				.prompt(prompt)
@@ -187,11 +243,6 @@ public final class DashScopeSdkChatModel implements ChatModel {
 
 			observation.parentObservation(contextView.getOrDefault(ObservationThreadLocalAccessor.KEY, null)).start();
 
-			var toolStreams = new HashMap<Integer, DashScopeSdkToolCallStream>();
-			boolean incremental = Boolean.TRUE.equals(request.getIncrementalOutput());
-			Flux<ChatResponse> chatResponse = flowableToFlux(generationResults)
-				.map(result -> toChatResponse(result, previousChatResponse, request.getModel(), toolStreams, incremental));
-
 			Flux<ChatResponse> flux = chatResponse.doOnError(observation::error)
 				.doFinally(s -> observation.stop())
 				.contextWrite(ctx -> ctx.put(ObservationThreadLocalAccessor.KEY, observation));
@@ -200,12 +251,24 @@ public final class DashScopeSdkChatModel implements ChatModel {
 		});
 	}
 
+	private DashScopeSdkChatOptions requestOptions(Prompt prompt) {
+		DashScopeSdkChatOptions options = (DashScopeSdkChatOptions) prompt.getOptions();
+		Assert.notNull(options, "DashScopeSdkChatOptions cannot be null");
+		return options;
+	}
+
+	private boolean isMultimodal(DashScopeSdkChatOptions options) {
+		return DashScopeChatEndpoints.isMultimodal(options.getModel(), options.getMultiModel());
+	}
+
 	GenerationParam createRequest(Prompt prompt, boolean stream) {
-		DashScopeSdkChatOptions requestOptions = (DashScopeSdkChatOptions) prompt.getOptions();
-		Assert.notNull(requestOptions, "DashScopeSdkChatOptions cannot be null");
-		String model = Objects.requireNonNull(requestOptions.getModel(),
-				"DashScopeSdkChatOptions model cannot be null");
-		List<Message> sdkMessages = toSdkMessages(prompt);
+		DashScopeSdkChatOptions options = requestOptions(prompt);
+		return createGenerationParameters(options, toSdkMessages(prompt, options), stream);
+	}
+
+	private GenerationParam createGenerationParameters(DashScopeSdkChatOptions requestOptions, List<Message> sdkMessages,
+			boolean stream) {
+		String model = Objects.requireNonNull(requestOptions.getModel(), "DashScopeSdkChatOptions model cannot be null");
 
 		GenerationParam.GenerationParamBuilder<?, ?> requestBuilder = GenerationParam.builder()
 			.model(model)
@@ -260,11 +323,55 @@ public final class DashScopeSdkChatModel implements ChatModel {
 			requestBuilder.headers(mergedHeaders);
 		}
 
-		if (!CollectionUtils.isEmpty(requestOptions.getExtraBody())) {
-			requestBuilder.parameters(requestOptions.getExtraBody());
+		if (requestOptions.getExtraBody() != null) {
+			requestOptions.getExtraBody().forEach((name, value) -> {
+				if (!"multi_model".equals(name)) {
+					requestBuilder.parameter(name, value);
+				}
+			});
 		}
 
 		return requestBuilder.build();
+	}
+
+	private MultiModalConversationParam createMultimodalRequest(Prompt prompt, DashScopeSdkChatOptions options,
+			boolean stream) {
+		GenerationParam shared = createGenerationParameters(options, List.of(), stream);
+		Map<String, Object> parameters = shared.getParameters();
+		// The same incremental_output setting also controls this adapter's accumulator.
+		if (stream) {
+			parameters.put("incremental_output", shared.getIncrementalOutput());
+		}
+		var request = MultiModalConversationParam.builder()
+			.model(shared.getModel())
+			.messages(toSdkMultimodalMessages(prompt, options))
+			.parameters(parameters)
+			.incrementalOutput(shared.getIncrementalOutput());
+		if (StringUtils.hasText(this.apiKey)) {
+			request.apiKey(this.apiKey);
+		}
+		if (StringUtils.hasText(this.workspaceId)) {
+			request.workspace(this.workspaceId);
+		}
+		return request.headers(mergeHeaders(options.getHttpHeaders())).build();
+	}
+
+	private DashScopeResult executeMultimodalCall(MultiModalConversationParam request) {
+		try {
+			return this.multimodalClient.call(request);
+		}
+		catch (Exception ex) {
+			throw new DashScopeSdkException("Failed to call DashScope SDK multimodal generation API", ex);
+		}
+	}
+
+	private Flowable<DashScopeResult> executeMultimodalStream(MultiModalConversationParam request) {
+		try {
+			return this.multimodalClient.stream(request);
+		}
+		catch (Exception ex) {
+			throw new DashScopeSdkException("Failed to stream DashScope SDK multimodal generation API", ex);
+		}
 	}
 
 	private GenerationResult executeCall(GenerationParam request) {
@@ -285,7 +392,7 @@ public final class DashScopeSdkChatModel implements ChatModel {
 		}
 	}
 
-	private Flux<GenerationResult> flowableToFlux(Flowable<GenerationResult> flowable) {
+	private <T> Flux<T> flowableToFlux(Flowable<T> flowable) {
 		return Flux.create(sink -> {
 			Disposable disposable = flowable.subscribe(sink::next, sink::error, sink::complete);
 			sink.onDispose(disposable::dispose);
@@ -293,7 +400,7 @@ public final class DashScopeSdkChatModel implements ChatModel {
 	}
 
 	private ChatResponse toChatResponse(GenerationResult generationResult, @Nullable ChatResponse previousChatResponse,
-			String requestModel, @Nullable Map<Integer, DashScopeSdkToolCallStream> toolStreams, boolean incremental) {
+			String requestModel, @Nullable Map<Integer, StreamChoice> toolStreams, boolean incremental) {
 		if (generationResult == null || generationResult.getOutput() == null) {
 			return new ChatResponse(List.of());
 		}
@@ -307,8 +414,13 @@ public final class DashScopeSdkChatModel implements ChatModel {
 				GenerationOutput.Choice choice = choices.get(position);
 				int index = Objects.requireNonNullElse(choice.getIndex(), position);
 				var toolStream = toolStreams != null
-						? toolStreams.computeIfAbsent(index, key -> new DashScopeSdkToolCallStream()) : null;
-				generations.add(buildGeneration(generationResult.getRequestId(), choice, output, toolStream, incremental));
+						? toolStreams.computeIfAbsent(index, key -> new StreamChoice()) : null;
+				Message message = choice.getMessage();
+				String finish = choice.getFinishReason() != null ? choice.getFinishReason() : output.getFinishReason();
+				generations.add(buildGeneration(generationResult.getRequestId(), message != null ? message.getRole() : "assistant",
+						message != null ? message.getContent() : output.getText(), finish,
+						message != null ? message.getReasoningContent() : null, null, sdkToolDeltas(message), toolStream,
+						incremental, false));
 			}
 		}
 		else if (StringUtils.hasText(output.getText())) {
@@ -318,52 +430,94 @@ public final class DashScopeSdkChatModel implements ChatModel {
 
 		GenerationUsage usage = generationResult.getUsage();
 		Usage currentUsage = usage != null ? DashScopeSdkUsage.from(usage) : new EmptyUsage();
-		UsageCalculator.getCumulativeUsage(currentUsage, previousChatResponse);
+		currentUsage = UsageCalculator.getCumulativeUsage(currentUsage, previousChatResponse);
 
 		return new ChatResponse(generations,
 				ChatResponseMetadata.builder().id(generationResult.getRequestId()).usage(currentUsage).model(requestModel)
 					.build());
 	}
 
-	private Generation buildGeneration(String requestId, GenerationOutput.Choice choice, GenerationOutput output,
-			@Nullable DashScopeSdkToolCallStream toolStream, boolean incremental) {
-		Message sdkMessage = choice.getMessage();
-		String content = sdkMessage != null ? sdkMessage.getContent() : output.getText();
-		String role = sdkMessage != null ? sdkMessage.getRole() : "assistant";
-		String finishReason = choice.getFinishReason() != null ? choice.getFinishReason() : output.getFinishReason();
-
-		Map<String, Object> metadata = Map.of(
-				"id", requestId,
-				"role", role == null ? "" : role,
-				"finishReason", finishReason == null ? "" : finishReason);
-
-		var message = AssistantMessage.builder().properties(metadata);
-		String reasoning = sdkMessage != null ? sdkMessage.getReasoningContent() : null;
-		if (reasoning != null && !reasoning.isEmpty()) {
-			ReasoningPart part = ReasoningPart.of(reasoning);
-			if (toolStream == null) {
-				message.reasoning(part);
-			}
-			else {
-				message.part(incremental ? StreamingParts.partial(part, 0) : StreamingParts.complete(part, 0));
+	private ChatResponse toChatResponse(DashScopeResult result, @Nullable ChatResponse previousChatResponse,
+			MultiModalConversationParam request, @Nullable Map<Integer, StreamChoice> streamedChoices) {
+		if (StringUtils.hasText(result.getCode())) {
+			throw new DashScopeSdkException("DashScope SDK multimodal generation failed: " + result.getCode());
+		}
+		var output = result.getOutput() == null ? null
+				: JSON.readValue(result.getOutput().toString(), ChatCompletionOutput.class);
+		List<Generation> generations = new ArrayList<>();
+		boolean incremental = Boolean.TRUE.equals(request.getIncrementalOutput());
+		boolean summarized = "summarized".equals(request.getParameters().get("thinking_display"));
+		if (output != null && output.choices() != null) {
+			for (int position = 0; position < output.choices().size(); position++) {
+				var choice = output.choices().get(position);
+				var message = choice.message();
+				var state = streamedChoices != null
+						? streamedChoices.computeIfAbsent(Objects.requireNonNullElse(choice.index(), position),
+								key -> new StreamChoice()) : null;
+				var calls = message != null && message.toolCalls() != null ? message.toolCalls() : List.<ToolCall>of();
+				var deltas = IntStream.range(0, calls.size()).filter(i -> calls.get(i) != null).mapToObj(i -> {
+					var call = calls.get(i);
+					var function = call.function();
+					return new DashScopeToolCallStream.Delta(Objects.requireNonNullElse(call.index(), i), call.id(),
+							function != null ? function.name() : null, function != null ? function.arguments() : null);
+				}).toList();
+				generations.add(buildGeneration(result.getRequestId(),
+						message != null && message.role() != null ? message.role().name().toLowerCase(Locale.ROOT) : "assistant",
+						message != null ? message.rawContent() : null, choice.finishReason() != null ? choice.finishReason().name() : null,
+						message != null ? message.reasoningContent() : null, message != null ? message.encryptedContent() : null,
+						deltas, state, incremental, summarized));
 			}
 		}
-		if (toolStream == null) {
-			message.content(content).toolCalls(toSpringToolCalls(sdkMessage));
+		Usage usage = result.getUsage() == null ? new EmptyUsage()
+				: DashScopeAiUsage.from(JSON.readValue(result.getUsage().toString(), TokenUsage.class));
+		return new ChatResponse(generations, ChatResponseMetadata.builder().id(result.getRequestId())
+			.usage(UsageCalculator.getCumulativeUsage(usage, previousChatResponse)).model(request.getModel()).build());
+	}
+
+	private Generation buildGeneration(String requestId, @Nullable String role, @Nullable Object content,
+			@Nullable String finishReason, @Nullable String reasoning, @Nullable String encrypted,
+			List<DashScopeToolCallStream.Delta> calls, @Nullable StreamChoice state, boolean incremental,
+			boolean summarized) {
+		String finish = finishReason == null || "null".equalsIgnoreCase(finishReason) ? "" : finishReason;
+		var metadata = Map.<String, Object>of("id", Objects.requireNonNullElse(requestId, ""), "role",
+				Objects.requireNonNullElse(role, ""), "finishReason", finish);
+		var message = AssistantMessage.builder().properties(metadata);
+		var part = state == null ? DashScopeChatReasoning.fromResponse(reasoning, encrypted, summarized)
+				: state.reasoning.accept(reasoning, encrypted, incremental, summarized);
+		if (part != null) {
+			message.part(part);
+		}
+		if (state == null) {
+			message.parts(DashScopeMessageParts.decode(content)).toolCalls(calls.stream().filter(call -> StringUtils.hasText(call.name()))
+				.map(call -> new AssistantMessage.ToolCall(Objects.requireNonNullElse(call.id(), ""), "function", call.name(),
+						Objects.requireNonNullElse(call.arguments(), ""))).toList());
 		}
 		else {
-			if (content != null && !content.isEmpty()) {
-				TextPart part = TextPart.of(content);
-				message.part(incremental ? StreamingParts.partial(part, 1) : StreamingParts.complete(part, 1));
-			}
-			else {
+			var contentParts = state.content.accept(content, incremental);
+			if (contentParts.isEmpty()) {
 				message.content("");
 			}
-			message.parts(toolStream.accept(sdkMessage, finishReason, incremental));
+			else {
+				message.parts(contentParts);
+			}
+			message.parts(state.tools.accept(calls, "tool_calls".equalsIgnoreCase(finish), incremental));
 		}
 
-		return new Generation(message.build(),
-				ChatGenerationMetadata.builder().finishReason(finishReason == null ? "" : finishReason).build());
+		var generationMetadata = ChatGenerationMetadata.builder().finishReason(finish);
+		if ("sensitive".equalsIgnoreCase(finish)) {
+			generationMetadata.finishReasonCategory(FinishReasonCategory.FILTERED);
+		}
+		return new Generation(message.build(), generationMetadata.build());
+	}
+
+	private static final class StreamChoice {
+
+		private final DashScopeMessageParts.Stream content = new DashScopeMessageParts.Stream();
+
+		private final DashScopeToolCallStream tools = new DashScopeToolCallStream(index -> this.content.nextIndex());
+
+		private final DashScopeChatReasoning.Stream reasoning = new DashScopeChatReasoning.Stream();
+
 	}
 
 	private Generation buildTextOnlyGeneration(String requestId, String content, String finishReason) {
@@ -374,25 +528,24 @@ public final class DashScopeSdkChatModel implements ChatModel {
 				ChatGenerationMetadata.builder().finishReason(finishReason == null ? "" : finishReason).build());
 	}
 
-	private List<AssistantMessage.ToolCall> toSpringToolCalls(@Nullable Message sdkMessage) {
-		if (sdkMessage == null || CollectionUtils.isEmpty(sdkMessage.getToolCalls())) {
+	private List<DashScopeToolCallStream.Delta> sdkToolDeltas(@Nullable Message message) {
+		if (message == null || CollectionUtils.isEmpty(message.getToolCalls())) {
 			return List.of();
 		}
-		return sdkMessage.getToolCalls()
-			.stream()
-			.filter(ToolCallFunction.class::isInstance)
-			.map(ToolCallFunction.class::cast)
-			.filter(toolCall -> toolCall.getFunction() != null)
-			.map(toolCall -> new AssistantMessage.ToolCall(toolCall.getId(), "function",
-					toolCall.getFunction().getName(), toolCall.getFunction().getArguments()))
-			.toList();
+		var calls = message.getToolCalls();
+		return IntStream.range(0, calls.size()).filter(i -> calls.get(i) instanceof ToolCallFunction).mapToObj(i -> {
+			var call = (ToolCallFunction) calls.get(i);
+			var function = call.getFunction();
+			return new DashScopeToolCallStream.Delta(Objects.requireNonNullElse(call.getIndex(), i), call.getId(),
+					function != null ? function.getName() : null, function != null ? function.getArguments() : null);
+		}).toList();
 	}
 
-	private List<Message> toSdkMessages(Prompt prompt) {
+	private List<Message> toSdkMessages(Prompt prompt, DashScopeSdkChatOptions options) {
 		List<Message> sdkMessages = new ArrayList<>();
 		prompt.getInstructions().forEach(message -> {
 			if (message.getMessageType() == MessageType.USER || message.getMessageType() == MessageType.SYSTEM) {
-				if (message instanceof UserMessage userMessage && !CollectionUtils.isEmpty(userMessage.getMedia())) {
+				if (message instanceof UserMessage userMessage && DashScopeMessageParts.requiresBlocks(userMessage.getParts())) {
 					throw new IllegalArgumentException(
 							"DashScope SDK chat module currently supports text-only USER messages");
 				}
@@ -403,6 +556,8 @@ public final class DashScopeSdkChatModel implements ChatModel {
 			}
 			else if (message.getMessageType() == MessageType.ASSISTANT) {
 				AssistantMessage assistantMessage = (AssistantMessage) message;
+				Assert.isTrue(!DashScopeMessageParts.requiresBlocks(assistantMessage.getParts()),
+						"DashScope SDK assistant media and provider blocks require a multimodal endpoint");
 				Message sdkMessage = Message.builder()
 					.role("assistant")
 					.content(assistantMessage.getText())
@@ -410,33 +565,99 @@ public final class DashScopeSdkChatModel implements ChatModel {
 				if (!CollectionUtils.isEmpty(assistantMessage.getToolCalls())) {
 					sdkMessage.setToolCalls(toDashScopeToolCalls(assistantMessage.getToolCalls()));
 				}
-				String reasoning = assistantMessage.getReasoning().stream()
-					.filter(part -> part.payload() == null)
-					.map(part -> Objects.requireNonNullElse(part.text(), ""))
-					.collect(Collectors.joining());
-				if (StringUtils.hasText(reasoning)) {
-					sdkMessage.setReasoningContent(reasoning);
+				if (preserveThinking(options)) {
+					String reasoning = DashScopeChatReasoning.reasoningContent(assistantMessage);
+					if (StringUtils.hasText(reasoning)) {
+						sdkMessage.setReasoningContent(reasoning);
+					}
 				}
 				sdkMessages.add(sdkMessage);
 			}
 			else if (message.getMessageType() == MessageType.TOOL) {
 				ToolResponseMessage toolMessage = (ToolResponseMessage) message;
-				toolMessage.getResponses().forEach(response -> {
-					Assert.notNull(response.id(), "ToolResponseMessage must have an id");
-					Assert.notNull(response.name(), "ToolResponseMessage must have a name");
-					sdkMessages.add(Message.builder()
-						.role("tool")
-						.name(response.name())
-						.toolCallId(response.id())
-						.content(response.responseData())
-						.build());
-				});
+				toolMessage.getResults().forEach(result -> sdkMessages.add(Message.builder().role("tool")
+					.name(result.name()).toolCallId(DashScopeMessageParts.toolCallId(result))
+					.content(DashScopeMessageParts.toolResultText(result)).build()));
 			}
 			else {
 				throw new IllegalArgumentException("Unsupported message type: " + message.getMessageType());
 			}
 		});
 		return sdkMessages;
+	}
+
+	private List<Object> toSdkMultimodalMessages(Prompt prompt, DashScopeSdkChatOptions options) {
+		List<Object> messages = new ArrayList<>();
+		for (var message : prompt.getInstructions()) {
+			if (message instanceof ToolResponseMessage toolMessage) {
+				for (var result : toolMessage.getResults()) {
+					Map<String, Object> tool = new LinkedHashMap<>();
+					tool.put("role", "tool");
+					tool.put("tool_call_id", DashScopeMessageParts.toolCallId(result));
+					tool.put("content", DashScopeMessageParts.toolResultText(result));
+					if (result.name() != null) {
+						tool.put("name", result.name());
+					}
+					messages.add(tool);
+				}
+				continue;
+			}
+			Map<String, Object> entry = new LinkedHashMap<>();
+			entry.put("role", message.getMessageType().name().toLowerCase(Locale.ROOT));
+			if (message instanceof UserMessage userMessage) {
+				entry.put("content", sdkContent(userMessage.getParts()));
+			}
+			else if (message instanceof AssistantMessage assistant) {
+				entry.put("content", sdkContent(assistant.getParts()));
+			}
+			else {
+				String text = Objects.requireNonNullElse(message.getText(), "");
+				entry.put("content", text.isEmpty() ? List.of() : List.of(Map.of("text", text)));
+			}
+			if (message instanceof AssistantMessage assistant) {
+				if (!assistant.getToolCalls().isEmpty()) {
+					entry.put("tool_calls", toDashScopeToolCalls(assistant.getToolCalls()));
+				}
+				if (preserveThinking(options)) {
+					String reasoning = DashScopeChatReasoning.reasoningContent(assistant);
+					if (StringUtils.hasText(reasoning)) {
+						entry.put("reasoning_content", reasoning);
+					}
+					if (DashScopeChatEndpoints.supportsEncryptedThinking(options.getModel())) {
+						String encrypted = DashScopeChatReasoning.encryptedContent(assistant);
+						if (encrypted != null) {
+							entry.put("encrypted_content", encrypted);
+						}
+					}
+				}
+			}
+			messages.add(entry);
+		}
+		return messages;
+	}
+
+	private static boolean preserveThinking(DashScopeSdkChatOptions options) {
+		return options.getExtraBody() == null || !Boolean.FALSE.equals(options.getExtraBody().get("preserve_thinking"));
+	}
+
+	private static List<Object> sdkContent(List<MessagePart> parts) {
+		List<Object> content = new ArrayList<>();
+		for (var part : parts) {
+			var block = DashScopeMessageParts.replayBlock(part);
+			if (block != null) {
+				content.add(JSON.convertValue(block, Object.class));
+			}
+			else if (part instanceof TextPart text) {
+				content.add(Map.of("text", text.text()));
+			}
+			else if (part instanceof MediaPart media) {
+				String kind = media.media().getMimeType().getType();
+				Assert.isTrue(List.of("image", "audio", "video").contains(kind),
+						"Unsupported media type for DashScope SDK multimodal chat: " + media.media().getMimeType());
+				content.add(Map.of(kind, DashScopeMessageParts.mediaData(media.media())));
+			}
+		}
+		return content;
 	}
 
 	private List<ToolCallBase> toDashScopeToolCalls(List<AssistantMessage.ToolCall> toolCalls) {
@@ -548,7 +769,13 @@ public final class DashScopeSdkChatModel implements ChatModel {
 
 	public static final class Builder {
 
-		private DashScopeSdkGenerationClient generationClient = new DefaultDashScopeSdkGenerationClient();
+		private @Nullable DashScopeSdkGenerationClient generationClient;
+
+		private boolean customGenerationClient;
+
+		private @Nullable DashScopeSdkMultimodalClient multimodalClient;
+
+		private @Nullable String baseUrl;
 
 		private DashScopeSdkChatOptions defaultOptions = DashScopeSdkChatOptions.builder().model(DEFAULT_MODEL_NAME).build();
 
@@ -569,6 +796,9 @@ public final class DashScopeSdkChatModel implements ChatModel {
 
 		private Builder(DashScopeSdkChatModel dashScopeSdkChatModel) {
 			this.generationClient = dashScopeSdkChatModel.generationClient;
+			this.customGenerationClient = dashScopeSdkChatModel.customGenerationClient;
+			this.baseUrl = dashScopeSdkChatModel.baseUrl;
+			this.multimodalClient = dashScopeSdkChatModel.multimodalClient;
 			this.defaultOptions = dashScopeSdkChatModel.defaultOptions;
 			this.retryTemplate = dashScopeSdkChatModel.retryTemplate;
 			this.toolCallingManager = dashScopeSdkChatModel.toolCallingManager;
@@ -580,6 +810,16 @@ public final class DashScopeSdkChatModel implements ChatModel {
 
 		public Builder generationClient(DashScopeSdkGenerationClient generationClient) {
 			this.generationClient = generationClient;
+			this.customGenerationClient = true;
+			return this;
+		}
+
+		public Builder baseUrl(@Nullable String baseUrl) {
+			this.baseUrl = StringUtils.hasText(baseUrl) ? baseUrl : null;
+			this.multimodalClient = null;
+			if (!this.customGenerationClient) {
+				this.generationClient = null;
+			}
 			return this;
 		}
 
@@ -619,9 +859,12 @@ public final class DashScopeSdkChatModel implements ChatModel {
 		}
 
 		public DashScopeSdkChatModel build() {
-			return new DashScopeSdkChatModel(this.generationClient, this.defaultOptions, this.toolCallingManager,
+			var textClient = this.generationClient != null ? this.generationClient
+					: new DefaultDashScopeSdkGenerationClient(this.baseUrl);
+			var mediaClient = this.multimodalClient != null ? this.multimodalClient : new DashScopeSdkMultimodalClient(this.baseUrl);
+			return new DashScopeSdkChatModel(textClient, this.defaultOptions, this.toolCallingManager,
 					this.retryTemplate, this.observationRegistry, this.apiKey, this.workspaceId,
-					this.connectionHeaders);
+					this.connectionHeaders, mediaClient, this.baseUrl, this.customGenerationClient);
 		}
 
 	}

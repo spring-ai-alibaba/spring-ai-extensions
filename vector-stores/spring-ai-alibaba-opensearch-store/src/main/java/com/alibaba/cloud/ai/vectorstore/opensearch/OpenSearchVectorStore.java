@@ -79,6 +79,8 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	 */
 	private final OpenSearchVectorStoreOptions options;
 
+	private volatile @Nullable Integer indexDimensions;
+
 	/**
 	 * Whether to initialize the schema for the vector store.
 	 */
@@ -166,11 +168,12 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 
 	@Override
 	protected void doUpsert(List<EmbeddedDocument> documents) {
+		int dimensions = getVectorDimensions();
 		Assert.hasText(this.options.getVectorField(), "OpenSearch vector field must be configured");
 		List<Map<String, ?>> rows = documents.stream().<Map<String, ?>>map(embedded -> {
 			Document document = embedded.document();
 			float[] embedding = embedded.embedding();
-			checkDimensions(document.getId(), embedding.length, this.options.getDimensions());
+			checkDimensions(document.getId(), embedding.length, dimensions);
 			return toAddOperation(document, toVector(embedding));
 		}).toList();
 		this.openSearchApi.uploadDocument(this.options.getTableName(), this.options.getPrimaryKeyField(), rows);
@@ -234,7 +237,7 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 
 	@Override
 	protected List<Document> doSimilaritySearch(float[] queryEmbedding, SearchRequest request) {
-		checkDimensions("query", queryEmbedding.length, this.options.getDimensions());
+		checkDimensions("query", queryEmbedding.length, getVectorDimensions());
 		if (request.hasFilterExpression()) {
 			throw new UnsupportedOperationException("OpenSearch vector search does not support packed metadata filters");
 		}
@@ -268,10 +271,17 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 	 */
 	@Override
 	public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
-		return VectorStoreObservationContext.builder(VectorStoreProvider.OPENSEARCH.value(), operationName)
+		var builder = VectorStoreObservationContext.builder(VectorStoreProvider.OPENSEARCH.value(), operationName)
 			.collectionName(this.options.getIndex())
-			.dimensions(this.options.getDimensions())
 			.similarityMetric(getSimilarityFunction());
+		Integer dimensions = this.options.getConfiguredDimensions();
+		if (dimensions == null) {
+			dimensions = this.indexDimensions;
+		}
+		if (dimensions != null) {
+			builder.dimensions(dimensions);
+		}
+		return builder;
 	}
 
 	private String getSimilarityFunction() {
@@ -287,14 +297,39 @@ public class OpenSearchVectorStore extends AbstractObservationVectorStore implem
 
 	public boolean exists(String tableName) throws Exception {
 		List<Object> indexList = openSearchApi.getIndexList(tableName);
-		return indexList.contains("saa_default_index");
+		return indexList.contains(this.options.getIndex());
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (this.initializeSchema && !exists(this.options.getIndex())) {
+		if (this.initializeSchema && !exists(this.options.getTableName())) {
 			openSearchApi.createCollectionAndIndex(this.options.getMappingJson().formatted(this.options.getDimensions()));
 		}
+	}
+
+	private synchronized int getVectorDimensions() {
+		Integer configured = this.options.getConfiguredDimensions();
+		if (configured != null) {
+			return configured;
+		}
+		if (this.indexDimensions == null) {
+			try {
+				var indexes = this.openSearchApi.getVectorIndexes(this.options.getTableName());
+				int dimensions = indexes.stream()
+					.filter(index -> this.options.getIndex().equals(index.getIndexName())
+							&& this.options.getVectorField().equals(index.getVectorField()))
+					.findFirst()
+					.map(index -> Integer.parseInt(index.getDimension()))
+					.orElseThrow(() -> new IllegalStateException("Matching vector index and field are absent"));
+				Assert.state(dimensions > 0, "Vector dimension must be positive");
+				this.indexDimensions = dimensions;
+			}
+			catch (Exception ex) {
+				throw new IllegalStateException("Cannot determine vector dimensions for OpenSearch index "
+						+ this.options.getIndex() + " in table " + this.options.getTableName(), ex);
+			}
+		}
+		return this.indexDimensions;
 	}
 
 	/**

@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.advisor;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -162,7 +163,7 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 	@Override
 	public ChatClientRequest before(ChatClientRequest request, AdvisorChain advisorChain) {
 
-		var context = request.context();
+		var context = new HashMap<>(request.context());
 		var userMessage = request.prompt().getUserMessage();
 		String query = Objects.requireNonNullElse(userMessage.getText(), "");
 

@@ -36,6 +36,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.messages.part.MediaPart;
+import org.springframework.ai.chat.messages.part.ReasoningPart;
+import org.springframework.ai.chat.messages.part.TextPart;
+import org.springframework.ai.chat.messages.part.UnknownPart;
+import org.springframework.ai.content.Media;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Flux;
@@ -96,7 +103,9 @@ class DashScopeAgentTests {
   @Test
   void testSuccessfulCall() {
     // Prepare test data
-    Message message = new UserMessage(TEST_USER_MESSAGE);
+    Message message = UserMessage.builder().part(TextPart.of(TEST_USER_MESSAGE))
+        .part(MediaPart.of(new Media(MimeTypeUtils.IMAGE_PNG, new ByteArrayResource(new byte[] {1}))))
+        .build();
     Prompt prompt = new Prompt(List.of(message), options);
 
     // Create mock response
@@ -113,7 +122,14 @@ class DashScopeAgentTests {
     assertThat(result).isNotNull();
     assertThat(result.getResults()).hasSize(1);
     var assistantMessage = result.getResults().get(0).getOutput();
-    assertThat(assistantMessage.toString()).contains(TEST_ASSISTANT_RESPONSE);
+    assertThat(assistantMessage.getText()).isEqualTo(TEST_ASSISTANT_RESPONSE);
+    assertThat(assistantMessage.getReasoning()).containsExactly(ReasoningPart.of("test reasoning content"));
+    assertThat(assistantMessage.getParts()).anySatisfy(part ->
+        assertThat(part).isInstanceOfSatisfying(UnknownPart.class, unknown ->
+            assertThat(unknown.rawJson()).contains("test action name")));
+    var request = ArgumentCaptor.forClass(DashScopeAgentRequest.class);
+    verify(dashScopeAgentApi).call(request.capture());
+    assertThat(request.getValue().input().images()).containsExactly("data:image/png;base64,AQ==");
     assertThat(result.getResults().get(0).getMetadata().getFinishReason()).isEqualTo("stop");
   }
 

@@ -16,6 +16,14 @@
 
 package com.alibaba.cloud.ai.dashscope.sdk.image;
 
+import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeImageApiConstants;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.InvokeMode;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageOptions;
+import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkMediaConnection;
+import org.springframework.web.client.RestClient;
+
 import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException;
 import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisParam;
 import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisResult;
@@ -102,6 +110,10 @@ public class DashScopeSdkImageModel implements ImageModel {
                 .from(this.defaultOptions)
                 .merge(request.getOptions())
                 .build();
+		String model = Objects.requireNonNull(options.getModel(), "An image model is required");
+		if (DashScopeImageApiConstants.isCurrentQwenImage(model)) {
+			return callQwenImage(request, options, model);
+		}
 		ImageSynthesisParam sdkRequest = createRequest(request, options);
 
 		ImageModelObservationContext observationContext = ImageModelObservationContext.builder()
@@ -119,6 +131,33 @@ public class DashScopeSdkImageModel implements ImageModel {
 				observationContext.setResponse(response);
 				return response;
 			});
+	}
+
+	private ImageResponse callQwenImage(ImagePrompt prompt, DashScopeSdkImageOptions options, String model) {
+		RestClient.Builder rest = RestClient.builder().defaultHeaders(headers ->
+				mergeHeaders(options.getHttpHeaders()).forEach((name, value) -> headers.set(name, value.toString())));
+		var api = DashScopeImageApi.builder()
+			.baseUrl(DashScopeSdkMediaConnection.baseUrl(this.workspaceId)).workSpaceId(this.workspaceId)
+			.apiKey(DashScopeSdkMediaConnection.apiKey(this.apiKey)).restClientBuilder(rest).build();
+		var requestOptions = DashScopeImageOptions.builder().model(model).n(options.getN()).size(options.getSize())
+			.width(options.getWidth()).height(options.getHeight()).seed(options.getSeed())
+			.negativePrompt(options.getNegativePrompt()).baseImageUrl(options.getRefImage())
+			.responseFormat(options.getResponseFormat())
+			.invokeMode(Boolean.TRUE.equals(options.getAsync()) ? InvokeMode.ASYNC : InvokeMode.SYNC);
+		if (options.getExtraBody() != null) {
+			for (var parameter : options.getExtraBody().entrySet()) {
+				switch (parameter.getKey()) {
+					case "prompt_extend" -> requestOptions.promptExtend((Boolean) parameter.getValue());
+					case "prompt_extend_mode" -> requestOptions.promptExtendMode((String) parameter.getValue());
+					case "enable_thinking" -> requestOptions.enableThinking((Boolean) parameter.getValue());
+					case "watermark" -> requestOptions.watermark((Boolean) parameter.getValue());
+					default -> throw new IllegalArgumentException("Unsupported Qwen image parameter " + parameter.getKey());
+				}
+			}
+		}
+		return DashScopeImageModel.builder().dashScopeApi(api).retryTemplate(this.retryTemplate)
+			.observationRegistry(this.observationRegistry).defaultOptions(requestOptions.build()).build()
+			.call(new ImagePrompt(prompt.getInstructions()));
 	}
 
 	private ImageSynthesisParam createRequest(ImagePrompt request, DashScopeSdkImageOptions options) {

@@ -60,6 +60,7 @@ public class DashScopeSdkChatAutoConfiguration {
 
 		DashScopeSdkChatModel model = DashScopeSdkChatModel.builder()
 			.apiKey(resolved.apiKey())
+			.baseUrl(chatProperties.getBaseUrl())
 			.workspaceId(resolved.workspaceId())
 			.connectionHeaders(resolved.headers())
 			.defaultOptions(chatProperties.toOptions())

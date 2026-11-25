@@ -34,6 +34,7 @@ import reactor.core.publisher.Flux;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;
+import java.util.Objects;
 
 /**
  * DashScope WebSocket TTS API for Sambert and CosyVoice models.
@@ -83,7 +84,7 @@ public class DashScopeWebSocketTTSApi {
 	 * For Sambert: run-task (with text) only.
 	 */
 	public Flux<ByteBuffer> stream(String text, DashScopeAudioSpeechOptions options) {
-		boolean isCosyVoiceModel = DashScopeAudioApiConstants.COSY_VOICE_MODEL_LIST.contains(options.getModel());
+		boolean isCosyVoiceModel = DashScopeAudioApiConstants.isDuplexTts(Objects.requireNonNull(options.getModel(), "TTS model is required"));
 
 		String taskId = UUID.randomUUID().toString();
 		String streamingMode = isCosyVoiceModel ? "duplex" : "output";
@@ -116,9 +117,9 @@ public class DashScopeWebSocketTTSApi {
 	 * @return the binary audio data flux
 	 */
 	public Flux<ByteBuffer> streamWithStreamingInput(Flux<String> textStream, DashScopeAudioSpeechOptions options) {
-		if (!DashScopeAudioApiConstants.COSY_VOICE_MODEL_LIST.contains(options.getModel())) {
+		if (!DashScopeAudioApiConstants.isDuplexTts(Objects.requireNonNull(options.getModel(), "TTS model is required"))) {
 			throw new IllegalArgumentException(
-					"Streaming text input is only supported for CosyVoice models, got: " + options.getModel());
+					"Streaming text input requires a duplex TTS model, got: " + options.getModel());
 		}
 
 		String taskId = UUID.randomUUID().toString();

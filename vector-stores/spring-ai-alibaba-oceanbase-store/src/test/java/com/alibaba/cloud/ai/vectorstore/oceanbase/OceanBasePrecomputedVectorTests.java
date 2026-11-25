@@ -62,13 +62,17 @@ class OceanBasePrecomputedVectorTests {
 		when(columns.getString("Field")).thenReturn("embedding");
 		when(columns.getString("Type")).thenReturn("vector(2)");
 		when(query.executeQuery()).thenReturn(empty);
-		var store = OceanBaseVectorStore.builder("documents", source, model).build();
+		var store = OceanBaseVectorStore.builder("documents", source, model).initializeSchema(true).build();
+		store.afterPropertiesSet();
 		var document = new Document("test-id", "text", Map.of("kind", "test"));
 		float[] vector = { 0.25f, 0.75f };
 		var embedded = new EmbeddedDocument(document, vector);
 
 		assertThatIllegalArgumentException().isThrownBy(
 				() -> store.upsert(List.of(embedded, new EmbeddedDocument(new Document("other"), new float[] { 1 }))));
+		assertThatIllegalArgumentException().isThrownBy(
+				() -> store.similaritySearch(new float[] { 1 }, SearchRequest.builder().build()));
+
 		store.upsert(List.of(embedded));
 		var statement = ArgumentCaptor.forClass(String.class);
 		verify(connection).prepareStatement(statement.capture(), eq(Statement.RETURN_GENERATED_KEYS));

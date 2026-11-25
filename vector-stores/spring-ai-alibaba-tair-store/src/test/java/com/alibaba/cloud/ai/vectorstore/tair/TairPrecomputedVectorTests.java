@@ -29,6 +29,7 @@ import org.springframework.ai.vectorstore.SearchRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -40,16 +41,21 @@ class TairPrecomputedVectorTests {
 		var client = mock(TairVectorApi.class);
 		var model = mock(EmbeddingModel.class);
 		var options = new TairVectorStoreOptions();
-		options.setDimensions(2);
-		var store = TairVectorStore.builder(client, model).options(options).build();
+		String index = options.getIndexName();
+		when(client.tvsgetindex(index)).thenReturn(Map.of("dimension", "2"));
+		var store = TairVectorStore.builder(client, model).options(options).initializeSchema(true).build();
+		store.afterPropertiesSet();
 		var document = new Document("test-id", "text", Map.of("kind", "test"));
 		float[] vector = { 0.25f, 0.75f };
 		var embedded = new EmbeddedDocument(document, vector);
-		String index = options.getIndexName();
 
 		assertThatIllegalArgumentException().isThrownBy(
 				() -> store.upsert(List.of(embedded, new EmbeddedDocument(new Document("other"), new float[] { 1 }))));
-		verifyNoInteractions(client);
+		verify(client).tvsgetindex(index);
+		verifyNoMoreInteractions(client);
+		assertThatIllegalArgumentException().isThrownBy(
+				() -> store.similaritySearch(new float[] { 1 }, SearchRequest.builder().build()));
+
 		store.upsert(List.of(embedded));
 		verify(client).tvshset(index, "test-id", "[0.25,0.75]",
 				"id", "test-id", "content", "text", "metadata", "{\"kind\":\"test\"}");

@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.agent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentReques
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestParameters.DashScopeAgentRequestRagOptions;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentResponse;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeMessageParts;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import org.jspecify.annotations.Nullable;
@@ -36,7 +38,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.messages.part.MediaPart;
+import org.springframework.ai.chat.messages.part.ReasoningPart;
+import org.springframework.ai.chat.messages.part.StreamingParts;
+import org.springframework.ai.chat.messages.part.TextPart;
+import org.springframework.ai.chat.messages.part.UnknownPart;
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -44,6 +54,8 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
+import tools.jackson.databind.json.JsonMapper;
 import reactor.core.publisher.Flux;
 
 /**
@@ -78,7 +90,7 @@ public final class DashScopeAgent extends Agent implements ChatModel {
             return new ChatResponse(List.of());
         }
 
-        return toChatResponse(response.getBody());
+        return toChatResponse(response.getBody(), false, false);
     }
 
     @Override
@@ -88,7 +100,8 @@ public final class DashScopeAgent extends Agent implements ChatModel {
 
         Flux<DashScopeAgentResponse> response = this.dashScopeAgentApi.stream(request);
 
-        return response.map(this::toChatResponse);
+        return response.map(chunk -> toChatResponse(chunk, true,
+                Boolean.TRUE.equals(request.parameters().incrementalOutput())));
     }
 
     @Override
@@ -112,6 +125,29 @@ public final class DashScopeAgent extends Agent implements ChatModel {
         List<DashScopeAgentRequestMessage> requestMessages = List.of();
 
         List<Message> messages = prompt.getInstructions();
+        List<String> images = new ArrayList<>(Objects.requireNonNullElse(runtimeOptions.getImages(), List.of()));
+        for (int i = 0; i < messages.size(); i++) {
+            Message message = messages.get(i);
+            if (message instanceof UserMessage user) {
+                for (var part : user.getParts()) {
+                    if (part instanceof MediaPart media) {
+                        Assert.isTrue(i == messages.size() - 1 && "image".equals(media.media().getMimeType().getType()),
+                                "DashScope applications accept images only on the current user message");
+                        images.add(DashScopeMessageParts.mediaData(media.media()));
+                    }
+                    else if (!(part instanceof TextPart)) {
+                        throw new IllegalArgumentException("Unsupported part in a DashScope application user message");
+                    }
+                }
+            }
+            else if (message instanceof AssistantMessage assistant) {
+                Assert.isTrue(assistant.getToolCalls().isEmpty() && !DashScopeMessageParts.requiresBlocks(assistant.getParts()),
+                        "DashScope application history requires text assistant messages");
+            }
+            else if (message.getMessageType() == MessageType.TOOL) {
+                throw new IllegalArgumentException("DashScope applications execute tools on the server");
+            }
+        }
         boolean onlyOneUserMessage = messages.size() == 1 && messages.get(0).getMessageType() == MessageType.USER;
         if (onlyOneUserMessage) {
             requestPrompt = messages.get(0).getText();
@@ -124,7 +160,8 @@ public final class DashScopeAgent extends Agent implements ChatModel {
         // @formatter:off
         DashScopeAgentRagOptions ragOptions = runtimeOptions.getRagOptions();
         DashScopeAgentRequestInput input = new DashScopeAgentRequestInput(requestPrompt, requestMessages,
-                runtimeOptions.getSessionId(), runtimeOptions.getMemoryId(), runtimeOptions.getImages(),
+                runtimeOptions.getSessionId(), runtimeOptions.getMemoryId(),
+                images.isEmpty() ? runtimeOptions.getImages() : images,
                 runtimeOptions.getFiles(), runtimeOptions.getBizParams());
         DashScopeAgentRequestParameters parameters = new DashScopeAgentRequestParameters(
                 runtimeOptions.getFlowStreamMode(), runtimeOptions.getHasThoughts(),
@@ -138,7 +175,7 @@ public final class DashScopeAgent extends Agent implements ChatModel {
         return new DashScopeAgentRequest(appId, input, parameters);
     }
 
-    private ChatResponse toChatResponse(DashScopeAgentResponse response) {
+    private ChatResponse toChatResponse(DashScopeAgentResponse response, boolean streaming, boolean incremental) {
         DashScopeAgentResponse.DashScopeAgentResponseOutput output = response.output();
         DashScopeAgentResponse.DashScopeAgentResponseUsage usage = response.usage();
         if (output == null) {
@@ -158,16 +195,38 @@ public final class DashScopeAgent extends Agent implements ChatModel {
         metadata.put(DashScopeApiConstants.THOUGHTS, output.thoughts());
         metadata.put(DashScopeApiConstants.OUTPUT, output);
 
-        var assistantMessage = AssistantMessage.builder()
-                .content(text)
-                .properties(metadata)
-                .build();
+        var assistant = AssistantMessage.builder().properties(metadata);
+        var thoughts = output.thoughts();
+        if (thoughts != null) {
+            for (int i = 0; i < thoughts.size(); i++) {
+                var thought = thoughts.get(i);
+                String reasoning = thought.reasoningContent();
+                if (StringUtils.hasText(reasoning)) {
+                    var part = ReasoningPart.of(reasoning);
+                    assistant.part(!streaming ? part : (incremental
+                            ? StreamingParts.partial(part, 1 + i * 2) : StreamingParts.complete(part, 1 + i * 2)));
+                }
+                var raw = new UnknownPart("dashscope-agent", "thought", JsonMapper.shared().writeValueAsString(thought),
+                        null, Map.of());
+                assistant.part(streaming ? StreamingParts.complete(raw, 2 + i * 2) : raw);
+            }
+        }
+        var textPart = TextPart.of(text);
+        assistant.part(!streaming ? textPart : (incremental
+                ? StreamingParts.partial(textPart, 0) : StreamingParts.complete(textPart, 0)));
+        var assistantMessage = assistant.build();
         var generationMetadata = ChatGenerationMetadata.builder()
                 .finishReason(output.finishReason()).build();
         Generation generation = new Generation(assistantMessage, generationMetadata);
         // @formatter:on
 
-        return new ChatResponse(List.of(generation));
+        var responseMetadata = ChatResponseMetadata.builder().id(Objects.requireNonNullElse(response.requestId(), ""));
+        if (usage != null && usage.models() != null) {
+            int inputTokens = usage.models().stream().mapToInt(model -> Objects.requireNonNullElse(model.inputTokens(), 0)).sum();
+            int outputTokens = usage.models().stream().mapToInt(model -> Objects.requireNonNullElse(model.outputTokens(), 0)).sum();
+            responseMetadata.usage(new DefaultUsage(inputTokens, outputTokens, inputTokens + outputTokens));
+        }
+        return new ChatResponse(List.of(generation), responseMetadata.build());
     }
 
     private Prompt buildRequestPrompt(Prompt prompt) {

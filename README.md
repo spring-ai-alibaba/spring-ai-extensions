@@ -88,6 +88,55 @@ Please check [Quick Start](https://java2ai.com/docs/1.0.0.2/get-started/chatbot)
 
 // TBD
 
+### DashScope model routing and reasoning
+
+The HTTP and SDK chat starters select the native generation endpoint for known models.
+For example, `qwen4-max`, `qwen3.8-flash`, and the Bailian-hosted `kimi-k3.1-pro` use the
+multimodal endpoint for text-only requests as well. `glm-5.3` uses the text endpoint.
+Set `multi-model` explicitly to override the route for a custom deployment.
+
+```yaml
+spring:
+  ai:
+    dashscope:
+      chat:
+        model: qwen4-max
+        enable-thinking: true
+        reasoning-effort: low
+        thinking-display: summarized
+        preserve-thinking: true
+```
+
+Use the same chat options under `spring.ai.dashscope.sdk.chat` with the SDK starter.
+For a workspace-specific endpoint, use `spring.ai.dashscope.base-url` with the HTTP
+starter or `spring.ai.dashscope.sdk.chat.base-url` with the SDK starter. Include `/api/v1`
+in the SDK base URL. For GLM, use `clear-thinking: false` to retain prior reasoning.
+Qwen4-Max accepts either `reasoning-effort` or `thinking-budget` in a request.
+Kimi-K3.1-Pro accepts only its default sampling values and does not accept
+`thinking-budget`.
+
+When `thinking-display: summarized` is enabled, keep the assistant message and its
+parts in conversation history. The adapter replays the encrypted reasoning payload
+with the next turn. For the provider-direct `kimi/kimi-k3` model, follow Bailian's
+[OpenAI-compatible API instructions](https://help.aliyun.com/zh/model-studio/kimi-api-by-moonshot-ai).
+
+### Bailian Decision Model
+
+Add `org.springframework.ai:spring-ai-starter-model-systemone` from Spring AI 2.1.0 to use the Bailian Decision Model. Inject `DecisionModel` and submit yes/no, choice, or score questions with `DecisionPrompt`. This configuration uses a China (Beijing) workspace. For other regions, use the hostname for your workspace. [Bailian Decision Model API](https://help.aliyun.com/en/model-studio/decision-model-api)
+
+```yaml
+spring:
+  ai:
+    model:
+      decision: systemone
+    systemone:
+      api-key: ${DASHSCOPE_API_KEY}
+      base-url: https://${BAILIAN_WORKSPACE_ID}.cn-beijing.maas.aliyuncs.com/compatible-mode
+      decision:
+        model: decision-model-preview
+        provider: dashscope
+```
+
 ## Playground and Example
 
 The community has developed a [Playground](https://github.com/springaialibaba/spring-ai-alibaba-examples/tree/main/spring-ai-alibaba-playground) agent that includes a complete front-end UI and back-end implementation. The Playground back-end is developed using Spring AI Alibaba and gives users a quick overview of all core framework capabilities such as chatbot, multi-round conversations, image generation, multi-modality, tool calling, MCP, and RAG.
@@ -161,6 +210,12 @@ Text-to-speech synthesis model that converts text into natural-sounding audio wi
 
 Speech-to-text transcription model that converts audio into text with high accuracy.
 
+#### Current DashScope image, video, and audio APIs
+
+- Image generation and editing support `qwen-image-3.0-pro`, `qwen-image-3.0`, `qwen-image-2.1-pro`, and `qwen-image-2.1-turbo`. Pass reference images with `baseImageUrl` or `images`. For synchronous Qwen Image 3.0, use `responseFormat("b64_json")` and read `Image.getB64Json()`.
+- Select `wan3.0-video` or a Wan 2.7 model for video generation. Set the frame with `resolution` and `ratio`, and provide reference media through `InputOptions.media`. The adapter polls the submitted task by ID.
+- Speech synthesis supports Qwen Audio TTS 3.0/3.1 and CosyVoice 3.5. For CosyVoice 3.5, configure a voice cloned or designed for the selected model. Use `qwen-audio-3.1-asr-flash` for short audio, `qwen-audio-3.1-asr-flash-filetrans` with a public URL for long audio, or `qwen-audio-3.1-asr-flash-streaming` for real-time transcription.
+
 ### MCP (Model Context Protocol)
 
 MCP provides a standardized protocol for managing and routing AI model contexts. This extension includes:
@@ -170,7 +225,7 @@ MCP provides a standardized protocol for managing and routing AI model contexts.
 - **MCP Registry**: Service registry for discovering and managing MCP services
 - **MCP Router**: Intelligent routing capabilities for distributing requests across multiple model contexts
 
-**MCP SDK Version**: 2.0.0
+MCP Java SDK 2.2.0 supports both Modern MCP (2026-07-28) and legacy MCP tool discovery and calls through the Nacos registry, router, and gateway.
 
 **Available Starters:**
 - `spring-ai-alibaba-starter-mcp-registry`
@@ -291,6 +346,24 @@ Available starters:
     <artifactId>spring-ai-alibaba-starter-rag</artifactId>
 </dependency>
 ```
+
+#### Bailian workspace RAG API
+
+Configure a workspace and an API key in the DashScope starter to inject `DashScopeRagApi`.
+
+```yaml
+spring:
+  ai:
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY}
+      workspace-id: ${BAILIAN_WORKSPACE_ID}
+      rag:
+        enabled: true
+```
+
+Use `DashScopeRagDocumentRetriever.forIndex(api, indexId, 5, List.of())` with an existing knowledge base or `forService(api, agentId, filters)` with a published retrieval service. Pass the retriever to `RetrievalAugmentationAdvisor` or `DashScopeDocumentRetrievalAdvisor`.
+
+Register files with `upload`, pass the file IDs to `submitImport`, and retain the job ID for `importStatus` or `awaitImport`. Use the knowledge base's document IDs with `deleteDocuments` and the data center file ID with `deleteFile`. For hosted question answering, consume the SSE events from `chat` and send the full message history on each turn.
 
 ### Prompt
 

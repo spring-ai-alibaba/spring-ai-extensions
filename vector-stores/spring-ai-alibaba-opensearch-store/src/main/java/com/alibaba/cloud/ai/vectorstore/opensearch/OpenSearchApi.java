@@ -16,11 +16,12 @@
 package com.alibaba.cloud.ai.vectorstore.opensearch;
 
 import com.aliyun.ha3engine.vector.Client;
+import com.aliyun.ha3engine.vector.models.GetTableResponseBody.GetTableResponseBodyResultVectorIndex;
+import com.aliyun.tea.TeaException;
 import com.aliyun.ha3engine.vector.models.PushDocumentsRequest;
 import com.aliyun.ha3engine.vector.models.PushDocumentsResponse;
 import com.aliyun.ha3engine.vector.models.QueryRequest;
 import com.aliyun.ha3engine.vector.models.SearchResponse;
-import com.aliyun.teautil.Common;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -61,7 +62,7 @@ public class OpenSearchApi {
 	public void createCollectionAndIndex(String mappingJson) throws Exception {
 		String queryUri = "/openapi/ha3/instances/" + this.instanceId + "/tables";
 		Map<String, ?> ansMap = client._request("POST", queryUri, null, client.getHeadersFromRunTimeOption(),
-				Common.toJSONString(mappingJson), client._runtimeOptions);
+				mappingJson, client._runtimeOptions);
 
 		if (null == ansMap.get("requestId")) {
 			throw new RuntimeException(
@@ -72,15 +73,21 @@ public class OpenSearchApi {
 	}
 
 	public List<Object> getIndexList(String tableName) throws Exception {
-		String queryUri = "/openapi/ha3/instances/" + this.instanceId + "/tables" + "/" + tableName;
-		Map<String, ?> ansMap = client._request("GET", queryUri, null, client.getHeadersFromRunTimeOption(), null,
-				client._runtimeOptions);
+		return getVectorIndexes(tableName).stream().map(index -> (Object) index.getIndexName()).toList();
+	}
 
-		if (null == ansMap.get("requestId")) {
-			throw new RuntimeException(
-					"OpenSearch autoInitializeIndex failed. Error message:{} " + ansMap.get("message"));
+	List<GetTableResponseBodyResultVectorIndex> getVectorIndexes(String tableName) throws Exception {
+		try {
+			var response = this.client.getTable(tableName);
+			var result = response.getBody().getResult();
+			return result.getVectorIndex() != null ? result.getVectorIndex() : List.of();
 		}
-		return Collections.singletonList(ansMap.get("vectorIndex"));
+		catch (TeaException ex) {
+			if (Objects.equals(ex.getStatusCode(), 404)) {
+				return List.of();
+			}
+			throw ex;
+		}
 	}
 
 	/**

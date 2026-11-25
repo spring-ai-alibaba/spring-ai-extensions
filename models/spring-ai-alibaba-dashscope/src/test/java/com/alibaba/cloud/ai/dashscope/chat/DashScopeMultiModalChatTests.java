@@ -312,7 +312,7 @@ public class DashScopeMultiModalChatTests {
         ChatCompletionChunk chunk1 = new ChatCompletionChunk(TEST_REQUEST_ID, output1, null, null);
         ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2, new TokenUsage(10, 5, 15, null, null, null, null, null, null, null), null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), anyBoolean())).thenReturn(Flux.just(chunk1, chunk2));
+        when(dashScopeApi.chatCompletionStreamDeltas(any(ChatCompletionRequest.class), any(), anyBoolean())).thenReturn(Flux.just(chunk1, chunk2));
 
         // Create user message with resource media
         UserMessage message = UserMessage.builder()
@@ -346,7 +346,7 @@ public class DashScopeMultiModalChatTests {
         ChatCompletionChunk chunk1 = new ChatCompletionChunk(TEST_REQUEST_ID, output1, null, null);
         ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2, new TokenUsage(10, 5, 15, null, null, null, null, null, null, null), null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(true))).thenReturn(Flux.just(chunk1, chunk2));
+        when(dashScopeApi.chatCompletionStreamDeltas(any(ChatCompletionRequest.class), any(), eq(true))).thenReturn(Flux.just(chunk1, chunk2));
 
         UserMessage message = multimodalMessage(MULTIMODAL_IMAGE_PROMPT, MessageFormat.IMAGE, List.of(new Media(MimeTypeUtils.IMAGE_JPEG, URI.create(MULTIMODAL_IMAGE_URL))));
         DashScopeChatOptions options = DashScopeChatOptions.builder()
@@ -364,7 +364,7 @@ public class DashScopeMultiModalChatTests {
                 .verifyComplete();
 
         ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
-        verify(dashScopeApi).chatCompletionStream(requestCaptor.capture(), any(), eq(true));
+        verify(dashScopeApi).chatCompletionStreamDeltas(requestCaptor.capture(), any(), eq(true));
         verify(dashScopeApi, never()).chatCompletionEntity(any(ChatCompletionRequest.class), any(), anyBoolean());
 
         ChatCompletionRequest request = requestCaptor.getValue();
@@ -413,7 +413,7 @@ public class DashScopeMultiModalChatTests {
 
         ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
         verify(dashScopeApi).chatCompletionEntity(requestCaptor.capture(), any(), eq(true));
-        verify(dashScopeApi, never()).chatCompletionStream(any(ChatCompletionRequest.class), any(), anyBoolean());
+        verify(dashScopeApi, never()).chatCompletionStreamDeltas(any(ChatCompletionRequest.class), any(), anyBoolean());
 
         ChatCompletionRequest request = requestCaptor.getValue();
         assertThat(request.model()).isEqualTo(MULTIMODAL_VIDEO_MODEL);

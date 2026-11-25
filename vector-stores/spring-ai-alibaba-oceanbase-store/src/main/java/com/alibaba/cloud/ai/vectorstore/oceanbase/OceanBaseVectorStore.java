@@ -155,11 +155,20 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 	}
 
 	private void initializeDatabase() {
-		int vectorDimension = dimension != null ? dimension :
-			(this.embeddingModel != null ? this.embeddingModel.dimensions() : DEFAULT_DIMENSION);
-
-		String createTableSql = buildCreateTableSql(vectorDimension);
-		executeUpdate(createTableSql);
+		Integer vectorDimension = this.dimension;
+		if (vectorDimension != null) {
+			executeUpdate(buildCreateTableSql(vectorDimension));
+		}
+		else {
+			vectorDimension = findVectorDimension();
+			if (vectorDimension == null) {
+				int creationDimension = this.embeddingModel != null ? this.embeddingModel.dimensions() : DEFAULT_DIMENSION;
+				Assert.state(creationDimension > 0, "OceanBase table must have a positive vector dimension");
+				executeUpdate(buildCreateTableSql(creationDimension));
+				vectorDimension = getVectorDimension();
+			}
+			this.dimension = vectorDimension;
+		}
 		createVectorIndex(vectorDimension);
 
 		if (enableFulltext) {
@@ -381,10 +390,15 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 	}
 
 	private synchronized int getVectorDimension() {
-		Integer configured = this.dimension;
-		if (configured != null) {
-			return configured;
+		if (this.dimension == null) {
+			this.dimension = findVectorDimension();
 		}
+		Integer dimensions = this.dimension;
+		Assert.state(dimensions != null, "Cannot determine vector dimensions for table " + this.tableName);
+		return dimensions;
+	}
+
+	private @Nullable Integer findVectorDimension() {
 		try (Connection connection = this.dataSource.getConnection();
 				PreparedStatement statement = connection.prepareStatement("SHOW COLUMNS FROM " + this.tableName);
 				ResultSet columns = statement.executeQuery()) {
@@ -392,15 +406,18 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 				if (EMBEDDING_FIELD.equalsIgnoreCase(columns.getString("Field"))) {
 					var matcher = VECTOR_COLUMN_TYPE.matcher(columns.getString("Type"));
 					if (matcher.matches()) {
-						int resolved = Integer.parseInt(matcher.group(1));
-						this.dimension = resolved;
-						return resolved;
+						int dimensions = Integer.parseInt(matcher.group(1));
+						Assert.state(dimensions > 0, "OceanBase table must have a positive vector dimension");
+						return dimensions;
 					}
 					break;
 				}
 			}
 		}
 		catch (SQLException ex) {
+			if ("42S02".equals(ex.getSQLState()) || ex.getErrorCode() == 1146) {
+				return null;
+			}
 			throw new IllegalStateException("Failed to read vector dimensions for table " + this.tableName, ex);
 		}
 		throw new IllegalStateException("Cannot determine vector dimensions for table " + this.tableName);
@@ -834,6 +851,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		}
 
 		public Builder dimension(@Nullable Integer dimension) {
+			Assert.isTrue(dimension == null || dimension > 0, "OceanBase table must have a positive vector dimension");
 			this.dimension = dimension;
 			return this;
 		}

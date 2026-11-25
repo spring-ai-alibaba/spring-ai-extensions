@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.dashscope.common;
 
+import org.jspecify.annotations.Nullable;
+
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
 
 import java.util.List;
@@ -34,12 +36,15 @@ public class DashScopeAudioApiConstants {
 
     public static final String ASR_TRANSCRIPTION = "/api/v1/services/audio/asr/transcription";
 
+    public static final String QWEN_AUDIO_TTS = "/api/v1/services/audio/tts/SpeechSynthesizer";
+
     public static final String QWEN_ASR = "/compatible-mode/v1/chat/completions";
 
     public static final String ASR_CUSTOMIZATION = "/api/v1/services/audio/asr/customization";
 
     // 实时语音合成 - CosyVocie
-    public static List<String> COSY_VOICE_MODEL_LIST = List.of(AudioModel.COSYVOICE_V1.getValue(), AudioModel.COSYVOICE_V2.getValue(), AudioModel.COSYVOICE_V3_FLASH.getValue(), AudioModel.COSYVOICE_V3_PLUS.getValue());
+    public static List<String> COSY_VOICE_MODEL_LIST = List.of(AudioModel.COSYVOICE_V1.getValue(), AudioModel.COSYVOICE_V2.getValue(), AudioModel.COSYVOICE_V3_FLASH.getValue(), AudioModel.COSYVOICE_V3_PLUS.getValue(),
+            AudioModel.COSYVOICE_V35_FLASH.getValue(), AudioModel.COSYVOICE_V35_PLUS.getValue());
 
     // 实时语音合成 - Sambert
     public static List<String> SAMBERT_MODEL_LIST = List.of(AudioModel.SAMBERT_ZHINAN_V1.getValue(), AudioModel.SAMBERT_ZHIQI_V1.getValue(), AudioModel.SAMBERT_ZHICHU_V1.getValue(), AudioModel.SAMBERT_ZHIDE_V1.getValue(), AudioModel.SAMBERT_ZHIJIA_V1.getValue(), AudioModel.SAMBERT_ZHIRU_V1.getValue(), AudioModel.SAMBERT_ZHIQIAN_V1.getValue(), AudioModel.SAMBERT_ZHIXIANG_V1.getValue(), AudioModel.SAMBERT_ZHIWEI_V1.getValue(), AudioModel.SAMBERT_ZHIHAO_V1.getValue(), AudioModel.SAMBERT_ZHIJING_V1.getValue(), AudioModel.SAMBERT_ZHIMING_V1.getValue(), AudioModel.SAMBERT_ZHIMO_V1.getValue(), AudioModel.SAMBERT_ZHINA_V1.getValue(), AudioModel.SAMBERT_ZHISHU_V1.getValue(), AudioModel.SAMBERT_ZHISTELLA_V1.getValue(), AudioModel.SAMBERT_ZHITING_V1.getValue(), AudioModel.SAMBERT_ZHIXIAO_V1.getValue(), AudioModel.SAMBERT_ZHIYA_V1.getValue(), AudioModel.SAMBERT_ZHIYE_V1.getValue(), AudioModel.SAMBERT_ZHIYING_V1.getValue(), AudioModel.SAMBERT_ZHIYUAN_V1.getValue(), AudioModel.SAMBERT_ZHIYUE_V1.getValue(), AudioModel.SAMBERT_ZHIGUI_V1.getValue(), AudioModel.SAMBERT_ZHISHUO_V1.getValue(), AudioModel.SAMBERT_ZHIMIAO_EMO_V1.getValue(), AudioModel.SAMBERT_ZHIMAO_V1.getValue(), AudioModel.SAMBERT_ZHILUN_V1.getValue(), AudioModel.SAMBERT_ZHIFEI_V1.getValue(), AudioModel.SAMBERT_ZHIDA_V1.getValue(), AudioModel.SAMBERT_CAMILA_V1.getValue(), AudioModel.SAMBERT_PERLA_V1.getValue(), AudioModel.SAMBERT_INDAH_V1.getValue(), AudioModel.SAMBERT_CLARA_V1.getValue(), AudioModel.SAMBERT_HANNA_V1.getValue(), AudioModel.SAMBERT_BETH_V1.getValue(), AudioModel.SAMBERT_BETTY_V1.getValue(), AudioModel.SAMBERT_CALLY_V1.getValue(), AudioModel.SAMBERT_CINDY_V1.getValue(), AudioModel.SAMBERT_EVA_V1.getValue(), AudioModel.SAMBERT_DONNA_V1.getValue(), AudioModel.SAMBERT_BRIAN_V1.getValue(), AudioModel.SAMBERT_WAAN_V1.getValue());
@@ -77,8 +82,32 @@ public class DashScopeAudioApiConstants {
 
     // 录音文件识别（Qwen-ASR）
     public static List<String> QWEN_ASR_MODEL_LIST = List.of(
-            AudioModel.QWEN3_ASR_FLASH_FILETRANS.getValue(),AudioModel.QWEN3_ASR_FLASH.getValue(),AudioModel.QWEN3_ASR_FLASH_US.getValue(),AudioModel.QWEN3_ASR_FLASH_FILETANS.getValue()
+            AudioModel.QWEN3_ASR_FLASH.getValue(),AudioModel.QWEN3_ASR_FLASH_US.getValue()
     );
+
+    public static boolean isQwenAudioTts(@Nullable String model) {
+        return model != null && (model.startsWith("qwen-audio-3.1-tts-") || model.startsWith("qwen-audio-3.0-tts-"));
+    }
+
+    public static boolean isQwenAudioAsrRealtime(String model) {
+        return AudioModel.QWEN_AUDIO_31_ASR_FLASH_STREAMING.getValue().equals(model)
+                || AudioModel.QWEN_AUDIO_31_ASR_FLASH_MESSAGE.getValue().equals(model);
+    }
+
+    public static boolean isQwenAudioAsr(String model) {
+        return AudioModel.QWEN_AUDIO_31_ASR_FLASH.getValue().equals(model)
+                || AudioModel.QWEN_AUDIO_30_ASR_FLASH.getValue().equals(model);
+    }
+
+    public static boolean isQwenFileTranscription(String model) {
+        return AudioModel.QWEN3_ASR_FLASH_FILETRANS.getValue().equals(model)
+                || AudioModel.QWEN_AUDIO_31_ASR_FLASH_FILETRANS.getValue().equals(model)
+                || AudioModel.QWEN_AUDIO_30_ASR_FLASH_FILETRANS.getValue().equals(model);
+    }
+
+    public static boolean isDuplexTts(String model) {
+        return isCosyVoiceModel(model) || isQwenAudioTts(model);
+    }
 
     public static boolean isWebsocketByTTSModelName(String modelName) {
         if (COSY_VOICE_MODEL_LIST.contains(modelName) || SAMBERT_MODEL_LIST.contains(modelName)) {
@@ -88,7 +117,7 @@ public class DashScopeAudioApiConstants {
     }
 
     public static boolean isQwenTTSModel(String modelName) {
-        return QWEN_TTS_MODEL_LIST.contains(modelName);
+        return QWEN_TTS_MODEL_LIST.contains(modelName) || isQwenAudioTts(modelName);
     }
 
     public static boolean isLiveTranslate(String modelName) {

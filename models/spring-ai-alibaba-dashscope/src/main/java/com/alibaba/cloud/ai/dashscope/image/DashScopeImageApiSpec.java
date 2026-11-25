@@ -510,7 +510,10 @@ public class DashScopeImageApiSpec {
                                  @JsonProperty("ttf_url") @Nullable String ttfUrl,
                                  @JsonProperty("output_image_ratio") @Nullable String outputImageRatio,
                                  @JsonProperty("image_short_size") @Nullable Integer imageShortSize,
-                                 @JsonProperty("alpha_channel") @Nullable Boolean alphaChannel) {
+                                 @JsonProperty("alpha_channel") @Nullable Boolean alphaChannel,
+                                 @JsonProperty("response_format") @Nullable String responseFormat,
+                                 @JsonProperty("prompt_extend_mode") @Nullable String promptExtendMode,
+                                 @JsonProperty("enable_thinking") @Nullable Boolean enableThinking) {
 
             public static Builder builder() {
                 return new Builder();
@@ -831,6 +834,27 @@ public class DashScopeImageApiSpec {
                     return this;
                 }
 
+                private @Nullable String responseFormat;
+
+                private @Nullable String promptExtendMode;
+
+                private @Nullable Boolean enableThinking;
+
+                public Builder responseFormat(@Nullable String responseFormat) {
+                    this.responseFormat = responseFormat;
+                    return this;
+                }
+
+                public Builder promptExtendMode(@Nullable String promptExtendMode) {
+                    this.promptExtendMode = promptExtendMode;
+                    return this;
+                }
+
+                public Builder enableThinking(@Nullable Boolean enableThinking) {
+                    this.enableThinking = enableThinking;
+                    return this;
+                }
+
                 public Parameters build() {
                     return new Parameters(style, size, n, seed, refStrength, refMode, promptExtend, watermark,
                             addWatermark, sketchWeight, sketchExtraction, sketchColor, maskColor, bboxList,
@@ -839,7 +863,7 @@ public class DashScopeImageApiSpec {
                             enableSequential, colorPalette, thinkingMode, resultType, seriesAmount, aspectRatio,
                             resolution, shortSideSize, scale, modelVersion, noiseLevel, refPromptWeight, fastMode,
                             dilateFlag, restoreFace, gender, clothesType, resources, skinRetouch, steps, fontName,
-                            ttfUrl, outputImageRatio, imageShortSize, alphaChannel);
+                            ttfUrl, outputImageRatio, imageShortSize, alphaChannel, responseFormat, promptExtendMode, enableThinking);
                 }
             }
         }

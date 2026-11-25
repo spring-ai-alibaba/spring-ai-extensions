@@ -35,6 +35,9 @@ public class DashScopeVideoApiConstants {
     public static final String VIDEO_GENERATION_SYNTHESIS = "/api/v1/services/aigc/video-generation/video-synthesis";
 
     static final Map<String, List<String>> videoGenerationSynthesis2Model = Map.of(VIDEO_GENERATION_SYNTHESIS, List.of(
+            DashScopeModel.VideoModel.WAN30_VIDEO.getName(),
+            DashScopeModel.VideoModel.WAN27_T2V.getName(), DashScopeModel.VideoModel.WAN27_I2V.getName(),
+            DashScopeModel.VideoModel.WAN27_R2V.getName(), DashScopeModel.VideoModel.WAN27_VIDEO_EDIT.getName(),
             // 通义万相-图生视频-基于首帧
             DashScopeModel.VideoModel.WANX21_I2V_TURBO.getName(), DashScopeModel.VideoModel.WANX21_I2V_PLUS.getName(),
             DashScopeModel.VideoModel.WANX22_I2V_PLUS.getName(), DashScopeModel.VideoModel.WAN22_I2V_FLASH.getName(),

@@ -40,7 +40,7 @@ import com.alibaba.cloud.ai.tool.ObservableToolCallingManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
@@ -49,6 +49,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.messages.part.ReasoningPart;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatReasoning;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -135,8 +136,8 @@ class SessionMemoryToolCallingTests {
 	}
 
 	@ParameterizedTest
-	@ValueSource(booleans = { false, true })
-	void resumesFromJdbcHistoryAfterAnEarlierToolRoundAndReplaysReasoning(boolean async) {
+	@CsvSource({ "false, false", "true, false", "false, true", "true, true" })
+	void resumesFromJdbcHistoryAfterAnEarlierToolRoundAndReplaysReasoning(boolean async, boolean encrypted) {
 		withJdbcSession(service -> {
 			ToolCallingManager manager = async
 					? DashScopeAsyncToolCallingManager.builder().taskExecutor(this.executor).build()
@@ -145,18 +146,23 @@ class SessionMemoryToolCallingTests {
 			ToolCallback confirmed = testTool("confirmed", true);
 			DashScopeApi api = mock(DashScopeApi.class);
 			List<ChatCompletionRequest> requests = new ArrayList<>();
-			when(api.chatCompletionEntity(any(), any(), eq(false))).thenAnswer(invocation -> {
+			when(api.chatCompletionEntity(any(), any(), eq(encrypted))).thenAnswer(invocation -> {
 				requests.add(invocation.getArgument(0));
 				return ResponseEntity.ok(switch (requests.size()) {
-					case 1 -> toolReply("lookup-id", "lookup", "first reasoning");
-					case 2 -> toolReply("confirm-id", "confirmed", "second reasoning");
+					case 1 -> toolReply("lookup-id", "lookup", "first reasoning", encrypted);
+					case 2 -> toolReply("confirm-id", "confirmed", "second reasoning", encrypted);
 					case 3 -> textReply("resumed");
 					case 4 -> textReply("next turn");
 					default -> throw new AssertionError("Unexpected model request");
 				});
 			});
+			var chatOptions = DashScopeChatOptions.builder().model(encrypted ? "qwen4-max" : "qwen-plus")
+				.preserveThinking(true);
+			if (encrypted) {
+				chatOptions.thinkingDisplay("summarized");
+			}
 			DashScopeChatModel model = DashScopeChatModel.builder().dashScopeApi(api)
-				.defaultOptions(DashScopeChatOptions.builder().model("qwen-plus").preserveThinking(true).build())
+				.defaultOptions(chatOptions.build())
 				.toolCallingManager(manager).build();
 			var advisors = new ArrayList<>(SessionAdvisors.builder(service).build());
 			advisors.add(ToolCallingAdvisor.builder().toolCallingManager(manager)
@@ -174,7 +180,14 @@ class SessionMemoryToolCallingTests {
 			assertThat(history).extracting(Message::getMessageType)
 				.containsExactly(MessageType.USER, MessageType.ASSISTANT, MessageType.TOOL, MessageType.ASSISTANT);
 			var saved = (AssistantMessage) history.get(3);
-			assertThat(saved.getReasoning()).containsExactly(ReasoningPart.of("second reasoning"));
+			if (encrypted) {
+				assertThat(saved.getReasoning()).singleElement().extracting(ReasoningPart::summary)
+					.isEqualTo("second reasoning");
+				assertThat(DashScopeChatReasoning.encryptedContent(saved)).isEqualTo("cipher-confirm-id");
+			}
+			else {
+				assertThat(saved.getReasoning()).containsExactly(ReasoningPart.of("second reasoning"));
+			}
 			ChatResponse storedReply = new ChatResponse(List.of(new Generation(saved)));
 			var options = ToolCallingChatOptions.builder().toolCallbacks(List.of(lookup, confirmed)).build();
 			var resumed = manager.executeToolCalls(new Prompt(history, options), storedReply,
@@ -189,10 +202,18 @@ class SessionMemoryToolCallingTests {
 			assertThat(requests.get(2).input().messages())
 				.extracting(ChatCompletionRequest.Input.ChatCompletionMessage::role)
 				.containsExactly(Role.USER, Role.ASSISTANT, Role.TOOL, Role.ASSISTANT, Role.TOOL);
-			assertThat(requests.get(2).input().messages().get(1).reasoningContent()).isEqualTo("first reasoning");
-			assertThat(requests.get(2).input().messages().get(3).reasoningContent()).isEqualTo("second reasoning");
+			if (encrypted) {
+				assertThat(requests.get(2).input().messages().get(1).encryptedContent()).isEqualTo("cipher-lookup-id");
+				assertThat(requests.get(2).input().messages().get(3).encryptedContent()).isEqualTo("cipher-confirm-id");
+				assertThat(requests.get(2).input().messages().get(3).reasoningContent()).isNull();
+				assertThat(requests.get(3).input().messages().get(3).encryptedContent()).isEqualTo("cipher-confirm-id");
+			}
+			else {
+				assertThat(requests.get(2).input().messages().get(1).reasoningContent()).isEqualTo("first reasoning");
+				assertThat(requests.get(2).input().messages().get(3).reasoningContent()).isEqualTo("second reasoning");
+				assertThat(requests.get(3).input().messages().get(3).reasoningContent()).isEqualTo("second reasoning");
+			}
 			assertThat(requests.get(2).input().messages().get(4).toolCallId()).isEqualTo("confirm-id");
-			assertThat(requests.get(3).input().messages().get(3).reasoningContent()).isEqualTo("second reasoning");
 			verify(confirmed).call(eq("{}"), any());
 		});
 	}
@@ -213,10 +234,10 @@ class SessionMemoryToolCallingTests {
 		}
 	}
 
-	private static ChatCompletion toolReply(String id, String name, String reasoning) {
+	private static ChatCompletion toolReply(String id, String name, String reasoning, boolean encrypted) {
 		var call = new ToolCall(id, "function", new ChatCompletionFunction(name, "{}"), 0);
 		var message = new ChatCompletionMessage("", Role.ASSISTANT, null, null, List.of(call), reasoning,
-				null, null, null, null);
+				null, null, null, null, encrypted ? "cipher-" + id : null);
 		var choice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, message, null, 0);
 		return new ChatCompletion(id, new ChatCompletionOutput("", List.of(choice), null), null);
 	}

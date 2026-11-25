@@ -18,7 +18,6 @@ package com.alibaba.cloud.ai.dashscope.rag;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionFinishReason;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
@@ -26,7 +25,9 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.api.CallAdvisorChain;
+import org.springframework.ai.chat.client.advisor.api.StreamAdvisorChain;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -46,9 +47,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.REFERENCED_DOCUMENTS;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.RETRIEVED_DOCUMENTS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -59,7 +65,6 @@ import static org.mockito.Mockito.when;
  * @author brianxiadong
  * @since 1.0.0-M5.1
  */
-@Disabled("1.0.0-RC1删除API，测试类需要重构")
 class DashScopeDocumentRetrievalAdvisorTests {
 
 	private static final String TEST_CATEGORY_ID = "test-category";
@@ -345,6 +350,35 @@ class DashScopeDocumentRetrievalAdvisorTests {
 		assertThat(response).isNotNull();
 		assertThat(response.chatResponse()).isNotNull();
 		assertThat(response.context()).containsKey(RETRIEVED_DOCUMENTS);
+	}
+
+	@Test
+	void streamedReferencesPreserveKnowledgeBaseIdsAcrossFragments() {
+		var document = new Document("source", Map.of("index_id", "kb-1", "doc_name", "source.txt"));
+		when(this.documentRetriever.retrieve(any())).thenAnswer(call -> {
+			Query query = call.getArgument(0);
+			assertThat(query.history()).hasSize(3);
+			return List.of(document);
+		});
+		var request = ChatClientRequest.builder().prompt(new Prompt(List.of(new UserMessage("First question"),
+				new AssistantMessage("First answer"), new UserMessage("Follow-up")))).build();
+		var chain = mock(StreamAdvisorChain.class);
+		when(chain.nextStream(any())).thenAnswer(call -> {
+			ChatClientRequest processed = call.getArgument(0);
+			assertThat(processed.prompt().getUserMessage().getText()).contains("[1] 【文档名】source.txt");
+			return Flux.just(ChatClientResponse.builder().chatResponse(new ChatResponse(
+				List.of(new Generation(new AssistantMessage("Answer <re"))))).build(),
+					ChatClientResponse.builder().chatResponse(new ChatResponse(
+						List.of(new Generation(new AssistantMessage("f>[1]</ref>"))))).build());
+		});
+		StepVerifier.create(this.advisor.adviseStream(request, chain)).expectNextCount(1)
+			.assertNext(response -> {
+				List<Document> references = response.chatResponse().getMetadata().get(REFERENCED_DOCUMENTS);
+				assertThat(references).singleElement().satisfies(reference -> assertThat(reference.getMetadata())
+						.containsEntry("index_id", "kb-1").containsEntry("citation_index", 1));
+			})
+			.verifyComplete();
+		assertThat(document.getMetadata()).doesNotContainKey("citation_index");
 	}
 
 }

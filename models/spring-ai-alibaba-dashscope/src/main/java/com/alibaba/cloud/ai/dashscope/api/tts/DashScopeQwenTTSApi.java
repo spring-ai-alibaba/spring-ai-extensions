@@ -40,6 +40,9 @@ import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.net.URI;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -61,6 +64,8 @@ public class DashScopeQwenTTSApi {
 	private final ApiKey apiKey;
 	private final @Nullable String workSpaceId;
 	private final RestClient restClient;
+
+	private final RestClient downloadClient = RestClient.create();
 	private final WebClient webClient;
 	private final JsonMapper jsonMapper;
 
@@ -103,6 +108,13 @@ public class DashScopeQwenTTSApi {
 	}
 
 	public DashScopeAudioTTSResponse call(String text, DashScopeAudioSpeechOptions options) {
+		String model = Objects.requireNonNull(options.getModel(), "TTS model is required");
+		if (DashScopeAudioApiConstants.isQwenAudioTts(model)) {
+			DashScopeAudioTTSResponse response = this.restClient.post()
+				.uri(DashScopeAudioApiConstants.QWEN_AUDIO_TTS).body(audioRequest(model, text, options))
+				.retrieve().body(DashScopeAudioTTSResponse.class);
+			return withAudio(response);
+		}
 		DashScopeAudioTTSRequest request = DashScopeAudioTTSRequest.builder()
 				.model(options.getModel())
 				.text(text)
@@ -127,6 +139,22 @@ public class DashScopeQwenTTSApi {
 	}
 
 	public Flux<DashScopeAudioTTSResponse> stream(String text, DashScopeAudioSpeechOptions options) {
+		String model = Objects.requireNonNull(options.getModel(), "TTS model is required");
+		if (DashScopeAudioApiConstants.isQwenAudioTts(model)) {
+			return this.webClient.post().uri(DashScopeAudioApiConstants.QWEN_AUDIO_TTS)
+				.accept(MediaType.TEXT_EVENT_STREAM).header(HEADER_SSE, ENABLED)
+				.bodyValue(audioRequest(model, text, options)).retrieve().bodyToFlux(String.class)
+				.takeWhile(frame -> !"[DONE]".equals(frame))
+				.map(frame -> {
+					var payload = this.jsonMapper.readTree(frame);
+					if (payload.hasNonNull("code")) {
+						throw new IllegalStateException("DashScope audio synthesis failed: "
+								+ payload.path("code").asString() + " (request_id=" + payload.path("request_id").asString() + ")");
+					}
+					return this.jsonMapper.treeToValue(payload, DashScopeAudioTTSResponse.class);
+				})
+				.filter(frame -> frame.getResult().getOutput().length > 0);
+		}
 		DashScopeAudioTTSRequest request = DashScopeAudioTTSRequest.builder()
 				.model(options.getModel())
 				.text(text)
@@ -148,6 +176,41 @@ public class DashScopeQwenTTSApi {
 				.takeUntil(SSE_DONE_PREDICATE)
 				.filter(SSE_DONE_PREDICATE.negate())
 				.map(content -> jsonMapper.readValue(content, DashScopeAudioTTSResponse.class));
+	}
+
+	private static Map<String, Object> audioRequest(String model, String text, DashScopeAudioSpeechOptions options) {
+		Map<String, Object> input = new LinkedHashMap<>();
+		input.put("text", text);
+		input.put("voice", options.getVoice());
+		input.put("format", options.getFormat());
+		input.put("sample_rate", options.getSampleRate());
+		input.put("volume", options.getVolume());
+		input.put("rate", options.getRate());
+		input.put("pitch", options.getPitch());
+		input.put("instruction", options.getInstruction());
+		input.put("enable_ssml", "SSML".equalsIgnoreCase(options.getTextType()) ? Boolean.TRUE : options.getEnableSsml());
+		if ("opus".equalsIgnoreCase(options.getFormat())) {
+			input.put("bit_rate", options.getBitRate());
+		}
+		input.put("enable_aigc_tag", options.getEnableAigcTag());
+		input.put("aigc_propagator", options.getAigcPropagator());
+		input.put("aigc_propagate_id", options.getAigcPropagateId());
+		input.values().removeIf(Objects::isNull);
+		return Map.of("model", model, "input", input);
+	}
+
+	private DashScopeAudioTTSResponse withAudio(@Nullable DashScopeAudioTTSResponse response) {
+		if (response == null || response.getOutput() == null || response.getOutput().audio() == null) {
+			throw new IllegalStateException("DashScope audio synthesis did not return audio");
+		}
+		if (response.getResult().getOutput().length > 0) {
+			return response;
+		}
+		String url = response.getOutput().audio().url();
+		Assert.hasText(url, "DashScope audio synthesis did not return a download URL");
+		byte[] bytes = this.downloadClient.get().uri(URI.create(url)).retrieve().body(byte[].class);
+		Assert.state(bytes != null && bytes.length > 0, "DashScope returned an empty audio file");
+		return new DashScopeAudioTTSResponse(response, bytes);
 	}
 
 	public static Builder builder() {

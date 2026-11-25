@@ -22,15 +22,21 @@ import com.alibaba.dashscope.aigc.generation.GenerationResult;
 import com.alibaba.dashscope.aigc.generation.GenerationUsage;
 import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.tools.ToolCallFunction;
+import com.sun.net.httpserver.HttpServer;
 import io.reactivex.Flowable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.messages.part.MediaPart;
 import org.springframework.ai.chat.messages.part.ReasoningPart;
 import org.springframework.ai.chat.messages.part.StreamingParts;
 import org.springframework.ai.chat.messages.part.ToolCallPart;
+import org.springframework.ai.chat.messages.part.ToolResultPart;
+import org.springframework.ai.chat.messages.part.UnknownPart;
+import org.springframework.ai.chat.messages.part.TextPart;
+import tools.jackson.databind.json.JsonMapper;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.MessageAggregator;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -41,6 +47,8 @@ import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.lang.reflect.Constructor;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -299,6 +307,59 @@ class DashScopeSdkChatModelTests {
 		assertThat(request.getMessages().get(0).getName()).isEqualTo("get_weather");
 		assertThat(request.getMessages().get(0).getToolCallId()).isEqualTo("call-1");
 		assertThat(request.getMessages().get(0).getContent()).isEqualTo("{\"city\":\"HZ\"}");
+	}
+
+	@Test
+	void preservesToolErrorStatusInSdkMessage() {
+		var result = new ToolResultPart("call-1", "lookup", List.of(TextPart.of("failed")), true, null, Map.of());
+		var tool = ToolResponseMessage.builder().results(List.of(result)).build();
+		var request = this.chatModel.createRequest(
+				new Prompt(List.of(tool), DashScopeSdkChatOptions.builder().model(TEST_MODEL).build()), false);
+
+		assertThat(request.getMessages()).singleElement().satisfies(message -> {
+			assertThat(message.getToolCallId()).isEqualTo("call-1");
+			assertThat(JsonMapper.shared().readTree(message.getContent()))
+				.isEqualTo(JsonMapper.shared().valueToTree(Map.of("content", "failed", "is_error", true)));
+		});
+	}
+
+	@Test
+	void roundTripsMultimodalSdkContentOverHttp() throws Exception {
+		String blocks = """
+				[{"text":"before "},{"image":"https://example.test/image.png"},
+				 {"type":"vendor_block","value":1},{"text":"after"}]
+				""";
+		byte[] response = """
+				{"request_id":"test-request-id","output":{"choices":[{"finish_reason":"stop",
+				 "message":{"role":"assistant","content":%s}}]}}
+				""".formatted(blocks).getBytes(StandardCharsets.UTF_8);
+		var recorded = new AtomicReference<String>();
+		var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+		server.createContext("/", exchange -> {
+			try (exchange) {
+				recorded.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+				exchange.getResponseHeaders().set("Content-Type", "application/json");
+				exchange.sendResponseHeaders(200, response.length);
+				exchange.getResponseBody().write(response);
+			}
+		});
+		server.start();
+		try {
+			var options = DashScopeSdkChatOptions.builder().model("qwen4-max").build();
+			var model = DashScopeSdkChatModel.builder().apiKey("test-key")
+				.baseUrl("http://127.0.0.1:" + server.getAddress().getPort() + "/api/v1").defaultOptions(options).build();
+			var output = model.call(new Prompt("hello", options)).getResult().getOutput();
+
+			assertThat(output.getParts()).anyMatch(MediaPart.class::isInstance).anyMatch(UnknownPart.class::isInstance);
+			assertThat(output.getText()).isEqualTo("before after");
+
+			model.call(new Prompt(List.of(output, new UserMessage("Continue")), options));
+			var content = JsonMapper.shared().readTree(recorded.get()).at("/input/messages/0/content");
+			assertThat(content).isEqualTo(JsonMapper.shared().readTree(blocks));
+		}
+		finally {
+			server.stop(0);
+		}
 	}
 
 	@Test

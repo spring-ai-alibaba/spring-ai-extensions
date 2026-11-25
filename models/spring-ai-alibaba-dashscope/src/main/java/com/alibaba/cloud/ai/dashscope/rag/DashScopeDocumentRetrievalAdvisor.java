@@ -15,12 +15,12 @@
  */
 package com.alibaba.cloud.ai.dashscope.rag;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionFinishReason;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.api.AdvisorChain;
 import org.springframework.ai.chat.client.advisor.api.BaseAdvisor;
+import org.springframework.ai.chat.client.advisor.api.StreamAdvisorChain;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
@@ -29,16 +29,19 @@ import org.springframework.ai.rag.generation.augmentation.ContextualQueryAugment
 import org.springframework.ai.rag.generation.augmentation.QueryAugmenter;
 import org.springframework.ai.rag.retrieval.search.DocumentRetriever;
 import org.jspecify.annotations.Nullable;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Title Document retrieval advisor.<br>
@@ -50,9 +53,9 @@ import java.util.stream.Collectors;
 
 public class DashScopeDocumentRetrievalAdvisor implements BaseAdvisor {
 
-	private static final Pattern RAG_REFERENCE_PATTERN = Pattern.compile("<ref>(.*?)</ref>");
+	private static final Pattern RAG_REFERENCE_PATTERN = Pattern.compile("<ref>(.*?)</ref>", Pattern.DOTALL);
 
-	private static final Pattern RAG_REFERENCE_INNER_PATTERN = Pattern.compile("\\[([0-9]+)(?:[,，]?([0-9]+))*]");
+	private static final Pattern RAG_REFERENCE_INNER_PATTERN = Pattern.compile("[0-9]+");
 
 	private static final PromptTemplate DEFAULT_USER_TEXT_ADVISE = new PromptTemplate(
 			"""
@@ -115,7 +118,7 @@ public class DashScopeDocumentRetrievalAdvisor implements BaseAdvisor {
 						[%s] 【文档名】%s
 						【标题】%s
 						【正文】%s
-						""".formatted(document.getMetadata().get("index_id"), document.getMetadata().get("doc_name"),
+						""".formatted(document.getMetadata().get("citation_index"), document.getMetadata().get("doc_name"),
 						document.getMetadata().get("title"), document.getText()))
 				.collect(Collectors.joining(System.lineSeparator())))
 			.build();
@@ -133,21 +136,23 @@ public class DashScopeDocumentRetrievalAdvisor implements BaseAdvisor {
 		Map<String, Object> context = new HashMap<>(chatClientRequest.context());
 
         String text = chatClientRequest.prompt().getUserMessage().getText();
-        Query originalQuery = Query.builder().text(Objects.requireNonNullElse(text, "")).build();
+        Query originalQuery = Query.builder().text(Objects.requireNonNullElse(text, ""))
+			.history(chatClientRequest.prompt().getInstructions()).context(context).build();
 
 		List<Document> documents = retriever.retrieve(originalQuery);
 
-		Map<String, Document> documentMap = new HashMap<>();
+		Map<String, Document> documentMap = new LinkedHashMap<>();
 		for (int i = 0; i < documents.size(); i++) {
 			Document document = documents.get(i);
 			int indexId = i + 1;
-			document.getMetadata().put("index_id", indexId);
+			document = document.mutate().metadata(new HashMap<>(document.getMetadata()))
+				.metadata("citation_index", indexId).build();
 			documentMap.put("[%d]".formatted(indexId), document);
 		}
 
 		context.put(DashScopeApiConstants.RETRIEVED_DOCUMENTS, documentMap);
 
-		Query augmentedQuery = this.queryAugmenter.augment(originalQuery, documents);
+		Query augmentedQuery = this.queryAugmenter.augment(originalQuery, new ArrayList<>(documentMap.values()));
 
 		return chatClientRequest.mutate()
 			.prompt(chatClientRequest.prompt().augmentUserMessage(augmentedQuery.text()))
@@ -157,56 +162,55 @@ public class DashScopeDocumentRetrievalAdvisor implements BaseAdvisor {
 
 	@Override
 	public ChatClientResponse after(ChatClientResponse response, @Nullable AdvisorChain advisorChain) {
-		ChatResponse.Builder chatResponseBuilder;
-		var context = response.context();
-		if (response.chatResponse() == null) {
-			chatResponseBuilder = ChatResponse.builder();
-		}
-		else {
-			chatResponseBuilder = ChatResponse.builder().from(response.chatResponse());
-			var result = response.chatResponse().getResult();
-			if (enableReference && result != null && result.getMetadata() != null) {
-				ChatCompletionFinishReason finishReason = ChatCompletionFinishReason
-					.valueOf(Objects.requireNonNullElse(result.getMetadata().getFinishReason(), ChatCompletionFinishReason.NULL.name()));
-				if (finishReason == ChatCompletionFinishReason.NULL) {
-					String fullContent = context.getOrDefault("full_content", "").toString()
-							+ result.getOutput().getText();
-					context.put("full_content", fullContent);
-				}
-				else {
-					String content = context.getOrDefault("full_content", "").toString();
-					if (!StringUtils.hasText(content)) {
-						content = result.getOutput().getText();
+		return withReferences(response, responseText(response));
+	}
+
+	@Override
+	public Flux<ChatClientResponse> adviseStream(ChatClientRequest request, StreamAdvisorChain chain) {
+		return Flux.defer(() -> {
+			StringBuilder answer = new StringBuilder();
+			return Mono.fromCallable(() -> before(request, chain)).subscribeOn(getScheduler())
+				.flatMapMany(processed -> chain.nextStream(processed).map(response -> {
+					if (this.enableReference) {
+						answer.append(responseText(response));
 					}
+					var context = new HashMap<>(processed.context());
+					context.putAll(response.context());
+					var contextualResponse = ChatClientResponse.builder().chatResponse(response.chatResponse())
+						.context(context).build();
+					return withReferences(contextualResponse, answer);
+				}));
+		});
+	}
 
-					Object retrievedDocuments = context.get(DashScopeApiConstants.RETRIEVED_DOCUMENTS);
-					Map<String, Document> documentMap = retrievedDocuments instanceof Map<?, ?> rawDocumentMap
-							? (Map<String, Document>) rawDocumentMap : Map.of();
-					List<Document> referencedDocuments = new ArrayList<>();
+	private static String responseText(ChatClientResponse response) {
+		var chatResponse = response.chatResponse();
+		if (chatResponse == null || chatResponse.getResult() == null) {
+			return "";
+		}
+		return Objects.requireNonNullElse(chatResponse.getResult().getOutput().getText(), "");
+	}
 
-					Matcher refMatcher = RAG_REFERENCE_PATTERN.matcher(content);
-					while (refMatcher.find()) {
-						String refContent = refMatcher.group();
-						Matcher numberMatcher = RAG_REFERENCE_INNER_PATTERN.matcher(refContent);
-
-						while (numberMatcher.find()) {
-							for (int i = 1; i <= numberMatcher.groupCount(); i++) {
-								if (numberMatcher.group(i) != null) {
-									String index = numberMatcher.group(i);
-									Document document = documentMap.get(index);
-									if (document != null) {
-										referencedDocuments.add(document);
-									}
-								}
-							}
-						}
+	private ChatClientResponse withReferences(ChatClientResponse response, CharSequence answer) {
+		var chatResponse = response.chatResponse();
+		var builder = chatResponse == null ? ChatResponse.builder() : ChatResponse.builder().from(chatResponse);
+		Object retrieved = response.context().get(DashScopeApiConstants.RETRIEVED_DOCUMENTS);
+		Map<?, ?> documents = retrieved instanceof Map<?, ?> map ? map : Map.of();
+		builder.metadata(DashScopeApiConstants.RETRIEVED_DOCUMENTS, documents);
+		if (this.enableReference) {
+			var references = new LinkedHashSet<Document>();
+			var matcher = RAG_REFERENCE_PATTERN.matcher(answer);
+			while (matcher.find()) {
+				var numbers = RAG_REFERENCE_INNER_PATTERN.matcher(matcher.group(1));
+				while (numbers.find()) {
+					if (documents.get("[" + numbers.group() + "]") instanceof Document document) {
+						references.add(document);
 					}
 				}
 			}
+			builder.metadata(DashScopeApiConstants.REFERENCED_DOCUMENTS, List.copyOf(references));
 		}
-        chatResponseBuilder.metadata(DashScopeApiConstants.RETRIEVED_DOCUMENTS,
-                Objects.requireNonNullElse(response.context().get(DashScopeApiConstants.RETRIEVED_DOCUMENTS), Map.of()));
-		return ChatClientResponse.builder().chatResponse(chatResponseBuilder.build()).context(context).build();
+		return ChatClientResponse.builder().chatResponse(builder.build()).context(response.context()).build();
 	}
 
 }

@@ -85,6 +85,7 @@ public class AnalyticDbVectorStoreAutoConfiguration {
 		Assert.notNull(collectionName, "spring.ai.vectorstore.analyticdb.collect-name must not be null");
 		var builder = AnalyticDbVectorStore.builder(collectionName, config, client, embeddingModel)
 			.batchingStrategy(batchingStrategy)
+			.dimensions(properties.getDimensions())
 			.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
 			.customObservationConvention(customObservationConvention.getIfAvailable());
 		if (properties.getDefaultTopK() >= 0) {

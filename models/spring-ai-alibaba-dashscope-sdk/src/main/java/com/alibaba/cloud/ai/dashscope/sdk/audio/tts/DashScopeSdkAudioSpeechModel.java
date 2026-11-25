@@ -16,6 +16,14 @@
 
 package com.alibaba.cloud.ai.dashscope.sdk.audio.tts;
 
+import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechModel;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechOptions;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
+import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkMediaConnection;
+import org.springframework.ai.model.SimpleApiKey;
+import org.springframework.http.HttpHeaders;
+
 import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisAudioFormat;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisParam;
@@ -73,7 +81,12 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 
 	@Override
 	public TextToSpeechResponse call(TextToSpeechPrompt prompt) {
-		SpeechSynthesisParam request = createRequest(prompt, false);
+		var options = resolveOptions(prompt);
+		String model = Objects.requireNonNull(options.getModel());
+		if (DashScopeAudioApiConstants.isQwenTTSModel(model)) {
+			return mediaSpeechModel(options).call(new TextToSpeechPrompt(prompt.getInstructions().getText()));
+		}
+		SpeechSynthesisParam request = createRequest(prompt, options, false);
 		ByteBuffer data = RetryUtils.execute(this.retryTemplate, () -> executeCall(request));
 		byte[] bytes = toBytes(data);
 		TextToSpeechResponseMetadata metadata = new TextToSpeechResponseMetadata();
@@ -83,7 +96,13 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 
 	@Override
 	public Flux<TextToSpeechResponse> stream(TextToSpeechPrompt prompt) {
-		SpeechSynthesisParam request = createRequest(prompt, true);
+		var options = resolveOptions(prompt);
+		String model = Objects.requireNonNull(options.getModel());
+		if (DashScopeAudioApiConstants.isQwenTTSModel(model) || DashScopeAudioApiConstants.isCosyVoiceModel(model)
+				|| DashScopeAudioApiConstants.isQwenTTSRealtimeModel(model)) {
+			return mediaSpeechModel(options).stream(new TextToSpeechPrompt(prompt.getInstructions().getText()));
+		}
+		SpeechSynthesisParam request = createRequest(prompt, options, true);
 		Flowable<SpeechSynthesisResult> streamResult = RetryUtils.execute(this.retryTemplate, () -> executeStream(request));
 		return flowableToFlux(streamResult)
 			.map(this::toTextToSpeechResponse)
@@ -91,12 +110,28 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 					&& response.getResult().getOutput().length > 0);
 	}
 
-	private SpeechSynthesisParam createRequest(TextToSpeechPrompt prompt, boolean stream) {
-        // Merge request options with default options
-		DashScopeSdkAudioSpeechOptions options = DashScopeSdkAudioSpeechOptions.builder()
-                .from(this.defaultOptions)
-                .merge(prompt.getOptions())
-                .build();
+	private DashScopeSdkAudioSpeechOptions resolveOptions(TextToSpeechPrompt prompt) {
+		return DashScopeSdkAudioSpeechOptions.builder().from(this.defaultOptions).merge(prompt.getOptions()).build();
+	}
+
+	private DashScopeAudioSpeechModel mediaSpeechModel(DashScopeSdkAudioSpeechOptions sdkOptions) {
+		HttpHeaders headers = new HttpHeaders();
+		mergeHeaders(sdkOptions.getHttpHeaders()).forEach((name, value) -> headers.set(name, value.toString()));
+		String baseUrl = DashScopeSdkMediaConnection.baseUrl(this.workspaceId);
+		var api = DashScopeAudioSpeechApi.builder()
+			.apiKey(new SimpleApiKey(DashScopeSdkMediaConnection.apiKey(this.apiKey)))
+			.baseUrl(baseUrl).websocketUrl(baseUrl.replaceFirst("^https://", "wss://") + "/api-ws/v1/inference")
+			.workSpaceId(this.workspaceId).headers(headers).build();
+		var options = DashScopeAudioSpeechOptions.builder().model(sdkOptions.getModel()).voice(sdkOptions.getVoice())
+			.format(sdkOptions.getFormat()).textType(sdkOptions.getTextType()).sampleRate(sdkOptions.getSampleRate())
+			.volume(sdkOptions.getVolume()).rate(sdkOptions.getRate()).pitch(sdkOptions.getPitch())
+			.wordTimestampEnabled(sdkOptions.getWordTimestampEnabled())
+			.phonemeTimestampEnabled(sdkOptions.getPhonemeTimestampEnabled()).build();
+		return new DashScopeAudioSpeechModel(api, options, this.retryTemplate);
+	}
+
+	private SpeechSynthesisParam createRequest(TextToSpeechPrompt prompt, DashScopeSdkAudioSpeechOptions options,
+			boolean stream) {
 		String model = Objects.requireNonNull(options.getModel(),
 				"DashScopeSdkAudioSpeechOptions model cannot be null");
 

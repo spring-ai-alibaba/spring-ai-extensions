@@ -46,11 +46,19 @@ public class DashScopeRerankOptions implements RerankOptions {
      */
     private final Boolean returnDocuments;
 
+    private final @Nullable String instruct;
+
     protected DashScopeRerankOptions(
             @Nullable String model,
             @Nullable Integer topN,
             @Nullable Boolean returnDocuments) {
-        this.model = model != null ? model : "gte-rerank";
+        this(model, topN, returnDocuments, null);
+    }
+
+    private DashScopeRerankOptions(@Nullable String model, @Nullable Integer topN,
+            @Nullable Boolean returnDocuments, @Nullable String instruct) {
+        this.instruct = instruct;
+        this.model = model != null ? model : "qwen3-rerank";
         this.topN = topN != null ? topN : 3;
         this.returnDocuments = returnDocuments != null ? returnDocuments : Boolean.FALSE;
     }
@@ -69,6 +77,10 @@ public class DashScopeRerankOptions implements RerankOptions {
         return returnDocuments;
     }
 
+    public @Nullable String getInstruct() {
+        return this.instruct;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -83,12 +95,13 @@ public class DashScopeRerankOptions implements RerankOptions {
         }
         DashScopeRerankOptions that = (DashScopeRerankOptions) o;
         return Objects.equals(this.model, that.model) && Objects.equals(this.topN, that.topN)
-                && Objects.equals(this.returnDocuments, that.returnDocuments);
+                && Objects.equals(this.returnDocuments, that.returnDocuments)
+                && Objects.equals(this.instruct, that.instruct);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.model, this.topN, this.returnDocuments);
+        return Objects.hash(this.model, this.topN, this.returnDocuments, this.instruct);
     }
 
     @Override
@@ -106,6 +119,7 @@ public class DashScopeRerankOptions implements RerankOptions {
             this.model = fromOptions.getModel();
             this.topN = fromOptions.getTopN();
             this.returnDocuments = fromOptions.getReturnDocuments();
+            this.instruct = fromOptions.getInstruct();
             return this;
         }
 
@@ -120,6 +134,9 @@ public class DashScopeRerankOptions implements RerankOptions {
                 this.topN = from.getTopN();
             }
             if (from instanceof DashScopeRerankOptions castFrom) {
+                if (castFrom.getInstruct() != null) {
+                    this.instruct = castFrom.getInstruct();
+                }
                 if (castFrom.getReturnDocuments() != null) {
                     this.returnDocuments = castFrom.getReturnDocuments();
                 }
@@ -128,7 +145,7 @@ public class DashScopeRerankOptions implements RerankOptions {
         }
 
         public DashScopeRerankOptions build() {
-            return new DashScopeRerankOptions(this.model, this.topN, this.returnDocuments);
+            return new DashScopeRerankOptions(this.model, this.topN, this.returnDocuments, this.instruct);
         }
 
     }
@@ -140,6 +157,8 @@ public class DashScopeRerankOptions implements RerankOptions {
         protected @Nullable Integer topN;
 
         protected @Nullable Boolean returnDocuments;
+
+        protected @Nullable String instruct;
 
         @SuppressWarnings("unchecked")
         protected B self() {
@@ -158,6 +177,11 @@ public class DashScopeRerankOptions implements RerankOptions {
 
         public B returnDocuments(@Nullable Boolean returnDocuments) {
             this.returnDocuments = returnDocuments;
+            return self();
+        }
+
+        public B instruct(@Nullable String instruct) {
+            this.instruct = instruct;
             return self();
         }
 

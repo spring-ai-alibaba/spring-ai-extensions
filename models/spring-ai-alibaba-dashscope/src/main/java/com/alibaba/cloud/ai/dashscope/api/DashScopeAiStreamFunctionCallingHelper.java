@@ -120,8 +120,8 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		}
 
         // response
-		Object content = (current.content() != null ? current.content()
-				: (previous.content() != null) ? previous.content() : "");
+		Object content = (current.rawContent() != null ? current.rawContent()
+				: (previous.rawContent() != null) ? previous.rawContent() : "");
 		Role role = (current.role() != null ? current.role() : previous.role());
 		role = (role != null ? role : Role.ASSISTANT); // default to ASSISTANT (if null
 		String name = (StringUtils.hasText(current.name()) ? current.name() : previous.name());
@@ -168,7 +168,8 @@ public class DashScopeAiStreamFunctionCallingHelper {
 				toolCalls.add(lastPreviousToolCall);
 			}
 		}
-		return new ChatCompletionMessage(content, role, name, toolCallId, toolCalls, reasoningContent, partial, phase, annotations, status);
+		return new ChatCompletionMessage(content, role, name, toolCallId, toolCalls, reasoningContent, partial, phase, annotations, status,
+				StringUtils.hasLength(current.encryptedContent()) ? current.encryptedContent() : previous.encryptedContent());
 	}
 
 	private boolean isSameStreamingToolCall(@Nullable ToolCall previous, @Nullable ToolCall current) {

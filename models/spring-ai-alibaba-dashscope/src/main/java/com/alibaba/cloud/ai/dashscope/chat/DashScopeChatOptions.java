@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.dashscope.chat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -207,6 +208,14 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
 	public @Nullable Boolean getEnableThinking() {
 		return this.enableThinking;
+	}
+
+	public @Nullable Boolean getClearThinking() {
+		return this.extraBody != null && this.extraBody.get("clear_thinking") instanceof Boolean value ? value : null;
+	}
+
+	public @Nullable String getThinkingDisplay() {
+		return this.extraBody != null && this.extraBody.get("thinking_display") instanceof String value ? value : null;
 	}
 
 	public @Nullable Boolean getPreserveThinking() {
@@ -687,6 +696,21 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		public B skill(@Nullable List<Skill> skill) {
 			this.skill = skill;
 			return self();
+		}
+
+		public B clearThinking(boolean enabled) {
+			return parameter("clear_thinking", enabled);
+		}
+
+		public B thinkingDisplay(String display) {
+			return parameter("thinking_display", display);
+		}
+
+		private B parameter(String name, Object value) {
+			Map<String, Object> parameters = this.extraBody != null ? new LinkedHashMap<>(this.extraBody)
+					: new LinkedHashMap<>();
+			parameters.put(name, value);
+			return extraBody(parameters);
 		}
 
 		public B extraBody(@Nullable Map<String, Object> extraBody) {

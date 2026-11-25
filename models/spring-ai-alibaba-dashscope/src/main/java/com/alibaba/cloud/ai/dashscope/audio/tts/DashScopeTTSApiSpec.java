@@ -150,6 +150,13 @@ public class DashScopeTTSApiSpec {
             this.usage = usage;
         }
 
+        public DashScopeAudioTTSResponse(DashScopeAudioTTSResponse response, byte[] audio) {
+            super(List.of(new Speech(audio)));
+            this.requestId = response.requestId;
+            this.output = response.output;
+            this.usage = response.usage;
+        }
+
         public @Nullable String getRequestId() {
             return requestId;
         }

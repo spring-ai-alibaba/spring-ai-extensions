@@ -15,6 +15,9 @@
  */
 package com.alibaba.cloud.ai.vectorstore.tair;
 
+import org.jspecify.annotations.Nullable;
+import org.springframework.util.Assert;
+
 import com.aliyun.tair.tairvector.params.DistanceMethod;
 import com.aliyun.tair.tairvector.params.IndexAlgorithm;
 
@@ -48,7 +51,7 @@ public class TairVectorStoreOptions {
 	 * The dimension of the vectors to be stored in the index. All vectors inserted into
 	 * this index must have the same dimension. Valid range is [1, 32768].
 	 */
-	private int dimensions = 1536;
+	private @Nullable Integer dimensions;
 
 	/**
 	 * The algorithm used for building and querying the index. FLAT: No separate index is
@@ -96,7 +99,7 @@ public class TairVectorStoreOptions {
 	 * @return the vector dimension
 	 */
 	public int getDimensions() {
-		return dimensions;
+		return this.dimensions != null ? this.dimensions : 1536;
 	}
 
 	/**
@@ -104,7 +107,12 @@ public class TairVectorStoreOptions {
 	 * @param dimensions the vector dimension to set
 	 */
 	public void setDimensions(int dimensions) {
+		Assert.isTrue(dimensions > 0 && dimensions <= 32768, "Invalid vector dimension");
 		this.dimensions = dimensions;
+	}
+
+	@Nullable Integer getConfiguredDimensions() {
+		return this.dimensions;
 	}
 
 	/**

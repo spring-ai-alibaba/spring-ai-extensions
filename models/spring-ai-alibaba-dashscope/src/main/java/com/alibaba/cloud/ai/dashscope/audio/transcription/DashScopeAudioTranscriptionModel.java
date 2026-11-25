@@ -104,12 +104,19 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
         }
 
         // 录音文件识别Paraformer、Fun-ASR
-        if (DashScopeAudioApiConstants.isAsr(model)) {
+        if (DashScopeAudioApiConstants.isAsr(model) || DashScopeAudioApiConstants.isQwenFileTranscription(model)) {
             // prompt 类型强转判断
             if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
                 throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
             }
             return audioTranscriptionApi.callAsr((DashScopeAudioTranscriptionPrompt) prompt, options);
+        }
+
+        if (DashScopeAudioApiConstants.isQwenAudioAsr(model)) {
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt dashPrompt)) {
+                throw new IllegalArgumentException("Qwen Audio ASR requires DashScopeAudioTranscriptionPrompt");
+            }
+            return this.audioTranscriptionApi.callQwenAudioAsr(dashPrompt, options);
         }
 
         // 录音文件识别Qwen-ASR
@@ -141,6 +148,15 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
                     (DashScopeAudioTranscriptionPrompt) prompt,
                     options);
         }
+        if (DashScopeAudioApiConstants.isAsr(model) || DashScopeAudioApiConstants.isQwenFileTranscription(model)) {
+            return Flux.error(new IllegalArgumentException("File transcription is a task API; use call()"));
+        }
+        if (DashScopeAudioApiConstants.isQwenAudioAsr(model)) {
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt dashPrompt)) {
+                throw new IllegalArgumentException("Qwen Audio ASR requires DashScopeAudioTranscriptionPrompt");
+            }
+            return this.audioTranscriptionApi.streamQwenAudioAsr(dashPrompt, options);
+        }
         // 录音文件识别Qwen-ASR
         if (DashScopeAudioApiConstants.isQwenAsr(model)) {
             // prompt 类型强转判断
@@ -154,7 +170,9 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
         byte[] audioBytes = null;
         try {
 			var instructions = Objects.requireNonNull(prompt.getInstructions(), "prompt instructions must not be null");
-            audioBytes = instructions.getInputStream().readAllBytes();
+            try (var input = instructions.getInputStream()) {
+                audioBytes = input.readAllBytes();
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -166,7 +184,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	// ==================== Bidirectional Streaming Methods ====================
 
 	/**
-	 * Bidirectional streaming recognition for Paraformer / Fun-ASR real-time models.
+	 * Bidirectional streaming recognition for Qwen Audio ASR, Paraformer, and Fun-ASR.
 	 * <p>
 	 * Audio is streamed incrementally (e.g., from a microphone) while recognition results
 	 * are returned as they are produced. Returns rich {@link RecognitionResult} with full
@@ -175,7 +193,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	 * @param audioStream streaming audio input (PCM chunks, typically 16kHz mono)
 	 * @param options transcription options (model, format, sample rate, etc.)
 	 * @return stream of recognition results
-	 * @throws IllegalArgumentException if the model is not a Paraformer/Fun-ASR realtime model
+	 * @throws IllegalArgumentException if the model does not support this WebSocket protocol
 	 */
 	public Flux<RecognitionResult> streamRecognition(Flux<ByteBuffer> audioStream,
 			DashScopeAudioTranscriptionOptions options) {
@@ -185,10 +203,10 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
                 .merge(options)
                 .build();
 		String model = Objects.requireNonNull(mergedOptions.getModel(), "model must not be null");
-		if (!DashScopeAudioApiConstants.PARAFORMER_REALTIME_ONLY_LIST.contains(model)) {
+		if (!DashScopeAudioApiConstants.PARAFORMER_REALTIME_ONLY_LIST.contains(model)
+                && !DashScopeAudioApiConstants.isQwenAudioAsrRealtime(model)) {
 			throw new IllegalArgumentException(
-					"streamRecognition only supports models: " + DashScopeAudioApiConstants.PARAFORMER_REALTIME_ONLY_LIST
-							+ ", got: " + model);
+					"streamRecognition only supports models using the Qwen Audio, Paraformer, or Fun-ASR WebSocket protocol: " + model);
 		}
 		return audioTranscriptionApi.createWebSocketStreamingTask(audioStream, mergedOptions)
 				.map(this::parseRecognitionResult);
@@ -268,7 +286,8 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
             DashScopeAudioTranscription transcription = jsonMapper.convertValue(transcriptionNode, new TypeReference<>() {});
             return new DashScopeTranscriptionResponse(translations, transcription);
         }
-        if (DashScopeAudioApiConstants.PARAFORMER_FUNAS_LIST.contains(model)) {
+        if (DashScopeAudioApiConstants.PARAFORMER_FUNAS_LIST.contains(model)
+                || DashScopeAudioApiConstants.isQwenAudioAsrRealtime(model)) {
             JsonNode sentenceNode = jsonNode.get("sentence");
             JsonNode usageNode = jsonNode.get("usage");
             Sentence sentence = jsonMapper.convertValue(sentenceNode, new TypeReference<>() {});

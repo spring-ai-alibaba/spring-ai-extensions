@@ -134,6 +134,10 @@ public class DashScopeImageProperties extends DashScopeParentProperties {
 
     private @Nullable Boolean promptExtend;
 
+    private @Nullable String promptExtendMode;
+
+    private @Nullable Boolean enableThinking;
+
     private @Nullable Boolean watermark;
 
     private @Nullable String function;
@@ -567,6 +571,22 @@ public class DashScopeImageProperties extends DashScopeParentProperties {
 
     public void setText(@Nullable String text) {
         this.text = text;
+    }
+
+    public @Nullable String getPromptExtendMode() {
+        return this.promptExtendMode;
+    }
+
+    public void setPromptExtendMode(@Nullable String promptExtendMode) {
+        this.promptExtendMode = promptExtendMode;
+    }
+
+    public @Nullable Boolean getEnableThinking() {
+        return this.enableThinking;
+    }
+
+    public void setEnableThinking(@Nullable Boolean enableThinking) {
+        this.enableThinking = enableThinking;
     }
 
     public @Nullable Boolean getPromptExtend() {
@@ -1089,6 +1109,8 @@ public class DashScopeImageProperties extends DashScopeParentProperties {
         this.requestType = requestType;
     }
 
+    // NullAway loses the nullable array dimensions of the builder parameters across modules.
+    @SuppressWarnings("NullAway")
     public DashScopeImageOptions toOptions() {
         return DashScopeImageOptions.builder()
                 .model(this.model)
@@ -1125,6 +1147,8 @@ public class DashScopeImageProperties extends DashScopeParentProperties {
                 .negativePrompt(this.negativePrompt)
                 .text(this.text)
                 .promptExtend(this.promptExtend)
+                .promptExtendMode(this.promptExtendMode)
+                .enableThinking(this.enableThinking)
                 .watermark(this.watermark)
                 .function(this.function)
                 .sketchWeight(this.sketchWeight)

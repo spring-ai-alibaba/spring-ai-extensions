@@ -31,6 +31,7 @@ import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.observation.AbstractObservationVectorStore;
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationContext;
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationConvention;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.beans.factory.InitializingBean;
 import tools.jackson.databind.json.JsonMapper;
@@ -82,6 +83,8 @@ public class TairVectorStore extends AbstractObservationVectorStore implements I
 	 * Configuration options for the Tair vector store.
 	 */
 	protected TairVectorStoreOptions options;
+
+	private volatile @Nullable Integer indexDimensions;
 
 	protected final BatchingStrategy batchingStrategy;
 
@@ -147,16 +150,12 @@ public class TairVectorStore extends AbstractObservationVectorStore implements I
 			return;
 		}
 
-		try {
-			// Check if index already exists
-			Map<String, String> indexInfo = tairVectorApi.tvsgetindex(options.getIndexName());
-			if (indexInfo != null && !indexInfo.isEmpty()) {
-				logger.debug("Tair vector index {} already exists, skipping creation", options.getIndexName());
-				return;
+		Map<String, String> indexInfo = this.tairVectorApi.tvsgetindex(this.options.getIndexName());
+		if (indexInfo != null && !indexInfo.isEmpty()) {
+			if (this.options.getConfiguredDimensions() == null) {
+				this.indexDimensions = readDimensions(indexInfo);
 			}
-		}
-		catch (Exception e) {
-			logger.warn("Failed to check if index exists, proceeding to create", e);
+			return;
 		}
 
 		try {
@@ -167,11 +166,32 @@ public class TairVectorStore extends AbstractObservationVectorStore implements I
 				options.getDistanceMethod(),
 				options.getIndexParams().toArray(new String[0])
 			);
+			this.indexDimensions = this.options.getDimensions();
 			logger.debug("Created Tair vector index: {}", options.getIndexName());
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to create Tair vector index", e);
 		}
+	}
+
+	private synchronized int getVectorDimensions() {
+		Integer configured = this.options.getConfiguredDimensions();
+		if (configured != null) {
+			return configured;
+		}
+		if (this.indexDimensions == null) {
+			this.indexDimensions = readDimensions(this.tairVectorApi.tvsgetindex(this.options.getIndexName()));
+		}
+		return this.indexDimensions;
+	}
+
+	private int readDimensions(@Nullable Map<String, String> indexInfo) {
+		String dimension = indexInfo != null ? indexInfo.get("dimension") : null;
+		Assert.state(dimension != null, "Cannot determine vector dimensions for Tair index " + this.options.getIndexName());
+		int dimensions = Integer.parseInt(dimension);
+		Assert.state(dimensions > 0 && dimensions <= 32768,
+				"Invalid vector dimension for Tair index " + this.options.getIndexName());
+		return dimensions;
 	}
 
 	@Override
@@ -194,8 +214,9 @@ public class TairVectorStore extends AbstractObservationVectorStore implements I
 
 	@Override
 	protected void doUpsert(List<EmbeddedDocument> documents) {
+		int dimensions = getVectorDimensions();
 		for (EmbeddedDocument embedded : documents) {
-			checkDimensions(embedded.document().getId(), embedded.embedding().length, this.options.getDimensions());
+			checkDimensions(embedded.document().getId(), embedded.embedding().length, dimensions);
 		}
 		for (EmbeddedDocument embedded : documents) {
 			writeDocument(embedded.document(), embedded.embedding());
@@ -230,7 +251,7 @@ public class TairVectorStore extends AbstractObservationVectorStore implements I
 
 	@Override
 	protected List<Document> doSimilaritySearch(float[] queryEmbedding, SearchRequest request) {
-		checkDimensions("query", queryEmbedding.length, this.options.getDimensions());
+		checkDimensions("query", queryEmbedding.length, getVectorDimensions());
 		if (request.hasFilterExpression()) {
 			throw new UnsupportedOperationException("Tair vector search does not support metadata filters");
 		}
@@ -290,10 +311,17 @@ public class TairVectorStore extends AbstractObservationVectorStore implements I
 	 */
 	@Override
 	public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
-		return VectorStoreObservationContext.builder("tair", operationName)
+		var builder = VectorStoreObservationContext.builder("tair", operationName)
 			.collectionName(this.options.getIndexName())
-			.dimensions(this.options.getDimensions())
 			.similarityMetric(this.options.getDistanceMethod().name());
+		Integer dimensions = this.options.getConfiguredDimensions();
+		if (dimensions == null) {
+			dimensions = this.indexDimensions;
+		}
+		if (dimensions != null) {
+			builder.dimensions(dimensions);
+		}
+		return builder;
 	}
 
 	/**

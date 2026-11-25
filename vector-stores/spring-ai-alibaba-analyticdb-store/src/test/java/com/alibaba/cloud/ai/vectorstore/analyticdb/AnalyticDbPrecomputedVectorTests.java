@@ -21,6 +21,7 @@ import java.util.Map;
 import com.aliyun.gpdb20160503.Client;
 import com.aliyun.gpdb20160503.models.DescribeCollectionResponse;
 import com.aliyun.gpdb20160503.models.DescribeCollectionResponseBody;
+import com.aliyun.gpdb20160503.models.InitVectorDatabaseResponse;
 import com.aliyun.gpdb20160503.models.QueryCollectionDataRequest;
 import com.aliyun.gpdb20160503.models.QueryCollectionDataResponse;
 import com.aliyun.gpdb20160503.models.QueryCollectionDataResponseBody;
@@ -50,13 +51,19 @@ class AnalyticDbPrecomputedVectorTests {
 		var model = mock(EmbeddingModel.class);
 		when(client.describeCollection(any())).thenReturn(new DescribeCollectionResponse()
 			.setBody(new DescribeCollectionResponseBody().setDimension(2)));
-		var store = AnalyticDbVectorStore.builder("documents", new AnalyticDbConfig(), client, model).build();
+		when(client.initVectorDatabase(any())).thenReturn(new InitVectorDatabaseResponse());
+		var store = AnalyticDbVectorStore.builder("documents", new AnalyticDbConfig(), client, model)
+			.initializeSchema(true).build();
+		store.afterPropertiesSet();
 		var document = new Document("6cc64114-6bea-4fa9-a290-bdd15c787c76", "text", Map.of("kind", "test"));
 		float[] vector = { 0.25f, 0.75f };
 		var embedded = new EmbeddedDocument(document, vector);
 
 		assertThatIllegalArgumentException().isThrownBy(
 				() -> store.upsert(List.of(embedded, new EmbeddedDocument(new Document("other"), new float[] { 1 }))));
+		assertThatIllegalArgumentException().isThrownBy(
+				() -> store.similaritySearch(new float[] { 1 }, SearchRequest.builder().build()));
+
 		store.upsert(List.of(embedded));
 		var upsert = ArgumentCaptor.forClass(UpsertCollectionDataRequest.class);
 		verify(client).upsertCollectionData(upsert.capture());

@@ -185,6 +185,10 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		return this.toolContext;
 	}
 
+	public @Nullable Boolean getMultiModel() {
+		return this.extraBody != null && this.extraBody.get("multi_model") instanceof Boolean enabled ? enabled : null;
+	}
+
 	public @Nullable Map<String, Object> getExtraBody() {
 		return this.extraBody;
 	}
@@ -352,6 +356,48 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		public B httpHeaders(@Nullable Map<String, String> httpHeaders) {
 			this.httpHeaders = httpHeaders;
 			return self();
+		}
+
+		public B multiModel(boolean enabled) {
+			return parameter("multi_model", enabled);
+		}
+
+		public B enableThinking(boolean enabled) {
+			return parameter("enable_thinking", enabled);
+		}
+
+		public B preserveThinking(boolean enabled) {
+			return parameter("preserve_thinking", enabled);
+		}
+
+		public B clearThinking(boolean enabled) {
+			return parameter("clear_thinking", enabled);
+		}
+
+		public B thinkingDisplay(String display) {
+			return parameter("thinking_display", display);
+		}
+
+		public B thinkingBudget(int budget) {
+			return parameter("thinking_budget", budget);
+		}
+
+		public B maxCompletionTokens(int limit) {
+			return parameter("max_completion_tokens", limit);
+		}
+
+		public B reasoningEffort(String effort) {
+			return parameter("reasoning_effort", effort);
+		}
+
+		public B toolStream(boolean enabled) {
+			return parameter("tool_stream", enabled);
+		}
+
+		private B parameter(String name, Object value) {
+			Map<String, Object> parameters = this.extraBody != null ? new HashMap<>(this.extraBody) : new HashMap<>();
+			parameters.put(name, value);
+			return extraBody(parameters);
 		}
 
 		public B extraBody(@Nullable Map<String, Object> extraBody) {

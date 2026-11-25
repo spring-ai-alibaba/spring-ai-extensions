@@ -19,6 +19,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.aliyun.ha3engine.vector.Client;
+import com.aliyun.ha3engine.vector.models.GetTableResponse;
+import com.aliyun.ha3engine.vector.models.GetTableResponseBody;
+import com.aliyun.ha3engine.vector.models.GetTableResponseBody.GetTableResponseBodyResult;
+import com.aliyun.ha3engine.vector.models.GetTableResponseBody.GetTableResponseBodyResultVectorIndex;
 import com.aliyun.ha3engine.vector.models.PushDocumentsRequest;
 import com.aliyun.ha3engine.vector.models.PushDocumentsResponse;
 import com.aliyun.ha3engine.vector.models.QueryRequest;
@@ -39,6 +43,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 class OpenSearchPrecomputedVectorTests {
@@ -52,8 +57,12 @@ class OpenSearchPrecomputedVectorTests {
 		options.setIndex("vector_index");
 		options.setPrimaryKeyField("key");
 		options.setVectorField("embedding");
-		options.setDimensions(2);
 		options.setSimilarityFunction("l2");
+		when(client.getTable("table")).thenReturn(new GetTableResponse().setBody(new GetTableResponseBody()
+			.setResult(new GetTableResponseBodyResult().setVectorIndex(List.of(
+					new GetTableResponseBodyResultVectorIndex().setIndexName("other").setVectorField("other").setDimension("3"),
+					new GetTableResponseBodyResultVectorIndex().setIndexName("vector_index").setVectorField("embedding")
+						.setDimension("2"))))));
 		var store = OpenSearchVectorStore.builder(new OpenSearchApi("test-instance", client), model)
 			.options(options).build();
 		float[] vector = { 0.25f, 0.75f };
@@ -62,9 +71,13 @@ class OpenSearchPrecomputedVectorTests {
 
 		assertThatIllegalArgumentException().isThrownBy(
 				() -> store.upsert(List.of(embedded, new EmbeddedDocument(new Document("other"), new float[] { 1 }))));
-		verifyNoInteractions(client);
+		verify(client).getTable("table");
+		verifyNoMoreInteractions(client);
 		when(client.pushDocuments(anyString(), anyString(), any()))
 			.thenReturn(new PushDocumentsResponse().setBody("{\"code\":200}"));
+		assertThatIllegalArgumentException().isThrownBy(
+				() -> store.similaritySearch(new float[] { 1 }, SearchRequest.builder().build()));
+
 		store.upsert(List.of(embedded));
 		var upsert = ArgumentCaptor.forClass(PushDocumentsRequest.class);
 		verify(client).pushDocuments(eq("test-instance_table"), eq("key"), upsert.capture());

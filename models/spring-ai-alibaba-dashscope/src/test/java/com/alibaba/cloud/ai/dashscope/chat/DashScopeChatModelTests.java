@@ -54,6 +54,9 @@ import org.springframework.ai.chat.messages.part.MediaPart;
 import org.springframework.ai.chat.messages.part.ReasoningPart;
 import org.springframework.ai.chat.messages.part.StreamingParts;
 import org.springframework.ai.chat.messages.part.TextPart;
+import org.springframework.ai.chat.messages.part.ToolCallPart;
+import org.springframework.ai.chat.messages.part.ToolResultPart;
+import org.springframework.ai.chat.messages.part.UnknownPart;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.MessageAggregator;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -69,6 +72,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.MimeTypeUtils;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -166,7 +170,7 @@ class DashScopeChatModelTests {
         ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
         ChatCompletionChunk chunk = new ChatCompletionChunk(TEST_REQUEST_ID, output, null, null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false)))
+        when(dashScopeApi.chatCompletionStreamDeltas(any(ChatCompletionRequest.class), any(), eq(false)))
                 .thenReturn(Flux.just(chunk));
 
         StepVerifier.create(chatModel.stream(prompt))
@@ -175,7 +179,7 @@ class DashScopeChatModelTests {
 
         ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
         ArgumentCaptor<HttpHeaders> headersCaptor = ArgumentCaptor.forClass(HttpHeaders.class);
-        verify(dashScopeApi).chatCompletionStream(requestCaptor.capture(), headersCaptor.capture(), eq(false));
+        verify(dashScopeApi).chatCompletionStreamDeltas(requestCaptor.capture(), headersCaptor.capture(), eq(false));
 
         assertThat(headersCaptor.getValue().getFirst(DashScopeApiConstants.HEADER_DATAINSPECTION))
                 .isEqualTo(DashScopeApiConstants.ENABLED);
@@ -210,7 +214,7 @@ class DashScopeChatModelTests {
 
         ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
         verify(dashScopeApi).chatCompletionEntity(requestCaptor.capture(), any(), eq(false));
-        verify(dashScopeApi, never()).chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false));
+        verify(dashScopeApi, never()).chatCompletionStreamDeltas(any(ChatCompletionRequest.class), any(), eq(false));
 
         ChatCompletionRequest request = requestCaptor.getValue();
         assertThat(request.model()).isEqualTo("qwen-plus");
@@ -249,7 +253,7 @@ class DashScopeChatModelTests {
         ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2,
                 new TokenUsage(10, 5, 15, null, null, null, null, null, null, null), null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false)))
+        when(dashScopeApi.chatCompletionStreamDeltas(any(ChatCompletionRequest.class), any(), eq(false)))
                 .thenReturn(Flux.just(chunk1, chunk2));
 
         StepVerifier.create(chatModel.stream(prompt))
@@ -258,7 +262,7 @@ class DashScopeChatModelTests {
                 .verifyComplete();
 
         ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
-        verify(dashScopeApi).chatCompletionStream(requestCaptor.capture(), any(), eq(false));
+        verify(dashScopeApi).chatCompletionStreamDeltas(requestCaptor.capture(), any(), eq(false));
         verify(dashScopeApi, never()).chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false));
 
         ChatCompletionRequest request = requestCaptor.getValue();
@@ -322,7 +326,7 @@ class DashScopeChatModelTests {
         ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2, null, null);
         ChatCompletionChunk chunk3 = new ChatCompletionChunk(TEST_REQUEST_ID, output3, new TokenUsage(10, 5, 15, null, null, null, null, null, null, null), null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false)))
+        when(dashScopeApi.chatCompletionStreamDeltas(any(ChatCompletionRequest.class), any(), eq(false)))
                 .thenReturn(Flux.just(chunk1, chunk2, chunk3));
 
         // Execute test
@@ -489,7 +493,7 @@ class DashScopeChatModelTests {
         ChatCompletionChunk chunk2Response = new ChatCompletionChunk("test-id", new ChatCompletionOutput(chunk2, List.of(choice2), null), null, null);
         ChatCompletionChunk chunk3Response = new ChatCompletionChunk("test-id", new ChatCompletionOutput(chunk3, List.of(choice3), null), new TokenUsage(10, 5, 15, null, null, null, null, null, null, null), null);
 
-        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false)))
+        when(dashScopeApi.chatCompletionStreamDeltas(any(), any(), eq(false)))
                 .thenReturn(Flux.just(chunk1Response, chunk2Response, chunk3Response));
 
         Message message = new UserMessage("What's the weather like?");
@@ -843,14 +847,14 @@ class DashScopeChatModelTests {
         var usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         var chunk = new ChatCompletionChunk(TEST_REQUEST_ID, output, usage, null);
 
-        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.just(chunk));
+        when(dashScopeApi.chatCompletionStreamDeltas(any(), any(), eq(false))).thenReturn(Flux.just(chunk));
 
         StepVerifier.create(chatModel.stream(prompt))
                 .assertNext(chatResponse -> assertThat(chatResponse.getResult().getOutput().getText()).isEqualTo(TEST_RESPONSE))
                 .verifyComplete();
 
         ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
-        verify(dashScopeApi).chatCompletionStream(requestCaptor.capture(), any(), eq(false));
+        verify(dashScopeApi).chatCompletionStreamDeltas(requestCaptor.capture(), any(), eq(false));
         ChatCompletionRequest request = requestCaptor.getValue();
         assertThat(request.parameters().incrementalOutput()).isTrue();
         assertThat(JsonMapper.builder().build().writeValueAsString(request)).doesNotContain("\"stream\"");
@@ -868,7 +872,7 @@ class DashScopeChatModelTests {
         var usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         var chunk = new ChatCompletionChunk(TEST_REQUEST_ID, output, usage, null);
 
-        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.just(chunk));
+        when(dashScopeApi.chatCompletionStreamDeltas(any(), any(), eq(false))).thenReturn(Flux.just(chunk));
 
         var request = chatModel.createRequest(prompt);
         assertThat(request.parameters().incrementalOutput()).isFalse();
@@ -883,7 +887,7 @@ class DashScopeChatModelTests {
         Message message = new UserMessage("Test error handling");
         Prompt prompt = new Prompt(List.of(message));
 
-        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.error(new com.alibaba.cloud.ai.dashscope.common.DashScopeException("InvalidParameter  (requestId: error-request-123)")));
+        when(dashScopeApi.chatCompletionStreamDeltas(any(), any(), eq(false))).thenReturn(Flux.error(new com.alibaba.cloud.ai.dashscope.common.DashScopeException("InvalidParameter  (requestId: error-request-123)")));
 
         Flux<ChatResponse> responseFlux = chatModel.stream(prompt);
 
@@ -900,7 +904,7 @@ class DashScopeChatModelTests {
         Message message = new UserMessage("Test error handling");
         Prompt prompt = new Prompt(List.of(message));
 
-        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.error(
+        when(dashScopeApi.chatCompletionStreamDeltas(any(), any(), eq(false))).thenReturn(Flux.error(
                 new com.alibaba.cloud.ai.dashscope.common.DashScopeException("InvalidParameter",
                         "[InvalidParameter] invalid input (requestId: error-request-123)")));
 
@@ -1025,7 +1029,7 @@ class DashScopeChatModelTests {
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletionChunk chunk2 = new ChatCompletionChunk(TEST_REQUEST_ID, output2, usage, null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false)))
+        when(dashScopeApi.chatCompletionStreamDeltas(any(ChatCompletionRequest.class), any(), eq(false)))
                 .thenReturn(Flux.just(chunk1, chunk2));
 
         // Create prompt
@@ -1072,7 +1076,7 @@ class DashScopeChatModelTests {
         TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
         ChatCompletionChunk chunk = new ChatCompletionChunk(TEST_REQUEST_ID, output, usage, null);
 
-        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false)))
+        when(dashScopeApi.chatCompletionStreamDeltas(any(ChatCompletionRequest.class), any(), eq(false)))
                 .thenReturn(Flux.just(chunk));
 
         // Create prompt
@@ -1150,10 +1154,80 @@ class DashScopeChatModelTests {
     }
 
     @Test
+    void replaysOrderedAssistantPartsAndSameProviderBlocks() {
+        var options = defaultOptions.mutate().model("qwen4-max").build();
+        var content = List.of(Map.of("text", "before "), Map.of("image", "https://example.test/image.png"),
+                Map.of("type", "vendor_block", "value", 1), Map.of("text", "after"));
+        var message = new ChatCompletionMessage(content, Role.ASSISTANT);
+        var choice = new Choice(ChatCompletionFinishReason.STOP, message, null, 0);
+        var completion = new ChatCompletion(TEST_REQUEST_ID, new ChatCompletionOutput(null, List.of(choice), null), null);
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(true)))
+                .thenReturn(ResponseEntity.ok(completion));
+
+        var output = chatModel.call(new Prompt(TEST_PROMPT, options)).getResult().getOutput();
+
+        assertThat(output.getText()).isEqualTo("before after");
+        assertThat(output.getParts()).satisfiesExactly(
+                part -> assertThat(part).isEqualTo(TextPart.of("before ")),
+                part -> assertThat(part).isInstanceOfSatisfying(MediaPart.class, media ->
+                        assertThat(media.media().getData()).isEqualTo("https://example.test/image.png")),
+                part -> assertThat(part).isInstanceOfSatisfying(UnknownPart.class, unknown ->
+                        assertThat(unknown.kind()).isEqualTo("vendor_block")),
+                part -> assertThat(part).isEqualTo(TextPart.of("after")));
+        var request = chatModel.createRequest(new Prompt(List.of(output), options));
+        JsonNode replayed = JsonMapper.shared().valueToTree(request.input().messages().get(0).rawContent());
+        assertThat(replayed)
+                .isEqualTo(JsonMapper.shared().valueToTree(content));
+    }
+
+    @Test
+    void aggregatesMultimodalPartsAroundTextDeltasWithoutReplacingMedia() {
+        var options = defaultOptions.mutate().model("qwen4-max").incrementalOutput(true).build();
+        var initial = new ChatCompletionMessage(List.of(Map.of("text", "before "),
+                Map.of("image", "https://example.test/image.png"), Map.of("text", "after")), Role.ASSISTANT);
+        var delta = new ChatCompletionMessage(List.of(Map.of("text", " more")), Role.ASSISTANT);
+        var first = new ChatCompletionChunk(TEST_REQUEST_ID, new ChatCompletionOutput(null,
+                List.of(new Choice(ChatCompletionFinishReason.NULL, initial, null, 0)), null), null, null);
+        var last = new ChatCompletionChunk(TEST_REQUEST_ID, new ChatCompletionOutput(null,
+                List.of(new Choice(ChatCompletionFinishReason.STOP, delta, null, 0)), null), null, null);
+        when(dashScopeApi.chatCompletionStreamDeltas(any(), any(), eq(true))).thenReturn(Flux.just(first, last));
+        var aggregate = new AtomicReference<ChatResponse>();
+
+        StepVerifier.create(new MessageAggregator().aggregate(chatModel.stream(new Prompt(TEST_PROMPT, options)),
+                aggregate::set)).expectNextCount(2).verifyComplete();
+
+        var output = aggregate.get().getResult().getOutput();
+        assertThat(output.getParts()).anyMatch(MediaPart.class::isInstance);
+        assertThat(output.getText()).isEqualTo("before after more");
+    }
+
+    @Test
+    void keepsToolErrorStatusInNativeStringContent() {
+        var result = new ToolResultPart("call-1", "lookup", List.of(TextPart.of("failed")), true, null, Map.of());
+        var tool = ToolResponseMessage.builder().results(List.of(result)).build();
+
+        var message = chatModel.createRequest(new Prompt(List.of(tool), defaultOptions)).input().messages().get(0);
+        assertThat(message.toolCallId()).isEqualTo("call-1");
+        assertThat(message.rawContent()).isInstanceOfSatisfying(String.class, text ->
+                assertThat(JsonMapper.shared().readTree(text))
+                        .isEqualTo(JsonMapper.shared().valueToTree(Map.of("content", "failed", "is_error", true))));
+    }
+
+    @Test
+    void rejectsMediaToolResultsThatDashScopeCannotRepresent() {
+        var media = MediaPart.of(new Media(MimeTypeUtils.IMAGE_PNG, new ByteArrayResource(new byte[] { 1 })));
+        var result = new ToolResultPart("call-1", "lookup", List.of(media), false, null, Map.of());
+        var tool = ToolResponseMessage.builder().results(List.of(result)).build();
+
+        assertThatThrownBy(() -> chatModel.createRequest(new Prompt(List.of(tool), defaultOptions)))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("support text content only");
+    }
+
+    @Test
     void testStreamAggregatesReasoningDeltasSeparatelyFromText() {
         var first = reasoningChunk("first", "", ChatCompletionFinishReason.NULL);
         var second = reasoningChunk(" second", TEST_RESPONSE, ChatCompletionFinishReason.STOP);
-        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.just(first, second));
+        when(dashScopeApi.chatCompletionStreamDeltas(any(), any(), eq(false))).thenReturn(Flux.just(first, second));
         var aggregated = new AtomicReference<ChatResponse>();
 
         StepVerifier.create(new MessageAggregator().aggregate(chatModel.stream(new Prompt(TEST_PROMPT)), aggregated::set))
@@ -1175,7 +1249,7 @@ class DashScopeChatModelTests {
         var options = defaultOptions.mutate().incrementalOutput(false).build();
         var first = reasoningChunk("first", "", ChatCompletionFinishReason.NULL);
         var second = reasoningChunk("first second", TEST_RESPONSE, ChatCompletionFinishReason.STOP);
-        when(dashScopeApi.chatCompletionStream(any(), any(), eq(false))).thenReturn(Flux.just(first, second));
+        when(dashScopeApi.chatCompletionStreamDeltas(any(), any(), eq(false))).thenReturn(Flux.just(first, second));
         var aggregated = new AtomicReference<ChatResponse>();
 
         StepVerifier.create(new MessageAggregator().aggregate(chatModel.stream(new Prompt(TEST_PROMPT, options)),
@@ -1185,6 +1259,67 @@ class DashScopeChatModelTests {
 
         assertThat(aggregated.get().getResult().getOutput().getReasoning())
                 .containsExactly(ReasoningPart.of("first second"));
+    }
+
+    @Test
+    void routesKnownModelsAndHonorsAnExplicitOverride() {
+        var qwen = defaultOptions.mutate().model("qwen4-max").build();
+        assertThat(chatModel.createRequest(new Prompt(TEST_PROMPT, qwen)).input().messages().get(0).rawContent())
+                .isInstanceOf(List.class);
+        var override = qwen.mutate().multiModel(false).build();
+        assertThat(chatModel.createRequest(new Prompt(TEST_PROMPT, override)).input().messages().get(0).rawContent())
+                .isEqualTo(TEST_PROMPT);
+        var glm = defaultOptions.mutate().model("glm-5.3").clearThinking(false).build();
+        var request = chatModel.createRequest(new Prompt(TEST_PROMPT, glm));
+        assertThat(request.parameters().extraBody()).containsEntry("clear_thinking", false);
+        assertThat(request.input().messages().get(0).rawContent()).isEqualTo(TEST_PROMPT);
+    }
+
+    @Test
+    void streamsParallelToolArgumentsAndReplaysIndependentCiphertext() {
+        var options = defaultOptions.mutate().model("qwen4-max").thinkingDisplay("summarized")
+                .preserveThinking(true).build();
+        var first = reasoningChunk("summary ", "", ChatCompletionFinishReason.NULL);
+        var cipher = new ChatCompletionMessage("", Role.ASSISTANT, null, null, null, "text", null, null, null,
+                null, "ciphertext");
+        var a = new ToolCall("first", "function", new ChatCompletionFunction("lookup", "{\"x\":"), 0);
+        var b = new ToolCall("second", "function", new ChatCompletionFunction("lookup", "{\"y\":"), 1);
+        var increments = new ChatCompletionMessage("", Role.ASSISTANT, null, null, List.of(a, b), null,
+                null, null, null, null);
+        var bEnd = new ToolCall(null, "function", new ChatCompletionFunction(null, "2}"), 1);
+        var aEnd = new ToolCall(null, "function", new ChatCompletionFunction(null, "1}"), 0);
+        var finalArgs = new ChatCompletionMessage("", Role.ASSISTANT, null, null, List.of(bEnd, aEnd), null,
+                null, null, null, null);
+        when(dashScopeApi.chatCompletionStreamDeltas(any(), any(), eq(true)))
+                .thenReturn(Flux.just(first, frame(cipher, ChatCompletionFinishReason.NULL),
+                        frame(increments, ChatCompletionFinishReason.NULL), frame(finalArgs, ChatCompletionFinishReason.TOOL_CALLS)));
+        var aggregate = new AtomicReference<ChatResponse>();
+        StepVerifier.create(new MessageAggregator()
+                        .aggregate(chatModel.stream(new Prompt(TEST_PROMPT, options)), aggregate::set))
+                .assertNext(chunk -> assertThat(chunk.getResult().getOutput().getToolCalls()).isEmpty())
+                .assertNext(chunk -> assertThat(chunk.getResult().getOutput().getToolCalls()).isEmpty())
+                .assertNext(chunk -> {
+                    var output = chunk.getResult().getOutput();
+                    assertThat(output.getToolCalls()).isEmpty();
+                    assertThat(output.getParts()).filteredOn(part -> part instanceof ToolCallPart)
+                            .hasSize(2).allMatch(StreamingParts::isPartial);
+                })
+                .assertNext(chunk -> assertThat(chunk.getResult().getOutput().getToolCalls()).hasSize(2))
+                .verifyComplete();
+
+        var assistant = aggregate.get().getResult().getOutput();
+        assertThat(assistant.getToolCalls()).extracting(AssistantMessage.ToolCall::arguments)
+                .containsExactly("{\"x\":1}", "{\"y\":2}");
+        assertThat(assistant.getReasoning()).singleElement().extracting(ReasoningPart::summary).isEqualTo("summary text");
+        var request = chatModel.createRequest(new Prompt(List.of(assistant), options));
+        var replay = request.input().messages().get(0);
+        assertThat(replay.encryptedContent()).isEqualTo("ciphertext");
+        assertThat(replay.reasoningContent()).isNull();
+    }
+
+    private ChatCompletionChunk frame(ChatCompletionMessage message, ChatCompletionFinishReason finish) {
+        return new ChatCompletionChunk(TEST_REQUEST_ID,
+                new ChatCompletionOutput(null, List.of(new Choice(finish, message, null, 0)), null), null, null);
     }
 
     private ChatCompletionChunk reasoningChunk(String reasoning, String content, ChatCompletionFinishReason finishReason) {
