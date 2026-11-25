@@ -1,0 +1,522 @@
+/*
+ * Copyright 2024-2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.alibaba.cloud.ai.vectorstore.analyticdb;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import com.aliyun.gpdb20160503.Client;
+import com.aliyun.gpdb20160503.models.CreateCollectionRequest;
+import com.aliyun.gpdb20160503.models.CreateNamespaceRequest;
+import com.aliyun.gpdb20160503.models.DeleteCollectionDataRequest;
+import com.aliyun.gpdb20160503.models.DeleteCollectionDataResponse;
+import com.aliyun.gpdb20160503.models.DescribeCollectionRequest;
+import com.aliyun.gpdb20160503.models.DescribeNamespaceRequest;
+import com.aliyun.gpdb20160503.models.InitVectorDatabaseRequest;
+import com.aliyun.gpdb20160503.models.InitVectorDatabaseResponse;
+import com.aliyun.gpdb20160503.models.QueryCollectionDataRequest;
+import com.aliyun.gpdb20160503.models.QueryCollectionDataResponse;
+import com.aliyun.gpdb20160503.models.QueryCollectionDataResponseBody;
+import com.aliyun.gpdb20160503.models.UpsertCollectionDataRequest;
+import com.aliyun.gpdb20160503.models.UpsertCollectionDataRequest.UpsertCollectionDataRequestRows;
+import com.aliyun.tea.TeaException;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.springframework.ai.document.Document;
+import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.embedding.EmbeddingOptions;
+import org.springframework.ai.util.JacksonUtils;
+import org.springframework.ai.vectorstore.AbstractVectorStoreBuilder;
+import org.springframework.ai.vectorstore.EmbeddedDocument;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionConverter;
+import org.springframework.ai.vectorstore.observation.AbstractObservationVectorStore;
+import org.springframework.ai.vectorstore.observation.VectorStoreObservationContext;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
+
+/**
+ * @author HeYQ
+ * @since 2024-10-23 20:29
+ */
+public class AnalyticDbVectorStore extends AbstractObservationVectorStore implements InitializingBean {
+
+	private static final Logger logger = LoggerFactory.getLogger(AnalyticDbVectorStore.class);
+
+	private static final String DATA_BASE_SYSTEM = "analytic_db";
+
+	private static final String REF_DOC_NAME = "refDocId";
+
+	private static final String METADATA_FIELD_NAME = "metadata";
+
+	private static final String CONTENT_FIELD_NAME = "content";
+
+	private static final String DOC_NAME = "docId";
+
+	private static final int DEFAULT_TOP_K = 4;
+
+	private static final Double DEFAULT_SIMILARITY_THRESHOLD = 0.0;
+
+	public final FilterExpressionConverter filterExpressionConverter = new AdVectorFilterExpressionConverter();
+
+	private final boolean initializeSchema;
+
+	private final String collectionName;
+
+	private final AnalyticDbConfig config;
+
+	private final Client client;
+
+	private final JsonMapper jsonMapper;
+
+	private final @Nullable Integer configuredDimensions;
+
+	private volatile @Nullable Integer collectionDimensions;
+
+	private final Integer defaultTopK;
+
+	private final Double defaultSimilarityThreshold;
+
+	protected AnalyticDbVectorStore(Builder builder) throws Exception {
+		super(builder);
+		// collection_name must be updated every time
+		this.collectionName = builder.collectionName;
+		this.config = builder.config;
+		this.client = builder.client;
+		this.jsonMapper = JsonMapper.builder().addModules(JacksonUtils.instantiateAvailableModules()).build();
+		this.defaultSimilarityThreshold = builder.defaultSimilarityThreshold;
+		this.defaultTopK = builder.defaultTopK;
+		this.initializeSchema = builder.initializeSchema;
+		this.configuredDimensions = builder.dimensions;
+	}
+
+	public static Builder builder(String collectionName, AnalyticDbConfig config, Client client,
+			EmbeddingModel embeddingModel) {
+		return new Builder(collectionName, config, client, embeddingModel);
+	}
+
+	/**
+	 * initialize vector db
+	 */
+	private void initialize() throws Exception {
+		initializeVectorDataBase();
+		createNameSpaceIfNotExists();
+		createCollectionIfNotExists();
+	}
+
+	private void initializeVectorDataBase() throws Exception {
+		InitVectorDatabaseRequest request = new InitVectorDatabaseRequest().setDBInstanceId(config.getDbInstanceId())
+			.setRegionId(config.getRegionId())
+			.setManagerAccount(config.getManagerAccount())
+			.setManagerAccountPassword(config.getManagerAccountPassword());
+		InitVectorDatabaseResponse initVectorDatabaseResponse = client.initVectorDatabase(request);
+		logger.debug("successfully initialize vector database, response body:{}", initVectorDatabaseResponse.getBody());
+
+	}
+
+	private void createNameSpaceIfNotExists() throws Exception {
+		try {
+			DescribeNamespaceRequest request = new DescribeNamespaceRequest()
+				.setDBInstanceId(this.config.getDbInstanceId())
+				.setRegionId(this.config.getRegionId())
+				.setNamespace(this.config.getNamespace())
+				.setManagerAccount(this.config.getManagerAccount())
+				.setManagerAccountPassword(this.config.getManagerAccountPassword());
+			this.client.describeNamespace(request);
+		}
+		catch (TeaException e) {
+			if (Objects.equals(e.getStatusCode(), 404)) {
+				CreateNamespaceRequest request = new CreateNamespaceRequest()
+					.setDBInstanceId(this.config.getDbInstanceId())
+					.setRegionId(this.config.getRegionId())
+					.setNamespace(this.config.getNamespace())
+					.setManagerAccount(this.config.getManagerAccount())
+					.setManagerAccountPassword(this.config.getManagerAccountPassword())
+					.setNamespacePassword(this.config.getNamespacePassword());
+				this.client.createNamespace(request);
+			}
+			else {
+				throw new Exception("failed to create namespace:{}", e);
+			}
+		}
+	}
+
+	private void createCollectionIfNotExists() throws Exception {
+		try {
+			this.collectionDimensions = this.client.describeCollection(describeCollectionRequest()).getBody().getDimension();
+			logger.debug("collection{}already exists", this.collectionName);
+		}
+		catch (TeaException e) {
+			if (Objects.equals(e.getStatusCode(), 404)) {
+				long embeddingDimension = this.configuredDimensions != null ? this.configuredDimensions
+						: this.embeddingModel.dimensions();
+				Assert.state(embeddingDimension > 0, "AnalyticDB collection must have a positive vector dimension");
+				ObjectNode metadataNode = jsonMapper.createObjectNode();
+				metadataNode.put(REF_DOC_NAME, "text");
+				metadataNode.put(CONTENT_FIELD_NAME, "text");
+				metadataNode.put(METADATA_FIELD_NAME, "jsonb");
+				String metadata = jsonMapper.writeValueAsString(metadataNode);
+				CreateCollectionRequest createRequest = new CreateCollectionRequest()
+					.setDBInstanceId(this.config.getDbInstanceId())
+					.setRegionId(this.config.getRegionId())
+					.setManagerAccount(this.config.getManagerAccount())
+					.setManagerAccountPassword(this.config.getManagerAccountPassword())
+					.setNamespace(this.config.getNamespace())
+					.setCollection(this.collectionName)
+					.setDimension(embeddingDimension)
+					.setMetrics(this.config.getMetrics())
+					.setMetadata(metadata)
+					.setFullTextRetrievalFields(CONTENT_FIELD_NAME);
+				this.client.createCollection(createRequest);
+				this.collectionDimensions = Math.toIntExact(embeddingDimension);
+				logger.debug("collection{}created", this.collectionName);
+			}
+			else {
+				throw new RuntimeException(
+						"Failed to create collection " + this.collectionName + ": " + e.getMessage());
+			}
+		}
+	}
+
+	@Override
+	public void doAdd(List<Document> documents) {
+		Assert.notNull(documents, "The document list should not be null.");
+		if (CollectionUtils.isEmpty(documents)) {
+			return; // nothing to do;
+		}
+		List<float[]> embeddings = this.embeddingModel.embed(documents, EmbeddingOptions.builder().build(),
+				this.batchingStrategy);
+
+		var rows = new ArrayList<UpsertCollectionDataRequestRows>(documents.size());
+		for (int i = 0; i < documents.size(); i++) {
+			rows.add(toRow(documents.get(i), embeddings.get(i)));
+		}
+		writeRows(rows);
+	}
+
+	@Override
+	protected boolean supportsUpsert() {
+		return true;
+	}
+
+	@Override
+	protected void doUpsert(List<EmbeddedDocument> documents) {
+		int dimensions = getCollectionDimensions();
+		var rows = documents.stream().map(embedded -> {
+			Document document = embedded.document();
+			float[] embedding = embedded.embedding();
+			checkDimensions(document.getId(), embedding.length, dimensions);
+			return toRow(document, embedding).setId(document.getId());
+		}).toList();
+		writeRows(rows);
+	}
+
+	private UpsertCollectionDataRequestRows toRow(Document doc, float[] embedding) {
+		Map<String, String> metadata = new HashMap<>();
+		String docName = (String) doc.getMetadata().get(DOC_NAME);
+		metadata.put(REF_DOC_NAME, docName != null && !docName.isEmpty() ? docName : doc.getId());
+		metadata.put(CONTENT_FIELD_NAME, doc.getText());
+		metadata.put(METADATA_FIELD_NAME, this.jsonMapper.writeValueAsString(doc.getMetadata()));
+		return new UpsertCollectionDataRequestRows().setVector(toVector(embedding)).setMetadata(metadata);
+	}
+
+	private static List<Double> toVector(float[] embedding) {
+		return IntStream.range(0, embedding.length).mapToObj(i -> (double) embedding[i]).toList();
+	}
+
+	private DescribeCollectionRequest describeCollectionRequest() {
+		return new DescribeCollectionRequest().setDBInstanceId(this.config.getDbInstanceId())
+			.setRegionId(this.config.getRegionId())
+			.setNamespace(this.config.getNamespace())
+			.setNamespacePassword(this.config.getNamespacePassword())
+			.setCollection(this.collectionName);
+	}
+
+	private synchronized int getCollectionDimensions() {
+		if (this.configuredDimensions != null) {
+			return this.configuredDimensions;
+		}
+		if (this.collectionDimensions == null) {
+			try {
+				var response = this.client.describeCollection(describeCollectionRequest());
+				this.collectionDimensions = response.getBody().getDimension();
+			}
+			catch (Exception ex) {
+				throw new IllegalStateException("Failed to read dimensions for collection " + this.collectionName, ex);
+			}
+		}
+		Integer dimensions = this.collectionDimensions;
+		Assert.state(dimensions != null && dimensions > 0,
+				"AnalyticDB collection must have a positive vector dimension");
+		return dimensions;
+	}
+
+	private void writeRows(List<UpsertCollectionDataRequestRows> rows) {
+		UpsertCollectionDataRequest request = new UpsertCollectionDataRequest()
+			.setDBInstanceId(this.config.getDbInstanceId())
+			.setRegionId(this.config.getRegionId())
+			.setNamespace(this.config.getNamespace())
+			.setNamespacePassword(this.config.getNamespacePassword())
+			.setCollection(this.collectionName)
+			.setRows(rows);
+		try {
+			this.client.upsertCollectionData(request);
+		}
+		catch (Exception e) {
+			throw new RuntimeException("Failed to add collection data by IDs: " + e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public void doDelete(List<String> ids) {
+		if (ids.isEmpty()) {
+			return;
+		}
+		String idsStr = ids.stream().map(id -> "'" + id + "'").collect(Collectors.joining(", ", "(", ")"));
+		DeleteCollectionDataRequest request = new DeleteCollectionDataRequest()
+			.setDBInstanceId(this.config.getDbInstanceId())
+			.setRegionId(this.config.getRegionId())
+			.setNamespace(this.config.getNamespace())
+			.setNamespacePassword(this.config.getNamespacePassword())
+			.setCollection(this.collectionName)
+			.setCollectionData(null)
+			.setCollectionDataFilter("refDocId IN " + idsStr);
+		try {
+			DeleteCollectionDataResponse deleteCollectionDataResponse = this.client.deleteCollectionData(request);
+			logger.debug("delete collection data response:{}", deleteCollectionDataResponse.getBody());
+		}
+		catch (Exception e) {
+			throw new RuntimeException("Failed to delete collection data by IDs: " + e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public void doDelete(Filter.Expression filterExpression) {
+		String nativeFilterExpression = this.filterExpressionConverter.convertExpression(filterExpression);
+		DeleteCollectionDataRequest request = new DeleteCollectionDataRequest()
+			.setDBInstanceId(this.config.getDbInstanceId())
+			.setRegionId(this.config.getRegionId())
+			.setNamespace(this.config.getNamespace())
+			.setNamespacePassword(this.config.getNamespacePassword())
+			.setCollection(this.collectionName)
+			.setCollectionData(null)
+			.setCollectionDataFilter(nativeFilterExpression);
+		try {
+			DeleteCollectionDataResponse deleteCollectionDataResponse = this.client.deleteCollectionData(request);
+			logger.debug("delete collection data response:{}", deleteCollectionDataResponse.getBody());
+		}
+		catch (Exception e) {
+			throw new RuntimeException("Failed to delete collection data by filterExpression: " + e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public List<Document> similaritySearch(String query) {
+		return this.similaritySearch(SearchRequest.builder()
+			.query(query)
+			.topK(this.defaultTopK)
+			.similarityThreshold(this.defaultSimilarityThreshold)
+			.build());
+	}
+
+	@Override
+	public List<Document> doSimilaritySearch(SearchRequest searchRequest) {
+		String query = searchRequest.getQuery();
+		return search(this.embeddingModel.embed(query), searchRequest, query);
+	}
+
+	@Override
+	protected boolean supportsQueryEmbeddingSearch() {
+		return true;
+	}
+
+	@Override
+	protected List<Document> doSimilaritySearch(float[] queryEmbedding, SearchRequest request) {
+		checkDimensions("query", queryEmbedding.length, getCollectionDimensions());
+		return search(queryEmbedding, request, null);
+	}
+
+	private List<Document> search(float[] queryEmbedding, SearchRequest searchRequest, @Nullable String query) {
+		double scoreThreshold = searchRequest.getSimilarityThreshold();
+		boolean includeValues = searchRequest.hasFilterExpression();
+		int topK = searchRequest.getTopK();
+		String filterExpress = null;
+		if (includeValues) {
+			filterExpress = (searchRequest.getFilterExpression() != null)
+					? this.filterExpressionConverter.convertExpression(searchRequest.getFilterExpression()) : "";
+		}
+
+		QueryCollectionDataRequest request = new QueryCollectionDataRequest()
+			.setDBInstanceId(this.config.getDbInstanceId())
+			.setRegionId(this.config.getRegionId())
+			.setNamespace(this.config.getNamespace())
+			.setNamespacePassword(this.config.getNamespacePassword())
+			.setCollection(this.collectionName)
+			.setIncludeValues(includeValues)
+			.setMetrics(this.config.getMetrics())
+			.setVector(toVector(queryEmbedding))
+			.setContent(query)
+			.setTopK((long) topK)
+			.setFilter(filterExpress);
+		try {
+			QueryCollectionDataResponse response = this.client.queryCollectionData(request);
+			List<Document> documents = new ArrayList<>();
+			for (QueryCollectionDataResponseBody.QueryCollectionDataResponseBodyMatchesMatch match : response.getBody()
+				.getMatches()
+				.getMatch()) {
+				if (match.getScore() != null && match.getScore() >= scoreThreshold) {
+					Map<String, String> metadata = match.getMetadata();
+					String pageContent = metadata.get(CONTENT_FIELD_NAME);
+					Map<String, Object> metadataJson = jsonMapper.readValue(metadata.get(METADATA_FIELD_NAME),
+							new TypeReference<HashMap<String, Object>>() {
+							});
+					var document = Document.builder().text(pageContent).metadata(metadataJson).score(match.getScore());
+					if (StringUtils.hasText(match.getId())) {
+						document.id(match.getId());
+					}
+					documents.add(document.build());
+				}
+			}
+			return documents;
+		}
+		catch (Exception e) {
+			throw new RuntimeException("Failed to search by full text: " + e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		if (!this.initializeSchema) {
+			return;
+		}
+		initialize();
+		logger.debug("created AnalyticdbVector client success");
+	}
+
+	@Override
+	public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
+
+		var builder = VectorStoreObservationContext.builder(DATA_BASE_SYSTEM, operationName)
+			.collectionName(this.collectionName)
+			.namespace(Objects.requireNonNullElse(this.config.getNamespace(), ""))
+			.similarityMetric(this.config.getMetrics());
+		Integer dimensions = this.configuredDimensions != null ? this.configuredDimensions : this.collectionDimensions;
+		if (dimensions != null) {
+			builder.dimensions(dimensions);
+		}
+		return builder;
+	}
+
+	/**
+	 * Builder class for creating {@link AnalyticDbVectorStore} instances.
+	 * <p>
+	 * Provides a fluent API for configuring all aspects of the Analyticdb vector store.
+	 *
+	 * @since 1.0.0
+	 */
+	public static class Builder extends AbstractVectorStoreBuilder<Builder> {
+
+		private final String collectionName;
+
+		private final AnalyticDbConfig config;
+
+		private final Client client;
+
+		private int defaultTopK = DEFAULT_TOP_K;
+
+		private Double defaultSimilarityThreshold = DEFAULT_SIMILARITY_THRESHOLD;
+
+		private @Nullable Integer dimensions;
+
+		private boolean initializeSchema = false;
+
+		private Builder(String collectionName, AnalyticDbConfig config, Client client, EmbeddingModel embeddingModel) {
+			super(embeddingModel);
+			Assert.notNull(client, "Client must not be null");
+			this.client = client;
+			Assert.notNull(collectionName, "Collection name must not be null");
+			this.collectionName = collectionName.toLowerCase();
+			this.config = config;
+		}
+
+		/**
+		 * Sets the default maximum number of similar documents to return.
+		 * @param defaultTopK the maximum number of documents
+		 * @return the builder instance
+		 * @throws IllegalArgumentException if defaultTopK is negative
+		 */
+		public Builder defaultTopK(int defaultTopK) {
+			Assert.isTrue(defaultTopK >= 0, "The topK should be positive value.");
+			this.defaultTopK = defaultTopK;
+			return this;
+		}
+
+		/**
+		 * Sets the default similarity threshold for returned documents.
+		 * @param defaultSimilarityThreshold the similarity threshold (must be between 0.0
+		 * and 1.0)
+		 * @return the builder instance
+		 * @throws IllegalArgumentException if defaultSimilarityThreshold is not between
+		 * 0.0 and 1.0
+		 */
+		public Builder defaultSimilarityThreshold(Double defaultSimilarityThreshold) {
+			Assert.isTrue(defaultSimilarityThreshold >= 0.0 && defaultSimilarityThreshold <= 1.0,
+					"The similarity threshold must be in range [0.0:1.00].");
+			this.defaultSimilarityThreshold = defaultSimilarityThreshold;
+			return this;
+		}
+
+		/**
+		 * Set the vector dimension for a preconfigured collection or a new schema.
+		 * Omit it to use an existing collection's dimension.
+		 */
+		public Builder dimensions(@Nullable Integer dimensions) {
+			Assert.isTrue(dimensions == null || dimensions > 0, "AnalyticDB collection must have a positive vector dimension");
+			this.dimensions = dimensions;
+			return this;
+		}
+
+		public Builder initializeSchema(boolean initializeSchema) {
+			this.initializeSchema = initializeSchema;
+			return this;
+		}
+
+		@Override
+		public AnalyticDbVectorStore build() {
+			try {
+				return new AnalyticDbVectorStore(this);
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+	}
+
+}

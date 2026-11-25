@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.yuque;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -105,6 +107,78 @@ public class YuqueAutoConfiguration {
 		return new YuqueDeleteDocService(WebClientTool.builder(jsonParseTool, yuqueProperties)
 			.httpHeadersConsumer(headers -> headers.set("X-Auth-Token", yuqueProperties.getToken()))
 			.build(), jsonParseTool);
+	}
+
+	@Bean(name = "createYuqueBookToolCallback")
+	@ConditionalOnMissingBean(name = "createYuqueBookToolCallback")
+	public ToolCallback createYuqueBookToolCallback(YuqueCreateBookService createYuqueBook) {
+		return FunctionToolCallback.builder(YuqueConstants.CREATE_BOOK_TOOL_NAME, createYuqueBook)
+			.description("Use yuque api to invoke a http request to create a book.")
+			.inputType(YuqueCreateBookService.CreateBookRequest.class)
+			.build();
+	}
+
+	@Bean(name = "queryYuqueBookToolCallback")
+	@ConditionalOnMissingBean(name = "queryYuqueBookToolCallback")
+	public ToolCallback queryYuqueBookToolCallback(YuqueQueryBookService queryYuqueBook) {
+		return FunctionToolCallback.builder(YuqueConstants.QUERY_BOOK_TOOL_NAME, queryYuqueBook)
+			.description("Use yuque api to invoke a http request to query a book.")
+			.inputType(YuqueQueryBookService.QueryBookRequest.class)
+			.build();
+	}
+
+	@Bean(name = "updateYuqueBookToolCallback")
+	@ConditionalOnMissingBean(name = "updateYuqueBookToolCallback")
+	public ToolCallback updateYuqueBookToolCallback(YuqueUpdateBookService updateYuqueBook) {
+		return FunctionToolCallback.builder(YuqueConstants.UPDATE_BOOK_TOOL_NAME, updateYuqueBook)
+			.description("Use yuque api to invoke a http request to update a book.")
+			.inputType(YuqueUpdateBookService.updateBookRequest.class)
+			.build();
+	}
+
+	@Bean(name = "deleteYuqueBookToolCallback")
+	@ConditionalOnMissingBean(name = "deleteYuqueBookToolCallback")
+	public ToolCallback deleteYuqueBookToolCallback(YuqueDeleteBookService deleteYuqueBook) {
+		return FunctionToolCallback.builder(YuqueConstants.DELETE_BOOK_TOOL_NAME, deleteYuqueBook)
+			.description("Use yuque api to invoke a http request to delete a book.")
+			.inputType(YuqueDeleteBookService.DeleteBookRequest.class)
+			.build();
+	}
+
+	@Bean(name = "createYuqueDocToolCallback")
+	@ConditionalOnMissingBean(name = "createYuqueDocToolCallback")
+	public ToolCallback createYuqueDocToolCallback(YuqueCreateDocService createYuqueDoc) {
+		return FunctionToolCallback.builder(YuqueConstants.CREATE_DOC_TOOL_NAME, createYuqueDoc)
+			.description("Use yuque api to invoke a http request to create a doc.")
+			.inputType(YuqueCreateDocService.CreateDocRequest.class)
+			.build();
+	}
+
+	@Bean(name = "queryYuqueDocToolCallback")
+	@ConditionalOnMissingBean(name = "queryYuqueDocToolCallback")
+	public ToolCallback queryYuqueDocToolCallback(YuqueQueryDocService queryYuqueDoc) {
+		return FunctionToolCallback.builder(YuqueConstants.QUERY_DOC_TOOL_NAME, queryYuqueDoc)
+			.description("Use yuque api to invoke a http request to query a doc.")
+			.inputType(YuqueQueryDocService.queryDocRequest.class)
+			.build();
+	}
+
+	@Bean(name = "updateDocServiceToolCallback")
+	@ConditionalOnMissingBean(name = "updateDocServiceToolCallback")
+	public ToolCallback updateDocServiceToolCallback(YuqueUpdateDocService updateDocService) {
+		return FunctionToolCallback.builder(YuqueConstants.UPDATE_DOC_TOOL_NAME, updateDocService)
+			.description("Use yuque api to invoke a http request to update your doc.")
+			.inputType(YuqueUpdateDocService.updateDocRequest.class)
+			.build();
+	}
+
+	@Bean(name = "deleteDocServiceToolCallback")
+	@ConditionalOnMissingBean(name = "deleteDocServiceToolCallback")
+	public ToolCallback deleteDocServiceToolCallback(YuqueDeleteDocService deleteDocService) {
+		return FunctionToolCallback.builder(YuqueConstants.DELETE_DOC_TOOL_NAME, deleteDocService)
+			.description("Use yuque api to invoke a http request to delete your doc.")
+			.inputType(YuqueDeleteDocService.DeleteDocRequest.class)
+			.build();
 	}
 
 }

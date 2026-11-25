@@ -23,12 +23,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -50,12 +50,12 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 
 	private final WebClientTool webClientTool;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	public OpenAlexService(OpenAlexProperties properties, JsonParseTool jsonParseTool, WebClientTool webClientTool) {
 		this.properties = properties;
 		this.webClientTool = webClientTool;
-		this.objectMapper = new ObjectMapper();
+		this.jsonMapper = JsonMapper.shared();
 	}
 
 	@Override
@@ -148,7 +148,7 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 
 	private Response parseResponse(String responseBody, Request request) {
 		try {
-			JsonNode rootNode = objectMapper.readTree(responseBody);
+			JsonNode rootNode = jsonMapper.readTree(responseBody);
 			JsonNode resultsNode = rootNode.get("results");
 
 			List<OpenAlexResult> results = new ArrayList<>();
@@ -176,19 +176,19 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 	}
 
 	private OpenAlexResult parseResult(JsonNode node, String entityType) {
-		String id = node.has("id") ? node.get("id").asText() : "";
-		String displayName = node.has("display_name") ? node.get("display_name").asText() : "";
-		String title = node.has("title") ? node.get("title").asText() : displayName;
+		String id = node.has("id") ? node.get("id").asString() : "";
+		String displayName = node.has("display_name") ? node.get("display_name").asString() : "";
+		String title = node.has("title") ? node.get("title").asString() : displayName;
 
 		// Extract description/snippet based on entity type
 		String description = "";
 		if (entityType.equals("works") || entityType.equals("work")) {
 			// For works, try to get abstract or use host venue info
 			if (node.has("host_venue") && node.get("host_venue").has("display_name")) {
-				description = "发表于: " + node.get("host_venue").get("display_name").asText();
+				description = "发表于: " + node.get("host_venue").get("display_name").asString();
 			}
 			if (node.has("publication_year")) {
-				description += " (" + node.get("publication_year").asText() + ")";
+				description += " (" + node.get("publication_year").asString() + ")";
 			}
 		}
 		else if (entityType.equals("authors") || entityType.equals("author")) {
@@ -198,17 +198,17 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 				if (institutions.isArray() && institutions.size() > 0) {
 					JsonNode firstInst = institutions.get(0);
 					if (firstInst.has("display_name")) {
-						description = "隶属于: " + firstInst.get("display_name").asText();
+						description = "隶属于: " + firstInst.get("display_name").asString();
 					}
 				}
 			}
 			if (node.has("works_count")) {
-				description += " | 作品数: " + node.get("works_count").asText();
+				description += " | 作品数: " + node.get("works_count").asString();
 			}
 		}
 
 		// Get URL
-		String url = node.has("id") ? node.get("id").asText() : "";
+		String url = node.has("id") ? node.get("id").asString() : "";
 
 		// Get citation count - safely handle missing values
 		Integer citationCount = null;
@@ -225,14 +225,14 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 		// Get DOI for works
 		String doi = null;
 		if (node.has("doi") && !node.get("doi").isNull()) {
-			doi = node.get("doi").asText();
+			doi = node.get("doi").asString();
 		}
 
 		return new OpenAlexResult(id, title, displayName, description, url, doi, citationCount, year, entityType);
 	}
 
 	public record OpenAlexResult(String id, String title, String displayName, String description, String url,
-			String doi, Integer citationCount, Integer year, String entityType) {
+			@Nullable String doi, @Nullable Integer citationCount, @Nullable Integer year, String entityType) {
 	}
 
 	@JsonClassDescription("OpenAlex Search Request. Search for scholarly works, authors, institutions, etc.")
@@ -243,25 +243,25 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 			@JsonProperty(value = "entity_type",
 					defaultValue = "works") @JsonPropertyDescription("Type of entity to search: works, authors, sources, institutions, topics, publishers, funders") String entityType,
 
-			@JsonProperty(value = "author") @JsonPropertyDescription("Filter by author ID or name") String author,
+			@JsonProperty(value = "author") @JsonPropertyDescription("Filter by author ID or name") @Nullable String author,
 
 			@JsonProperty(
-					value = "institution") @JsonPropertyDescription("Filter by institution ID or name") String institution,
+					value = "institution") @JsonPropertyDescription("Filter by institution ID or name") @Nullable String institution,
 
 			@JsonProperty(
-					value = "from_year") @JsonPropertyDescription("Start year for publication date filter") Integer fromYear,
+					value = "from_year") @JsonPropertyDescription("Start year for publication date filter") @Nullable Integer fromYear,
 
 			@JsonProperty(
-					value = "to_year") @JsonPropertyDescription("End year for publication date filter") Integer toYear,
+					value = "to_year") @JsonPropertyDescription("End year for publication date filter") @Nullable Integer toYear,
 
 			@JsonProperty(
-					value = "is_open_access") @JsonPropertyDescription("Filter for open access works only") Boolean isOpenAccess,
+					value = "is_open_access") @JsonPropertyDescription("Filter for open access works only") @Nullable Boolean isOpenAccess,
 
 			@JsonProperty(value = "per_page",
-					defaultValue = "25") @JsonPropertyDescription("Number of results per page (max 200)") Integer perPage,
+					defaultValue = "25") @JsonPropertyDescription("Number of results per page (max 200)") @Nullable Integer perPage,
 
 			@JsonProperty(value = "sort_by",
-					defaultValue = "cited_by_count:desc") @JsonPropertyDescription("Sort order: cited_by_count:desc, publication_date:desc, relevance_score:desc") String sortBy)
+					defaultValue = "cited_by_count:desc") @JsonPropertyDescription("Sort order: cited_by_count:desc, publication_date:desc, relevance_score:desc") @Nullable String sortBy)
 			implements
 				SearchService.Request {
 
@@ -285,8 +285,9 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 
 	@JsonClassDescription("OpenAlex Search Response")
 	@JsonIgnoreProperties(ignoreUnknown = true)
-	public record Response(@JsonProperty("query") String query, @JsonProperty("results") List<OpenAlexResult> results,
-			@JsonProperty("error") String error) implements SearchService.Response {
+	public record Response(@JsonProperty("query") String query,
+			@JsonProperty("results") @Nullable List<OpenAlexResult> results,
+			@JsonProperty("error") @Nullable String error) implements SearchService.Response {
 
 		public static Response errorResponse(String query, String errorMsg) {
 			return new Response(query, null, errorMsg);
@@ -294,10 +295,11 @@ public class OpenAlexService implements SearchService, Function<OpenAlexService.
 
 		@Override
 		public SearchService.SearchResult getSearchResult() {
+			List<OpenAlexResult> results = this.results();
 			if (results == null) {
 				return new SearchService.SearchResult(List.of());
 			}
-			return new SearchService.SearchResult(this.results()
+			return new SearchService.SearchResult(results
 				.stream()
 				.map(item -> new SearchService.SearchContent(item.title(), item.description(), item.url(), null))
 				.toList());

@@ -25,6 +25,9 @@ import com.alibaba.cloud.ai.mcp.gateway.core.security.McpGatewayOAuthInterceptor
 import com.alibaba.cloud.ai.mcp.gateway.core.security.McpGatewayOAuthTokenManager;
 import com.alibaba.cloud.ai.mcp.gateway.core.security.McpGatewayOAuthProperties;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.definition.NacosMcpGatewayToolDefinition;
+import com.alibaba.cloud.ai.mcp.common.transport.builder.ModernMcpToolTransport;
+import com.alibaba.cloud.ai.mcp.utils.NacosMcpProtocol;
+import com.alibaba.cloud.ai.mcp.utils.NacosMcpClientUtil;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
 import com.alibaba.nacos.api.ai.model.mcp.McpEndpointInfo;
 import com.alibaba.nacos.api.ai.model.mcp.McpServerRemoteServiceConfig;
@@ -34,21 +37,22 @@ import com.alibaba.nacos.api.config.listener.AbstractListener;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.common.utils.JacksonUtils;
 import com.alibaba.nacos.shaded.com.google.common.collect.Maps;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.springframework.ai.mcp.client.webflux.transport.WebClientStreamableHttpTransport;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
 import io.modelcontextprotocol.client.McpClient;
+import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
-import io.modelcontextprotocol.client.transport.WebClientStreamableHttpTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.InitializeResult;
 import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ToolContext;
@@ -56,7 +60,6 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.lang.NonNull;
 import org.springframework.http.client.reactive.JdkClientHttpConnector;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.util.CollectionUtils;
@@ -65,11 +68,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.HttpProtocol;
 import reactor.netty.http.client.HttpClient;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -88,14 +93,13 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
             .compile("\\{\\{\\s*\\$\\{nacos\\.([^}]+)\\}(\\.[\\w-]+(?:\\.[\\w-]+)*)?\\s*}}");
 
     /**
-     * The Object mapper.
+     * The Json mapper.
      */
-    static ObjectMapper objectMapper = new ObjectMapper();
-
-    static {
-        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        objectMapper.setSerializationInclusion(Include.NON_NULL);
-    }
+    static JsonMapper jsonMapper = JsonMapper.builder()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+            .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
+            .build();
 
     private final NacosMcpGatewayToolDefinition toolDefinition;
 
@@ -219,7 +223,7 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
      */
     private Mono<String> processToolRequest(String configJson, Map<String, Object> args, String baseUrl) {
         try {
-            JsonNode toolConfig = objectMapper.readTree(configJson);
+            JsonNode toolConfig = jsonMapper.readTree(configJson);
             logger.info("[processToolRequest] toolConfig: {} args: {} baseUrl: {}", toolConfig, args, baseUrl);
 
             // Validate configuration integrity
@@ -229,8 +233,8 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
 
             JsonNode requestTemplate = toolConfig.path("requestTemplate");
             JsonNode argsPosition = toolConfig.path("argsPosition");
-            String url = requestTemplate.path("url").asText();
-            String method = requestTemplate.path("method").asText();
+            String url = requestTemplate.path("url").asString();
+            String method = requestTemplate.path("method").asString();
             logger.info("[processToolRequest] requestTemplate: {} url: {} method: {}", requestTemplate, url, method);
 
             // Check URL and method
@@ -297,7 +301,7 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
         }
         // Process request body
         WebClient.RequestHeadersSpec<?> headersSpec = RequestTemplateParser.addRequestBody(requestBodySpec, headers,
-                info, args, this::processTemplateString, objectMapper, logger);
+                info, args, this::processTemplateString, jsonMapper, logger);
 
         // Output final request information
         String fullUrl = baseUrl.endsWith("/") && pathOnlyUrl.startsWith("/") ? baseUrl + pathOnlyUrl.substring(1)
@@ -356,7 +360,7 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
      * @param url Full URL
      * @return Host information (host:port format), or null if not present
      */
-    private String extractHostFromUrl(String url) {
+    private @Nullable String extractHostFromUrl(@Nullable String url) {
         if (url == null || url.isEmpty()) {
             return null;
         }
@@ -390,8 +394,8 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
         params.put("args", args);
         params.put("extendedData", responseBody);
         if (!responseTemplate.isEmpty()) {
-            if (responseTemplate.has("body") && !responseTemplate.path("body").asText().isEmpty()) {
-                String bodyTemplate = responseTemplate.path("body").asText();
+            if (responseTemplate.has("body") && !responseTemplate.path("body").asString().isEmpty()) {
+                String bodyTemplate = responseTemplate.path("body").asString();
                 // Hand over to ResponseTemplateParser for unified processing
                 result = processTemplateString(bodyTemplate, params);
                 logger.info("[processResponse] ResponseTemplateParser result: {}", result);
@@ -442,7 +446,7 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
      * @param dotNotation Dot notation part in format .key1.key2 (may be null)
      * @return Resolved value
      */
-    private String resolveNacosReference(String nacosRef, String dotNotation) {
+    private @Nullable String resolveNacosReference(String nacosRef, @Nullable String dotNotation) {
         if (StringUtils.isBlank(nacosRef)) {
             return null;
         }
@@ -489,7 +493,7 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
      * @return Config content
      * @throws NacosException Nacos exception
      */
-    private String getConfigContent(String dataId, String group) throws NacosException {
+    private @Nullable String getConfigContent(String dataId, String group) throws NacosException {
         String cacheKey = dataId + "@@" + group;
         if (nacosConfigContent.containsKey(cacheKey)) {
             return nacosConfigContent.get(cacheKey);
@@ -520,10 +524,10 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
      * @param jsonPath JSON path, e.g. key1.key2
      * @return Extracted value
      */
-    private String extractJsonValueFromNacos(String jsonString, String jsonPath) {
+    private @Nullable String extractJsonValueFromNacos(String jsonString, String jsonPath) {
 
         try {
-            JsonNode rootNode = objectMapper.readTree(jsonString);
+            JsonNode rootNode = jsonMapper.readTree(jsonString);
             String[] pathParts = jsonPath.split("\\.");
 
             JsonNode currentNode = rootNode;
@@ -541,17 +545,17 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
             }
 
             // Return appropriate value based on node type
-            if (currentNode.isTextual()) {
-                return currentNode.asText();
+            if (currentNode.isString()) {
+                return currentNode.asString();
             } else if (currentNode.isNumber()) {
-                return currentNode.asText();
+                return currentNode.asString();
             } else if (currentNode.isBoolean()) {
                 return String.valueOf(currentNode.asBoolean());
             } else {
                 // For complex objects, return JSON string
                 return currentNode.toString();
             }
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             logger.error("[extractJsonValueFromNacos] Failed to parse JSON from Nacos config. Content: {}, Error: {}",
                     jsonString, e.getMessage());
             throw new RuntimeException(
@@ -565,9 +569,9 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
         }
     }
 
-    private String processTemplateString(String template, Map<String, Object> params) {
-        Map<String, Object> args = (Map<String, Object>) params.get("args");
-        String extendedData = (String) params.get("extendedData");
+    private String processTemplateString(@Nullable String template, Map<String, Object> params) {
+        @Nullable Map<String, Object> args = (Map<String, Object>) params.get("args");
+        @Nullable String extendedData = (String) params.get("extendedData");
         logger.debug("[processTemplateString] template: {} args: {} extendedData: {}", template, args, extendedData);
         if (template == null || template.isEmpty()) {
             return "";
@@ -596,7 +600,8 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
      * @param extendedData Extended data (JSON string)
      * @return Resolved value
      */
-    private String resolvePathValue(String fullPath, Map<String, Object> args, String extendedData) {
+    private String resolvePathValue(@Nullable String fullPath, @Nullable Map<String, Object> args,
+            @Nullable String extendedData) {
         if (fullPath == null) {
             return extendedData != null ? extendedData : "";
         }
@@ -633,7 +638,7 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
             // First parse extendedData string as JSON object
             try {
                 if (StringUtils.isNoneBlank(extendedData)) {
-                    dataSource = objectMapper.readValue(extendedData, Map.class);
+                    dataSource = jsonMapper.readValue(extendedData, Map.class);
                 } else {
                     dataSource = null;
                 }
@@ -685,13 +690,13 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
     }
 
     @Override
-    public String call(@NonNull final String input) {
+    public String call(final String input) {
         return call(input, new ToolContext(Maps.newHashMap()));
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public String call(@NonNull final String input, final ToolContext toolContext) {
+    public String call(final String input, final @Nullable ToolContext toolContext) {
         try {
             logger.info("[call] input: {} toolContext: {}", input, JacksonUtils.toJson(toolContext));
 
@@ -705,7 +710,7 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
             Map<String, Object> args = new HashMap<>();
             if (!input.isEmpty()) {
                 try {
-                    args = objectMapper.readValue(input, Map.class);
+                    args = jsonMapper.readValue(input, Map.class);
                     logger.info("[call] parsed args: {}", args);
                 } catch (Exception e) {
                     logger.error("[call] Failed to parse input to args", e);
@@ -726,7 +731,7 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
             // Dispatch to different handling methods based on protocol type
             if ("http".equalsIgnoreCase(protocol) || "https".equalsIgnoreCase(protocol)) {
                 return handleHttpHttpsProtocol(args, remoteServerConfig, protocol);
-            } else if ("mcp-sse".equalsIgnoreCase(protocol) || "mcp-streamable".equalsIgnoreCase(protocol)) {
+            } else if ("mcp-sse".equalsIgnoreCase(protocol) || NacosMcpProtocol.isStreamable(protocol)) {
                 return handleMcpStreamProtocol(args, remoteServerConfig, protocol);
             } else {
                 logger.error("[call] Unsupported protocol: {}", protocol);
@@ -767,16 +772,17 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
             Object jsonGoTemplate = templates.get("json-go-template");
             try {
                 logger.info("[handleHttpHttpsProtocol] json-go-template: {}",
-                        objectMapper.writeValueAsString(jsonGoTemplate));
-            } catch (JsonProcessingException e) {
+                        jsonMapper.writeValueAsString(jsonGoTemplate));
+            } catch (JacksonException e) {
                 logger.error("[handleHttpHttpsProtocol] Failed to serialize json-go-template", e);
             }
             try {
                 // Call executeToolRequest
-                String configJson = objectMapper.writeValueAsString(jsonGoTemplate);
+                String configJson = jsonMapper.writeValueAsString(jsonGoTemplate);
                 logger.info("[handleHttpHttpsProtocol] configJson: {} args: {} baseUrl: {}", configJson, args,
                         baseUrl);
-                return processToolRequest(configJson, args, baseUrl).block();
+                return Objects.requireNonNull(processToolRequest(configJson, args, baseUrl).block(),
+                        "Tool execution returned null response");
             } catch (Exception e) {
                 logger.error("Failed to execute tool request", e);
                 return "Error: " + e.getMessage();
@@ -807,40 +813,33 @@ public class NacosMcpGatewayToolCallback implements ToolCallback {
         String exportPath = remoteServerConfig.getExportPath();
 
         // Build base URL
-        String baseUrl = "http://" + mcpEndpointInfo.getAddress() + ":" + mcpEndpointInfo.getPort();
+        String baseUrl = NacosMcpClientUtil.checkProtocol(mcpEndpointInfo) + "://" + mcpEndpointInfo.getAddress() + ":" + mcpEndpointInfo.getPort();
 
         logger.info("[handleMcpStreamProtocol] Processing {} protocol with args: {} and baseUrl: {}", protocol,
                 args, baseUrl);
 
         try {
-            // Get tool name - extract actual tool name from tool definition name
-            String toolDefinitionName = this.toolDefinition.name();
-            if (toolDefinitionName.isEmpty()) {
-                throw new RuntimeException("Tool definition name is not available");
+            String toolName = this.toolDefinition.getRemoteToolName();
+            if (toolName == null) {
+                String name = this.toolDefinition.name();
+                int separator = name.lastIndexOf("_tools_");
+                toolName = separator >= 0 ? name.substring(separator + "_tools_".length()) : name;
             }
-
-            // Tool definition name format: serverName_tools_toolName
-            // Need to extract the last toolName part
-            String toolName;
-            if (toolDefinitionName.contains("_tools_")) {
-                toolName = toolDefinitionName.substring(toolDefinitionName.lastIndexOf("_tools_") + 7);
-            } else {
-                // If no _tools_ separator, use the whole name
-                toolName = toolDefinitionName;
-            }
-
             if (toolName.isEmpty()) {
                 throw new RuntimeException("Extracted tool name is empty");
             }
 
             // Build transport layer
-            String sseEndpoint = "/sse";
+            String sseEndpoint = NacosMcpProtocol.isStreamable(protocol) ? "/mcp" : "/sse";
             if (exportPath != null && !exportPath.isEmpty()) {
                 sseEndpoint = exportPath;
             }
 
             McpClientTransport transport;
-            if ("mcp-streamable".equalsIgnoreCase(protocol)) {
+            if (NacosMcpProtocol.isModern(protocol)) {
+                transport = new ModernMcpToolTransport(mcpEndpointInfo, exportPath,
+                        serviceRef.getServiceName(), new JacksonMcpJsonMapper(jsonMapper), getTimeoutDuration());
+            } else if (NacosMcpProtocol.isStreamable(protocol)) {
                 // Use WebClientStreamableHttpTransport for streamable protocol
                 WebClient.Builder webClientBuilder = this.webClientBuilder.clone().baseUrl(baseUrl);
                 transport = WebClientStreamableHttpTransport.builder(webClientBuilder)

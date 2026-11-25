@@ -15,12 +15,16 @@
  */
 package com.alibaba.cloud.ai.toolcalling.regex;
 
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Description;
+
+import java.util.function.Function;
 
 /**
  * @author 北极星
@@ -36,6 +40,17 @@ public class RegexAutoConfiguration {
 	@Description("Use regex to find content based on the expression.")
 	public RegexService regexFindAll() {
 		return new RegexService();
+	}
+
+	@Bean(name = "regexFindAllToolCallback")
+	@ConditionalOnMissingBean(name = "regexFindAllToolCallback")
+	public ToolCallback regexFindAllToolCallback(RegexService regexFindAll) {
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		Function<RegexService.RegexRequest, Object> regexFindAllFunction = (Function) regexFindAll;
+		return FunctionToolCallback.builder(RegexConstants.TOOL_NAME, regexFindAllFunction)
+			.description("Use regex to find content based on the expression.")
+			.inputType(RegexService.RegexRequest.class)
+			.build();
 	}
 
 }

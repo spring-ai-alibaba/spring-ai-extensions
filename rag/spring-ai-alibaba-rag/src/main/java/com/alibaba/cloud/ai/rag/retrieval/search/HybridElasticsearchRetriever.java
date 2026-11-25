@@ -33,6 +33,7 @@ import org.springframework.ai.vectorstore.elasticsearch.SimilarityFunction;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionConverter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionTextParser;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -194,8 +195,8 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
                                         EmbeddingModel embeddingModel, double similarityThreshold, int neighborsNum,
                                         int candidateNum, int topK, int rankWindowSize, int rankConstant, float bm25Bias, float knnBias,
                                         RetrieverType retrieverType, boolean useRrf,
-                                        FilterExpressionConverter filterExpressionConverter,
-                                        Supplier<Filter.Expression> filterExpression) {
+                                        @Nullable FilterExpressionConverter filterExpressionConverter,
+                                        @Nullable Supplier<Filter.Expression> filterExpression) {
         this.vectorStoreOptions = vectorStoreOptions;
         this.elasticsearchClient = elasticsearchClient;
         this.embeddingModel = embeddingModel;
@@ -472,8 +473,9 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
             documentBuilder.metadata(DocumentMetadata.DISTANCE.value(), score);
             documentBuilder.score(score);
         } else if (!useRrf && score != null) {
-            documentBuilder.metadata(DocumentMetadata.DISTANCE.value(), 1 - normalizeSimilarityScore(hit.score()));
-            documentBuilder.score(normalizeSimilarityScore(hit.score()));
+            double normalizedScore = normalizeSimilarityScore(score);
+            documentBuilder.metadata(DocumentMetadata.DISTANCE.value(), 1 - normalizedScore);
+            documentBuilder.score(normalizedScore);
         }
         return documentBuilder.build();
     }
@@ -498,11 +500,11 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
 
     public static final class Builder {
 
-        private ElasticsearchVectorStoreOptions vectorStoreOptions;
+        private @Nullable ElasticsearchVectorStoreOptions vectorStoreOptions;
 
-        private ElasticsearchClient elasticsearchClient;
+        private @Nullable ElasticsearchClient elasticsearchClient;
 
-        private EmbeddingModel embeddingModel;
+        private @Nullable EmbeddingModel embeddingModel;
 
         private double similarityThreshold = SIMILARITY_THRESHOLD_ACCEPT_ALL;
 
@@ -526,21 +528,21 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
 
         private FilterExpressionConverter filterExpressionConverter = new ElasticsearchAiSearchFilterExpressionConverter();
 
-        private Supplier<Filter.Expression> filterExpression;
+        private @Nullable Supplier<Filter.Expression> filterExpression;
 
-        public Builder vectorStoreOptions(ElasticsearchVectorStoreOptions vectorStoreOptions) {
+        public Builder vectorStoreOptions(@Nullable ElasticsearchVectorStoreOptions vectorStoreOptions) {
             Assert.notNull(vectorStoreOptions, "vectorStoreOptions must not be null");
             this.vectorStoreOptions = vectorStoreOptions;
             return this;
         }
 
-        public Builder elasticsearchClient(ElasticsearchClient elasticsearchClient) {
+        public Builder elasticsearchClient(@Nullable ElasticsearchClient elasticsearchClient) {
             Assert.notNull(elasticsearchClient, "elasticsearchClient must not be null");
             this.elasticsearchClient = elasticsearchClient;
             return this;
         }
 
-        public Builder embeddingModel(EmbeddingModel embeddingModel) {
+        public Builder embeddingModel(@Nullable EmbeddingModel embeddingModel) {
             Assert.notNull(embeddingModel, "embeddingModel must not be null");
             this.embeddingModel = embeddingModel;
             return this;
@@ -607,14 +609,17 @@ public class HybridElasticsearchRetriever implements HybridDocumentRetriever {
             return this;
         }
 
-        public Builder filterExpression(Supplier<Filter.Expression> filterExpression) {
+        public Builder filterExpression(@Nullable Supplier<Filter.Expression> filterExpression) {
             this.filterExpression = filterExpression;
             return this;
         }
 
         public HybridElasticsearchRetriever build() {
-            return new HybridElasticsearchRetriever(vectorStoreOptions, elasticsearchClient, embeddingModel, similarityThreshold,
-                    neighborsNum, candidateNum, topK, rankWindowSize, rankConstant, bm25Bias, knnBias, retrieverType, useRrf,
+            return new HybridElasticsearchRetriever(Objects.requireNonNull(vectorStoreOptions,
+                    "vectorStoreOptions must not be null"), Objects.requireNonNull(elasticsearchClient,
+                    "elasticsearchClient must not be null"), Objects.requireNonNull(embeddingModel,
+                    "embeddingModel must not be null"), similarityThreshold, neighborsNum, candidateNum, topK,
+                    rankWindowSize, rankConstant, bm25Bias, knnBias, retrieverType, useRrf,
                     filterExpressionConverter, filterExpression);
         }
     }

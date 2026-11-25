@@ -17,24 +17,26 @@
 
 package com.alibaba.cloud.ai.mcp.router.model;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.List;
 import java.util.Objects;
 
 public class McpServerInfo {
 
-	private String name;
+	private @Nullable String name;
 
-	private String description;
+	private @Nullable String description;
 
-	private String protocol;
+	private @Nullable String protocol;
 
-	private String version;
+	private @Nullable String version;
 
-	private String endpoint;
+	private @Nullable String endpoint;
 
-	private Boolean enabled;
+	private @Nullable Boolean enabled;
 
-	private List<String> tags;
+	private @Nullable List<String> tags;
 
 	// 临时分数字段，用于向量搜索结果排序，不参与 equals 和 hashCode
 	private transient double score;
@@ -42,8 +44,9 @@ public class McpServerInfo {
 	public McpServerInfo() {
 	}
 
-	public McpServerInfo(String name, String description, String protocol, String version, String endpoint,
-			Boolean enabled, List<String> tags) {
+	public McpServerInfo(@Nullable String name, @Nullable String description, @Nullable String protocol,
+			@Nullable String version, @Nullable String endpoint, @Nullable Boolean enabled,
+			@Nullable List<String> tags) {
 		this.name = name;
 		this.description = description;
 		this.protocol = protocol;
@@ -53,59 +56,59 @@ public class McpServerInfo {
 		this.tags = tags;
 	}
 
-	public String getName() {
+	public @Nullable String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public void setName(@Nullable String name) {
 		this.name = name;
 	}
 
-	public String getDescription() {
+	public @Nullable String getDescription() {
 		return description;
 	}
 
-	public void setDescription(String description) {
+	public void setDescription(@Nullable String description) {
 		this.description = description;
 	}
 
-	public String getProtocol() {
+	public @Nullable String getProtocol() {
 		return protocol;
 	}
 
-	public void setProtocol(String protocol) {
+	public void setProtocol(@Nullable String protocol) {
 		this.protocol = protocol;
 	}
 
-	public String getVersion() {
+	public @Nullable String getVersion() {
 		return version;
 	}
 
-	public void setVersion(String version) {
+	public void setVersion(@Nullable String version) {
 		this.version = version;
 	}
 
-	public String getEndpoint() {
+	public @Nullable String getEndpoint() {
 		return endpoint;
 	}
 
-	public void setEndpoint(String endpoint) {
+	public void setEndpoint(@Nullable String endpoint) {
 		this.endpoint = endpoint;
 	}
 
-	public Boolean getEnabled() {
+	public @Nullable Boolean getEnabled() {
 		return enabled;
 	}
 
-	public void setEnabled(Boolean enabled) {
+	public void setEnabled(@Nullable Boolean enabled) {
 		this.enabled = enabled;
 	}
 
-	public List<String> getTags() {
+	public @Nullable List<String> getTags() {
 		return tags;
 	}
 
-	public void setTags(List<String> tags) {
+	public void setTags(@Nullable List<String> tags) {
 		this.tags = tags;
 	}
 

@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.reader.mongodb;
 
+import org.jspecify.annotations.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,33 +39,33 @@ public class MongodbResource implements Resource {
 	 * mongodb://[username:password@]host1[:port1][,host2[:port2],...][/database][?options]
 	 * Default: mongodb://localhost:27017
 	 */
-	private String uri;
+	private @Nullable String uri;
 
 	/**
 	 * MongoDB Username Optional, used for authentication
 	 */
-	private String username;
+	private @Nullable String username;
 
 	/**
 	 * MongoDB Password Optional, used for authentication
 	 */
-	private String password;
+	private @Nullable String password;
 
 	/**
 	 * MongoDB Database Name Required, specifies the database to connect to
 	 */
-	private String database;
+	private @Nullable String database;
 
 	/**
 	 * MongoDB Collection Name Required, specifies the collection to read from
 	 */
-	private String collection;
+	private @Nullable String collection;
 
 	/**
 	 * MongoDB Query Condition (JSON format) Optional, used to filter documents to be read
 	 * Example: {"status": "active", "type": "article"}
 	 */
-	private String query;
+	private @Nullable String query;
 
 	/**
 	 * Document Chunk Size (in characters) Used to split large documents into smaller
@@ -111,35 +113,35 @@ public class MongodbResource implements Resource {
 
 	// Getters and Setters
 
-	public String getUri() {
+	public @Nullable String getUri() {
 		return uri;
 	}
 
-	public void setUri(String uri) {
+	public void setUri(@Nullable String uri) {
 		this.uri = uri;
 	}
 
-	public String getDatabase() {
+	public @Nullable String getDatabase() {
 		return database;
 	}
 
-	public void setDatabase(String database) {
+	public void setDatabase(@Nullable String database) {
 		this.database = database;
 	}
 
-	public String getCollection() {
+	public @Nullable String getCollection() {
 		return collection;
 	}
 
-	public void setCollection(String collection) {
+	public void setCollection(@Nullable String collection) {
 		this.collection = collection;
 	}
 
-	public String getQuery() {
+	public @Nullable String getQuery() {
 		return query;
 	}
 
-	public void setQuery(String query) {
+	public void setQuery(@Nullable String query) {
 		this.query = query;
 	}
 
@@ -214,17 +216,17 @@ public class MongodbResource implements Resource {
 
 	@Override
 	public URL getURL() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("MongodbResource does not expose a URL");
 	}
 
 	@Override
 	public URI getURI() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("MongodbResource does not expose a URI");
 	}
 
 	@Override
 	public File getFile() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("MongodbResource is not backed by a local file");
 	}
 
 	@Override
@@ -239,37 +241,37 @@ public class MongodbResource implements Resource {
 
 	@Override
 	public Resource createRelative(String relativePath) throws IOException {
-		return null;
+		throw new UnsupportedOperationException("MongodbResource does not support relative resources");
 	}
 
 	@Override
 	public String getFilename() {
-		return "";
+		return collection != null ? collection : "mongodb";
 	}
 
 	@Override
 	public String getDescription() {
-		return "";
+		return "MongoDB resource";
 	}
 
 	@Override
 	public InputStream getInputStream() {
-		return null;
+		throw new UnsupportedOperationException("MongodbResource does not expose a raw input stream");
 	}
 
-	public void setUsername(String username) {
+	public void setUsername(@Nullable String username) {
 		this.username = username;
 	}
 
-	public void setPassword(String password) {
+	public void setPassword(@Nullable String password) {
 		this.password = password;
 	}
 
-	public String getUsername() {
+	public @Nullable String getUsername() {
 		return username;
 	}
 
-	public String getPassword() {
+	public @Nullable String getPassword() {
 		return password;
 	}
 

@@ -21,6 +21,7 @@ import com.alibaba.cloud.ai.mcp.gateway.nacos.callback.NacosMcpGatewayToolCallba
 import com.alibaba.cloud.ai.mcp.gateway.nacos.definition.NacosMcpGatewayToolDefinition;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.properties.NacosMcpGatewayProperties;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
+import com.alibaba.cloud.ai.mcp.utils.NacosMcpProtocol;
 import com.alibaba.nacos.api.ai.model.mcp.McpServerDetailInfo;
 import com.alibaba.nacos.api.ai.model.mcp.McpServerRemoteServiceConfig;
 import com.alibaba.nacos.api.ai.model.mcp.McpTool;
@@ -64,9 +65,9 @@ public class NacosMcpGatewayToolsInitializer implements McpGatewayToolsInitializ
 					logger.warn("No service detail info found for service: {}", serviceName);
 					continue;
 				}
-				String protocol = serviceDetail.getProtocol();
+				String protocol = NacosMcpProtocol.resolve(serviceDetail);
 				if ("http".equalsIgnoreCase(protocol) || "https".equalsIgnoreCase(protocol)
-						|| "mcp-sse".equalsIgnoreCase(protocol) || "mcp-streamable".equalsIgnoreCase(protocol)) {
+						|| "mcp-sse".equalsIgnoreCase(protocol) || NacosMcpProtocol.isStreamable(protocol)) {
 					List<ToolCallback> tools = parseToolsFromMcpServerDetailInfo(serviceDetail);
 					if (CollectionUtils.isEmpty(tools)) {
 						logger.warn("No tools defined for service: {}", serviceName);
@@ -93,7 +94,7 @@ public class NacosMcpGatewayToolsInitializer implements McpGatewayToolsInitializ
 	private List<ToolCallback> parseToolsFromMcpServerDetailInfo(McpServerDetailInfo mcpServerDetailInfo) {
 		try {
 			McpToolSpecification toolSpecification = mcpServerDetailInfo.getToolSpec();
-			String protocol = mcpServerDetailInfo.getProtocol();
+			String protocol = NacosMcpProtocol.resolve(mcpServerDetailInfo);
 			McpServerRemoteServiceConfig mcpServerRemoteServiceConfig = mcpServerDetailInfo.getRemoteServerConfig();
 			List<ToolCallback> toolCallbacks = new ArrayList<>();
 			if (toolSpecification != null) {
@@ -114,6 +115,7 @@ public class NacosMcpGatewayToolsInitializer implements McpGatewayToolsInitializ
 					}
 					NacosMcpGatewayToolDefinition toolDefinition = NacosMcpGatewayToolDefinition.builder()
 						.name(mcpServerDetailInfo.getName() + "_tools_" + toolName)
+						.remoteToolName(toolName)
 						.description(toolDescription)
 						.inputSchema(inputSchema)
 						.protocol(protocol)
@@ -129,7 +131,7 @@ public class NacosMcpGatewayToolsInitializer implements McpGatewayToolsInitializ
 			logger.warn("Failed to get or parse nacos mcp service tools info (mcpName {})",
 					mcpServerDetailInfo.getName() + mcpServerDetailInfo.getVersionDetail().getVersion(), e);
 		}
-		return null;
+		return new ArrayList<>();
 	}
 
 }

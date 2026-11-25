@@ -1,0 +1,326 @@
+/*
+ * Copyright 2024-2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.alibaba.cloud.ai.dashscope.agent;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi;
+import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentRequest;
+import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentResponse;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.messages.part.MediaPart;
+import org.springframework.ai.chat.messages.part.ReasoningPart;
+import org.springframework.ai.chat.messages.part.TextPart;
+import org.springframework.ai.chat.messages.part.UnknownPart;
+import org.springframework.ai.content.Media;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.util.MimeTypeUtils;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.http.ResponseEntity;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
+/**
+ * Test cases for DashScopeAgent.
+ *
+ * @author yuluo
+ * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
+ * @author brianxiadong
+ * @since 1.0.0-M2
+ */
+@ExtendWith(MockitoExtension.class)
+class DashScopeAgentTests {
+
+  private static final String TEST_APP_ID = "test-app-id";
+
+  private static final String TEST_USER_MESSAGE = "Hello, AI!";
+
+  private static final String TEST_ASSISTANT_RESPONSE = "Hello, Human!";
+
+  @Mock private DashScopeAgentApi dashScopeAgentApi;
+
+  private DashScopeAgent agent;
+
+  private DashScopeAgentOptions options;
+
+  private JsonMapper jsonMapper;
+
+  private JsonNode testBizParams;
+
+  @BeforeEach
+  void setUp() {
+    // Initialize JsonMapper and create test bizParams
+    jsonMapper = JsonMapper.shared();
+    ObjectNode bizParams = jsonMapper.createObjectNode();
+    bizParams.put("key1", "value1");
+    bizParams.put("key2", "value2");
+    testBizParams = bizParams;
+
+    // Create agent options
+    options =
+        DashScopeAgentOptions.builder()
+            .appId(TEST_APP_ID)
+            .sessionId("test-session")
+            .memoryId("test-memory")
+            .incrementalOutput(false)
+            .hasThoughts(false)
+            .bizParams(testBizParams)
+            .build();
+
+    // Create agent instance
+    agent = new DashScopeAgent(dashScopeAgentApi, options);
+  }
+
+  /** Test successful call with valid prompt */
+  @Test
+  void testSuccessfulCall() {
+    // Prepare test data
+    Message message = UserMessage.builder().part(TextPart.of(TEST_USER_MESSAGE))
+        .part(MediaPart.of(new Media(MimeTypeUtils.IMAGE_PNG, new ByteArrayResource(new byte[] {1}))))
+        .build();
+    Prompt prompt = new Prompt(List.of(message), options);
+
+    // Create mock response
+    DashScopeAgentResponse response = createMockResponse();
+
+    // Mock API behavior
+    when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class)))
+        .thenReturn(ResponseEntity.ok(response));
+
+    // Execute test
+    var result = agent.call(prompt);
+
+    // Verify response
+    assertThat(result).isNotNull();
+    assertThat(result.getResults()).hasSize(1);
+    var assistantMessage = result.getResults().get(0).getOutput();
+    assertThat(assistantMessage.getText()).isEqualTo(TEST_ASSISTANT_RESPONSE);
+    assertThat(assistantMessage.getReasoning()).containsExactly(ReasoningPart.of("test reasoning content"));
+    assertThat(assistantMessage.getParts()).anySatisfy(part ->
+        assertThat(part).isInstanceOfSatisfying(UnknownPart.class, unknown ->
+            assertThat(unknown.rawJson()).contains("test action name")));
+    var request = ArgumentCaptor.forClass(DashScopeAgentRequest.class);
+    verify(dashScopeAgentApi).call(request.capture());
+    assertThat(request.getValue().input().images()).containsExactly("data:image/png;base64,AQ==");
+    assertThat(result.getResults().get(0).getMetadata().getFinishReason()).isEqualTo("stop");
+  }
+
+  /** Test call uses default options when prompt options are absent */
+  @Test
+  void testCallUsesDefaultOptionsWhenPromptHasNoOptions() {
+    // Prepare test data
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    Prompt prompt = new Prompt(List.of(message));
+
+    // Create mock response
+    DashScopeAgentResponse response = createMockResponse();
+
+    // Mock API behavior
+    when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class)))
+        .thenReturn(ResponseEntity.ok(response));
+
+    // Execute test
+    var result = agent.call(prompt);
+
+    // Verify response
+    assertThat(result).isNotNull();
+    assertThat(result.getResults()).hasSize(1);
+  }
+
+  @Test
+  void testCallUsesRuntimeOptionsAsReplacement() {
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    DashScopeAgentOptions runtimeOptions =
+        DashScopeAgentOptions.builder().appId("runtime-app-id").build();
+    Prompt prompt = new Prompt(List.of(message), runtimeOptions);
+    DashScopeAgentResponse response = createMockResponse();
+    when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class))).thenReturn(ResponseEntity.ok(response));
+
+    agent.call(prompt);
+
+    ArgumentCaptor<DashScopeAgentRequest> requestCaptor = ArgumentCaptor.forClass(DashScopeAgentRequest.class);
+    verify(dashScopeAgentApi).call(requestCaptor.capture());
+    DashScopeAgentRequest request = requestCaptor.getValue();
+    assertThat(request.appId()).isEqualTo("runtime-app-id");
+    assertThat(request.input().sessionId()).isNull();
+    assertThat(request.input().memoryId()).isNull();
+  }
+
+  /** Test call with null response */
+  @Test
+  void testCallWithNullResponse() {
+    // Prepare test data
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    Prompt prompt = new Prompt(List.of(message), options);
+
+    // Mock API behavior to return null
+    when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class))).thenReturn(null);
+
+    // Execute test
+    var result = agent.call(prompt);
+
+    // Verify response is null
+    assertThat(result).isNotNull();
+  }
+
+  /** Test call with null prompt */
+  @Test
+  void testCallWithNullPrompt() {
+    // Execute test and verify exception
+    assertThatThrownBy(() -> agent.call((String) null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Content must not be null for SYSTEM or USER messages");
+  }
+
+  /** Test call with null appId */
+  @Test
+  void testCallWithNullAppId() {
+    // Prepare test data with null appId
+    DashScopeAgentOptions optionsWithNullAppId = DashScopeAgentOptions.builder().appId("").build();
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    Prompt prompt = new Prompt(List.of(message), optionsWithNullAppId);
+
+    // Execute test and verify exception
+    assertThatThrownBy(() -> agent.call(prompt))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("appId must be set");
+  }
+
+  /** Test successful stream with valid prompt */
+  @Test
+  void testSuccessfulStream() {
+    // Prepare test data
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    Prompt prompt = new Prompt(List.of(message), options);
+
+    // Create mock response
+    DashScopeAgentResponse response = createMockResponse();
+
+    // Mock API behavior
+    when(dashScopeAgentApi.stream(any(DashScopeAgentRequest.class)))
+        .thenReturn(Flux.just(response));
+
+    // Execute test
+    var resultFlux = agent.stream(prompt);
+
+    // Verify stream response
+    StepVerifier.create(resultFlux)
+        .assertNext(
+            result -> {
+              assertThat(result).isNotNull();
+              assertThat(result.getResults()).hasSize(1);
+              var assistantMessage = result.getResults().get(0).getOutput();
+              assertThat(assistantMessage.toString()).contains(TEST_ASSISTANT_RESPONSE);
+              assertThat(result.getResults().get(0).getMetadata().getFinishReason())
+                  .isEqualTo("stop");
+            })
+        .verifyComplete();
+  }
+
+  /** Test stream with null prompt */
+  @Test
+  void testStreamWithNullPrompt() {
+    // Execute test and verify exception
+    assertThatThrownBy(() -> agent.stream((String) null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Content must not be null for SYSTEM or USER messages");
+  }
+
+  /** Test default constructor */
+  @Test
+  void testDefaultConstructor() {
+    // Create agent with default constructor
+    DashScopeAgent defaultAgent = DashScopeAgent.builder().dashScopeAgentApi(dashScopeAgentApi).build();
+
+    // Verify default options are set
+    Message message = new UserMessage(TEST_USER_MESSAGE);
+    DashScopeAgentOptions defaultOptions =
+        DashScopeAgentOptions.builder().appId(TEST_APP_ID).build();
+    Prompt prompt = new Prompt(List.of(message), defaultOptions);
+
+    // Create mock response
+    DashScopeAgentResponse response = createMockResponse();
+
+    // Mock API behavior
+    when(dashScopeAgentApi.call(any(DashScopeAgentRequest.class)))
+        .thenReturn(ResponseEntity.ok(response));
+
+    // Execute test
+    var result = defaultAgent.call(prompt);
+
+    // Verify response
+    assertThat(result).isNotNull();
+    assertThat(result.getResults()).hasSize(1);
+  }
+
+  /** Helper method to create a mock DashScopeAgentResponse */
+  private DashScopeAgentResponse createMockResponse() {
+    // Create thoughts list
+    var thought =
+        new DashScopeAgentResponse.DashScopeAgentResponseOutput
+            .DashScopeAgentResponseOutputThoughts(
+            "test thought",
+            "test action type",
+            "test action name",
+            "test action",
+            "test input stream",
+            "test input",
+            "test response",
+            "test observation",
+            "test reasoning content");
+    List<DashScopeAgentResponse.DashScopeAgentResponseOutput.DashScopeAgentResponseOutputThoughts>
+        thoughts = List.of(thought);
+
+    // Create doc references list (empty for this test)
+    List<
+            DashScopeAgentResponse.DashScopeAgentResponseOutput
+                .DashScopeAgentResponseOutputDocReference>
+        docReferences = List.of();
+
+    // Create output with all required parameters
+    var output =
+        new DashScopeAgentResponse.DashScopeAgentResponseOutput(
+            TEST_ASSISTANT_RESPONSE, // text
+            "stop", // finishReason
+            "test-session", // sessionId
+            thoughts, // thoughts list
+            docReferences // docReferences list
+            );
+
+    // Create usage with models list
+    var usageModel =
+        new DashScopeAgentResponse.DashScopeAgentResponseUsage.DashScopeAgentResponseUsageModels(
+            "test-model", 10, 20);
+    var usage = new DashScopeAgentResponse.DashScopeAgentResponseUsage(List.of(usageModel));
+
+    return new DashScopeAgentResponse(null, "request-123", null, null, output, usage);
+  }
+}

@@ -16,8 +16,9 @@
 
 package com.alibaba.cloud.ai.mcp.gateway.core.jsontemplate;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -38,8 +39,8 @@ public class RequestTemplateParser {
 	public static final Pattern PATH_VARIABLES_PATTERN = Pattern.compile("(?<!\\{)\\{([^}]+)\\}(?!\\})");
 
 	public static RequestTemplateInfo parseRequestTemplate(JsonNode requestTemplate, JsonNode argsPosition) {
-		String url = requestTemplate.path("url").asText();
-		String method = requestTemplate.path("method").asText();
+		String url = requestTemplate.path("url").asString();
+		String method = requestTemplate.path("method").asString();
 		boolean argsToUrlParam = requestTemplate.path("argsToUrlParam").asBoolean(false);
 		boolean argsToJsonBody = requestTemplate.path("argsToJsonBody").asBoolean(false);
 		boolean argsToFormBody = requestTemplate.path("argsToFormBody").asBoolean(false);
@@ -97,7 +98,7 @@ public class RequestTemplateParser {
 			Object value = entry.getValue();
 			boolean addToQuery = info.argsToUrlParam;
 			if (info.argsPosition != null && info.argsPosition.has(key)) {
-				String position = info.argsPosition.path(key).asText();
+				String position = info.argsPosition.path(key).asString();
 				addToQuery = "query".equals(position);
 			}
 			if (addToQuery && value != null) {
@@ -134,7 +135,7 @@ public class RequestTemplateParser {
 			if (value != null) {
 				// 检查是否指定了cookie位置
 				if (info.argsPosition != null && info.argsPosition.has(key)) {
-					String position = info.argsPosition.path(key).asText();
+					String position = info.argsPosition.path(key).asString();
 					if ("cookie".equals(position)) {
 						if (!cookieBuilder.isEmpty()) {
 							cookieBuilder.append("; ");
@@ -159,8 +160,8 @@ public class RequestTemplateParser {
 		JsonNode headersNode = info.headers;
 		if (headersNode != null && headersNode.isArray()) {
 			for (JsonNode header : headersNode) {
-				String key = header.path("key").asText();
-				String valueTemplate = header.path("value").asText();
+				String key = header.path("key").asString();
+				String valueTemplate = header.path("value").asString();
 				Map<String, Object> params = new HashMap<>();
 				params.put("args", args);
 				params.put("extendedData", "");
@@ -176,7 +177,7 @@ public class RequestTemplateParser {
 			Object value = entry.getValue();
 			boolean addToHeader = false;
 			if (info.argsPosition != null && info.argsPosition.has(key)) {
-				String position = info.argsPosition.path(key).asText();
+				String position = info.argsPosition.path(key).asString();
 				addToHeader = "header".equals(position);
 			}
 			if (addToHeader && value != null) {
@@ -206,7 +207,7 @@ public class RequestTemplateParser {
 		while (matcher.find()) {
 			String variableName = matcher.group(1);
 			if (info.argsPosition != null && info.argsPosition.has(variableName)) {
-				String position = info.argsPosition.path(variableName).asText();
+				String position = info.argsPosition.path(variableName).asString();
 				if ("path".equals(position)) {
 					Object value = args.get(variableName);
 					String replacement = value != null ? value.toString() : matcher.group(0);
@@ -223,7 +224,7 @@ public class RequestTemplateParser {
 			MultiValueMap<String, String> headers, RequestTemplateInfo info, Map<String, Object> args,
 			java.util.function.BiFunction<String, Map<String, Object>, String> templateProcessor,
 			ObjectMapper objectMapper, Logger logger) {
-		boolean hasBody = info.body != null && !info.body.asText().isEmpty();
+		boolean hasBody = info.body != null && !info.body.asString().isEmpty();
 		int optionCount = (hasBody ? 1 : 0) + (info.argsToJsonBody ? 1 : 0) + (info.argsToFormBody ? 1 : 0)
 				+ (info.argsToUrlParam ? 1 : 0);
 		if (optionCount > 1) {
@@ -231,7 +232,7 @@ public class RequestTemplateParser {
 					"Only one of body, argsToJsonBody, argsToFormBody, or argsToUrlParam should be specified");
 		}
 		if (hasBody) {
-			String bodyTemplate = info.body.asText();
+			String bodyTemplate = info.body.asString();
 			Map<String, Object> params = new HashMap<>();
 			params.put("args", args);
 			params.put("extendedData", "");
@@ -260,7 +261,7 @@ public class RequestTemplateParser {
 				}
 				boolean addToBody = info.argsToFormBody || info.argsToJsonBody;
 				if (info.argsPosition != null && info.argsPosition.has(key)) {
-					String position = info.argsPosition.path(key).asText();
+					String position = info.argsPosition.path(key).asString();
 					addToBody = "body".equals(position);
 				}
 				if (addToBody) {
@@ -277,7 +278,7 @@ public class RequestTemplateParser {
 					return requestSpec.contentType(org.springframework.http.MediaType.APPLICATION_JSON)
 						.bodyValue(jsonBody);
 				}
-				catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+				catch (JacksonException e) {
 					logger.error("Failed to create JSON request body", e);
 					return requestSpec;
 				}

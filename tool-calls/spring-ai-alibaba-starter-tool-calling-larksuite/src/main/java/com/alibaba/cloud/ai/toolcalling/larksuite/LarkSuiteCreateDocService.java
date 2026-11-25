@@ -76,9 +76,9 @@ public class LarkSuiteCreateDocService implements Function<LarkSuiteCreateDocSer
 			return resp.getData();
 		}
 		catch (Exception e) {
-			logger.error("failed to invoke baidu search caused by:{}", e.getMessage());
+			logger.error("failed to invoke baidu search caused by:{}", e.getMessage(), e);
+			throw new RuntimeException("创建飞书文档失败", e);
 		}
-		return null;
 	}
 
 	public record DocRequest(

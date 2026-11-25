@@ -16,6 +16,9 @@
 package com.alibaba.cloud.ai.toolcalling.larksuite.param.req;
 
 import com.google.gson.annotations.SerializedName;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author NewGK
@@ -34,7 +37,7 @@ public class ValuesAppendReqBody {
 	}
 
 	public ValuesAppendReqBody(Builder builder) {
-		this.valueRange = builder.valueRange;
+		this.valueRange = Objects.requireNonNull(builder.valueRange, "valueRange must not be null");
 	}
 
 	public static Builder newBuilder() {
@@ -44,9 +47,9 @@ public class ValuesAppendReqBody {
 	public static class Builder {
 
 		@SerializedName("valueRange")
-		private ValueRange valueRange;
+		private @Nullable ValueRange valueRange;
 
-		public Builder valueRange(ValueRange valueRange) {
+		public Builder valueRange(@Nullable ValueRange valueRange) {
 			this.valueRange = valueRange;
 			return this;
 		}

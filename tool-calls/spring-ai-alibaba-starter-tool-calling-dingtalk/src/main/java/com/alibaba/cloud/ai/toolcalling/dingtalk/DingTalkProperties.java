@@ -29,6 +29,11 @@ public class DingTalkProperties extends CommonToolCallProperties {
 
 	private String customRobotSignature;
 
+    public DingTalkProperties() {
+		this.customRobotAccessToken = System.getenv(DingTalkConstants.ACCESS_TOKEN_ENV);
+		this.customRobotSignature = System.getenv(DingTalkConstants.SIGNATURE_ENV);
+	}
+
 	public DingTalkProperties(String customRobotAccessToken, String customRobotSignature) {
 		this.customRobotAccessToken = customRobotAccessToken;
 		this.customRobotSignature = customRobotSignature;

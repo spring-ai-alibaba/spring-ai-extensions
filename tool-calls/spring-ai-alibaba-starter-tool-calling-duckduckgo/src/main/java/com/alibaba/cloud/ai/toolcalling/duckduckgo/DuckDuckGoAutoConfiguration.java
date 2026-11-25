@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.duckduckgo;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -29,6 +31,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
 import static com.alibaba.cloud.ai.toolcalling.common.CommonToolCallConstants.DEFAULT_USER_AGENTS;
+
+import java.util.function.Function;
 
 /**
  * @author 北极星
@@ -55,6 +59,17 @@ public class DuckDuckGoAutoConfiguration {
 			.httpHeadersConsumer(consumer)
 			.build();
 		return new DuckDuckGoQueryNewsService(duckDuckGoProperties, webClientTool);
+	}
+
+	@Bean(name = "duckDuckGoQueryNewsToolCallback")
+	@ConditionalOnMissingBean(name = "duckDuckGoQueryNewsToolCallback")
+	public ToolCallback duckDuckGoQueryNewsToolCallback(DuckDuckGoQueryNewsService duckDuckGoQueryNews) {
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		Function<DuckDuckGoQueryNewsService.DuckDuckGoQueryNewsRequest, Object> duckDuckGoQueryNewsFunction = (Function) duckDuckGoQueryNews;
+		return FunctionToolCallback.builder(DuckDuckGoConstants.TOOL_NAME, duckDuckGoQueryNewsFunction)
+			.description("Use DuckDuckGo search to query for the latest news.")
+			.inputType(DuckDuckGoQueryNewsService.DuckDuckGoQueryNewsRequest.class)
+			.build();
 	}
 
 }

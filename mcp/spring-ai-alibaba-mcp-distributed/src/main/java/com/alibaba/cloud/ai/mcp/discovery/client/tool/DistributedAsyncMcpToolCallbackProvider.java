@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiPredicate;
 
 /**
@@ -51,28 +52,28 @@ public class DistributedAsyncMcpToolCallbackProvider implements ToolCallbackProv
         this((mcpClient, tool) -> true, mcpClients);
     }
 
-    @Override
-    public ToolCallback[] getToolCallbacks() {
-        List<ToolCallback> toolCallbackList = new ArrayList();
-        Iterator var2 = this.mcpClients.iterator();
+	@Override
+	public ToolCallback[] getToolCallbacks() {
+		List<ToolCallback> toolCallbackList = new ArrayList<>();
+		Iterator<DistributedAsyncMcpClient> var2 = this.mcpClients.iterator();
 
-        while (var2.hasNext()) {
-            DistributedAsyncMcpClient mcpClient = (DistributedAsyncMcpClient) var2.next();
-            ToolCallback[] toolCallbacks = (ToolCallback[]) mcpClient.listTools().map((response) -> {
-                return (ToolCallback[]) response.tools().stream().filter((tool) -> {
-                    return this.toolFilter.test(mcpClient.getMcpAsyncClient(), tool);
-                }).map((tool) -> {
-                    return new DistributedAsyncMcpToolCallback(mcpClient, tool);
-                }).toArray((x$0) -> {
-                    return new ToolCallback[x$0];
-                });
-            }).block();
-            this.validateToolCallbacks(toolCallbacks);
-            toolCallbackList.addAll(List.of(toolCallbacks));
-        }
+		while (var2.hasNext()) {
+			DistributedAsyncMcpClient mcpClient = var2.next();
+			ToolCallback[] toolCallbacks = Objects.requireNonNull(mcpClient.listTools().map((response) -> {
+				return response.tools().stream().filter((tool) -> {
+					return this.toolFilter.test(mcpClient.getMcpAsyncClient(), tool);
+				}).map((tool) -> {
+					return new DistributedAsyncMcpToolCallback(mcpClient, tool);
+				}).toArray((x$0) -> {
+					return new ToolCallback[x$0];
+				});
+			}).block(), "Distributed async MCP tool callbacks must not be null");
+			this.validateToolCallbacks(toolCallbacks);
+			toolCallbackList.addAll(List.of(toolCallbacks));
+		}
 
-        return (ToolCallback[]) toolCallbackList.toArray(new ToolCallback[0]);
-    }
+		return toolCallbackList.toArray(new ToolCallback[0]);
+	}
 
     private void validateToolCallbacks(ToolCallback[] toolCallbacks) {
         List<String> duplicateToolNames = ToolUtils.getDuplicateToolNames(toolCallbacks);

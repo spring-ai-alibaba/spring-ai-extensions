@@ -19,9 +19,9 @@ package com.alibaba.cloud.ai.mcp.discovery.client.tool;
 import com.alibaba.cloud.ai.mcp.discovery.client.transport.DistributedSyncMcpClient;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.springframework.ai.mcp.McpToolUtils;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
+import org.springframework.ai.util.JsonHelper;
 import org.springframework.util.Assert;
 
 import java.util.Map;
@@ -37,11 +37,14 @@ public class DistributedSyncMcpToolCallback implements ToolCallback {
 
     private final McpSchema.Tool tool;
 
+    private final JsonHelper jsonHelper;
+
     public DistributedSyncMcpToolCallback(DistributedSyncMcpClient distributedSyncMcpClient, McpSchema.Tool tool) {
         Assert.notNull(distributedSyncMcpClient, "distributedSyncClient must not be null");
         Assert.notNull(tool, "tool must not be null");
         this.distributedSyncMcpClient = distributedSyncMcpClient;
         this.tool = tool;
+        this.jsonHelper = new JsonHelper();
     }
 
     @Override
@@ -49,19 +52,19 @@ public class DistributedSyncMcpToolCallback implements ToolCallback {
         return ToolDefinition.builder()
                 .name(McpToolUtils.prefixedToolName(this.distributedSyncMcpClient.getServerName(), this.tool.name()))
                 .description(this.tool.description())
-                .inputSchema(ModelOptionsUtils.toJsonString(this.tool.inputSchema()))
+                .inputSchema(jsonHelper.toJson(this.tool.inputSchema()))
                 .build();    }
 
     @Override
     public String call(String toolInput) {
-        Map<String, Object> arguments = ModelOptionsUtils.jsonToMap(toolInput);
+        Map<String, Object> arguments = jsonHelper.fromJsonToMap(toolInput);
         McpSchema.CallToolResult response = this.distributedSyncMcpClient
                 .callTool(new McpSchema.CallToolRequest(this.tool.name(), arguments));
         if (response.isError() != null && response.isError()) {
             throw new IllegalStateException("Error calling tool: " + response.content());
         }
         else {
-            return ModelOptionsUtils.toJsonString(response.content());
+            return jsonHelper.toJson(response.content());
         }
     }
 }

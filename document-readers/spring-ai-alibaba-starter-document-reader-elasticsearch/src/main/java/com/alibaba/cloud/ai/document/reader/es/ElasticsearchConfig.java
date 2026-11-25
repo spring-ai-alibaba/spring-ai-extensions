@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.document.reader.es;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,7 +47,7 @@ public class ElasticsearchConfig {
 	/**
 	 * Index name to query
 	 */
-	private String index;
+	private @Nullable String index;
 
 	/**
 	 * Query field to search in
@@ -55,12 +57,12 @@ public class ElasticsearchConfig {
 	/**
 	 * Username for authentication (optional)
 	 */
-	private String username;
+	private @Nullable String username;
 
 	/**
 	 * Password for authentication (optional)
 	 */
-	private String password;
+	private @Nullable String password;
 
 	/**
 	 * Maximum number of documents to retrieve
@@ -97,11 +99,11 @@ public class ElasticsearchConfig {
 		this.nodes = nodes;
 	}
 
-	public String getIndex() {
+	public @Nullable String getIndex() {
 		return index;
 	}
 
-	public void setIndex(String index) {
+	public void setIndex(@Nullable String index) {
 		this.index = index;
 	}
 
@@ -113,19 +115,19 @@ public class ElasticsearchConfig {
 		this.queryField = queryField;
 	}
 
-	public String getUsername() {
+	public @Nullable String getUsername() {
 		return username;
 	}
 
-	public void setUsername(String username) {
+	public void setUsername(@Nullable String username) {
 		this.username = username;
 	}
 
-	public String getPassword() {
+	public @Nullable String getPassword() {
 		return password;
 	}
 
-	public void setPassword(String password) {
+	public void setPassword(@Nullable String password) {
 		this.password = password;
 	}
 

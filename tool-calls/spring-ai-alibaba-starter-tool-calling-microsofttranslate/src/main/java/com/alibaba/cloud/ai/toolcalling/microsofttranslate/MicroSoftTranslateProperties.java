@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.toolcalling.microsofttranslate;
 
 import com.alibaba.cloud.ai.toolcalling.common.CommonToolCallProperties;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -24,18 +25,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = MicroSoftTranslateConstants.CONFIG_PREFIX)
 public class MicroSoftTranslateProperties extends CommonToolCallProperties {
 
-	private String region;
+	private @Nullable String region;
 
 	public MicroSoftTranslateProperties() {
 		super("https://api.cognitive.microsofttranslator.com");
 		this.setPropertiesFromEnv(MicroSoftTranslateConstants.API_KEY_ENV, null, null, null);
 	}
 
-	public String getRegion() {
+	public @Nullable String getRegion() {
 		return region;
 	}
 
-	public void setRegion(final String region) {
+	public void setRegion(final @Nullable String region) {
 		this.region = region;
 	}
 

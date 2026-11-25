@@ -52,7 +52,6 @@
     </scm>
 
     <dependencies>
-
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter-tool-calling-common</artifactId>

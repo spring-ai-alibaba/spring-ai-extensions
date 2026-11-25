@@ -41,6 +41,8 @@ public abstract class MultiServerMcpGatewayManager implements DisposableBean {
 
 	protected final List<NacosMcpGatewayToolsWatcher> watchers = new ArrayList<>();
 
+	protected final List<Runnable> modernServerShutdown = new ArrayList<>();
+
 	/**
 	 * Creates a per-entry {@link NacosMcpGatewayProperties} instance containing only the
 	 * service names configured for that specific server entry. This ensures tool
@@ -60,6 +62,7 @@ public abstract class MultiServerMcpGatewayManager implements DisposableBean {
 	@Override
 	public void destroy() {
 		watchers.forEach(NacosMcpGatewayToolsWatcher::stop);
+		modernServerShutdown.forEach(Runnable::run);
 	}
 
 }

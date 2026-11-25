@@ -19,6 +19,9 @@ import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -43,6 +46,15 @@ public class TushareAutoConfiguration {
 		logger.debug("TushareStockQuotesService is enabled.");
 		return new TushareStockQuotesService(WebClientTool.builder(jsonParseTool, tushareProperties).build(),
 				tushareProperties);
+	}
+
+	@Bean(name = "tushareGetStockQuotesToolCallback")
+	@ConditionalOnMissingBean(name = "tushareGetStockQuotesToolCallback")
+	public ToolCallback tushareGetStockQuotesToolCallback(TushareStockQuotesService tushareGetStockQuotes) {
+		return FunctionToolCallback.builder(TushareConstants.STOCK_QUOTES_TOOL_NAME, tushareGetStockQuotes)
+			.description("根据股票代码或(和)日期获取股票日行情，每次最多6000条")
+			.inputType(TushareStockQuotesService.Request.class)
+			.build();
 	}
 
 }

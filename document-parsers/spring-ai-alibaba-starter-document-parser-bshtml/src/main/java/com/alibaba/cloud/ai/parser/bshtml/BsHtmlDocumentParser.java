@@ -22,6 +22,7 @@ import org.springframework.ai.document.Document;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author HeYQ
@@ -41,7 +42,7 @@ public class BsHtmlDocumentParser implements DocumentParser {
 	}
 
 	public BsHtmlDocumentParser(String charsetName, String baseUri) {
-		this(charsetName, baseUri, null);
+		this(charsetName, baseUri, Parser.htmlParser().newInstance());
 	}
 
 	public BsHtmlDocumentParser() {
@@ -51,7 +52,7 @@ public class BsHtmlDocumentParser implements DocumentParser {
 	public BsHtmlDocumentParser(String charsetName, String baseUri, Parser parser) {
 		this.charsetName = charsetName;
 		this.baseUri = baseUri;
-		this.parser = parser;
+		this.parser = Objects.requireNonNull(parser, "parser cannot be null");
 	}
 
 	@Override

@@ -1,0 +1,124 @@
+/*
+ * Copyright 2024-2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.alibaba.cloud.ai.autoconfigure.dashscope;
+
+import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
+import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
+import io.micrometer.observation.ObservationRegistry;
+import org.springframework.ai.chat.observation.ChatModelObservationConvention;
+import org.springframework.ai.model.SpringAIModelProperties;
+import org.springframework.ai.model.tool.ToolCallingManager;
+import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
+import org.springframework.ai.retry.RetryUtils;
+import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.restclient.autoconfigure.RestClientAutoConfiguration;
+import org.springframework.boot.webclient.autoconfigure.WebClientAutoConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.retry.RetryTemplate;
+import org.springframework.web.client.ResponseErrorHandler;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUtils.resolveConnectionProperties;
+
+/**
+ * Spring AI Alibaba DashScope Chat Auto Configuration.
+ *
+ * @author nuocheng.lxm
+ * @author yuluo
+ * @since 2024/8/16 11:45
+ */
+
+@AutoConfiguration(after = { RestClientAutoConfiguration.class, WebClientAutoConfiguration.class,
+        SpringAiRetryAutoConfiguration.class, ToolCallingAutoConfiguration.class })
+@ConditionalOnDashScopeEnabled
+@ConditionalOnClass(DashScopeApi.class)
+@ConditionalOnProperty(name = SpringAIModelProperties.CHAT_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
+		matchIfMissing = true)
+@EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeChatProperties.class})
+public class DashScopeChatAutoConfiguration {
+
+		@Bean
+		@ConditionalOnMissingBean
+		public DashScopeChatModel dashScopeChatModel(
+				ObjectProvider<RetryTemplate> retryTemplate,
+				ToolCallingManager toolCallingManager,
+				DashScopeChatProperties chatProperties,
+				ObjectProvider<ResponseErrorHandler> responseErrorHandler,
+				DashScopeConnectionProperties commonProperties,
+				ObjectProvider<ObservationRegistry> observationRegistry,
+				ObjectProvider<WebClient.Builder> webClientBuilderProvider,
+				ObjectProvider<RestClient.Builder> restClientBuilderProvider,
+				ObjectProvider<ChatModelObservationConvention> observationConvention
+		) {
+
+			var dashscopeApi = dashscopeChatApi(
+					commonProperties,
+					chatProperties,
+					restClientBuilderProvider.getIfAvailable(RestClient::builder),
+					webClientBuilderProvider.getIfAvailable(WebClient::builder),
+					responseErrorHandler.getIfAvailable(() -> RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER),
+					"chat"
+			);
+
+			var dashscopeModel = DashScopeChatModel.builder()
+					.dashScopeApi(dashscopeApi)
+                    .toolCallingManager(toolCallingManager)
+					.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
+					.defaultOptions(chatProperties.toOptions())
+					.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
+					.build();
+
+			observationConvention.ifAvailable(dashscopeModel::setObservationConvention);
+
+			return dashscopeModel;
+		}
+
+		private DashScopeApi dashscopeChatApi(
+				DashScopeConnectionProperties commonProperties,
+				DashScopeChatProperties chatProperties,
+				RestClient.Builder restClientBuilder,
+				WebClient.Builder webClientBuilder,
+				ResponseErrorHandler responseErrorHandler,
+				String modelType
+		) {
+
+			ResolvedConnectionProperties resolved = resolveConnectionProperties(
+					commonProperties,
+					chatProperties,
+					modelType
+			);
+
+			return DashScopeApi.builder()
+					.apiKey(resolved.apiKey())
+                    .workSpaceId(resolved.workspaceId())
+					.headers(resolved.headers())
+					.baseUrl(resolved.baseUrl())
+					.completionsPath(chatProperties.getCompletionsPath())
+					.webClientBuilder(webClientBuilder)
+					.restClientBuilder(restClientBuilder)
+					.responseErrorHandler(responseErrorHandler)
+					.build();
+		}
+}
+// @formatter:on

@@ -20,7 +20,9 @@ package com.alibaba.cloud.ai.mcp.router.nacos;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
 import com.alibaba.cloud.ai.mcp.router.core.discovery.McpServiceDiscovery;
 import com.alibaba.cloud.ai.mcp.router.model.McpServerInfo;
+import com.alibaba.cloud.ai.mcp.utils.NacosMcpProtocol;
 import com.alibaba.nacos.api.ai.model.mcp.McpServerDetailInfo;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,7 +49,7 @@ public class NacosMcpServiceDiscovery implements McpServiceDiscovery {
 	 * @param serviceName 服务名
 	 * @return McpServerInfo
 	 */
-	public McpServerInfo fetchAndCacheService(String serviceName) {
+	public @Nullable McpServerInfo fetchAndCacheService(String serviceName) {
 		try {
 			McpServerDetailInfo detail = nacosMcpOperationService.getServerDetail(serviceName);
 			if (detail == null)
@@ -60,7 +62,7 @@ public class NacosMcpServiceDiscovery implements McpServiceDiscovery {
 				// 生成 embedding
 				String name = detail.getName();
 				String description = detail.getDescription();
-				String protocol = detail.getProtocol();
+				String protocol = NacosMcpProtocol.resolve(detail);
 				String endpoint = null;
 				if (detail.getRemoteServerConfig() != null && detail.getRemoteServerConfig().getServiceRef() != null) {
 					var ref = detail.getRemoteServerConfig().getServiceRef();
@@ -86,7 +88,7 @@ public class NacosMcpServiceDiscovery implements McpServiceDiscovery {
 	}
 
 	@Override
-	public McpServerInfo getService(String serviceName) {
+	public @Nullable McpServerInfo getService(String serviceName) {
 		return fetchAndCacheService(serviceName);
 	}
 

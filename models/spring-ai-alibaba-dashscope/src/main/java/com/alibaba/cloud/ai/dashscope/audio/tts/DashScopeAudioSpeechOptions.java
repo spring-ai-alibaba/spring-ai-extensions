@@ -1,0 +1,609 @@
+/*
+ * Copyright 2024-2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.alibaba.cloud.ai.dashscope.audio.tts;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import com.alibaba.cloud.ai.dashscope.audio.AudioCommonType.TextType;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
+import org.jspecify.annotations.Nullable;
+import org.springframework.ai.audio.tts.TextToSpeechOptions;
+import org.springframework.util.Assert;
+
+/**
+ * DashScope Audio Speech Options.
+ *
+ * @author kevinlin09
+ * @author xuguan
+ * @author yingzi
+ */
+public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
+
+	public static final String DEFAULT_MODEL = AudioModel.SAMBERT_ZHICHU_V1.getValue();
+
+	@JsonProperty("model")
+	private final @Nullable String model;
+
+	@JsonProperty("text_type")
+	private final String textType;
+
+	@JsonProperty("voice")
+	private final String voice;
+
+	private final @Nullable String requestedVoice;
+
+	@JsonProperty("format")
+	private final @Nullable String format;
+
+	@JsonProperty("sample_rate")
+	private final @Nullable Integer sampleRate;
+
+	@JsonProperty("volume")
+	private final @Nullable Integer volume;
+
+	@JsonProperty("rate")
+	private final @Nullable Float rate;
+
+	@JsonProperty("pitch")
+	private final @Nullable Float pitch;
+
+	@JsonProperty("enable_ssml")
+	private final @Nullable Boolean enableSsml;
+
+	@JsonProperty("bit_rate")
+	private final @Nullable Integer bitRate;
+
+	@JsonProperty("speed")
+	private final @Nullable Double speed;
+
+	@JsonProperty("seed")
+	private final @Nullable Integer seed;
+
+	@JsonProperty("word_timestamp_enabled")
+	private final @Nullable Boolean wordTimestampEnabled;
+
+	@JsonProperty("phoneme_timestamp_enabled")
+	private final @Nullable Boolean phonemeTimestampEnabled;
+
+	@JsonProperty("language_hints")
+	private final @Nullable List<String> languageHints;
+
+	@JsonProperty("instruction")
+	private final @Nullable String instruction;
+
+	@JsonProperty("optimize_instructions")
+	private final @Nullable Boolean optimizeInstructions;
+
+	@JsonProperty("enable_aigc_tag")
+	private final @Nullable Boolean enableAigcTag;
+
+	@JsonProperty("aigc_propagator")
+	private final @Nullable String aigcPropagator;
+
+	@JsonProperty("aigc_propagate_id")
+	private final @Nullable String aigcPropagateId;
+
+	@JsonProperty("language_type")
+	private final @Nullable String languageType;
+
+	protected DashScopeAudioSpeechOptions(@Nullable String model, @Nullable String textType, @Nullable String voice,
+			@Nullable String format, @Nullable Integer sampleRate, @Nullable Integer volume, @Nullable Float rate,
+			@Nullable Float pitch, @Nullable Boolean enableSsml, @Nullable Integer bitRate, @Nullable Double speed,
+			@Nullable Integer seed, @Nullable Boolean wordTimestampEnabled, @Nullable Boolean phonemeTimestampEnabled,
+			@Nullable List<String> languageHints, @Nullable String instruction,
+			@Nullable Boolean optimizeInstructions, @Nullable Boolean enableAigcTag,
+			@Nullable String aigcPropagator, @Nullable String aigcPropagateId, @Nullable String languageType) {
+		this.model = model;
+		this.textType = textType != null ? textType : TextType.PLAIN_TEXT.getValue();
+		this.requestedVoice = voice;
+		this.voice = voice != null ? voice : defaultVoice(this.model);
+		this.format = format;
+		this.sampleRate = sampleRate;
+		this.volume = volume;
+		this.rate = rate;
+		this.pitch = pitch;
+		this.enableSsml = enableSsml;
+		this.bitRate = bitRate;
+		this.speed = speed;
+		this.seed = seed;
+		this.wordTimestampEnabled = wordTimestampEnabled;
+		this.phonemeTimestampEnabled = phonemeTimestampEnabled;
+		this.languageHints = languageHints != null ? List.copyOf(languageHints) : null;
+		this.instruction = instruction;
+		this.optimizeInstructions = optimizeInstructions;
+		this.enableAigcTag = enableAigcTag;
+		this.aigcPropagator = aigcPropagator;
+		this.aigcPropagateId = aigcPropagateId;
+		this.languageType = languageType;
+	}
+
+	@Override
+	public @Nullable String getModel() {
+		return this.model;
+	}
+
+	private static String defaultVoice(@Nullable String model) {
+		if (model != null && model.startsWith("qwen-audio-3.1-tts-")) {
+			return "longanhuan_v3.1";
+		}
+		return DashScopeAudioApiConstants.isQwenAudioTts(model) ? "longanhuan_v3.6" : "longanyang";
+	}
+
+	@Override
+	public String getVoice() {
+		return this.voice;
+	}
+
+	public String requireVoice() {
+		if (this.model != null && this.model.startsWith("cosyvoice-v3.5-")) {
+			Assert.hasText(this.requestedVoice, "CosyVoice 3.5 requires a voice cloned or designed for the selected model");
+		}
+		return this.voice;
+	}
+
+	public String getTextType() {
+		return this.textType;
+	}
+
+	@Override
+	public @Nullable String getFormat() {
+		return this.format;
+	}
+
+	public @Nullable Integer getSampleRate() {
+		return this.sampleRate;
+	}
+
+	public @Nullable Integer getVolume() {
+		return this.volume;
+	}
+
+	public @Nullable Float getRate() {
+		return this.rate;
+	}
+
+	public @Nullable Float getPitch() {
+		return this.pitch;
+	}
+
+	public @Nullable Boolean getEnableSsml() {
+		return this.enableSsml;
+	}
+
+	public @Nullable Integer getBitRate() {
+		return this.bitRate;
+	}
+
+	@Override
+	public @Nullable Double getSpeed() {
+		return this.speed;
+	}
+
+	public @Nullable Integer getSeed() {
+		return this.seed;
+	}
+
+	public @Nullable Boolean getWordTimestampEnabled() {
+		return this.wordTimestampEnabled;
+	}
+
+	public @Nullable Boolean getPhonemeTimestampEnabled() {
+		return this.phonemeTimestampEnabled;
+	}
+
+	public @Nullable List<String> getLanguageHints() {
+		return this.languageHints;
+	}
+
+	public @Nullable String getInstruction() {
+		return this.instruction;
+	}
+
+	public @Nullable Boolean getOptimizeInstructions() {
+		return this.optimizeInstructions;
+	}
+
+	public @Nullable Boolean getEnableAigcTag() {
+		return this.enableAigcTag;
+	}
+
+	public @Nullable String getAigcPropagator() {
+		return this.aigcPropagator;
+	}
+
+	public @Nullable String getAigcPropagateId() {
+		return this.aigcPropagateId;
+	}
+
+	public @Nullable String getLanguageType() {
+		return this.languageType;
+	}
+
+    public Builder mutate() {
+        return builder()
+                .model(this.model)
+                .textType(this.textType)
+                .voice(this.requestedVoice)
+                .format(this.format)
+                .sampleRate(this.sampleRate)
+                .volume(this.volume)
+                .rate(this.rate)
+                .pitch(this.pitch)
+                .enableSsml(this.enableSsml)
+                .bitRate(this.bitRate)
+                .speed(this.speed)
+                .seed(this.seed)
+                .wordTimestampEnabled(this.wordTimestampEnabled)
+                .phonemeTimestampEnabled(this.phonemeTimestampEnabled)
+                .languageHints(this.languageHints)
+                .instruction(this.instruction)
+                .optimizeInstructions(this.optimizeInstructions)
+                .enableAigcTag(this.enableAigcTag)
+                .aigcPropagator(this.aigcPropagator)
+                .aigcPropagateId(this.aigcPropagateId)
+                .languageType(this.languageType);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		DashScopeAudioSpeechOptions that = (DashScopeAudioSpeechOptions) o;
+		return Objects.equals(this.model, that.model) && Objects.equals(this.textType, that.textType)
+				&& Objects.equals(this.voice, that.voice) && Objects.equals(this.format, that.format)
+				&& Objects.equals(this.sampleRate, that.sampleRate) && Objects.equals(this.volume, that.volume)
+				&& Objects.equals(this.rate, that.rate) && Objects.equals(this.pitch, that.pitch)
+				&& Objects.equals(this.enableSsml, that.enableSsml) && Objects.equals(this.bitRate, that.bitRate)
+				&& Objects.equals(this.speed, that.speed) && Objects.equals(this.seed, that.seed)
+				&& Objects.equals(this.wordTimestampEnabled, that.wordTimestampEnabled)
+				&& Objects.equals(this.phonemeTimestampEnabled, that.phonemeTimestampEnabled)
+				&& Objects.equals(this.languageHints, that.languageHints)
+				&& Objects.equals(this.instruction, that.instruction)
+				&& Objects.equals(this.optimizeInstructions, that.optimizeInstructions)
+				&& Objects.equals(this.enableAigcTag, that.enableAigcTag)
+				&& Objects.equals(this.aigcPropagator, that.aigcPropagator)
+				&& Objects.equals(this.aigcPropagateId, that.aigcPropagateId)
+				&& Objects.equals(this.languageType, that.languageType);
+	}
+
+    // @formatter:off
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.model, this.textType, this.voice, this.format, this.sampleRate, this.volume, this.rate,
+				this.pitch, this.enableSsml, this.bitRate, this.speed, this.seed, this.wordTimestampEnabled,
+				this.phonemeTimestampEnabled, this.languageHints, this.instruction, this.optimizeInstructions,
+				this.enableAigcTag, this.aigcPropagator, this.aigcPropagateId, this.languageType);
+	}
+    // @formatter:on
+
+	@Override
+	public String toString() {
+		return "DashScopeAudioSpeechOptions{" + "model='" + this.model + '\'' + ", textType='" + this.textType + '\''
+				+ ", voice='" + this.voice + '\'' + ", format='" + this.format + '\'' + ", sampleRate="
+				+ this.sampleRate + ", volume=" + this.volume + ", rate=" + this.rate + ", pitch=" + this.pitch
+				+ ", enableSsml=" + this.enableSsml + ", bitRate=" + this.bitRate + ", speed=" + this.speed
+				+ ", seed=" + this.seed + ", wordTimestampEnabled=" + this.wordTimestampEnabled
+				+ ", phonemeTimestampEnabled=" + this.phonemeTimestampEnabled + ", languageHints="
+				+ this.languageHints + ", instruction='" + this.instruction + '\'' + ", optimizeInstructions="
+				+ this.optimizeInstructions + ", enableAigcTag=" + this.enableAigcTag + ", aigcPropagator='"
+				+ this.aigcPropagator + '\'' + ", aigcPropagateId='" + this.aigcPropagateId + '\''
+				+ ", languageType='" + this.languageType + '\'' + '}';
+	}
+
+	/**
+	 * Builder for DashScopeAudioSpeechOptions.
+	 */
+	public static final class Builder extends AbstractBuilder<DashScopeAudioSpeechOptions, Builder> {
+
+		@Override
+		protected Builder self() {
+			return this;
+		}
+
+        // @formatter:off
+		@Override
+		public DashScopeAudioSpeechOptions build() {
+			return new DashScopeAudioSpeechOptions(this.model, this.textType, this.voice, this.format, this.sampleRate,
+					this.volume, this.rate, this.pitch, this.enableSsml, this.bitRate, this.speed, this.seed,
+					this.wordTimestampEnabled, this.phonemeTimestampEnabled, this.languageHints, this.instruction,
+					this.optimizeInstructions, this.enableAigcTag, this.aigcPropagator, this.aigcPropagateId,
+					this.languageType);
+		}
+        // @formatter:on
+
+	}
+
+	protected abstract static class AbstractBuilder<O extends DashScopeAudioSpeechOptions, B extends AbstractBuilder<O, B>>
+			implements TextToSpeechOptions.Builder {
+
+		protected @Nullable String model;
+
+		protected @Nullable String textType;
+
+		protected @Nullable String voice;
+
+		protected @Nullable String format;
+
+		protected @Nullable Integer sampleRate;
+
+		protected @Nullable Integer volume;
+
+		protected @Nullable Float rate;
+
+		protected @Nullable Float pitch;
+
+		protected @Nullable Boolean enableSsml;
+
+		protected @Nullable Integer bitRate;
+
+		protected @Nullable Double speed;
+
+		protected @Nullable Integer seed;
+
+		protected @Nullable Boolean wordTimestampEnabled;
+
+		protected @Nullable Boolean phonemeTimestampEnabled;
+
+		protected @Nullable List<String> languageHints;
+
+		protected @Nullable String instruction;
+
+		protected @Nullable Boolean optimizeInstructions;
+
+		protected @Nullable Boolean enableAigcTag;
+
+		protected @Nullable String aigcPropagator;
+
+		protected @Nullable String aigcPropagateId;
+
+		protected @Nullable String languageType;
+
+		protected AbstractBuilder() {
+		}
+
+		protected abstract B self();
+
+		@Override
+		public B model(@Nullable String model) {
+			this.model = model;
+			return self();
+		}
+
+		public B textType(@Nullable String textType) {
+			this.textType = textType;
+			return self();
+		}
+
+		@Override
+		public B voice(@Nullable String voice) {
+			this.voice = voice;
+			return self();
+		}
+
+		@Override
+		public B format(@Nullable String format) {
+			this.format = format;
+			return self();
+		}
+
+		public B sampleRate(@Nullable Integer sampleRate) {
+			this.sampleRate = sampleRate;
+			return self();
+		}
+
+		public B volume(@Nullable Integer volume) {
+			this.volume = volume;
+			return self();
+		}
+
+		public B rate(@Nullable Float rate) {
+			this.rate = rate;
+			return self();
+		}
+
+		public B pitch(@Nullable Float pitch) {
+			this.pitch = pitch;
+			return self();
+		}
+
+		public B enableSsml(@Nullable Boolean enableSsml) {
+			this.enableSsml = enableSsml;
+			return self();
+		}
+
+		public B bitRate(@Nullable Integer bitRate) {
+			this.bitRate = bitRate;
+			return self();
+		}
+
+		@Override
+		public B speed(@Nullable Double speed) {
+			this.speed = speed;
+			return self();
+		}
+
+		public B seed(@Nullable Integer seed) {
+			this.seed = seed;
+			return self();
+		}
+
+		public B wordTimestampEnabled(@Nullable Boolean wordTimestampEnabled) {
+			this.wordTimestampEnabled = wordTimestampEnabled;
+			return self();
+		}
+
+		public B phonemeTimestampEnabled(@Nullable Boolean phonemeTimestampEnabled) {
+			this.phonemeTimestampEnabled = phonemeTimestampEnabled;
+			return self();
+		}
+
+		public B languageHints(@Nullable List<String> languageHints) {
+			this.languageHints = languageHints;
+			return self();
+		}
+
+		public B instruction(@Nullable String instruction) {
+			this.instruction = instruction;
+			return self();
+		}
+
+		public B optimizeInstructions(@Nullable Boolean optimizeInstructions) {
+			this.optimizeInstructions = optimizeInstructions;
+			return self();
+		}
+
+		public B enableAigcTag(@Nullable Boolean enableAigcTag) {
+			this.enableAigcTag = enableAigcTag;
+			return self();
+		}
+
+		public B aigcPropagator(@Nullable String aigcPropagator) {
+			this.aigcPropagator = aigcPropagator;
+			return self();
+		}
+
+		public B aigcPropagateId(@Nullable String aigcPropagateId) {
+			this.aigcPropagateId = aigcPropagateId;
+			return self();
+		}
+
+		public B languageType(@Nullable String languageType) {
+			this.languageType = languageType;
+			return self();
+		}
+
+        // @formatter:off
+		public B from(DashScopeAudioSpeechOptions fromOptions) {
+			this.model = fromOptions.getModel();
+			this.textType = fromOptions.getTextType();
+			this.voice = fromOptions.requestedVoice;
+			this.format = fromOptions.getFormat();
+			this.sampleRate = fromOptions.getSampleRate();
+			this.volume = fromOptions.getVolume();
+			this.rate = fromOptions.getRate();
+			this.pitch = fromOptions.getPitch();
+			this.enableSsml = fromOptions.getEnableSsml();
+			this.bitRate = fromOptions.getBitRate();
+			this.speed = fromOptions.getSpeed();
+			this.seed = fromOptions.getSeed();
+			this.wordTimestampEnabled = fromOptions.getWordTimestampEnabled();
+			this.phonemeTimestampEnabled = fromOptions.getPhonemeTimestampEnabled();
+			this.languageHints = fromOptions.getLanguageHints();
+			this.instruction = fromOptions.getInstruction();
+			this.optimizeInstructions = fromOptions.getOptimizeInstructions();
+			this.enableAigcTag = fromOptions.getEnableAigcTag();
+			this.aigcPropagator = fromOptions.getAigcPropagator();
+			this.aigcPropagateId = fromOptions.getAigcPropagateId();
+			this.languageType = fromOptions.getLanguageType();
+			return self();
+		}
+        // @formatter:on
+
+		public B merge(@Nullable TextToSpeechOptions from) {
+			if (from == null) {
+				return self();
+			}
+			if (from.getModel() != null) {
+				this.model = from.getModel();
+			}
+			String voice = from instanceof DashScopeAudioSpeechOptions options ? options.requestedVoice : from.getVoice();
+			if (voice != null) {
+				this.voice = voice;
+			}
+			if (from.getFormat() != null) {
+				this.format = from.getFormat();
+			}
+			if (from.getSpeed() != null) {
+				this.speed = from.getSpeed();
+			}
+			if (from instanceof DashScopeAudioSpeechOptions castFrom) {
+				if (castFrom.getTextType() != null) {
+					this.textType = castFrom.getTextType();
+				}
+				if (castFrom.getSampleRate() != null) {
+					this.sampleRate = castFrom.getSampleRate();
+				}
+				if (castFrom.getVolume() != null) {
+					this.volume = castFrom.getVolume();
+				}
+				if (castFrom.getRate() != null) {
+					this.rate = castFrom.getRate();
+				}
+				if (castFrom.getPitch() != null) {
+					this.pitch = castFrom.getPitch();
+				}
+				if (castFrom.getEnableSsml() != null) {
+					this.enableSsml = castFrom.getEnableSsml();
+				}
+				if (castFrom.getBitRate() != null) {
+					this.bitRate = castFrom.getBitRate();
+				}
+				if (castFrom.getSeed() != null) {
+					this.seed = castFrom.getSeed();
+				}
+				if (castFrom.getWordTimestampEnabled() != null) {
+					this.wordTimestampEnabled = castFrom.getWordTimestampEnabled();
+				}
+				if (castFrom.getPhonemeTimestampEnabled() != null) {
+					this.phonemeTimestampEnabled = castFrom.getPhonemeTimestampEnabled();
+				}
+                if (castFrom.getLanguageHints() != null) {
+                    if (this.languageHints == null) {
+                        this.languageHints = new ArrayList<>(castFrom.getLanguageHints());
+                    }
+                    else {
+                        List<String> merged = new ArrayList<>(this.languageHints);
+                        merged.addAll(castFrom.getLanguageHints());
+                        this.languageHints = merged;
+                    }
+                }
+				if (castFrom.getInstruction() != null) {
+					this.instruction = castFrom.getInstruction();
+				}
+				if (castFrom.getOptimizeInstructions() != null) {
+					this.optimizeInstructions = castFrom.getOptimizeInstructions();
+				}
+				if (castFrom.getEnableAigcTag() != null) {
+					this.enableAigcTag = castFrom.getEnableAigcTag();
+				}
+				if (castFrom.getAigcPropagator() != null) {
+					this.aigcPropagator = castFrom.getAigcPropagator();
+				}
+				if (castFrom.getAigcPropagateId() != null) {
+					this.aigcPropagateId = castFrom.getAigcPropagateId();
+				}
+				if (castFrom.getLanguageType() != null) {
+					this.languageType = castFrom.getLanguageType();
+				}
+			}
+			return self();
+		}
+
+	}
+
+}

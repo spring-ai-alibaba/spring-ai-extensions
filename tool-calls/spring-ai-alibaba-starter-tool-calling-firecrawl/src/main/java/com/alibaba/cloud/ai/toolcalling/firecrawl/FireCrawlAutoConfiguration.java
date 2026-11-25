@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.firecrawl;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -45,6 +47,15 @@ public class FireCrawlAutoConfiguration {
 		return new FireCrawlService(
 				WebClientTool.builder(jsonParseTool, properties).httpHeadersConsumer(consumer).build(), jsonParseTool,
 				properties);
+	}
+
+	@Bean(name = "fireCrawlToolCallback")
+	@ConditionalOnMissingBean(name = "fireCrawlToolCallback")
+	public ToolCallback fireCrawlToolCallback(FireCrawlService fireCrawl) {
+		return FunctionToolCallback.builder(FireCrawlConstants.TOOL_NAME, fireCrawl)
+			.description("Firecrawl Service Plugin.")
+			.inputType(FireCrawlService.Request.class)
+			.build();
 	}
 
 }

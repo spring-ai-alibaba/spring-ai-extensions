@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.mcp.register;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.annotation.PostConstruct;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,14 +35,18 @@ public class NacosMcpRegisterProperties {
 
 	public static final String CONFIG_PREFIX = "spring.ai.alibaba.mcp.nacos.register";
 
+	@Nullable
 	String host;
 
 	int port = -1;
 
+	@Nullable
 	String serviceGroup;
 
+	@Nullable
 	String serviceName;
 
+	@Nullable
 	String sseExportContextPath;
 
 	boolean serviceRegister = true;
@@ -68,35 +73,35 @@ public class NacosMcpRegisterProperties {
 		this.serviceEphemeral = serviceEphemeral;
 	}
 
-	public String getSseExportContextPath() {
+	public @Nullable String getSseExportContextPath() {
 		return sseExportContextPath;
 	}
 
-	public void setSseExportContextPath(String sseExportContextPath) {
+	public void setSseExportContextPath(@Nullable String sseExportContextPath) {
 		this.sseExportContextPath = sseExportContextPath;
 	}
 
-	public String getServiceGroup() {
+	public @Nullable String getServiceGroup() {
 		return serviceGroup;
 	}
 
-	public void setServiceGroup(String serviceGroup) {
+	public void setServiceGroup(@Nullable String serviceGroup) {
 		this.serviceGroup = serviceGroup;
 	}
 
-	public String getServiceName() {
+	public @Nullable String getServiceName() {
 		return serviceName;
 	}
 
-	public void setServiceName(String serviceName) {
+	public void setServiceName(@Nullable String serviceName) {
 		this.serviceName = serviceName;
 	}
 
-	public String getHost() {
+	public @Nullable String getHost() {
 		return host;
 	}
 
-	public void setHost(String host) {
+	public void setHost(@Nullable String host) {
 		this.host = host;
 	}
 

@@ -15,21 +15,23 @@
  */
 package com.alibaba.cloud.ai.reader.youtube;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.Jsoup;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,7 +44,7 @@ public class YoutubeDocumentReader implements DocumentReader {
 
 	private static final String WATCH_URL = "https://www.youtube.com/watch?v=%s";
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	private static final List<String> YOUTUBE_URL_PATTERNS = List.of("youtube\\.com/watch\\?v=([^&]+)",
 			"youtu\\.be/([^?&]+)");
@@ -63,7 +65,7 @@ public class YoutubeDocumentReader implements DocumentReader {
 	public YoutubeDocumentReader(String resourcePath) {
 		Assert.hasText(resourcePath, "Query string must not be empty");
 		this.resourcePath = resourcePath;
-		this.objectMapper = new ObjectMapper();
+		this.jsonMapper = JsonMapper.shared();
 	}
 
 	@Override
@@ -95,13 +97,13 @@ public class YoutubeDocumentReader implements DocumentReader {
 	public String getSubtitleInfo(String videoId) throws IOException {
 		// Step 1: Fetch the HTML content of the YouTube video page
 		String url = String.format(WATCH_URL, videoId);
-		String htmlContent = fetchHtmlContent(url).block(); // Blocking for simplicity in
+		String htmlContent = Objects.requireNonNullElse(fetchHtmlContent(url).block(), ""); // Blocking for simplicity in
 															// this example
 
 		// Step 2: Extract the subtitle tracks from the HTML
 		String captionsJsonString = extractCaptionsJson(htmlContent);
 		if (captionsJsonString != null) {
-			JsonNode captionsJson = objectMapper.readTree(captionsJsonString);
+			JsonNode captionsJson = jsonMapper.readTree(captionsJsonString);
 			JsonNode captionTracks = captionsJson.path("playerCaptionsTracklistRenderer").path("captionTracks");
 
 			// Check if captionTracks exists and is an array
@@ -135,7 +137,7 @@ public class YoutubeDocumentReader implements DocumentReader {
 		return WEB_CLIENT.get().uri(url).retrieve().bodyToMono(String.class);
 	}
 
-	private String extractCaptionsJson(String htmlContent) {
+	private @Nullable String extractCaptionsJson(String htmlContent) {
 		// Extract the captions JSON from the HTML content
 		String marker = "\"captions\":";
 		int startIndex = htmlContent.indexOf(marker);
@@ -146,7 +148,7 @@ public class YoutubeDocumentReader implements DocumentReader {
 				return captionsJsonString.trim();
 			}
 		}
-		return null;
+			return null;
 	}
 
 	private String fetchSubtitleText(String decodedUrl) throws IOException {

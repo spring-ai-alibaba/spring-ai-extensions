@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.toolcalling.serpapi;
 
 import com.alibaba.cloud.ai.toolcalling.common.CommonToolCallProperties;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -37,13 +38,13 @@ public class SerpApiProperties extends CommonToolCallProperties {
 		this.setPropertiesFromEnv(SerpApiConstants.API_KEY_ENV, null, null, null);
 	}
 
-	private String engine;
+	private @Nullable String engine;
 
-	public String getEngine() {
+	public @Nullable String getEngine() {
 		return engine;
 	}
 
-	public void setEngine(String engine) {
+	public void setEngine(@Nullable String engine) {
 		this.engine = engine;
 	}
 

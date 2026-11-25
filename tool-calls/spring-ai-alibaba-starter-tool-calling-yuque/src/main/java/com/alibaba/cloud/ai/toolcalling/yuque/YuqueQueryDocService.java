@@ -20,6 +20,9 @@ import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
+
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -46,17 +49,19 @@ public class YuqueQueryDocService
 
 	@Override
 	public queryDocResponse apply(queryDocRequest queryDocRequest) {
-		if (queryDocRequest.bookId == null || queryDocRequest.id == null) {
-			return null;
+		if (queryDocRequest == null || !StringUtils.hasText(queryDocRequest.bookId)
+				|| !StringUtils.hasText(queryDocRequest.id)) {
+			throw new IllegalArgumentException("Yuque query doc request bookId and id must not be empty");
 		}
 		String uri = "/repos/" + queryDocRequest.bookId + "/docs/" + queryDocRequest.id;
 		try {
-			String json = webClientTool.get(uri).block();
+			String json = Objects.requireNonNull(webClientTool.get(uri).block(),
+					"Yuque query doc API returned empty response");
 			return jsonParseTool.jsonToObject(json, queryDocResponse.class);
 		}
 		catch (Exception e) {
 			logger.error("Failed to query the Yuque document.", e);
-			return null;
+			throw new RuntimeException("Failed to query the Yuque document", e);
 		}
 	}
 

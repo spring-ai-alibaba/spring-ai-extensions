@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.toolcalling.larksuite;
 
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -52,6 +54,33 @@ public class LarkSuiteAutoConfiguration {
 	@Description("It calls the document api to invoke a method to create a larksuite sheet")
 	public LarkSuiteCreateSheetService larksuiteCreateSheetFunction(LarkSuiteProperties properties) {
 		return new LarkSuiteCreateSheetService(properties);
+	}
+
+	@Bean(name = "larksuiteCreateDocFunctionToolCallback")
+	@ConditionalOnMissingBean(name = "larksuiteCreateDocFunctionToolCallback")
+	public ToolCallback larksuiteCreateDocFunctionToolCallback(LarkSuiteCreateDocService larksuiteCreateDocFunction) {
+		return FunctionToolCallback.builder("larksuiteCreateDocFunction", larksuiteCreateDocFunction)
+			.description("It calls the document api to invoke a method to create a larksuite document")
+			.inputType(LarkSuiteCreateDocService.DocRequest.class)
+			.build();
+	}
+
+	@Bean(name = "larksuiteChatFunctionToolCallback")
+	@ConditionalOnMissingBean(name = "larksuiteChatFunctionToolCallback")
+	public ToolCallback larksuiteChatFunctionToolCallback(LarkSuiteChatService larksuiteChatFunction) {
+		return FunctionToolCallback.builder("larksuiteChatFunction", larksuiteChatFunction)
+			.description("It runs a api to invoke a method to send message including group and single chat")
+			.inputType(LarkSuiteChatService.IMChatRequest.class)
+			.build();
+	}
+
+	@Bean(name = "larksuiteCreateSheetFunctionToolCallback")
+	@ConditionalOnMissingBean(name = "larksuiteCreateSheetFunctionToolCallback")
+	public ToolCallback larksuiteCreateSheetFunctionToolCallback(LarkSuiteCreateSheetService larksuiteCreateSheetFunction) {
+		return FunctionToolCallback.builder("larksuiteCreateSheetFunction", larksuiteCreateSheetFunction)
+			.description("It calls the document api to invoke a method to create a larksuite sheet")
+			.inputType(LarkSuiteCreateSheetService.SheetRequest.class)
+			.build();
 	}
 
 }

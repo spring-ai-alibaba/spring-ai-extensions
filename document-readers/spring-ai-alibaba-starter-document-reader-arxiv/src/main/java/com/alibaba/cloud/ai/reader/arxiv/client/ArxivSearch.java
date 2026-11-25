@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.reader.arxiv.client;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +35,7 @@ public class ArxivSearch {
 
 	private List<String> idList; // List of article IDs to restrict search
 
-	private Integer maxResults; // Maximum number of results to return
+	private @Nullable Integer maxResults; // Maximum number of results to return
 
 	private ArxivSortCriterion sortBy; // Sort criterion
 
@@ -43,7 +45,7 @@ public class ArxivSearch {
 		this("", new ArrayList<>(), null, ArxivSortCriterion.RELEVANCE, ArxivSortOrder.DESCENDING);
 	}
 
-	public ArxivSearch(String query, List<String> idList, Integer maxResults, ArxivSortCriterion sortBy,
+	public ArxivSearch(String query, List<String> idList, @Nullable Integer maxResults, ArxivSortCriterion sortBy,
 			ArxivSortOrder sortOrder) {
 		this.query = query;
 		this.idList = idList;
@@ -68,11 +70,11 @@ public class ArxivSearch {
 		this.idList = idList;
 	}
 
-	public Integer getMaxResults() {
+	public @Nullable Integer getMaxResults() {
 		return maxResults;
 	}
 
-	public void setMaxResults(Integer maxResults) {
+	public void setMaxResults(@Nullable Integer maxResults) {
 		this.maxResults = maxResults;
 	}
 

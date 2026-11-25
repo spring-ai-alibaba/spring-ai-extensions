@@ -16,10 +16,10 @@
 package com.alibaba.cloud.ai.toolcalling.common;
 
 import java.util.Arrays;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -71,7 +71,8 @@ public final class CommonToolCallUtils {
 	 * @param logger Logger instance
 	 * @return Operation result
 	 */
-	public static <T> T handleServiceError(String serviceName, Supplier<T> operation, Logger logger) {
+	public static <T> @Nullable T handleServiceError(String serviceName, Supplier<@Nullable T> operation,
+			Logger logger) {
 		try {
 			return operation.get();
 		}
@@ -93,20 +94,34 @@ public final class CommonToolCallUtils {
 	}
 
 	/**
+	 * Parses a non-null HTTP body string into a result that may be null.
+	 * <p>
+	 * Used by {@link #handleResponse(String, ResponseBodyParser, Logger)} because NullAway does not treat
+	 * {@code Function<String, @Nullable T>} as distinct from {@code Function<String, T>} for lambda typing.
+	 * @param <T> parsed type (may include null as a valid outcome from {@link #parse(String)})
+	 */
+	@FunctionalInterface
+	public interface ResponseBodyParser<T> {
+
+		@Nullable T parse(String responseData);
+	}
+
+	/**
 	 * Handle service response with error handling and logging
 	 * @author inlines10
 	 * @param responseData Raw response data
-	 * @param parser Function to parse the response
+	 * @param parser Parses the response body; may return null
 	 * @param logger Logger instance
 	 * @return Parsed response or null if handling fails
 	 */
-	public static <T> T handleResponse(String responseData, Function<String, T> parser, Logger logger) {
+	public static <T> @Nullable T handleResponse(@Nullable String responseData, ResponseBodyParser<T> parser,
+			Logger logger) {
 		if (responseData == null) {
 			logger.error("Response data is null");
 			return null;
 		}
 		try {
-			return parser.apply(responseData);
+			return parser.parse(responseData);
 		}
 		catch (Exception e) {
 			logger.error("Failed to handle response: {}", e.getMessage());

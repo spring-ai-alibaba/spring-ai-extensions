@@ -23,7 +23,7 @@ import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.rag.Query;
 import org.springframework.ai.rag.preretrieval.query.transformation.QueryTransformer;
 import org.springframework.ai.rag.util.PromptAssert;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -53,7 +53,7 @@ public class HyDeTransformer implements QueryTransformer {
 
     private final PromptTemplate promptTemplate;
 
-    public HyDeTransformer(ChatClient.Builder chatClientBuilder, PromptTemplate promptTemplate) {
+    public HyDeTransformer(ChatClient.Builder chatClientBuilder, @Nullable PromptTemplate promptTemplate) {
         Assert.notNull(chatClientBuilder, "chatClientBuilder cannot be null");
         this.chatClient = chatClientBuilder.build();
         this.promptTemplate = promptTemplate != null ? promptTemplate : DEFAULT_PROMPT_TEMPLATE;
@@ -81,23 +81,24 @@ public class HyDeTransformer implements QueryTransformer {
 
     public static final class Builder {
 
-        private ChatClient.Builder chatClientBuilder;
+        private ChatClient.@Nullable Builder chatClientBuilder;
 
         @Nullable
         private PromptTemplate promptTemplate;
 
-        public Builder chatClientBuilder(ChatClient.Builder chatClientBuilder) {
+        public Builder chatClientBuilder(ChatClient.@Nullable Builder chatClientBuilder) {
             this.chatClientBuilder = chatClientBuilder;
             return this;
         }
 
-        public Builder promptTemplate(PromptTemplate promptTemplate) {
+        public Builder promptTemplate(@Nullable PromptTemplate promptTemplate) {
             this.promptTemplate = promptTemplate;
             return this;
         }
 
         public HyDeTransformer build() {
-            return new HyDeTransformer(this.chatClientBuilder, this.promptTemplate);
+            return new HyDeTransformer(java.util.Objects.requireNonNull(this.chatClientBuilder,
+                    "chatClientBuilder cannot be null"), this.promptTemplate);
         }
 
     }

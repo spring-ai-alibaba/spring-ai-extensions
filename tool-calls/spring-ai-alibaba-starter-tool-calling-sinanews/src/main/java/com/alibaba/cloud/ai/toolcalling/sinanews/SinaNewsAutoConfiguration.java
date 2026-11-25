@@ -21,6 +21,8 @@ import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -56,6 +58,15 @@ public class SinaNewsAutoConfiguration {
 
 		return new SinaNewsService(jsonParseTool, properties,
 				WebClientTool.builder(jsonParseTool, properties).httpHeadersConsumer(consumer).build());
+	}
+
+	@Bean(name = "getSinaNewsToolCallback")
+	@ConditionalOnMissingBean(name = "getSinaNewsToolCallback")
+	public ToolCallback getSinaNewsToolCallback(SinaNewsService getSinaNews) {
+		return FunctionToolCallback.builder(SinaNewsConstants.TOOL_NAME, getSinaNews)
+			.description("Get the news from the Sina news (获取新浪新闻).")
+			.inputType(SinaNewsService.Request.class)
+			.build();
 	}
 
 }

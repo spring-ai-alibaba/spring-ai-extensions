@@ -16,8 +16,10 @@
 
 package com.alibaba.cloud.ai.mcp.register.utils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -29,16 +31,18 @@ import java.util.Set;
  */
 public class JsonSchemaUtil {
 
-	private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger log = LoggerFactory.getLogger(JsonSchemaUtil.class);
+
+	private static final JsonMapper JSON_MAPPER = JsonMapper.shared();
 
 	public static boolean compare(String origin, String target) {
 		try {
-			JsonNode originNode = objectMapper.readTree(origin);
-			JsonNode targetNode = objectMapper.readTree(target);
+			JsonNode originNode = JSON_MAPPER.readTree(origin);
+			JsonNode targetNode = JSON_MAPPER.readTree(target);
 			return compare(originNode, targetNode);
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			log.error("Json string compare failed", e);
 			return false;
 		}
 	}
@@ -61,7 +65,7 @@ public class JsonSchemaUtil {
 			return false;
 		}
 
-		if (originType != null && originType.isTextual() && "array".equals(originType.asText())) {
+		if (originType != null && originType.isString() && "array".equals(originType.asString())) {
 			JsonNode originItems = originNode.get("items");
 			JsonNode targetItems = targetNode.get("items");
 			if ((originItems == null) != (targetItems == null)) {
@@ -83,7 +87,7 @@ public class JsonSchemaUtil {
 		}
 		else if (originProperties != null && targetProperties != null) {
 			// 遍历原始 properties
-			for (Iterator<Map.Entry<String, JsonNode>> it = originProperties.fields(); it.hasNext();) {
+			for (Iterator<Map.Entry<String, JsonNode>> it = originProperties.properties().iterator(); it.hasNext();) {
 				Map.Entry<String, JsonNode> entry = it.next();
 				String key = entry.getKey();
 				JsonNode valueNode = entry.getValue();
@@ -92,10 +96,10 @@ public class JsonSchemaUtil {
 					continue;
 				}
 				JsonNode typeNode = valueNode.get("type");
-				if (typeNode == null || !typeNode.isTextual()) {
+				if (typeNode == null || !typeNode.isString()) {
 					continue;
 				}
-				String type = typeNode.asText();
+				String type = typeNode.asString();
 
 				if (!targetProperties.has(key)) {
 					return false;
@@ -103,7 +107,7 @@ public class JsonSchemaUtil {
 
 				JsonNode targetValueNode = targetProperties.get(key);
 				JsonNode targetPropTypeNode = targetValueNode.get("type");
-				String targetPropType = targetPropTypeNode != null && targetPropTypeNode.isTextual() ? targetPropTypeNode.asText() : "";
+				String targetPropType = targetPropTypeNode != null && targetPropTypeNode.isString() ? targetPropTypeNode.asString() : "";
 
 				if (!type.equals(targetPropType)) {
 					return false;
@@ -129,7 +133,7 @@ public class JsonSchemaUtil {
 			}
 
 			// 检查新增字段
-			for (Iterator<Map.Entry<String, JsonNode>> it = targetProperties.fields(); it.hasNext();) {
+			for (Iterator<Map.Entry<String, JsonNode>> it = targetProperties.properties().iterator(); it.hasNext();) {
 				Map.Entry<String, JsonNode> entry = it.next();
 				String key = entry.getKey();
 				if (!originProperties.has(key)) {
@@ -154,8 +158,8 @@ public class JsonSchemaUtil {
 			// 使用 Set 确保字段顺序不影响比较结果
 			Set<String> originSet = new HashSet<>();
 			for (JsonNode node : originRequired) {
-				if (node.isTextual()) {
-					originSet.add(node.asText());
+				if (node.isString()) {
+					originSet.add(node.asString());
 				}
 				else {
 					// 非字符串类型视为不匹配
@@ -164,8 +168,8 @@ public class JsonSchemaUtil {
 			}
 			Set<String> targetSet = new HashSet<>();
 			for (JsonNode node : targetRequired) {
-				if (node.isTextual()) {
-					targetSet.add(node.asText());
+				if (node.isString()) {
+					targetSet.add(node.asString());
 				}
 				else {
 					// 非字符串类型视为不匹配

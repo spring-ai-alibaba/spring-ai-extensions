@@ -16,8 +16,8 @@
 
 package com.alibaba.cloud.ai.mcp.common.transport.builder;
 
-import io.modelcontextprotocol.client.transport.WebFluxSseClientTransport;
 import io.modelcontextprotocol.json.McpJsonMapper;
+import org.springframework.ai.mcp.client.webflux.transport.WebFluxSseClientTransport;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 

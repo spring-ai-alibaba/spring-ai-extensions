@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.parser.yaml;
 
 import com.alibaba.cloud.ai.document.DocumentParser;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -37,7 +38,7 @@ public class YamlDocumentParser implements DocumentParser {
 
 	private final boolean strict;
 
-	private final Class<? extends Object> beanClass;
+	private final @Nullable Class<?> beanClass;
 
 	public YamlDocumentParser() {
 		this(false, null);
@@ -47,11 +48,11 @@ public class YamlDocumentParser implements DocumentParser {
 		this(strict, null);
 	}
 
-	public YamlDocumentParser(Class<? extends Object> beanClass) {
+	public YamlDocumentParser(Class<?> beanClass) {
 		this(false, beanClass);
 	}
 
-	public YamlDocumentParser(boolean strict, Class<? extends Object> beanClass) {
+	public YamlDocumentParser(boolean strict, @Nullable Class<?> beanClass) {
 		this.strict = strict;
 		this.beanClass = beanClass;
 	}

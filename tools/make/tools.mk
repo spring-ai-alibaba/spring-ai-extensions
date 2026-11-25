@@ -17,6 +17,9 @@
 .PHONY: tools
 
 MVND_VERSION := 2.0.0-rc-3
+MVND_ZIP := maven-mvnd-$(MVND_VERSION)-linux-amd64.zip
+MVND_PRIMARY_URL := https://dlcdn.apache.org/maven/mvnd/$(MVND_VERSION)/$(MVND_ZIP)
+MVND_FALLBACK_URL := https://archive.apache.org/dist/maven/mvnd/$(MVND_VERSION)/$(MVND_ZIP)
 
 tools: ## Install ci tools
 
@@ -52,7 +55,9 @@ tools: ## Install ci tools
 	cd .. && rm -rf gitleaks
 
 	@echo "Installing mvnd"
-	curl -sL https://dlcdn.apache.org/maven/mvnd/$(MVND_VERSION)/maven-mvnd-$(MVND_VERSION)-linux-amd64.zip -o mvnd.zip && \
+	( curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$(MVND_PRIMARY_URL)" -o mvnd.zip || \
+	  curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$(MVND_FALLBACK_URL)" -o mvnd.zip ) && \
+	unzip -tq mvnd.zip && \
 	unzip -q mvnd.zip && \
 	mkdir -p ${HOME}/.local && \
 	mv maven-mvnd-$(MVND_VERSION)-linux-amd64 ${HOME}/.local/mvnd && \

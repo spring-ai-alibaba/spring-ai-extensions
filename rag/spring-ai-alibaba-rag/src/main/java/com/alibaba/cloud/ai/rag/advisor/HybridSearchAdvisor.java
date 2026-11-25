@@ -31,7 +31,7 @@ import org.springframework.ai.rag.generation.augmentation.QueryAugmenter;
 import org.springframework.ai.rag.postretrieval.document.DocumentPostProcessor;
 import org.springframework.ai.rag.preretrieval.query.expansion.QueryExpander;
 import org.springframework.ai.rag.preretrieval.query.transformation.QueryTransformer;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Hybrid Search Advisor
@@ -53,7 +54,7 @@ public class HybridSearchAdvisor implements BaseAdvisor {
 
     private final List<QueryTransformer> queryTransformers;
 
-    private final QueryExpander queryExpander;
+    private final @Nullable QueryExpander queryExpander;
 
     private final HybridDocumentRetriever hybridDocumentRetriever;
 
@@ -63,15 +64,16 @@ public class HybridSearchAdvisor implements BaseAdvisor {
 
     private final int order;
 
-    private final HyDeTransformer hyDeTransformer;
+    private final @Nullable HyDeTransformer hyDeTransformer;
 
-    private final DashScopeRerankPostProcessor dashScopeRerankPostProcessor;
+    private final @Nullable DashScopeRerankPostProcessor dashScopeRerankPostProcessor;
 
     public HybridSearchAdvisor(List<QueryTransformer> queryTransformers,
-                               QueryExpander queryExpander,
+                               @Nullable QueryExpander queryExpander,
                                @Nullable HybridDocumentRetriever hybridDocumentRetriever,
-                               List<DocumentPostProcessor> documentPostProcessors, QueryAugmenter queryAugmenter,
-                               HyDeTransformer hyDeTransformer, DashScopeRerankPostProcessor dashScopeRerankPostProcessor, Integer order) {
+                               List<DocumentPostProcessor> documentPostProcessors, @Nullable QueryAugmenter queryAugmenter,
+                               @Nullable HyDeTransformer hyDeTransformer,
+                               @Nullable DashScopeRerankPostProcessor dashScopeRerankPostProcessor, Integer order) {
         Assert.notNull(hybridDocumentRetriever, "hybridDocumentRetriever must not be null");
         this.queryTransformers = queryTransformers;
         this.queryExpander = queryExpander;
@@ -88,7 +90,7 @@ public class HybridSearchAdvisor implements BaseAdvisor {
         Map<String, Object> context = new HashMap<>(chatClientRequest.context());
         // 1. Create a query from the user text, parameters, and conversation history.
         Query originalQuery = Query.builder()
-                .text(chatClientRequest.prompt().getUserMessage().getText())
+                .text(Objects.requireNonNullElse(chatClientRequest.prompt().getUserMessage().getText(), ""))
                 .history(chatClientRequest.prompt().getInstructions())
                 .context(context)
                 .build();
@@ -137,7 +139,8 @@ public class HybridSearchAdvisor implements BaseAdvisor {
         } else {
             chatResponseBuilder = ChatResponse.builder().from(chatClientResponse.chatResponse());
         }
-        chatResponseBuilder.metadata(DOCUMENT_CONTEXT, chatClientResponse.context().get(DOCUMENT_CONTEXT));
+        chatResponseBuilder.metadata(DOCUMENT_CONTEXT,
+                Objects.requireNonNullElse(chatClientResponse.context().get(DOCUMENT_CONTEXT), List.of()));
         return ChatClientResponse.builder()
                 .chatResponse(chatResponseBuilder.build())
                 .context(chatClientResponse.context())
@@ -157,19 +160,19 @@ public class HybridSearchAdvisor implements BaseAdvisor {
 
         private List<QueryTransformer> queryTransformers = new ArrayList<>();
 
-        private QueryExpander queryExpander;
+        private @Nullable QueryExpander queryExpander;
 
-        private HybridDocumentRetriever hybridDocumentRetriever;
+        private @Nullable HybridDocumentRetriever hybridDocumentRetriever;
 
         private List<DocumentPostProcessor> documentPostProcessors = new ArrayList<>();
 
-        private QueryAugmenter queryAugmenter;
+        private @Nullable QueryAugmenter queryAugmenter;
 
         private int order;
 
-        private HyDeTransformer hyDeTransformer;
+        private @Nullable HyDeTransformer hyDeTransformer;
 
-        private DashScopeRerankPostProcessor dashScopeRerankPostProcessor;
+        private @Nullable DashScopeRerankPostProcessor dashScopeRerankPostProcessor;
 
         private Builder() {
         }

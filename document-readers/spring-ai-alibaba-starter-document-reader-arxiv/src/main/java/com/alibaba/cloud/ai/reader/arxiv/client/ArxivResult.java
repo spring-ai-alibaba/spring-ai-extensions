@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.reader.arxiv.client;
 
+import org.jspecify.annotations.Nullable;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -30,35 +32,35 @@ import java.util.regex.Pattern;
  */
 public class ArxivResult {
 
-	private String entryId; // URL in the format https://arxiv.org/abs/{id}
+	private @Nullable String entryId; // URL in the format https://arxiv.org/abs/{id}
 
-	private LocalDateTime updated; // Last update time
+	private @Nullable LocalDateTime updated; // Last update time
 
-	private LocalDateTime published; // Initial publication time
+	private @Nullable LocalDateTime published; // Initial publication time
 
-	private String title; // Title
+	private @Nullable String title; // Title
 
-	private List<ArxivAuthor> authors; // List of authors
+	private @Nullable List<ArxivAuthor> authors; // List of authors
 
-	private String summary; // Abstract
+	private @Nullable String summary; // Abstract
 
-	private String comment; // Author comments (optional)
+	private @Nullable String comment; // Author comments (optional)
 
-	private String journalRef; // Journal reference (optional)
+	private @Nullable String journalRef; // Journal reference (optional)
 
-	private String doi; // DOI link (optional)
+	private @Nullable String doi; // DOI link (optional)
 
-	private String primaryCategory; // Primary category
+	private @Nullable String primaryCategory; // Primary category
 
-	private List<String> categories; // All categories
+	private @Nullable List<String> categories; // All categories
 
-	private List<ArxivLink> links; // Related links (up to 3)
+	private @Nullable List<ArxivLink> links; // Related links (up to 3)
 
-	private String pdfUrl; // PDF link (if available)
+	private @Nullable String pdfUrl; // PDF link (if available)
 
 	// Getters and Setters
 	public String getEntryId() {
-		return entryId;
+		return Objects.requireNonNull(entryId, "entryId must not be null");
 	}
 
 	public void setEntryId(String entryId) {
@@ -66,7 +68,7 @@ public class ArxivResult {
 	}
 
 	public LocalDateTime getUpdated() {
-		return updated;
+		return Objects.requireNonNull(updated, "updated must not be null");
 	}
 
 	public void setUpdated(LocalDateTime updated) {
@@ -74,7 +76,7 @@ public class ArxivResult {
 	}
 
 	public LocalDateTime getPublished() {
-		return published;
+		return Objects.requireNonNull(published, "published must not be null");
 	}
 
 	public void setPublished(LocalDateTime published) {
@@ -82,7 +84,7 @@ public class ArxivResult {
 	}
 
 	public String getTitle() {
-		return title;
+		return Objects.requireNonNull(title, "title must not be null");
 	}
 
 	public void setTitle(String title) {
@@ -90,7 +92,7 @@ public class ArxivResult {
 	}
 
 	public List<ArxivAuthor> getAuthors() {
-		return authors;
+		return Objects.requireNonNull(authors, "authors must not be null");
 	}
 
 	public void setAuthors(List<ArxivAuthor> authors) {
@@ -98,47 +100,47 @@ public class ArxivResult {
 	}
 
 	public String getSummary() {
-		return summary;
+		return Objects.requireNonNull(summary, "summary must not be null");
 	}
 
 	public void setSummary(String summary) {
 		this.summary = summary;
 	}
 
-	public String getComment() {
+	public @Nullable String getComment() {
 		return comment;
 	}
 
-	public void setComment(String comment) {
+	public void setComment(@Nullable String comment) {
 		this.comment = comment;
 	}
 
-	public String getJournalRef() {
+	public @Nullable String getJournalRef() {
 		return journalRef;
 	}
 
-	public void setJournalRef(String journalRef) {
+	public void setJournalRef(@Nullable String journalRef) {
 		this.journalRef = journalRef;
 	}
 
-	public String getDoi() {
+	public @Nullable String getDoi() {
 		return doi;
 	}
 
-	public void setDoi(String doi) {
+	public void setDoi(@Nullable String doi) {
 		this.doi = doi;
 	}
 
-	public String getPrimaryCategory() {
+	public @Nullable String getPrimaryCategory() {
 		return primaryCategory;
 	}
 
-	public void setPrimaryCategory(String primaryCategory) {
+	public void setPrimaryCategory(@Nullable String primaryCategory) {
 		this.primaryCategory = primaryCategory;
 	}
 
 	public List<String> getCategories() {
-		return categories;
+		return Objects.requireNonNull(categories, "categories must not be null");
 	}
 
 	public void setCategories(List<String> categories) {
@@ -146,7 +148,7 @@ public class ArxivResult {
 	}
 
 	public List<ArxivLink> getLinks() {
-		return links;
+		return Objects.requireNonNull(links, "links must not be null");
 	}
 
 	public void setLinks(List<ArxivLink> links) {
@@ -159,7 +161,7 @@ public class ArxivResult {
 			.orElse(null);
 	}
 
-	public String getPdfUrl() {
+	public @Nullable String getPdfUrl() {
 		return pdfUrl;
 	}
 
@@ -169,7 +171,7 @@ public class ArxivResult {
 	 * "quant-ph/0201082v1"
 	 */
 	public String getShortId() {
-		return entryId.split("arxiv.org/abs/")[1];
+		return getEntryId().split("arxiv.org/abs/")[1];
 	}
 
 	/**

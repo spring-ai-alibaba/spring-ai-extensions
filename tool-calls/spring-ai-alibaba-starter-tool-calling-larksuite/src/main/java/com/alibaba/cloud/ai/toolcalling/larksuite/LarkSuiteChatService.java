@@ -24,8 +24,10 @@ import com.lark.oapi.service.im.v1.model.CreateMessageReqBody;
 import com.lark.oapi.service.im.v1.model.CreateMessageResp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.ObjectUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -43,6 +45,11 @@ public class LarkSuiteChatService implements Function<LarkSuiteChatService.IMCha
 
 	@Override
 	public CreateMessageResp apply(IMChatRequest request) {
+		if (ObjectUtils.isEmpty(larkSuiteProperties.getAppId())
+				|| ObjectUtils.isEmpty(larkSuiteProperties.getAppSecret())) {
+			throw new IllegalArgumentException("current spring.ai.plugin.tool.larksuite must not be null.");
+		}
+
 		Client client = Client.newBuilder(larkSuiteProperties.getAppId(), larkSuiteProperties.getAppSecret()).build();
 		CreateMessageReq req = CreateMessageReq.newBuilder()
 			.receiveIdType(request.receiveIdType())
@@ -65,10 +72,11 @@ public class LarkSuiteChatService implements Function<LarkSuiteChatService.IMCha
 			}
 		}
 		catch (Exception e) {
-			logger.error("创建飞书文档异常");
+			logger.error("创建飞书文档异常", e);
+			throw new RuntimeException("创建飞书消息失败", e);
 		}
 
-		return resp;
+		return Objects.requireNonNull(resp, "CreateMessageResp must not be null");
 	}
 
 	public record IMChatRequest(@JsonProperty(required = true, value = "receive_id") String receiveId,

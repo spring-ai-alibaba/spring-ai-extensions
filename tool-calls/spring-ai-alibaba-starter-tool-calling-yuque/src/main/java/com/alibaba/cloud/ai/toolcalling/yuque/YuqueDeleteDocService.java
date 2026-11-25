@@ -21,7 +21,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.function.Function;
+import org.springframework.util.StringUtils;
 
 /**
  * @author 北极星
@@ -42,17 +44,19 @@ public class YuqueDeleteDocService
 
 	@Override
 	public YuqueDeleteDocService.DeleteDocResponse apply(YuqueDeleteDocService.DeleteDocRequest deleteDocRequest) {
-		if (deleteDocRequest == null || deleteDocRequest.bookId == null) {
-			return null;
+		if (deleteDocRequest == null || !StringUtils.hasText(deleteDocRequest.bookId)
+				|| !StringUtils.hasText(deleteDocRequest.id)) {
+			throw new IllegalArgumentException("Yuque delete doc request bookId and id must not be empty");
 		}
 		String uri = "/repos/" + deleteDocRequest.bookId + "/docs/" + deleteDocRequest.id;
 		try {
-			String json = webClientTool.delete(uri).block();
+			String json = Objects.requireNonNull(webClientTool.delete(uri).block(),
+					"Yuque delete doc API returned empty response");
 			return jsonParseTool.jsonToObject(json, DeleteDocResponse.class);
 		}
 		catch (Exception e) {
 			logger.error("Failed to delete the Yuque document.", e);
-			return null;
+			throw new RuntimeException("Failed to delete the Yuque document", e);
 		}
 	}
 

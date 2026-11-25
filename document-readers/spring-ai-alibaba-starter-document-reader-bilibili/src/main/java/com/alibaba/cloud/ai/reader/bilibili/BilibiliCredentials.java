@@ -15,7 +15,10 @@
  */
 package com.alibaba.cloud.ai.reader.bilibili;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
+
+import java.util.Objects;
 
 /**
  * Bilibili authentication credentials for accessing video content.
@@ -29,11 +32,11 @@ public class BilibiliCredentials {
 
 	private final String biliJct;
 
-	private final String buvid3;
+	private final @Nullable String buvid3;
 
 	private BilibiliCredentials(Builder builder) {
-		this.sessdata = builder.sessdata;
-		this.biliJct = builder.biliJct;
+		this.sessdata = Objects.requireNonNull(builder.sessdata, "SESSDATA must not be null");
+		this.biliJct = Objects.requireNonNull(builder.biliJct, "bili_jct must not be null");
 		this.buvid3 = builder.buvid3;
 	}
 
@@ -45,7 +48,7 @@ public class BilibiliCredentials {
 		return biliJct;
 	}
 
-	public String getBuvid3() {
+	public @Nullable String getBuvid3() {
 		return buvid3;
 	}
 
@@ -55,26 +58,26 @@ public class BilibiliCredentials {
 
 	public static class Builder {
 
-		private String sessdata;
+			private @Nullable String sessdata;
 
-		private String biliJct;
+			private @Nullable String biliJct;
 
-		private String buvid3;
+			private @Nullable String buvid3;
 
-		public Builder sessdata(String sessdata) {
-			this.sessdata = sessdata;
-			return this;
-		}
+			public Builder sessdata(@Nullable String sessdata) {
+				this.sessdata = sessdata;
+				return this;
+			}
 
-		public Builder biliJct(String biliJct) {
-			this.biliJct = biliJct;
-			return this;
-		}
+			public Builder biliJct(@Nullable String biliJct) {
+				this.biliJct = biliJct;
+				return this;
+			}
 
-		public Builder buvid3(String buvid3) {
-			this.buvid3 = buvid3;
-			return this;
-		}
+			public Builder buvid3(@Nullable String buvid3) {
+				this.buvid3 = buvid3;
+				return this;
+			}
 
 		public BilibiliCredentials build() {
 			Assert.hasText(sessdata, "SESSDATA must not be empty");

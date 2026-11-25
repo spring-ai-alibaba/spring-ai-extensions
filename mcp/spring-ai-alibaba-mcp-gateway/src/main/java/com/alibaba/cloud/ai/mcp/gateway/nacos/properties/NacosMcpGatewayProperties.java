@@ -17,6 +17,7 @@ package com.alibaba.cloud.ai.mcp.gateway.nacos.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,7 +28,7 @@ public class NacosMcpGatewayProperties {
 
 	public static final String CONFIG_PREFIX = "spring.ai.alibaba.mcp.gateway.nacos";
 
-	private List<String> serviceNames;
+	private List<String> serviceNames = new ArrayList<>();
 
 	public List<String> getServiceNames() {
 		return serviceNames;

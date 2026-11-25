@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.ollamasearchmodel;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.RestClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -43,6 +45,15 @@ public class OllamaSearchModelAutoConfiguration {
 			OllamaSearchModelProperties ollamaSearchModelProperties) {
 		RestClientTool restClientTool = RestClientTool.builder(jsonParseTool, ollamaSearchModelProperties).build();
 		return new OllamaSearchModelService(restClientTool);
+	}
+
+	@Bean(name = "searchModelServiceToolCallback")
+	@ConditionalOnMissingBean(name = "searchModelServiceToolCallback")
+	public ToolCallback searchModelServiceToolCallback(OllamaSearchModelService searchModelService) {
+		return FunctionToolCallback.builder(OllamaSearchModelConstants.TOOL_NAME, searchModelService)
+			.description("Search model information from ollama")
+			.inputType(OllamaSearchModelService.Request.class)
+			.build();
 	}
 
 }

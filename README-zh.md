@@ -12,6 +12,7 @@
 
 1. 需要 JDK 17+
 2. 如果遇到任何 `spring-ai` 依赖问题，请查看 [FAQ 页面](https://java2ai.com/docs/1.0.0.2/faq) 了解如何配置 `spring-milestones` Maven 仓库
+3. 扩展版本 `2.1.0.0` 使用 Spring AI `2.1.0` 和 Spring Boot `4.2.0`。如需在下方示例中使用本地构建的构件，请运行 `mvn install -DskipTests`。
 
 ### 使用 `ChatClient` 开发聊天机器人
 
@@ -23,8 +24,8 @@
   <dependencies>
     <dependency>
       <groupId>com.alibaba.cloud.ai</groupId>
-      <artifactId>spring-ai-extensions-bom</artifactId>
-      <version>1.1.2.0</version>
+      <artifactId>spring-ai-alibaba-extensions-bom</artifactId>
+      <version>2.1.0.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -86,6 +87,52 @@ public class HelloworldController {
 ### 使用 Agent 框架开发智能体
 
 // 待补充
+
+### DashScope 模型选路与推理
+
+HTTP 和 SDK starter 会为已知模型选择 DashScope 原生端点。`qwen4-max`、
+`qwen3.8-flash` 和百炼部署的 `kimi-k3.1-pro` 即使只传文本也走多模态端点。
+`glm-5.3` 走文本端点。自定义部署可以显式设置 `multi-model` 覆盖选路。
+
+```yaml
+spring:
+  ai:
+    dashscope:
+      chat:
+        model: qwen4-max
+        enable-thinking: true
+        reasoning-effort: low
+        thinking-display: summarized
+        preserve-thinking: true
+```
+
+SDK starter 使用相同的选项，配置前缀为 `spring.ai.dashscope.sdk.chat`。
+使用业务空间专属域名时，HTTP starter 设置 `spring.ai.dashscope.base-url`，
+SDK starter 设置 `spring.ai.dashscope.sdk.chat.base-url`，SDK 地址需包含 `/api/v1`。
+GLM 可用 `clear-thinking: false` 保留历史思考。Qwen4-Max 每次请求可在
+`reasoning-effort` 和 `thinking-budget` 中选择一个。Kimi-K3.1-Pro 只接受默认采样值，
+也不支持 `thinking-budget`。
+
+启用 `thinking-display: summarized` 后，请在对话历史中保留完整的 assistant 消息及其
+Message Parts，适配器会在下一轮回传加密推理内容。月之暗面直供的 `kimi/kimi-k3`
+按百炼的 [OpenAI 兼容接口文档](https://help.aliyun.com/zh/model-studio/kimi-api-by-moonshot-ai) 配置。
+
+### 百炼决策模型
+
+使用百炼决策模型时，添加 Spring AI 2.1.0 的 `org.springframework.ai:spring-ai-starter-model-systemone`。注入 `DecisionModel`，通过 `DecisionPrompt` 提交是非判断、分类或评分问题。示例使用华北 2（北京）业务空间，其他地域请使用对应的业务空间域名。[百炼决策模型 API](https://help.aliyun.com/zh/model-studio/decision-model-api)
+
+```yaml
+spring:
+  ai:
+    model:
+      decision: systemone
+    systemone:
+      api-key: ${DASHSCOPE_API_KEY}
+      base-url: https://${BAILIAN_WORKSPACE_ID}.cn-beijing.maas.aliyuncs.com/compatible-mode
+      decision:
+        model: decision-model-preview
+        provider: dashscope
+```
 
 ## 示例和演示
 
@@ -160,6 +207,12 @@ DashScopeChatModel 支持：
 
 语音转文本转录模型，以高精度将音频转换为文本。
 
+#### 百炼新版图像、视频和音频
+
+- 图像生成和编辑支持 `qwen-image-3.0-pro`、`qwen-image-3.0`、`qwen-image-2.1-pro` 和 `qwen-image-2.1-turbo`。用 `baseImageUrl` 或 `images` 提供参考图。Qwen Image 3.0 同步调用可用 `responseFormat("b64_json")`，结果从 `Image.getB64Json()` 读取。
+- 视频可选 `wan3.0-video` 和万相 2.7 系列。使用 `resolution`、`ratio` 控制画幅，通过 `InputOptions.media` 传入参考素材。任务提交后按 ID 查询结果。
+- 语音合成支持 Qwen Audio TTS 3.0/3.1 和 CosyVoice 3.5。使用 CosyVoice 3.5 时需配置为对应模型复刻或设计的音色。短音频识别用 `qwen-audio-3.1-asr-flash`，长文件用 `qwen-audio-3.1-asr-flash-filetrans` 和公网音频 URL，实时识别用 `qwen-audio-3.1-asr-flash-streaming`。
+
 ### MCP (模型上下文协议)
 
 MCP 提供了一个标准化协议，用于管理和路由 AI 模型上下文。此扩展包括：
@@ -169,7 +222,7 @@ MCP 提供了一个标准化协议，用于管理和路由 AI 模型上下文。
 - **MCP Registry**: 用于发现和管理 MCP 服务的注册中心
 - **MCP Router**: 智能路由功能，用于在多个模型上下文之间分发请求
 
-**MCP SDK 版本**: 0.14.0
+基于 MCP Java SDK 2.2.0，支持通过 Nacos 注册中心、路由与网关发现和调用 Modern MCP（2026-07-28）及旧版 MCP 工具。
 
 **可用的 Starter：**
 - `spring-ai-alibaba-starter-mcp-registry`
@@ -244,6 +297,16 @@ MCP 提供了一个标准化协议，用于管理和路由 AI 模型上下文。
 
 ### 聊天记忆
 
+Spring AI 2.1 的新会话可以使用 Session Memory。引入
+`spring-ai-alibaba-starter-model-chat-memory` 后，将 `spring.ai.alibaba.session.enabled` 设为
+`true`，给 ChatClient 注册 `SessionAdvisors.builder(sessionService).build()`，并在每次请求中传入
+`SessionAdvisors.session(sessionId)`。缺少其他会话存储时使用内存仓库。需要 JDBC 持久化时，引入
+Spring AI 的 `spring-ai-starter-model-session-jdbc`。
+
+迁移已有会话时，调用 `LegacyChatMemorySessionImporter.importConversation(repository, conversationId, target)`，
+并在 `CreateSessionRequest` 中指定目标会话 ID。导入器按旧仓库的存储顺序复制消息，使用同一来源和目标可安全重试。
+导入后可使用新的 Advisor 继续会话。详见 [Spring AI 迁移指南](https://docs.spring.io/spring-ai/reference/2.1-SNAPSHOT/upgrading/session-memory.html)。
+
 多种存储后端，用于管理对话历史和长期记忆：
 
 **短期记忆：**
@@ -258,9 +321,9 @@ MCP 提供了一个标准化协议，用于管理和路由 AI 模型上下文。
 - **Mem0**: 具有智能摘要和检索功能的高级长期记忆
 
 可用的 Starter：
-- `spring-ai-alibaba-starter-memory`（短期记忆）
-- `spring-ai-alibaba-starter-memory-long`（长期记忆）
-- 单独的存储后端 Starter（如 `spring-ai-alibaba-starter-memory-redis`）
+- `spring-ai-alibaba-starter-model-chat-memory`（短期记忆）
+- `spring-ai-alibaba-starter-model-chat-memory-long`（长期记忆）
+- 单独的存储后端 Starter（如 `spring-ai-alibaba-starter-model-chat-memory-repository-redis`）
 
 ### 检索增强生成 (RAG)
 
@@ -276,6 +339,24 @@ MCP 提供了一个标准化协议，用于管理和路由 AI 模型上下文。
     <artifactId>spring-ai-alibaba-starter-rag</artifactId>
 </dependency>
 ```
+
+#### 百炼工作空间 RAG API
+
+使用 DashScope Starter 时，配置业务空间和 API Key 即可注入 `DashScopeRagApi`。
+
+```yaml
+spring:
+  ai:
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY}
+      workspace-id: ${BAILIAN_WORKSPACE_ID}
+      rag:
+        enabled: true
+```
+
+`DashScopeRagDocumentRetriever.forIndex(api, indexId, 5, List.of())` 接入已有知识库。使用 `forService(api, agentId, filters)` 接入已发布的多库检索服务，将检索器传给 `RetrievalAugmentationAdvisor` 或 `DashScopeDocumentRetrievalAdvisor`。
+
+调用 `upload` 注册文件，使用返回的文件 ID 调用 `submitImport`，并保存返回的任务 ID 以查询 `importStatus` 或等待 `awaitImport`。用知识库返回的文档 ID 调用 `deleteDocuments`。需要清理数据中心原文件时，再用文件 ID 调用 `deleteFile`。托管知识问答通过 `chat` 接收 SSE，每轮传入完整消息历史。
 
 ### 提示词
 

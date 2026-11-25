@@ -17,7 +17,9 @@ package com.alibaba.cloud.ai.reader.gitbook.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,38 +34,38 @@ public class GitbookPage {
 	/**
 	 * The unique identifier of the page
 	 */
-	private String id;
+	private String id = "";
 
 	/**
 	 * The title/name of the page
 	 */
-	private String title;
+	private String title = "";
 
 	/**
 	 * The URL path to access the page
 	 */
-	private String path;
+	private String path = "";
 
 	/**
 	 * The type of the page (e.g. "document", "group")
 	 */
-	private String type;
+	private String type = "";
 
 	/**
 	 * A brief description of the page content
 	 */
-	private String description;
+	private String description = "";
 
 	/**
 	 * The ID of the parent page if this is a sub-page
 	 */
-	private String parent;
+	private @Nullable String parent;
 
 	/**
 	 * List of child pages under this page
 	 */
 	@JsonProperty("pages")
-	private List<GitbookPage> subPages;
+	private List<GitbookPage> subPages = new ArrayList<>();
 
 	// Getters and Setters
 	public String getId() {
@@ -106,11 +108,11 @@ public class GitbookPage {
 		this.description = description;
 	}
 
-	public String getParent() {
+	public @Nullable String getParent() {
 		return parent;
 	}
 
-	public void setParent(String parent) {
+	public void setParent(@Nullable String parent) {
 		this.parent = parent;
 	}
 

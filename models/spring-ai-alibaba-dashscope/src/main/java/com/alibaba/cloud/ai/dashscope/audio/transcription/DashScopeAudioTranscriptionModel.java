@@ -1,0 +1,371 @@
+/*
+ * Copyright 2024-2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.alibaba.cloud.ai.dashscope.audio.transcription;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Objects;
+
+import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.DashScopeAudioTranscription;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Sentence;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Translation;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Usage;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.jspecify.annotations.Nullable;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
+import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
+import org.springframework.ai.retry.RetryUtils;
+import org.springframework.ai.util.JacksonUtils;
+import org.springframework.core.retry.RetryTemplate;
+import reactor.core.publisher.Flux;
+
+/**
+ * Audio transcription: Input audio, output text.
+ *
+ * @author xuguan, yingzi
+ */
+public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel {
+
+	private static final Logger logger = LoggerFactory.getLogger(DashScopeAudioTranscriptionModel.class);
+
+	private final DashScopeAudioTranscriptionApi audioTranscriptionApi;
+
+	private final DashScopeAudioTranscriptionOptions defaultOptions;
+
+	private final RetryTemplate retryTemplate;
+
+    private final JsonMapper jsonMapper;
+
+	public DashScopeAudioTranscriptionModel(DashScopeAudioTranscriptionApi api,
+			DashScopeAudioTranscriptionOptions defaultOptions) {
+
+		this(api, defaultOptions, RetryUtils.DEFAULT_RETRY_TEMPLATE);
+	}
+
+	public DashScopeAudioTranscriptionModel(DashScopeAudioTranscriptionApi api,
+			DashScopeAudioTranscriptionOptions defaultOptions, RetryTemplate retryTemplate) {
+
+		this.audioTranscriptionApi = Objects.requireNonNull(api, "api must not be null");
+		this.defaultOptions = Objects.requireNonNull(defaultOptions, "options must not be null");
+		this.retryTemplate = Objects.requireNonNull(retryTemplate, "retryTemplate must not be null");
+        this.jsonMapper = JsonMapper.builder()
+                // Deserialization configuration
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                // Serialization configuration
+                .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+                .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
+                // Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
+                .addModules(JacksonUtils.instantiateAvailableModules())
+                .build();
+	}
+
+	@Override
+	public AudioTranscriptionResponse call(AudioTranscriptionPrompt prompt) {
+        // Merge request options with default options
+        DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+                .from(defaultOptions)
+                .merge(prompt.getOptions())
+                .build();
+		String model = Objects.requireNonNull(options.getModel(), "model must not be null");
+        if (DashScopeAudioApiConstants.isLiveTranslate(model)) {
+            // prompt 类型强转判断
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
+                throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
+            }
+            return audioTranscriptionApi.callLiveTranslate(
+                    (DashScopeAudioTranscriptionPrompt) prompt,
+                    options);
+        }
+
+        // 录音文件识别Paraformer、Fun-ASR
+        if (DashScopeAudioApiConstants.isAsr(model) || DashScopeAudioApiConstants.isQwenFileTranscription(model)) {
+            // prompt 类型强转判断
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
+                throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
+            }
+            return audioTranscriptionApi.callAsr((DashScopeAudioTranscriptionPrompt) prompt, options);
+        }
+
+        if (DashScopeAudioApiConstants.isQwenAudioAsr(model)) {
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt dashPrompt)) {
+                throw new IllegalArgumentException("Qwen Audio ASR requires DashScopeAudioTranscriptionPrompt");
+            }
+            return this.audioTranscriptionApi.callQwenAudioAsr(dashPrompt, options);
+        }
+
+        // 录音文件识别Qwen-ASR
+        if (DashScopeAudioApiConstants.isQwenAsr(model)) {
+            // prompt 类型强转判断
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
+                throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
+            }
+            return audioTranscriptionApi.callQwenAsr((DashScopeAudioTranscriptionPrompt) prompt, options);
+        }
+
+        throw new IllegalArgumentException("Model " + model + " is not supported call method.");
+	}
+
+	@Override
+	public Flux<AudioTranscriptionResponse> stream(AudioTranscriptionPrompt prompt) {
+        // Merge request options with default options
+        DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+                .from(defaultOptions)
+                .merge(prompt.getOptions())
+                .build();
+		String model = Objects.requireNonNull(options.getModel(), "model must not be null");
+        if (DashScopeAudioApiConstants.isLiveTranslate(model)) {
+            // prompt 类型强转判断
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
+                throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
+            }
+            return audioTranscriptionApi.streamLiveTranslate(
+                    (DashScopeAudioTranscriptionPrompt) prompt,
+                    options);
+        }
+        if (DashScopeAudioApiConstants.isAsr(model) || DashScopeAudioApiConstants.isQwenFileTranscription(model)) {
+            return Flux.error(new IllegalArgumentException("File transcription is a task API; use call()"));
+        }
+        if (DashScopeAudioApiConstants.isQwenAudioAsr(model)) {
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt dashPrompt)) {
+                throw new IllegalArgumentException("Qwen Audio ASR requires DashScopeAudioTranscriptionPrompt");
+            }
+            return this.audioTranscriptionApi.streamQwenAudioAsr(dashPrompt, options);
+        }
+        // 录音文件识别Qwen-ASR
+        if (DashScopeAudioApiConstants.isQwenAsr(model)) {
+            // prompt 类型强转判断
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
+                throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
+            }
+            return audioTranscriptionApi.streamQwenAsr((DashScopeAudioTranscriptionPrompt) prompt, options);
+        }
+
+        // 下面是websocket任务
+        byte[] audioBytes = null;
+        try {
+			var instructions = Objects.requireNonNull(prompt.getInstructions(), "prompt instructions must not be null");
+            try (var input = instructions.getInputStream()) {
+                audioBytes = input.readAllBytes();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        ByteBuffer binaryData = ByteBuffer.wrap(audioBytes);
+        return audioTranscriptionApi.createWebSocketTask(binaryData, options)
+                .map(response -> parseWebSocketResponse(response, model));
+    }
+
+	// ==================== Bidirectional Streaming Methods ====================
+
+	/**
+	 * Bidirectional streaming recognition for Qwen Audio ASR, Paraformer, and Fun-ASR.
+	 * <p>
+	 * Audio is streamed incrementally (e.g., from a microphone) while recognition results
+	 * are returned as they are produced. Returns rich {@link RecognitionResult} with full
+	 * sentence, stash (intermediate), word timestamps, and VAD information.
+	 *
+	 * @param audioStream streaming audio input (PCM chunks, typically 16kHz mono)
+	 * @param options transcription options (model, format, sample rate, etc.)
+	 * @return stream of recognition results
+	 * @throws IllegalArgumentException if the model does not support this WebSocket protocol
+	 */
+	public Flux<RecognitionResult> streamRecognition(Flux<ByteBuffer> audioStream,
+			DashScopeAudioTranscriptionOptions options) {
+        // Merge request options with default options
+        DashScopeAudioTranscriptionOptions mergedOptions = DashScopeAudioTranscriptionOptions.builder()
+                .from(defaultOptions)
+                .merge(options)
+                .build();
+		String model = Objects.requireNonNull(mergedOptions.getModel(), "model must not be null");
+		if (!DashScopeAudioApiConstants.PARAFORMER_REALTIME_ONLY_LIST.contains(model)
+                && !DashScopeAudioApiConstants.isQwenAudioAsrRealtime(model)) {
+			throw new IllegalArgumentException(
+					"streamRecognition only supports models using the Qwen Audio, Paraformer, or Fun-ASR WebSocket protocol: " + model);
+		}
+		return audioTranscriptionApi.createWebSocketStreamingTask(audioStream, mergedOptions)
+				.map(this::parseRecognitionResult);
+	}
+
+	/**
+	 * Bidirectional streaming translation for Gummy long-speech (realtime) models.
+	 * <p>
+	 * Audio is streamed incrementally while both source-language transcription and
+	 * target-language translations are returned. Suitable for continuous long-form audio
+	 * such as meetings or lectures.
+	 *
+	 * @param audioStream streaming audio input (PCM chunks, typically 16kHz mono)
+	 * @param options transcription options (model, source/target languages, etc.)
+	 * @return stream of translation-recognition results
+	 * @throws IllegalArgumentException if the model is not a Gummy realtime model
+	 */
+	public Flux<TranslationRecognitionResult> streamTranslation(Flux<ByteBuffer> audioStream,
+			DashScopeAudioTranscriptionOptions options) {
+        // Merge request options with default options
+        DashScopeAudioTranscriptionOptions mergedOptions = DashScopeAudioTranscriptionOptions.builder()
+                .from(defaultOptions)
+                .merge(options)
+                .build();
+		String model = Objects.requireNonNull(mergedOptions.getModel(), "model must not be null");
+		if (!DashScopeAudioApiConstants.GUMMY_REALTIME_LIST.contains(model)) {
+			throw new IllegalArgumentException(
+					"streamTranslation only supports models: " + DashScopeAudioApiConstants.GUMMY_REALTIME_LIST
+							+ ", got: " + model);
+		}
+		return audioTranscriptionApi.createWebSocketStreamingTask(audioStream, mergedOptions)
+				.map(this::parseTranslationRecognitionResult);
+	}
+
+	/**
+	 * Bidirectional streaming translation for Gummy short-speech (chat) models.
+	 * <p>
+	 * Processes a single sentence: after a sentence-end is detected, subsequent audio
+	 * frames are ignored. Suitable for voice assistants and short utterance translation.
+	 *
+	 * @param audioStream streaming audio input (PCM chunks, typically 16kHz mono)
+	 * @param options transcription options (model, source/target languages, etc.)
+	 * @return stream of translation-recognition results (completes after sentence-end)
+	 * @throws IllegalArgumentException if the model is not a Gummy chat model
+	 */
+	public Flux<TranslationRecognitionResult> streamTranslationChat(Flux<ByteBuffer> audioStream,
+			DashScopeAudioTranscriptionOptions options) {
+        // Merge request options with default options
+        DashScopeAudioTranscriptionOptions mergedOptions = DashScopeAudioTranscriptionOptions.builder()
+                .from(defaultOptions)
+                .merge(options)
+                .build();
+		String model = Objects.requireNonNull(mergedOptions.getModel(), "model must not be null");
+		if (!DashScopeAudioApiConstants.GUMMY_CHAT_LIST.contains(model)) {
+			throw new IllegalArgumentException(
+					"streamTranslationChat only supports models: " + DashScopeAudioApiConstants.GUMMY_CHAT_LIST
+							+ ", got: " + model);
+		}
+		// Chat mode: take results until sentence-end, then complete the stream
+		return audioTranscriptionApi.createWebSocketStreamingTask(audioStream, mergedOptions)
+				.map(this::parseTranslationRecognitionResult)
+				.takeUntil(TranslationRecognitionResult::isSentenceEnd);
+	}
+
+	// ==================== WebSocket Response Parsing ====================
+
+	/**
+	 * Parse WebSocket response for the existing {@code stream()} method (backward compatible).
+	 */
+	private AudioTranscriptionResponse parseWebSocketResponse(String response, String model) {
+        logger.debug("Raw WebSocket response: {}", response);
+        JsonNode jsonNode = jsonMapper.readTree(response).get("payload").get("output");
+        if (DashScopeAudioApiConstants.QWEN3_LONG_SHORT_TRANSLATE_LIST.contains(model)) {
+            JsonNode translationsNode = jsonNode.get("translations");
+            JsonNode transcriptionNode = jsonNode.get("transcription");
+            List<Translation> translations = jsonMapper.convertValue(translationsNode, new TypeReference<>() {});
+            DashScopeAudioTranscription transcription = jsonMapper.convertValue(transcriptionNode, new TypeReference<>() {});
+            return new DashScopeTranscriptionResponse(translations, transcription);
+        }
+        if (DashScopeAudioApiConstants.PARAFORMER_FUNAS_LIST.contains(model)
+                || DashScopeAudioApiConstants.isQwenAudioAsrRealtime(model)) {
+            JsonNode sentenceNode = jsonNode.get("sentence");
+            JsonNode usageNode = jsonNode.get("usage");
+            Sentence sentence = jsonMapper.convertValue(sentenceNode, new TypeReference<>() {});
+            Usage usage = jsonMapper.convertValue(usageNode, new TypeReference<>() {});
+            return new DashScopeTranscriptionResponse(sentence, usage);
+        }
+        throw new IllegalArgumentException("Model " + model + " is not supported for WebSocket response parsing.");
+	}
+
+	/**
+	 * Parse WebSocket response into rich {@link RecognitionResult} for Paraformer/Fun-ASR.
+	 */
+	private RecognitionResult parseRecognitionResult(String response) {
+        logger.debug("Raw WebSocket response (recognition): {}", response);
+        JsonNode outputNode = jsonMapper.readTree(response).get("payload").get("output");
+        return jsonMapper.convertValue(outputNode, RecognitionResult.class);
+	}
+
+	/**
+	 * Parse WebSocket response into rich {@link TranslationRecognitionResult} for Gummy.
+	 */
+	private TranslationRecognitionResult parseTranslationRecognitionResult(String response) {
+        logger.debug("Raw WebSocket response (translation): {}", response);
+        JsonNode outputNode = jsonMapper.readTree(response).get("payload").get("output");
+        return jsonMapper.convertValue(outputNode, TranslationRecognitionResult.class);
+	}
+    /**
+     * Returns a builder pre-populated with the current configuration for mutation.
+     */
+    public Builder mutate() {
+        return new Builder(this);
+    }
+
+    @Override
+    public DashScopeAudioTranscriptionModel clone() {
+        return this.mutate().build();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private @Nullable DashScopeAudioTranscriptionApi audioTranscriptionApi;
+
+        private DashScopeAudioTranscriptionOptions defaultOptions = DashScopeAudioTranscriptionOptions.builder().build();;
+
+        private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
+
+        private Builder() {
+        }
+
+        private Builder(DashScopeAudioTranscriptionModel model) {
+            this.audioTranscriptionApi = model.audioTranscriptionApi;
+            this.defaultOptions = model.defaultOptions;
+            this.retryTemplate = model.retryTemplate;
+        }
+
+        public Builder audioTranscriptionApi(@Nullable DashScopeAudioTranscriptionApi audioTranscriptionApi) {
+            this.audioTranscriptionApi = audioTranscriptionApi;
+            return this;
+        }
+
+        public Builder defaultOptions(DashScopeAudioTranscriptionOptions defaultOptions) {
+            this.defaultOptions = defaultOptions;
+            return this;
+        }
+
+        public Builder retryTemplate(RetryTemplate retryTemplate) {
+            this.retryTemplate = retryTemplate;
+            return this;
+        }
+
+        public DashScopeAudioTranscriptionModel build() {
+            Objects.requireNonNull(this.audioTranscriptionApi, "audioTranscriptionApi must not be null");
+            return new DashScopeAudioTranscriptionModel(this.audioTranscriptionApi, this.defaultOptions, this.retryTemplate);
+        }
+    }
+
+}

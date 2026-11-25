@@ -30,6 +30,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -63,14 +64,15 @@ public class YoudaoTranslateService
 	@Override
 	public Response apply(Request request) {
 		if (request == null || !StringUtils.hasText(request.text) || !StringUtils.hasText(request.targetLanguage)) {
-			return null;
+			throw new IllegalArgumentException("Youdao translate request text and targetLanguage must not be empty");
 		}
 		String curtime = String.valueOf(System.currentTimeMillis() / 1000);
 		String salt = UUID.randomUUID().toString();
 		try {
+			String sourceLanguage = StringUtils.hasText(request.sourceLanguage) ? request.sourceLanguage : "auto";
 			MultiValueMap<String, String> params = CommonToolCallUtils.<String, String>multiValueMapBuilder()
 				.add("q", request.text)
-				.add("from", request.sourceLanguage)
+				.add("from", sourceLanguage)
 				.add("to", request.targetLanguage)
 				.add("appKey", appKey)
 				.add("salt", salt)
@@ -84,14 +86,14 @@ public class YoudaoTranslateService
 						MediaType.APPLICATION_FORM_URLENCODED)
 				.block();
 
-			assert responseData != null;
+			Objects.requireNonNull(responseData, "Youdao translate API returned empty response");
 			logger.debug("Translation request: {}, response: {}", request.text, responseData);
 
 			return jsonParseTool.jsonToObject(responseData, Response.class);
 		}
 		catch (Exception e) {
 			logger.error("Failed to invoke Youdao translate API due to: {}", e.getMessage());
-			return null;
+			throw new RuntimeException("Failed to invoke Youdao translate API", e);
 		}
 	}
 

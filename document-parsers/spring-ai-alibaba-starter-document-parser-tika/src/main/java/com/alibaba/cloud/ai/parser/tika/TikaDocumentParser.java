@@ -16,14 +16,17 @@
 package com.alibaba.cloud.ai.parser.tika;
 
 import com.alibaba.cloud.ai.document.DocumentParser;
+import org.apache.tika.exception.WriteLimitReachedException;
 import org.apache.tika.exception.ZeroByteFileException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.ExtractedTextFormatter;
+import org.springframework.util.Assert;
 import org.xml.sax.ContentHandler;
 
 import java.io.InputStream;
@@ -44,7 +47,7 @@ import java.util.function.Supplier;
 
 public class TikaDocumentParser implements DocumentParser {
 
-	private static final int NO_WRITE_LIMIT = -1;
+	public static final int DEFAULT_MAX_EXTRACTED_CHARS = 10_000_000;
 
 	public static final Supplier<Parser> DEFAULT_PARSER_SUPPLIER = AutoDetectParser::new;
 
@@ -53,7 +56,7 @@ public class TikaDocumentParser implements DocumentParser {
 	public static final Supplier<ParseContext> DEFAULT_PARSE_CONTEXT_SUPPLIER = ParseContext::new;
 
 	public static final Supplier<ContentHandler> DEFAULT_CONTENT_HANDLER_SUPPLIER = () -> new BodyContentHandler(
-			NO_WRITE_LIMIT);
+			DEFAULT_MAX_EXTRACTED_CHARS);
 
 	private final Supplier<Parser> parserSupplier;
 
@@ -69,16 +72,30 @@ public class TikaDocumentParser implements DocumentParser {
 		this((Supplier<Parser>) null, null, null, null, ExtractedTextFormatter.defaults());
 	}
 
+	/**
+	 * Create a parser with a limit on the number of characters extracted per input.
+	 */
+	public TikaDocumentParser(int maxExtractedChars) {
+		this(null, limitedHandler(maxExtractedChars), null, null, ExtractedTextFormatter.defaults());
+	}
+
+	private static Supplier<ContentHandler> limitedHandler(int maxExtractedChars) {
+		Assert.isTrue(maxExtractedChars > 0, "maxExtractedChars must be positive");
+		return () -> new BodyContentHandler(maxExtractedChars);
+	}
+
 	public TikaDocumentParser(ExtractedTextFormatter textFormatter) {
 		this((Supplier<Parser>) null, null, null, null, textFormatter);
 	}
 
-	public TikaDocumentParser(Supplier<ContentHandler> contentHandlerSupplier, ExtractedTextFormatter textFormatter) {
+	public TikaDocumentParser(@Nullable Supplier<ContentHandler> contentHandlerSupplier,
+			ExtractedTextFormatter textFormatter) {
 		this((Supplier<Parser>) null, contentHandlerSupplier, null, null, textFormatter);
 	}
 
-	public TikaDocumentParser(Supplier<Parser> parserSupplier, Supplier<ContentHandler> contentHandlerSupplier,
-			Supplier<Metadata> metadataSupplier, Supplier<ParseContext> parseContextSupplier) {
+	public TikaDocumentParser(@Nullable Supplier<Parser> parserSupplier,
+			@Nullable Supplier<ContentHandler> contentHandlerSupplier, @Nullable Supplier<Metadata> metadataSupplier,
+			@Nullable Supplier<ParseContext> parseContextSupplier) {
 		this(parserSupplier, contentHandlerSupplier, metadataSupplier, parseContextSupplier,
 				ExtractedTextFormatter.defaults());
 	}
@@ -90,16 +107,16 @@ public class TikaDocumentParser implements DocumentParser {
 	 * @param parserSupplier Supplier for Tika parser to use. Default:
 	 * {@link AutoDetectParser}
 	 * @param contentHandlerSupplier Supplier for Tika content handler. Default:
-	 * {@link BodyContentHandler} without write limit
+	 * {@link BodyContentHandler} bounded by {@link #DEFAULT_MAX_EXTRACTED_CHARS}
 	 * @param metadataSupplier Supplier for Tika metadata. Default: empty {@link Metadata}
 	 * @param parseContextSupplier Supplier for Tika parse context. Default: empty
 	 * {@link ParseContext}
 	 * @param textFormatter Formatter for extracted text. Default:
 	 * {@link ExtractedTextFormatter#defaults()}
 	 */
-	public TikaDocumentParser(Supplier<Parser> parserSupplier, Supplier<ContentHandler> contentHandlerSupplier,
-			Supplier<Metadata> metadataSupplier, Supplier<ParseContext> parseContextSupplier,
-			ExtractedTextFormatter textFormatter) {
+	public TikaDocumentParser(@Nullable Supplier<Parser> parserSupplier,
+			@Nullable Supplier<ContentHandler> contentHandlerSupplier, @Nullable Supplier<Metadata> metadataSupplier,
+			@Nullable Supplier<ParseContext> parseContextSupplier, ExtractedTextFormatter textFormatter) {
 		this.parserSupplier = getOrDefault(parserSupplier, () -> DEFAULT_PARSER_SUPPLIER);
 		this.contentHandlerSupplier = getOrDefault(contentHandlerSupplier, () -> DEFAULT_CONTENT_HANDLER_SUPPLIER);
 		this.metadataSupplier = getOrDefault(metadataSupplier, () -> DEFAULT_METADATA_SUPPLIER);
@@ -125,6 +142,9 @@ public class TikaDocumentParser implements DocumentParser {
 			return Collections.singletonList(toDocument(text));
 		}
 		catch (Exception e) {
+			if (WriteLimitReachedException.isWriteLimitReached(e)) {
+				throw new IllegalStateException("Tika document exceeds the extracted character limit", e);
+			}
 			throw new RuntimeException(e);
 		}
 	}
@@ -140,7 +160,7 @@ public class TikaDocumentParser implements DocumentParser {
 		return new Document(docText);
 	}
 
-	private static <T> T getOrDefault(T value, Supplier<T> defaultValueSupplier) {
+	private static <T> T getOrDefault(@Nullable T value, Supplier<T> defaultValueSupplier) {
 		return value != null ? value : defaultValueSupplier.get();
 	}
 

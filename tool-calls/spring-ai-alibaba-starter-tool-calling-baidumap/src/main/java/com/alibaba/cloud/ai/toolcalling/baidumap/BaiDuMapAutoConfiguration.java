@@ -20,6 +20,9 @@ import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -60,6 +63,24 @@ public class BaiDuMapAutoConfiguration {
 	@Bean
 	public BaiDuMapTools baiDuMapTools(BaiDuMapProperties properties, JsonParseTool jsonParseTool) {
 		return new BaiDuMapTools(properties, WebClientTool.builder(jsonParseTool, properties).build(), jsonParseTool);
+	}
+
+	@Bean(name = "baiduMapGetAddressInformationToolCallback")
+	@ConditionalOnMissingBean(name = "baiduMapGetAddressInformationToolCallback")
+	public ToolCallback baiduMapGetAddressInformationToolCallback(BaiduMapSearchInfoService baiduMapGetAddressInformation) {
+		return FunctionToolCallback.builder(BaiduMapConstants.TOOL_NAME_GET_ADDRESS, baiduMapGetAddressInformation)
+			.description("Search for places using Baidu Maps API " + "or Get detail information of a address and facility query with baidu map or " + "Get address information of a place with baidu map or " + "Get detailed information about a specific place with baidu map")
+			.inputType(BaiduMapSearchInfoService.Request.class)
+			.build();
+	}
+
+	@Bean(name = "baiDuMapGetAddressWeatherInformationToolCallback")
+	@ConditionalOnMissingBean(name = "baiDuMapGetAddressWeatherInformationToolCallback")
+	public ToolCallback baiDuMapGetAddressWeatherInformationToolCallback(BaiDuMapWeatherService baiDuMapGetAddressWeatherInformation) {
+		return FunctionToolCallback.builder(BaiduMapConstants.TOOL_NAME_GET_WEATHER, baiDuMapGetAddressWeatherInformation)
+			.description("Query the weather conditions of a specified location")
+			.inputType(BaiDuMapWeatherService.Request.class)
+			.build();
 	}
 
 }

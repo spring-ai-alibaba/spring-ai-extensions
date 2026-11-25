@@ -15,8 +15,8 @@
  */
 package com.alibaba.cloud.ai.reader.bilibili;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
@@ -24,6 +24,7 @@ import org.springframework.ai.document.DocumentReader;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -62,11 +63,11 @@ public class BilibiliDocumentReader implements DocumentReader {
 			43, 5, 49, 33, 9, 42, 19, 29, 28, 14, 39, 12, 38, 41, 13, 37, 48, 7, 16, 24, 55, 40, 61, 26, 17, 0, 1, 60,
 			51, 30, 4, 22, 25, 54, 21, 56, 59, 6, 63, 57, 62, 11, 36, 20, 34, 44, 52 };
 
-	private final BilibiliResource bilibiliResource;
+	private final @Nullable BilibiliResource bilibiliResource;
 
-	private final List<BilibiliResource> bilibiliResourceList;
+	private final @Nullable List<BilibiliResource> bilibiliResourceList;
 
-	private final ObjectMapper objectMapper;
+	private final JsonMapper jsonMapper;
 
 	private final WebClient webClient;
 
@@ -79,20 +80,20 @@ public class BilibiliDocumentReader implements DocumentReader {
 	public BilibiliDocumentReader(BilibiliResource bilibiliResource) {
 		this.bilibiliResource = bilibiliResource;
 		this.bilibiliResourceList = null;
-		this.objectMapper = new ObjectMapper();
+		this.jsonMapper = JsonMapper.shared();
 		this.webClient = createWebClient(bilibiliResource.getCredentials());
 	}
 
 	public BilibiliDocumentReader(List<BilibiliResource> bilibiliResourceList) {
 		this.bilibiliResourceList = bilibiliResourceList;
 		this.bilibiliResource = null;
-		this.objectMapper = new ObjectMapper();
+		this.jsonMapper = JsonMapper.shared();
 		// Use credentials from first resource for WebClient
 		this.webClient = createWebClient(
 				bilibiliResourceList.isEmpty() ? null : bilibiliResourceList.get(0).getCredentials());
 	}
 
-	private WebClient createWebClient(BilibiliCredentials credentials) {
+	private WebClient createWebClient(@Nullable BilibiliCredentials credentials) {
 		return WebClient.builder()
 			.defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
 			.defaultHeader(HttpHeaders.USER_AGENT, userAgent())
@@ -106,7 +107,7 @@ public class BilibiliDocumentReader implements DocumentReader {
 				System.getProperty("java.version"), System.getProperty("os.name"), System.getProperty("os.arch"));
 	}
 
-	private String buildCookieHeader(BilibiliCredentials credentials) {
+	private String buildCookieHeader(@Nullable BilibiliCredentials credentials) {
 		if (credentials == null) {
 			return "";
 		}
@@ -143,15 +144,16 @@ public class BilibiliDocumentReader implements DocumentReader {
 			String bvid = resource.getBvid();
 
 			// Step 1: Get video basic info
-			String videoInfoResponse = webClient.get()
-				.uri(API_VIDEO_INFO + "?bvid=" + bvid)
-				.retrieve()
-				.bodyToMono(String.class)
-				.block();
+				String videoInfoResponse = webClient.get()
+					.uri(API_VIDEO_INFO + "?bvid=" + bvid)
+					.retrieve()
+					.bodyToMono(String.class)
+					.block();
 
-			JsonNode videoData = parseJson(videoInfoResponse).path("data");
-			String title = videoData.path("title").asText();
-			String description = videoData.path("desc").asText();
+				JsonNode videoData = parseJson(Objects.requireNonNull(videoInfoResponse, "video info response must not be null"))
+					.path("data");
+			String title = videoData.path("title").asString();
+			String description = videoData.path("desc").asString();
 
 			// Add video info document
 			Map<String, Object> infoMetadata = new java.util.HashMap<>();
@@ -163,13 +165,14 @@ public class BilibiliDocumentReader implements DocumentReader {
 			documents.add(infoDoc);
 
 			// Step 2: Get page list to obtain cid
-			String pageListResponse = webClient.get()
-				.uri(API_PAGE_LIST + "?bvid=" + bvid)
-				.retrieve()
-				.bodyToMono(String.class)
-				.block();
+				String pageListResponse = webClient.get()
+					.uri(API_PAGE_LIST + "?bvid=" + bvid)
+					.retrieve()
+					.bodyToMono(String.class)
+					.block();
 
-			JsonNode pageData = parseJson(pageListResponse).path("data");
+				JsonNode pageData = parseJson(Objects.requireNonNull(pageListResponse, "page list response must not be null"))
+					.path("data");
 			if (!pageData.isArray() || pageData.size() == 0) {
 				logger.error("No page data found for video: {}", bvid);
 				documents.add(new Document("Error: No page data found"));
@@ -232,11 +235,12 @@ public class BilibiliDocumentReader implements DocumentReader {
 		String playerUrl = API_PLAYER_WBI + "?" + queryString + "&w_rid=" + wRid;
 		String playerResponse = webClient.get().uri(playerUrl).retrieve().bodyToMono(String.class).block();
 
-		JsonNode playerData = parseJson(playerResponse).path("data");
+		JsonNode playerData = parseJson(Objects.requireNonNull(playerResponse, "player response must not be null"))
+			.path("data");
 		JsonNode subtitleList = playerData.path("subtitle").path("subtitles");
 
 		if (subtitleList.isArray() && subtitleList.size() > 0) {
-			String subtitleUrl = subtitleList.get(0).path("subtitle_url").asText();
+			String subtitleUrl = subtitleList.get(0).path("subtitle_url").asString();
 
 			// Add https: prefix if missing
 			if (subtitleUrl.startsWith("//")) {
@@ -246,9 +250,10 @@ public class BilibiliDocumentReader implements DocumentReader {
 			// Download subtitle content
 			String subtitleResponse = webClient.get().uri(subtitleUrl).retrieve().bodyToMono(String.class).block();
 
-			JsonNode subtitleJson = parseJson(subtitleResponse);
+			JsonNode subtitleJson = parseJson(
+					Objects.requireNonNull(subtitleResponse, "subtitle response must not be null"));
 			StringBuilder rawTranscript = new StringBuilder();
-			subtitleJson.path("body").forEach(node -> rawTranscript.append(node.path("content").asText()).append(" "));
+			subtitleJson.path("body").forEach(node -> rawTranscript.append(node.path("content").asString()).append(" "));
 
 			return rawTranscript.toString().trim();
 		}
@@ -261,9 +266,11 @@ public class BilibiliDocumentReader implements DocumentReader {
 		// Fetch navigation API to get img_url and sub_url
 		String navResponse = webClient.get().uri(API_NAV).retrieve().bodyToMono(String.class).block();
 
-		JsonNode navData = parseJson(navResponse).path("data").path("wbi_img");
-		String imgUrl = navData.path("img_url").asText();
-		String subUrl = navData.path("sub_url").asText();
+		JsonNode navData = parseJson(Objects.requireNonNull(navResponse, "nav response must not be null"))
+			.path("data")
+			.path("wbi_img");
+		String imgUrl = navData.path("img_url").asString();
+		String subUrl = navData.path("sub_url").asString();
 
 		// Extract keys from URLs
 		String imgKey = imgUrl.substring(imgUrl.lastIndexOf('/') + 1).replace(".png", "");
@@ -302,7 +309,7 @@ public class BilibiliDocumentReader implements DocumentReader {
 	}
 
 	private JsonNode parseJson(String jsonResponse) throws IOException {
-		return objectMapper.readTree(jsonResponse);
+		return jsonMapper.readTree(jsonResponse);
 	}
 
 }

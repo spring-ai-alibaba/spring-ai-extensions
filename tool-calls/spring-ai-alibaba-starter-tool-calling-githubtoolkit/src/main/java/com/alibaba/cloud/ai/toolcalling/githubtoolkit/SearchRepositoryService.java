@@ -15,24 +15,22 @@
  */
 package com.alibaba.cloud.ai.toolcalling.githubtoolkit;
 
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import tools.jackson.core.type.TypeReference;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class SearchRepositoryService implements Function<SearchRepositoryService.Request, Response> {
 
@@ -59,39 +57,38 @@ public class SearchRepositoryService implements Function<SearchRepositoryService
 		params.add("sort", request.sort() != null ? request.sort() : "best match");
 		params.add("order", request.order() != null ? request.order() : "desc");
 
-		try {
-			String responseData = webClientTool.get(SEARCH_REPOS_ENDPOINT, params).block();
-			logger.info("SearchRepositoriesOperation success");
+        String responseData = GithubToolKitValueUtils
+                .requireResponseBody(webClientTool.get(SEARCH_REPOS_ENDPOINT, params).block(), "Search repository");
+        logger.info("SearchRepositoriesOperation success");
 
-			return new Response<>(parseRepositorySearchResults(responseData));
-		}
-		catch (IOException e) {
-			logger.error("Error occurred while parsing response: {}", e.getMessage());
-			throw new RuntimeException(e);
-		}
+        return new Response<>(parseRepositorySearchResults(responseData));
 	}
 
-	public List<Repository> parseRepositorySearchResults(String json) throws JsonProcessingException {
+	public List<Repository> parseRepositorySearchResults(String json) {
+		@Nullable
 		List<Map<String, Object>> itemMaps = jsonParseTool.getFieldValue(json,
 				new TypeReference<List<Map<String, Object>>>() {
 				}, "items");
+		if (itemMaps == null) {
+			return List.of();
+		}
 
 		return itemMaps.stream().map(itemMap -> {
-			long id = ((Number) itemMap.get("id")).longValue();
-			String name = (String) itemMap.get("name");
-			String fullName = (String) itemMap.get("full_name");
-			String description = (String) itemMap.get("description");
-			String htmlUrl = (String) itemMap.get("html_url");
-			int stargazersCount = ((Number) itemMap.get("stargazers_count")).intValue();
-			int forksCount = ((Number) itemMap.get("forks_count")).intValue();
-			String language = (String) itemMap.get("language");
+			long id = GithubToolKitValueUtils.requireLong(itemMap, "id");
+			String name = GithubToolKitValueUtils.requireString(itemMap, "name");
+			String fullName = GithubToolKitValueUtils.requireString(itemMap, "full_name");
+			@Nullable String description = GithubToolKitValueUtils.nullableString(itemMap, "description");
+			String htmlUrl = GithubToolKitValueUtils.requireString(itemMap, "html_url");
+			int stargazersCount = GithubToolKitValueUtils.requireInt(itemMap, "stargazers_count");
+			int forksCount = GithubToolKitValueUtils.requireInt(itemMap, "forks_count");
+			@Nullable String language = GithubToolKitValueUtils.nullableString(itemMap, "language");
 
 			return new Repository(id, name, fullName, description, htmlUrl, stargazersCount, forksCount, language);
-		}).collect(Collectors.toList());
+		}).toList();
 	}
 
-	public record Repository(long id, String name, String fullName, String description, String htmlUrl,
-			int stargazersCount, int forksCount, String language) {
+	public record Repository(long id, String name, String fullName, @Nullable String description, String htmlUrl,
+			int stargazersCount, int forksCount, @Nullable String language) {
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
@@ -100,10 +97,10 @@ public class SearchRepositoryService implements Function<SearchRepositoryService
 			value = "query") @JsonPropertyDescription("Keywords used for queries, useful for getting a list of repositories") String query,
 
 			@JsonProperty(
-					value = "sort") @JsonPropertyDescription("Sorts the results of your query by number of stars, forks, or help-wanted-issues or how recently the items were updated.") String sort,
+					value = "sort") @JsonPropertyDescription("Sorts the results of your query by number of stars, forks, or help-wanted-issues or how recently the items were updated.") @Nullable String sort,
 
 			@JsonProperty(
-					value = "order") @JsonPropertyDescription("Determines whether the first search result returned is the highest number of matches (desc) or lowest number of matches (asc). This parameter is ignored unless you provide sort.") String order) {
+					value = "order") @JsonPropertyDescription("Determines whether the first search result returned is the highest number of matches (desc) or lowest number of matches (asc). This parameter is ignored unless you provide sort.") @Nullable String order) {
 	}
 
 }

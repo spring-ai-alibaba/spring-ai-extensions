@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.reader.obsidian;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
 
@@ -28,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -113,9 +115,9 @@ public class ObsidianResource implements Resource {
 
 	public static class Builder {
 
-		private Path vaultPath;
+		private @Nullable Path vaultPath;
 
-		private Path filePath;
+		private @Nullable Path filePath;
 
 		public Builder vaultPath(Path vaultPath) {
 			this.vaultPath = vaultPath;
@@ -128,9 +130,8 @@ public class ObsidianResource implements Resource {
 		}
 
 		public ObsidianResource build() {
-			Assert.notNull(vaultPath, "VaultPath must not be null");
-			Assert.notNull(filePath, "FilePath must not be null");
-			return new ObsidianResource(vaultPath, filePath);
+			return new ObsidianResource(Objects.requireNonNull(vaultPath, "VaultPath must not be null"),
+					Objects.requireNonNull(filePath, "FilePath must not be null"));
 		}
 
 	}

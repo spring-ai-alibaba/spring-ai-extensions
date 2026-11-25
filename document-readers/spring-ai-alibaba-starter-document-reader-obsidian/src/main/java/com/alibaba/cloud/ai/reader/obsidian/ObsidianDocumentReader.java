@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.reader.obsidian;
 
 import com.alibaba.cloud.ai.parser.markdown.MarkdownDocumentParser;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Document reader for Obsidian vault Reads all markdown files in the vault and parses
@@ -80,7 +82,7 @@ public class ObsidianDocumentReader implements DocumentReader {
 
 	public static class Builder {
 
-		private Path vaultPath;
+		private @Nullable Path vaultPath;
 
 		public Builder vaultPath(Path vaultPath) {
 			this.vaultPath = vaultPath;
@@ -88,7 +90,7 @@ public class ObsidianDocumentReader implements DocumentReader {
 		}
 
 		public ObsidianDocumentReader build() {
-			return new ObsidianDocumentReader(vaultPath);
+			return new ObsidianDocumentReader(Objects.requireNonNull(vaultPath, "VaultPath must not be null"));
 		}
 
 	}

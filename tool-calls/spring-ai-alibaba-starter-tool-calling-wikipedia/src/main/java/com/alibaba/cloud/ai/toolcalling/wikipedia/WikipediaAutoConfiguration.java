@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.wikipedia;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -43,6 +45,15 @@ public class WikipediaAutoConfiguration {
 		return new WikipediaService(WebClientTool.builder(jsonParseTool, properties).httpHeadersConsumer(headers -> {
 			headers.add("User-Agent", "Spring AI Alibaba Wikipedia Tool/1.0");
 		}).build(), jsonParseTool, properties);
+	}
+
+	@Bean(name = "searchWikipediaToolCallback")
+	@ConditionalOnMissingBean(name = "searchWikipediaToolCallback")
+	public ToolCallback searchWikipediaToolCallback(WikipediaService searchWikipedia) {
+		return FunctionToolCallback.builder(WikipediaConstants.TOOL_NAME, searchWikipedia)
+			.description("Search Wikipedia for information using keywords.")
+			.inputType(WikipediaService.Request.class)
+			.build();
 	}
 
 }

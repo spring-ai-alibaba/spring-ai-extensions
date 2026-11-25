@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.reader.gitlab;
 
+import org.jspecify.annotations.Nullable;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,111 +29,111 @@ import java.util.List;
 public class GitLabIssueConfig {
 
 	// Assignee username to filter issues
-	private String assignee;
+	private @Nullable String assignee;
 
 	// Author username to filter issues
-	private String author;
+	private @Nullable String author;
 
 	// Whether to return only confidential issues
-	private Boolean confidential;
+	private @Nullable Boolean confidential;
 
 	// Return issues created after this date
-	private LocalDateTime createdAfter;
+	private @Nullable LocalDateTime createdAfter;
 
 	// Return issues created before this date
-	private LocalDateTime createdBefore;
+	private @Nullable LocalDateTime createdBefore;
 
 	// List of issue IIDs to filter
-	private List<Integer> iids;
+	private @Nullable List<Integer> iids;
 
 	// Type of issues to return (issue, incident, test_case)
-	private GitLabIssueType issueType;
+	private @Nullable GitLabIssueType issueType;
 
 	// Labels to filter issues
-	private List<String> labels;
+	private @Nullable List<String> labels;
 
 	// Milestone title to filter issues
-	private String milestone;
+	private @Nullable String milestone;
 
 	// Whether to return only non-archived issues
-	private Boolean nonArchived;
+	private @Nullable Boolean nonArchived;
 
 	// Scope of issues to return (created_by_me, assigned_to_me, all)
-	private GitLabScope scope;
+	private @Nullable GitLabScope scope;
 
 	// Search query to filter issues
-	private String search;
+	private @Nullable String search;
 
 	// State of issues to return (opened, closed, all)
-	private GitLabIssueState state;
+	private @Nullable GitLabIssueState state;
 
 	// Return issues updated after this date
-	private LocalDateTime updatedAfter;
+	private @Nullable LocalDateTime updatedAfter;
 
 	// Return issues updated before this date
-	private LocalDateTime updatedBefore;
+	private @Nullable LocalDateTime updatedBefore;
 
 	private GitLabIssueConfig() {
 		// Use builder pattern to create instances
 	}
 
-	public String getAssignee() {
+	public @Nullable String getAssignee() {
 		return assignee;
 	}
 
-	public String getAuthor() {
+	public @Nullable String getAuthor() {
 		return author;
 	}
 
-	public Boolean getConfidential() {
+	public @Nullable Boolean getConfidential() {
 		return confidential;
 	}
 
-	public LocalDateTime getCreatedAfter() {
+	public @Nullable LocalDateTime getCreatedAfter() {
 		return createdAfter;
 	}
 
-	public LocalDateTime getCreatedBefore() {
+	public @Nullable LocalDateTime getCreatedBefore() {
 		return createdBefore;
 	}
 
-	public List<Integer> getIids() {
+	public @Nullable List<Integer> getIids() {
 		return iids;
 	}
 
-	public GitLabIssueType getIssueType() {
+	public @Nullable GitLabIssueType getIssueType() {
 		return issueType;
 	}
 
-	public List<String> getLabels() {
+	public @Nullable List<String> getLabels() {
 		return labels;
 	}
 
-	public String getMilestone() {
+	public @Nullable String getMilestone() {
 		return milestone;
 	}
 
-	public Boolean getNonArchived() {
+	public @Nullable Boolean getNonArchived() {
 		return nonArchived;
 	}
 
-	public GitLabScope getScope() {
+	public @Nullable GitLabScope getScope() {
 		return scope;
 	}
 
-	public String getSearch() {
+	public @Nullable String getSearch() {
 		return search;
 	}
 
-	public GitLabIssueState getState() {
+	public @Nullable GitLabIssueState getState() {
 		return state;
 	}
 
-	public LocalDateTime getUpdatedAfter() {
+	public @Nullable LocalDateTime getUpdatedAfter() {
 		return updatedAfter;
 	}
 
-	public LocalDateTime getUpdatedBefore() {
+	public @Nullable LocalDateTime getUpdatedBefore() {
 		return updatedBefore;
 	}
 
@@ -147,77 +149,77 @@ public class GitLabIssueConfig {
 			config = new GitLabIssueConfig();
 		}
 
-		public Builder assignee(String assignee) {
+		public Builder assignee(@Nullable String assignee) {
 			config.assignee = assignee;
 			return this;
 		}
 
-		public Builder author(String author) {
+		public Builder author(@Nullable String author) {
 			config.author = author;
 			return this;
 		}
 
-		public Builder confidential(Boolean confidential) {
+		public Builder confidential(@Nullable Boolean confidential) {
 			config.confidential = confidential;
 			return this;
 		}
 
-		public Builder createdAfter(LocalDateTime createdAfter) {
+		public Builder createdAfter(@Nullable LocalDateTime createdAfter) {
 			config.createdAfter = createdAfter;
 			return this;
 		}
 
-		public Builder createdBefore(LocalDateTime createdBefore) {
+		public Builder createdBefore(@Nullable LocalDateTime createdBefore) {
 			config.createdBefore = createdBefore;
 			return this;
 		}
 
-		public Builder iids(List<Integer> iids) {
+		public Builder iids(@Nullable List<Integer> iids) {
 			config.iids = iids;
 			return this;
 		}
 
-		public Builder issueType(GitLabIssueType issueType) {
+		public Builder issueType(@Nullable GitLabIssueType issueType) {
 			config.issueType = issueType;
 			return this;
 		}
 
-		public Builder labels(List<String> labels) {
+		public Builder labels(@Nullable List<String> labels) {
 			config.labels = labels;
 			return this;
 		}
 
-		public Builder milestone(String milestone) {
+		public Builder milestone(@Nullable String milestone) {
 			config.milestone = milestone;
 			return this;
 		}
 
-		public Builder nonArchived(Boolean nonArchived) {
+		public Builder nonArchived(@Nullable Boolean nonArchived) {
 			config.nonArchived = nonArchived;
 			return this;
 		}
 
-		public Builder scope(GitLabScope scope) {
+		public Builder scope(@Nullable GitLabScope scope) {
 			config.scope = scope;
 			return this;
 		}
 
-		public Builder search(String search) {
+		public Builder search(@Nullable String search) {
 			config.search = search;
 			return this;
 		}
 
-		public Builder state(GitLabIssueState state) {
+		public Builder state(@Nullable GitLabIssueState state) {
 			config.state = state != null ? state : GitLabIssueState.OPEN;
 			return this;
 		}
 
-		public Builder updatedAfter(LocalDateTime updatedAfter) {
+		public Builder updatedAfter(@Nullable LocalDateTime updatedAfter) {
 			config.updatedAfter = updatedAfter;
 			return this;
 		}
 
-		public Builder updatedBefore(LocalDateTime updatedBefore) {
+		public Builder updatedBefore(@Nullable LocalDateTime updatedBefore) {
 			config.updatedBefore = updatedBefore;
 			return this;
 		}

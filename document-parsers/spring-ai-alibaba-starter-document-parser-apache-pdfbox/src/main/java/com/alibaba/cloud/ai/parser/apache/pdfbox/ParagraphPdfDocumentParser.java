@@ -24,6 +24,7 @@ import java.util.List;
 import com.alibaba.cloud.ai.document.DocumentParser;
 import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,7 +126,7 @@ public class ParagraphPdfDocumentParser implements DocumentParser {
 		}
 	}
 
-	protected Document toDocument(Paragraph from, Paragraph to, PDDocument pdDocument) {
+	protected @Nullable Document toDocument(Paragraph from, Paragraph to, PDDocument pdDocument) {
 
 		String docText = this.getTextBetweenParagraphs(from, to, pdDocument);
 
