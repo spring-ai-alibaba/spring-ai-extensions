@@ -48,7 +48,7 @@ public class PythonServiceAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(name = "pythonToolCallback")
     public ToolCallback pythonToolCallback(PythonService pythonService) {
-        return FunctionToolCallback.builder("python", pythonService)
+        return FunctionToolCallback.builder("python", pythonService::apply)
                 .description(PythonConstants.DESCRIPTION)
                 .inputType(PythonService.Request.class)
                 .build();
