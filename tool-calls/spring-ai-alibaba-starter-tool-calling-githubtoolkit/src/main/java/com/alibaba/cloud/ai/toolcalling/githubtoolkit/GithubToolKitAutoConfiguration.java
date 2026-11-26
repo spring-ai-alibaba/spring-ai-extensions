@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.githubtoolkit;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -67,6 +69,33 @@ public class GithubToolKitAutoConfiguration {
 			headers.set("X-GitHub-Api-Version", GithubToolKitProperties.X_GitHub_Api_Version);
 			headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + properties.getToken());
 		}).build();
+	}
+
+	@Bean(name = "getIssueToolCallback")
+	@ConditionalOnMissingBean(name = "getIssueToolCallback")
+	public ToolCallback getIssueToolCallback(GetIssueService getIssue) {
+		return FunctionToolCallback.builder(GithubToolKitConstants.GET_ISSUE_TOOL_NAME, getIssue)
+			.description("implement the function of get a GitHub issue operation")
+			.inputType(GetIssueService.Request.class)
+			.build();
+	}
+
+	@Bean(name = "createPullRequestToolCallback")
+	@ConditionalOnMissingBean(name = "createPullRequestToolCallback")
+	public ToolCallback createPullRequestToolCallback(CreatePullRequestService createPullRequest) {
+		return FunctionToolCallback.builder(GithubToolKitConstants.CREATE_PR_TOOL_NAME, createPullRequest)
+			.description("implement the function of create GitHub pull request operation")
+			.inputType(CreatePullRequestService.Request.class)
+			.build();
+	}
+
+	@Bean(name = "searchRepositoryToolCallback")
+	@ConditionalOnMissingBean(name = "searchRepositoryToolCallback")
+	public ToolCallback searchRepositoryToolCallback(SearchRepositoryService searchRepository) {
+		return FunctionToolCallback.builder(GithubToolKitConstants.SEARCH_REPOSITORY_TOOL_NAME, searchRepository)
+			.description("implement the function of search the list of repositories operation")
+			.inputType(SearchRepositoryService.Request.class)
+			.build();
 	}
 
 }

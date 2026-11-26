@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.rag.advisor;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.api.AdvisorChain;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Expand the original query into multiple queries for Retrieval
@@ -43,7 +45,7 @@ public class MultiQueryRetrieverAdvisor implements BaseAdvisor {
 
     public static final String DOCUMENT_CONTEXT = "spring_ai_alibaba_rag_document_context";
 
-    private final QueryExpander queryExpander;
+    private final @Nullable QueryExpander queryExpander;
 
     private final QueryAugmenter queryAugmenter;
 
@@ -51,7 +53,7 @@ public class MultiQueryRetrieverAdvisor implements BaseAdvisor {
 
     private final int order;
 
-    public MultiQueryRetrieverAdvisor(QueryExpander queryExpander, QueryAugmenter queryAugmenter,
+    public MultiQueryRetrieverAdvisor(@Nullable QueryExpander queryExpander, @Nullable QueryAugmenter queryAugmenter,
                                       DocumentRetriever documentRetriever, Integer order) {
         Assert.notNull(documentRetriever, "documentRetriever cannot be null");
         this.queryExpander = queryExpander;
@@ -65,7 +67,7 @@ public class MultiQueryRetrieverAdvisor implements BaseAdvisor {
         Map<String, Object> context = new HashMap<>(chatClientRequest.context());
         // 1. Create a query from the user text, parameters, and conversation history.
         Query originalQuery = Query.builder()
-                .text(chatClientRequest.prompt().getUserMessage().getText())
+                .text(Objects.requireNonNullElse(chatClientRequest.prompt().getUserMessage().getText(), ""))
                 .history(chatClientRequest.prompt().getInstructions())
                 .context(context)
                 .build();
@@ -94,7 +96,8 @@ public class MultiQueryRetrieverAdvisor implements BaseAdvisor {
         } else {
             chatResponseBuilder = ChatResponse.builder().from(chatClientResponse.chatResponse());
         }
-        chatResponseBuilder.metadata(DOCUMENT_CONTEXT, chatClientResponse.context().get(DOCUMENT_CONTEXT));
+        chatResponseBuilder.metadata(DOCUMENT_CONTEXT,
+                Objects.requireNonNullElse(chatClientResponse.context().get(DOCUMENT_CONTEXT), List.of()));
         return ChatClientResponse.builder()
                 .chatResponse(chatResponseBuilder.build())
                 .context(chatClientResponse.context())
@@ -112,11 +115,11 @@ public class MultiQueryRetrieverAdvisor implements BaseAdvisor {
 
     public static final class Builder {
 
-        private QueryExpander queryExpander;
+        private @Nullable QueryExpander queryExpander;
 
-        private QueryAugmenter queryAugmenter;
+        private @Nullable QueryAugmenter queryAugmenter;
 
-        private DocumentRetriever documentRetriever;
+        private @Nullable DocumentRetriever documentRetriever;
 
         private int order;
 
@@ -145,7 +148,8 @@ public class MultiQueryRetrieverAdvisor implements BaseAdvisor {
         }
 
         public MultiQueryRetrieverAdvisor build() {
-            return new MultiQueryRetrieverAdvisor(queryExpander, queryAugmenter, documentRetriever, order);
+            return new MultiQueryRetrieverAdvisor(queryExpander, queryAugmenter,
+                    java.util.Objects.requireNonNull(documentRetriever, "documentRetriever cannot be null"), order);
         }
     }
 }

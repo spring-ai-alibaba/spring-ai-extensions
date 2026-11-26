@@ -126,7 +126,7 @@ public class PdfTablesParser implements DocumentParser {
 		List<Document> documents = new ArrayList<>();
 
 		if (data.isEmpty()) {
-			return null;
+			return documents;
 		}
 
 		for (String datum : data) {

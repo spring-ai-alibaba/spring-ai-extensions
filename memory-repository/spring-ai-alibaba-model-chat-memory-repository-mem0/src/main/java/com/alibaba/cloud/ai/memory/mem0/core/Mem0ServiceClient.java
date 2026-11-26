@@ -1,0 +1,520 @@
+/*
+ * Copyright 2024-2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.alibaba.cloud.ai.memory.mem0.core;
+
+import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerRequest;
+import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerResp;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.http.MediaType;
+import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import org.jspecify.annotations.Nullable;
+
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import tools.jackson.core.type.TypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.json.JsonMapper;
+
+/**
+ * Mem0 API Client Implementation
+ *
+ * Directly calls the Mem0 REST API interface. Reference documentation:
+ * http://localhost:8888/docs
+ */
+public class Mem0ServiceClient {
+
+	private static final Logger logger = LoggerFactory.getLogger(Mem0ServiceClient.class);
+	// Mem0 API endpoint
+	private static final String CONFIGURE_ENDPOINT = "/configure";
+	private static final String MEMORIES_ENDPOINT = "/memories";
+	private static final String SEARCH_ENDPOINT = "/search";
+	private static final String RESET_ENDPOINT = "/reset";
+	private final WebClient webClient;
+	private final JsonMapper jsonMapper;
+	private final Mem0Client mem0Client;
+	private final Mem0Server mem0Server;
+	private final ResourceLoader resourceLoader;
+	private final Executor asyncExecutor;
+
+	/**
+	 * Constructor
+	 */
+	public Mem0ServiceClient(Mem0Client mem0Client, Mem0Server mem0Server, ResourceLoader resourceLoader) {
+		this.mem0Client = mem0Client;
+		this.mem0Server = mem0Server;
+		this.resourceLoader = resourceLoader;
+		this.jsonMapper = JsonMapper.builder()
+                // JSON key serialization using snake_case
+                .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                // Ignore null values and empty collections
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_EMPTY))
+                .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(JsonInclude.Include.NON_EMPTY))
+                .build();
+
+		// Create WebClient to connect to Mem0 API
+		this.webClient = WebClient.builder()
+				.baseUrl(mem0Client.getBaseUrl())
+				.defaultHeader("Content-Type", "application/json")
+				.build();
+
+		// Initialize async executor for memory operations
+		Mem0Client.AsyncConfig async = mem0Client.getAsync();
+		if (async.isEnabled()) {
+			this.asyncExecutor = Executors.newFixedThreadPool(async.getMaxPoolSize(), new ThreadFactory() {
+				private final AtomicInteger threadNumber = new AtomicInteger(1);
+
+				@Override
+				public Thread newThread(Runnable r) {
+					Thread t = new Thread(r, async.getThreadNamePrefix() + threadNumber.getAndIncrement());
+					t.setDaemon(true);
+					return t;
+				}
+			});
+		}
+		else {
+			// If async is disabled, use a synchronous executor
+			this.asyncExecutor = Runnable::run;
+		}
+	}
+
+	/**
+	 * Configures Mem0
+	 */
+	public void configure(Mem0Server mem0server) {
+		try {
+			if (Objects.nonNull(mem0server.getProject())) {
+				mem0server.getProject()
+						.setCustomInstructions(this.loadPrompt(mem0server.getProject().getCustomInstructions()));
+				mem0server.getProject()
+						.setCustomCategories(this.loadPrompt(mem0server.getProject().getCustomCategories()));
+			}
+			if (Objects.nonNull(mem0server.getGraphStore())) {
+				mem0server.getGraphStore()
+						.setCustomPrompt(this.loadPrompt(mem0server.getGraphStore().getCustomPrompt()));
+			}
+			mem0server.setCustomFactExtractionPrompt(this.loadPrompt(mem0server.getCustomFactExtractionPrompt()));
+			mem0server.setCustomUpdateMemoryPrompt(this.loadPrompt(mem0server.getCustomUpdateMemoryPrompt()));
+
+			String requestJson = jsonMapper.writeValueAsString(mem0server);
+			String response = webClient.post()
+					.uri(CONFIGURE_ENDPOINT)
+					.contentType(MediaType.APPLICATION_JSON)
+					.body(BodyInserters.fromValue(requestJson))
+					.retrieve()
+					.bodyToMono(String.class)
+					.timeout(Duration.ofSeconds(this.mem0Client.getTimeoutSeconds()))
+					.block();
+			if (StringUtils.hasText(response) && response.contains("successfully")) {
+				logger.info("Mem0 configuration updated successfully");
+			}
+			else {
+				logger.error("Failed to configure Mem0: {}", response);
+				throw new RuntimeException("Failed to configure Mem0");
+			}
+		}
+		catch (Exception e) {
+			logger.error("Failed to configure Mem0: {}", e.getMessage(), e);
+			throw new RuntimeException("Failed to configure Mem0", e);
+		}
+	}
+
+	/**
+	 * Add memory - automatically chooses sync or async based on configuration
+	 */
+	public void addMemory(Mem0ServerRequest.MemoryCreate memoryCreate) {
+		if (mem0Client.getAsync().isEnabled()) {
+			// Execute asynchronously
+			CompletableFuture.runAsync(() -> {
+				executeAddMemory(memoryCreate);
+			}, asyncExecutor);
+		}
+		else {
+			// Execute synchronously
+			executeAddMemory(memoryCreate);
+		}
+	}
+
+	/**
+	 * Add memory asynchronously - returns CompletableFuture for advanced usage
+	 */
+	public CompletableFuture<Void> addMemoryAsync(Mem0ServerRequest.MemoryCreate memoryCreate) {
+		return CompletableFuture.runAsync(() -> {
+			executeAddMemory(memoryCreate);
+		}, asyncExecutor);
+	}
+
+	/**
+	 * Internal method to execute add memory operation
+	 */
+	private void executeAddMemory(Mem0ServerRequest.MemoryCreate memoryCreate) {
+		try {
+			// Add debugging information
+			String requestJson = jsonMapper.writeValueAsString(memoryCreate);
+
+			String response = webClient.post()
+					.uri(MEMORIES_ENDPOINT)
+					.contentType(MediaType.APPLICATION_JSON)
+					.body(BodyInserters.fromValue(requestJson))
+					.retrieve()
+					.bodyToMono(String.class)
+					.timeout(Duration.ofSeconds(mem0Client.getTimeoutSeconds()))
+					.retry(mem0Client.getMaxRetryAttempts())
+					.block();
+
+			if (response != null) {
+				jsonMapper.readValue(response, new TypeReference<Map<String, Object>>() {
+				});
+				logger.info("Successfully added memory with {} messages", memoryCreate.getMessages().size());
+			}
+		}
+		catch (WebClientResponseException e) {
+			String errorBody = e.getResponseBodyAsString();
+			logger.error("HTTP error adding memory: {} - {}", e.getStatusCode(), errorBody, e);
+			throw new RuntimeException("Failed to add memory: " + errorBody, e);
+		}
+		catch (Exception e) {
+			logger.error("UNKNOWN error adding memory: {}", e.getMessage(), e);
+			throw new RuntimeException("Failed to add memory", e);
+		}
+	}
+
+
+	/**
+	 * Get all memory
+	 */
+	public Mem0ServerResp getAllMemories(@Nullable String userId, @Nullable String runId, @Nullable String agentId) {
+		try {
+			String response = webClient.get().uri(uriBuilder -> {
+						uriBuilder.path(MEMORIES_ENDPOINT);
+						if (userId != null)
+							uriBuilder.queryParam("user_id", userId);
+						if (runId != null)
+							uriBuilder.queryParam("run_id", runId);
+						if (agentId != null)
+							uriBuilder.queryParam("agent_id", agentId);
+						return uriBuilder.build();
+					})
+					.retrieve()
+					.bodyToMono(String.class)
+					.timeout(Duration.ofSeconds(this.mem0Client.getTimeoutSeconds()))
+					.retry(this.mem0Client.getMaxRetryAttempts())
+					.block();
+
+			if (response != null) {
+				// Mem0 service returns data in the format {"results":[],"relations":[]}
+				return jsonMapper.readValue(response, new TypeReference<Mem0ServerResp>() {
+				});
+			}
+		}
+		catch (Exception e) {
+			logger.error("Failed to get memories: {}", e.getMessage(), e);
+			throw new RuntimeException("Failed to get memories", e);
+		}
+
+		return new Mem0ServerResp();
+	}
+
+	/**
+	 * Get single memory
+	 */
+	public @Nullable Mem0ServerResp getMemory(String memoryId) {
+		try {
+			String response = webClient.get()
+					.uri(MEMORIES_ENDPOINT + "/{memoryId}", memoryId)
+					.retrieve()
+					.bodyToMono(String.class)
+					.timeout(Duration.ofSeconds(this.mem0Client.getTimeoutSeconds()))
+					.retry(this.mem0Client.getMaxRetryAttempts())
+					.block();
+
+			if (response != null) {
+				Mem0ServerResp memory = jsonMapper.readValue(response, Mem0ServerResp.class);
+				logger.info("Retrieved memory: {}", memoryId);
+				return memory;
+			}
+		}
+		catch (Exception e) {
+			logger.error("Failed to get memory {}: {}", memoryId, e.getMessage(), e);
+			throw new RuntimeException("Failed to get memory " + memoryId, e);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Search memory
+	 */
+	public Mem0ServerResp searchMemories(Mem0ServerRequest.SearchRequest searchRequest) {
+		try {
+			// The SEARCH_ENDPOINT requires the query field to have a value, so a fallback
+			// mechanism is implemented
+			if (!StringUtils.hasText(searchRequest.getQuery())) {
+				return getAllMemories(searchRequest.getUserId(), searchRequest.getRunId(), searchRequest.getAgentId());
+			}
+
+			// Add debug logging
+			String requestJson = jsonMapper.writeValueAsString(searchRequest);
+			logger.info("Sending search request to Mem0: {}", requestJson);
+
+			String response = webClient.post()
+					.uri(SEARCH_ENDPOINT)
+					.contentType(MediaType.APPLICATION_JSON)
+					.body(BodyInserters.fromValue(requestJson))
+					.retrieve()
+					.bodyToMono(String.class)
+					.timeout(Duration.ofSeconds(this.mem0Client.getTimeoutSeconds()))
+					.retry(this.mem0Client.getMaxRetryAttempts())
+					.block();
+
+			if (response != null) {
+				logger.info("Received response from Mem0: " + response);
+				// The Mem0 service returns data in the format
+				// {"results":[],"relations":[]}
+				return jsonMapper.readValue(response, new TypeReference<Mem0ServerResp>() {
+				});
+
+			}
+		}
+		catch (Exception e) {
+			logger.error("Failed to search memories: {}", e.getMessage(), e);
+			throw new RuntimeException("Failed to search memories", e);
+		}
+
+		return new Mem0ServerResp();
+	}
+
+	/**
+	 * Update memory - automatically chooses sync or async based on configuration
+	 */
+	public Map<String, Object> updateMemory(String memoryId, Map<String, Object> updatedMemory) {
+		if (mem0Client.getAsync().isEnabled()) {
+			// Execute asynchronously and return empty result immediately
+			CompletableFuture.runAsync(() -> {
+				executeUpdateMemory(memoryId, updatedMemory);
+			}, asyncExecutor);
+			return new HashMap<>();
+		}
+		else {
+			// Execute synchronously and return result
+			return executeUpdateMemory(memoryId, updatedMemory);
+		}
+	}
+
+	/**
+	 * Update memory asynchronously - returns CompletableFuture for advanced usage
+	 */
+	public CompletableFuture<Map<String, Object>> updateMemoryAsync(String memoryId,
+																	Map<String, Object> updatedMemory) {
+		return CompletableFuture.supplyAsync(() -> {
+			return executeUpdateMemory(memoryId, updatedMemory);
+		}, asyncExecutor);
+	}
+
+	/**
+	 * Internal method to execute update memory operation
+	 */
+	private Map<String, Object> executeUpdateMemory(String memoryId, Map<String, Object> updatedMemory) {
+		try {
+			String response = webClient.put()
+					.uri(MEMORIES_ENDPOINT + "/{memoryId}", memoryId)
+					.bodyValue(updatedMemory)
+					.retrieve()
+					.bodyToMono(String.class)
+					.timeout(Duration.ofSeconds(mem0Client.getTimeoutSeconds()))
+					.retry(mem0Client.getMaxRetryAttempts())
+					.block();
+
+			if (response != null) {
+				Map<String, Object> result = jsonMapper.readValue(response, new TypeReference<Map<String, Object>>() {
+				});
+				logger.info("Successfully updated memory: " + memoryId);
+				return result;
+			}
+		}
+		catch (Exception e) {
+			logger.error("Failed to update memory {}: {}", memoryId, e.getMessage(), e);
+			throw new RuntimeException("Failed to update memory", e);
+		}
+
+		return new HashMap<>();
+	}
+
+
+	/**
+	 * Get memory history
+	 */
+	public List<Map<String, Object>> getMemoryHistory(String memoryId) {
+		try {
+			String response = webClient.get()
+					.uri(MEMORIES_ENDPOINT + "/{memoryId}/history", memoryId)
+					.retrieve()
+					.bodyToMono(String.class)
+					.timeout(Duration.ofSeconds(this.mem0Client.getTimeoutSeconds()))
+					.block();
+
+			if (response != null) {
+				// Attempt to parse as an object and then extract the array
+				Map<String, Object> responseMap = jsonMapper.readValue(response,
+						new TypeReference<Map<String, Object>>() {
+						});
+
+				// Check if there is a "data" field containing an array
+				if (responseMap.containsKey("data")) {
+					Object data = responseMap.get("data");
+					if (data instanceof List) {
+						List<Map<String, Object>> history = jsonMapper.convertValue(data,
+								new TypeReference<List<Map<String, Object>>>() {
+								});
+						return history;
+					}
+				}
+
+				// If there is no "data" field, attempt to parse directly as an array
+				try {
+					List<Map<String, Object>> history = jsonMapper.readValue(response,
+							new TypeReference<List<Map<String, Object>>>() {
+							});
+					logger.info("Retrieved history for memory: {}", memoryId);
+					return history;
+				}
+				catch (Exception e) {
+					logger.error("Failed to parse history response as array, trying as object: {}", e.getMessage());
+				}
+
+				// If all attempts fail, return an empty list.
+				logger.warn("Could not parse memory history from response: {}", response);
+				return new ArrayList<>();
+			}
+		}
+		catch (Exception e) {
+			logger.error("Failed to get memory history {}: {}", memoryId, e.getMessage(), e);
+			throw new RuntimeException("Failed to get memory history", e);
+		}
+
+		return new ArrayList<>();
+	}
+
+	/**
+	 * Delete single memory
+	 */
+	public void deleteMemory(String memoryId) {
+		try {
+			webClient.delete()
+					.uri(MEMORIES_ENDPOINT + "/{memoryId}", memoryId)
+					.retrieve()
+					.bodyToMono(String.class)
+					.timeout(Duration.ofSeconds(this.mem0Client.getTimeoutSeconds()))
+					.block();
+
+			logger.info("Successfully deleted memory: {}", memoryId);
+		}
+		catch (Exception e) {
+			logger.error("Failed to delete memory {}: {}", memoryId, e.getMessage(), e);
+			throw new RuntimeException("Failed to delete memory", e);
+		}
+	}
+
+	/**
+	 * Delete all memory
+	 */
+	public void deleteAllMemories(@Nullable String userId, @Nullable String runId, @Nullable String agentId) {
+		try {
+			webClient.delete().uri(uriBuilder -> {
+						uriBuilder.path(MEMORIES_ENDPOINT);
+						if (userId != null)
+							uriBuilder.queryParam("user_id", userId);
+						if (runId != null)
+							uriBuilder.queryParam("run_id", runId);
+						if (agentId != null)
+							uriBuilder.queryParam("agent_id", agentId);
+						return uriBuilder.build();
+					})
+					.retrieve()
+					.bodyToMono(String.class)
+					.timeout(Duration.ofSeconds(this.mem0Client.getTimeoutSeconds()))
+					.block();
+
+			logger.info("Successfully deleted all memories");
+		}
+		catch (Exception e) {
+			logger.error("Failed to delete all memories: {}", e.getMessage(), e);
+			throw new RuntimeException("Failed to delete all memories", e);
+		}
+	}
+
+	/**
+	 * Reset all memory
+	 */
+	public void resetAllMemories() {
+		try {
+			webClient.post()
+					.uri(RESET_ENDPOINT)
+					.retrieve()
+					.bodyToMono(String.class)
+					.timeout(Duration.ofSeconds(this.mem0Client.getTimeoutSeconds()))
+					.block();
+
+			logger.info("Successfully reset all memories");
+		}
+		catch (Exception e) {
+			logger.error("Failed to reset all memories: " + e.getMessage(), e);
+			throw new RuntimeException("Failed to reset all memories", e);
+		}
+	}
+
+	public @Nullable String loadPrompt(@Nullable String classPath) throws Exception {
+		if (StringUtils.hasText(classPath)) {
+			Resource resource = resourceLoader.getResource(classPath);
+			if (!resource.exists()) {
+				throw new IllegalArgumentException("Prompt resource not found: " + classPath);
+			}
+			// Read file content as a string
+			return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+		}
+		return null;
+	}
+
+	/**
+	 * Shutdown the async executor
+	 */
+	public void shutdown() {
+		if (asyncExecutor instanceof java.util.concurrent.ExecutorService) {
+			((java.util.concurrent.ExecutorService) asyncExecutor).shutdown();
+			logger.info("Mem0ServiceClient async executor shutdown completed");
+		}
+	}
+
+}

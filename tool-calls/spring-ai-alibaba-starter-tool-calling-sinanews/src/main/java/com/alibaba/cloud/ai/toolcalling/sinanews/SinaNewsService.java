@@ -17,7 +17,7 @@ package com.alibaba.cloud.ai.toolcalling.sinanews;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +78,7 @@ public class SinaNewsService implements Function<SinaNewsService.Request, SinaNe
 			if (!itemNode.has("info")) {
 				continue;
 			}
-			String title = itemNode.get("info").get("title").asText();
+			String title = itemNode.get("info").get("title").asString();
 			hotEvents.add(new HotEvent(title));
 		}
 

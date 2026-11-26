@@ -1,0 +1,32 @@
+/*
+ * Copyright 2023-2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure.model;
+
+import com.alibaba.cloud.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryProperties;
+import org.jspecify.annotations.Nullable;
+import org.springframework.boot.ssl.SslBundles;
+
+/**
+ * Configuration for Redis Memory using Redis Standalone
+ *
+ * @author benym
+ * @since 2025/7/30 21:32
+ */
+public record RedisChatMemoryStandalone(String hostName, int port, @Nullable String username, @Nullable String password,
+										int timeout, int database, @Nullable String keyPrefix, RedisChatMemoryProperties.Ssl ssl,
+										@Nullable SslBundles sslBundles) {
+
+}

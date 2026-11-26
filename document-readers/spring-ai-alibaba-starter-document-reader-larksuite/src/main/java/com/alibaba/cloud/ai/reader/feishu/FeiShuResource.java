@@ -17,14 +17,15 @@ package com.alibaba.cloud.ai.reader.feishu;
 
 import com.lark.oapi.Client;
 import com.lark.oapi.core.enums.BaseUrlEnum;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
-import org.springframework.util.Assert;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.util.Objects;
 
 public class FeiShuResource implements Resource {
 
@@ -55,31 +56,28 @@ public class FeiShuResource implements Resource {
 
 	public static class Builder {
 
-		private String appId;
+		private @Nullable String appId;
 
-		private String appSecret;
+		private @Nullable String appSecret;
 
-		public Builder appId(String appId) {
+		public Builder appId(@Nullable String appId) {
 			this.appId = appId;
 			return this;
 		}
 
-		public Builder appSecret(String appSecret) {
+		public Builder appSecret(@Nullable String appSecret) {
 			this.appSecret = appSecret;
 			return this;
 		}
 
 		public FeiShuResource build() {
-			Assert.notNull(appId, "FeiShu AppId must not be empty");
-			Assert.notNull(appSecret, "FeiShu AppSecret must not be empty");
-			return new FeiShuResource(appId, appSecret);
+			return new FeiShuResource(Objects.requireNonNull(appId, "FeiShu AppId must not be empty"),
+					Objects.requireNonNull(appSecret, "FeiShu AppSecret must not be empty"));
 		}
 
 	}
 
 	public Client buildDefaultFeiShuClient() {
-		Assert.notNull(this.appId, "FeiShu AppId must not be empty");
-		Assert.notNull(this.appSecret, "FeiShu AppSecret must not be empty");
 		return Client.newBuilder(this.appId, this.appSecret)
 			.openBaseUrl(BaseUrlEnum.FeiShu)
 			.logReqAtDebug(true)
@@ -93,17 +91,17 @@ public class FeiShuResource implements Resource {
 
 	@Override
 	public URL getURL() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("FeiShuResource does not expose a URL");
 	}
 
 	@Override
 	public URI getURI() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("FeiShuResource does not expose a URI");
 	}
 
 	@Override
 	public File getFile() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("FeiShuResource is not backed by a local file");
 	}
 
 	@Override
@@ -118,22 +116,22 @@ public class FeiShuResource implements Resource {
 
 	@Override
 	public Resource createRelative(String relativePath) throws IOException {
-		return null;
+		throw new UnsupportedOperationException("FeiShuResource does not support relative resources");
 	}
 
 	@Override
 	public String getFilename() {
-		return null;
+		return appId;
 	}
 
 	@Override
 	public String getDescription() {
-		return null;
+		return "FeiShu resource [appId=" + appId + "]";
 	}
 
 	@Override
 	public InputStream getInputStream() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("FeiShuResource does not expose a raw input stream");
 	}
 
 }

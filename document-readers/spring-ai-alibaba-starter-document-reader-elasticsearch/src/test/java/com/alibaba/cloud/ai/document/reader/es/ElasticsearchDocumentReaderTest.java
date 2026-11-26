@@ -19,15 +19,15 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.elasticsearch.client.RestClient;
+import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -140,18 +140,18 @@ public class ElasticsearchDocumentReaderTest {
 				.build();
 
 			// Create client with authentication and SSL
-			CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-			credentialsProvider.setCredentials(AuthScope.ANY,
-					new UsernamePasswordCredentials(ES_USERNAME, ES_PASSWORD));
+            BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+			credentialsProvider.setCredentials(new AuthScope(null, -1),
+					new UsernamePasswordCredentials(ES_USERNAME, ES_PASSWORD.toCharArray()));
 
-			RestClient restClient = RestClient.builder(new HttpHost(ES_HOST, ES_PORT, ES_SCHEME))
-				.setHttpClientConfigCallback(
-						httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider)
-							.setSSLContext(sslContext)
-							.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE))
+			Rest5Client restClient = Rest5Client.builder(new HttpHost(ES_SCHEME, ES_HOST, ES_PORT))
+				.setHttpClientConfigCallback(httpClientBuilder ->
+                        httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider))
+                .setConnectionManagerCallback(connectionManager ->
+                        connectionManager.setTlsStrategy(new DefaultClientTlsStrategy(sslContext, NoopHostnameVerifier.INSTANCE)))
 				.build();
 
-			client = new ElasticsearchClient(new RestClientTransport(restClient, new JacksonJsonpMapper()));
+			client = new ElasticsearchClient(new Rest5ClientTransport(restClient, new JacksonJsonpMapper()));
 
 			// Delete index if exists
 			boolean indexExists = client.indices().exists(e -> e.index(TEST_INDEX)).value();

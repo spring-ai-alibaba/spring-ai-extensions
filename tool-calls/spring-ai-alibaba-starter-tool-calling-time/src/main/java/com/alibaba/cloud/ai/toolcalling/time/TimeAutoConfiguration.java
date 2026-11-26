@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.toolcalling.time;
 
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -38,6 +40,15 @@ public class TimeAutoConfiguration {
 	@Description("Get the time of a specified city.")
 	public GetTimeByZoneIdService getCityTimeFunction() {
 		return new GetTimeByZoneIdService();
+	}
+
+	@Bean(name = "getCityTimeFunctionToolCallback")
+	@ConditionalOnMissingBean(name = "getCityTimeFunctionToolCallback")
+	public ToolCallback getCityTimeFunctionToolCallback(GetTimeByZoneIdService getCityTimeFunction) {
+		return FunctionToolCallback.builder(TimeConstants.TOOL_NAME, getCityTimeFunction)
+			.description("Get the time of a specified city.")
+			.inputType(GetTimeByZoneIdService.Request.class)
+			.build();
 	}
 
 }

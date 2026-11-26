@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.metaso;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -38,6 +40,15 @@ public class MetasoAutoConfiguration {
 			httpHeaders.add("Content-Type", "application/json");
 			httpHeaders.add("Authorization", "Bearer " + properties.getApiKey());
 		}).build(), jsonParseTool, properties);
+	}
+
+	@Bean(name = "metasoServiceToolCallback")
+	@ConditionalOnMissingBean(name = "metasoServiceToolCallback")
+	public ToolCallback metasoServiceToolCallback(MetasoService metasoService) {
+		return FunctionToolCallback.builder(MetasoConstants.TOOL_NAME, metasoService)
+			.description("Metaso AI Web Search Service")
+			.inputType(MetasoService.Request.class)
+			.build();
 	}
 
 }

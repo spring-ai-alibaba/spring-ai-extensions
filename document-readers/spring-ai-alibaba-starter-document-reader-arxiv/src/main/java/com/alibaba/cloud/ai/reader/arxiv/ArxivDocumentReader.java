@@ -20,6 +20,7 @@ import com.alibaba.cloud.ai.parser.apache.pdfbox.PagePdfDocumentParser;
 import com.alibaba.cloud.ai.reader.arxiv.client.ArxivClient;
 import com.alibaba.cloud.ai.reader.arxiv.client.ArxivResult;
 import com.alibaba.cloud.ai.reader.arxiv.client.ArxivSearch;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
@@ -59,12 +60,23 @@ public class ArxivDocumentReader implements DocumentReader {
 	 * @param maxSize maximum number of documents to retrieve
 	 */
 	public ArxivDocumentReader(String queryString, int maxSize) {
+		this(queryString, maxSize, new PagePdfDocumentParser());
+	}
+
+	/**
+	 * Create an arXiv document reader with a custom document parser
+	 * @param queryString arXiv query string
+	 * @param maxSize maximum number of documents to retrieve
+	 * @param parser parser used for downloaded PDF content
+	 */
+	public ArxivDocumentReader(String queryString, int maxSize, DocumentParser parser) {
 		Assert.hasText(queryString, "Query string must not be empty");
 		Assert.isTrue(maxSize > 0, "Max size must be greater than 0");
+		Assert.notNull(parser, "Document parser must not be null");
 
 		this.queryString = queryString;
 		this.maxSize = maxSize;
-		this.parser = (DocumentParser) new PagePdfDocumentParser();
+		this.parser = parser;
 		this.arxivClient = new ArxivClient();
 		this.arxivResource = new ArxivResource(queryString, maxSize);
 	}
@@ -108,7 +120,7 @@ public class ArxivDocumentReader implements DocumentReader {
 	/**
 	 * Add non-null value to metadata map
 	 */
-	private void addIfNotNull(Map<String, Object> metadata, String key, Object value) {
+	private void addIfNotNull(Map<String, Object> metadata, String key, @Nullable Object value) {
 		if (value != null) {
 			metadata.put(key, value);
 		}
@@ -117,7 +129,7 @@ public class ArxivDocumentReader implements DocumentReader {
 	/**
 	 * Add non-empty collection to metadata map
 	 */
-	private void addIfNotEmpty(Map<String, Object> metadata, String key, List<?> value) {
+	private void addIfNotEmpty(Map<String, Object> metadata, String key, @Nullable List<?> value) {
 		if (value != null && !value.isEmpty()) {
 			metadata.put(key, value);
 		}

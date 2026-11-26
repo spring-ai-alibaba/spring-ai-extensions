@@ -82,41 +82,67 @@
         <module>document-readers/spring-ai-alibaba-starter-document-reader-youtube</module>
         <module>document-readers/spring-ai-alibaba-starter-document-reader-yuque</module>
 
-        <!-- memories modules -->
-        <module>memories/spring-ai-alibaba-starter-memory-elasticsearch</module>
-        <module>memories/spring-ai-alibaba-starter-memory-jdbc</module>
-        <module>memories/spring-ai-alibaba-starter-memory-mem0</module>
-        <module>memories/spring-ai-alibaba-starter-memory-memcached</module>
-        <module>memories/spring-ai-alibaba-starter-memory-mongodb</module>
-        <module>memories/spring-ai-alibaba-starter-memory-redis</module>
-        <module>memories/spring-ai-alibaba-starter-memory-tablestore</module>
+        <!-- memory modules -->
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-elasticsearch</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-jdbc</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-mem0</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-memcached</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-mongodb</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-redis</module>
+        <module>memory-repository/spring-ai-alibaba-model-chat-memory-repository-tablestore</module>
 
         <!-- auto-configurations modules -->
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-dashscope</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-dashscope-sdk</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-memory</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-memory-long</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-nacos-prompt</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-arms-observation</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-registry</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-router</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-rag-elasticsearch</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-distributed</module>
-        <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-gateway</module>
+        <module>auto-configurations/models/spring-ai-alibaba-autoconfigure-dashscope</module>
+        <module>auto-configurations/models/spring-ai-alibaba-autoconfigure-dashscope-sdk</module>
+        <module>auto-configurations/models/chat/memory/spring-ai-alibaba-autoconfigure-model-chat-memory</module>
+        <module>auto-configurations/models/chat/memory/spring-ai-alibaba-autoconfigure-model-chat-memory-mem0</module>
+        <module>auto-configurations/models/chat/memory/repository/spring-ai-alibaba-autoconfigure-model-chat-memory-repository-elasticsearch</module>
+        <module>auto-configurations/models/chat/memory/repository/spring-ai-alibaba-autoconfigure-model-chat-memory-repository-jdbc</module>
+        <module>auto-configurations/models/chat/memory/repository/spring-ai-alibaba-autoconfigure-model-chat-memory-repository-memcached</module>
+        <module>auto-configurations/models/chat/memory/repository/spring-ai-alibaba-autoconfigure-model-chat-memory-repository-mongodb</module>
+        <module>auto-configurations/models/chat/memory/repository/spring-ai-alibaba-autoconfigure-model-chat-memory-repository-redis</module>
+        <module>auto-configurations/models/chat/memory/repository/spring-ai-alibaba-autoconfigure-model-chat-memory-repository-tablestore</module>
+
+        <module>auto-configurations/prompt/spring-ai-alibaba-autoconfigure-nacos-prompt</module>
+        <module>auto-configurations/observation/spring-ai-alibaba-autoconfigure-arms-observation</module>
+        <module>auto-configurations/mcp/spring-ai-alibaba-autoconfigure-mcp-registry</module>
+        <module>auto-configurations/mcp/spring-ai-alibaba-autoconfigure-mcp-router</module>
+        <module>auto-configurations/rag/spring-ai-alibaba-autoconfigure-rag-elasticsearch</module>
+        <module>auto-configurations/mcp/spring-ai-alibaba-autoconfigure-mcp-distributed</module>
+        <module>auto-configurations/mcp/spring-ai-alibaba-autoconfigure-mcp-gateway</module>
+
+        <module>auto-configurations/vector-stores/spring-ai-alibaba-autoconfigure-vector-store-analyticdb</module>
+        <module>auto-configurations/vector-stores/spring-ai-alibaba-autoconfigure-vector-store-oceanbase</module>
+        <module>auto-configurations/vector-stores/spring-ai-alibaba-autoconfigure-vector-store-opensearch</module>
+        <module>auto-configurations/vector-stores/spring-ai-alibaba-autoconfigure-vector-store-tablestore</module>
+        <module>auto-configurations/vector-stores/spring-ai-alibaba-autoconfigure-vector-store-tair</module>
 
         <!-- spring-boot-starters modules -->
-        <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-dashscope-sdk</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-memory</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-memory-long</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-nacos-prompt</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-arms-observation</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-registry</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-router</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-rag</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-rag-bailian</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-distributed</module>
-        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-gateway</module>
+        <module>starters/spring-ai-alibaba-starter-dashscope</module>
+        <module>starters/spring-ai-alibaba-starter-dashscope-sdk</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-mem0</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-repository-elasticsearch</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-repository-jdbc</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-repository-memcached</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-repository-mongodb</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-repository-redis</module>
+        <module>starters/spring-ai-alibaba-starter-model-chat-memory-repository-tablestore</module>
+
+        <module>starters/spring-ai-alibaba-starter-nacos-prompt</module>
+        <module>starters/spring-ai-alibaba-starter-arms-observation</module>
+        <module>starters/spring-ai-alibaba-starter-mcp-registry</module>
+        <module>starters/spring-ai-alibaba-starter-mcp-router</module>
+        <module>starters/spring-ai-alibaba-starter-rag</module>
+        <module>starters/spring-ai-alibaba-starter-rag-bailian</module>
+        <module>starters/spring-ai-alibaba-starter-mcp-distributed</module>
+        <module>starters/spring-ai-alibaba-starter-mcp-gateway</module>
+
+        <module>starters/spring-ai-alibaba-starter-vector-store-analyticdb</module>
+        <module>starters/spring-ai-alibaba-starter-vector-store-oceanbase</module>
+        <module>starters/spring-ai-alibaba-starter-vector-store-opensearch</module>
+        <module>starters/spring-ai-alibaba-starter-vector-store-tablestore</module>
+        <module>starters/spring-ai-alibaba-starter-vector-store-tair</module>
 
         <!-- tool-calls modules -->
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-alitranslate</module>
@@ -166,11 +192,11 @@
         <module>tool-calls/spring-ai-alibaba-starter-tool-calling-agentbay</module>
 
         <!-- vector-stores modules -->
-        <module>vector-stores/spring-ai-alibaba-starter-analyticdb-store</module>
-        <module>vector-stores/spring-ai-alibaba-starter-oceanbase-store</module>
-        <module>vector-stores/spring-ai-alibaba-starter-opensearch-store</module>
-        <module>vector-stores/spring-ai-alibaba-starter-tablestore-store</module>
-        <module>vector-stores/spring-ai-alibaba-starter-tair-store</module>
+        <module>vector-stores/spring-ai-alibaba-analyticdb-store</module>
+        <module>vector-stores/spring-ai-alibaba-oceanbase-store</module>
+        <module>vector-stores/spring-ai-alibaba-opensearch-store</module>
+        <module>vector-stores/spring-ai-alibaba-tablestore-store</module>
+        <module>vector-stores/spring-ai-alibaba-tair-store</module>
 
         <module>mcp/spring-ai-alibaba-mcp-common</module>
         <module>mcp/spring-ai-alibaba-mcp-registry</module>
@@ -180,10 +206,10 @@
 
         <module>prompt/spring-ai-alibaba-prompt-nacos</module>
 
-        <module>models/dashscope</module>
-        <module>models/dashscope-sdk</module>
+        <module>models/spring-ai-alibaba-dashscope</module>
+        <module>models/spring-ai-alibaba-dashscope-sdk</module>
         <module>rag/spring-ai-alibaba-rag</module>
-        <module>observation</module>
+        <module>observation/spring-ai-alibaba-observation</module>
         <module>spring-ai-alibaba-extensions-bom</module>
     </modules>
 
@@ -196,7 +222,7 @@
     <properties>
 
         <!-- Spring AI Alibaba Version -->
-        <revision>1.1.2.3-SNAPSHOT</revision>
+        <revision>2.1.0.0</revision>
 
         <!-- Maven project basic config -->
         <java.version>17</java.version>
@@ -206,12 +232,15 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <!-- Spring version -->
-        <spring-ai.version>1.1.2</spring-ai.version>
-        <spring-boot.version>3.5.10</spring-boot.version>
+        <spring-ai.version>2.1.0</spring-ai.version>
+        <spring-boot.version>4.2.0</spring-boot.version>
         <springdoc-openapi.version>2.8.15</springdoc-openapi.version>
 
+        <!-- MCP -->
+        <mcp.sdk.version>2.2.0</mcp.sdk.version>
+
         <!-- DashScope SDK Version -->
-        <dashscope-sdk-java.version>2.15.1</dashscope-sdk-java.version>
+        <dashscope-sdk-java.version>2.23.6</dashscope-sdk-java.version>
 
         <!-- Nacos -->
         <nacos3.version>3.1.0</nacos3.version>
@@ -230,13 +259,10 @@
         <commons-exec.version>1.3</commons-exec.version>
         <commons-collections4.version>4.4</commons-collections4.version>
 
-        <docker-java.version>3.7.0</docker-java.version>
-
         <opennlp-tools.version>2.3.3</opennlp-tools.version>
 
+        <json-schema-validator.version>3.0.1</json-schema-validator.version>
         <json-path.version>2.9.0</json-path.version>
-
-        <jedis.version>5.2.0</jedis.version>
 
         <redisson.version>3.52.0</redisson.version>
 
@@ -250,14 +276,14 @@
 
         <webdrivermanager.version>6.1.0</webdrivermanager.version>
 
-        <httpclient5.version>5.4.3</httpclient5.version>
-
         <poi.version>5.4.0</poi.version>
         <tika.version>3.2.3</tika.version>
 
-        <mcp.version>0.14.0</mcp.version>
         <opentelemetry.version>1.38.0</opentelemetry.version>
         <a2a-sdk.version>0.2.5.Beta2</a2a-sdk.version>
+
+        <!-- JSpecify Version -->
+        <jspecify.version>1.0.0</jspecify.version>
 
         <!-- CheckStyle Plugin -->
         <disable.checks>false</disable.checks>
@@ -266,6 +292,10 @@
         <surefireArgLine>-Xms512m -Xmx1024m</surefireArgLine>
 
         <!-- plugin versions -->
+        <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
+        <!-- The version (range) of the JDK we want to use to compile.
+          This is different from ${java.version} which we use as -release target. -->
+        <compiler.jdk.version>[17,)</compiler.jdk.version>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <maven-site-plugin.version>4.0.0-M13</maven-site-plugin.version>
         <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
@@ -276,7 +306,7 @@
         <maven-assembly-plugin.version>3.7.0</maven-assembly-plugin.version>
         <maven-failsafe-plugin.version>3.1.2</maven-failsafe-plugin.version>
         <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
-        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+        <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.5.0</maven-dependency-plugin.version>
         <asciidoctor-maven-plugin.version>2.2.3</asciidoctor-maven-plugin.version>
         <springdoc-openapi-maven-plugin.version>1.4</springdoc-openapi-maven-plugin.version>
@@ -292,6 +322,10 @@
         <maven-checkstyle-plugin.failOnViolation>true</maven-checkstyle-plugin.failOnViolation>
         <puppycrawl-tools-checkstyle.version>9.3</puppycrawl-tools-checkstyle.version>
         <spotless.version>2.44.5</spotless.version>
+
+        <!-- NullAway -->
+        <error-prone.version>2.42.0</error-prone.version>
+        <nullaway.version>0.13.4</nullaway.version>
 
         <central.publishing.maven.version>0.7.0</central.publishing.maven.version>
     </properties>
@@ -313,13 +347,6 @@
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp-bom</artifactId>
                 <version>${okhttp.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.github.docker-java</groupId>
-                <artifactId>docker-java-bom</artifactId>
-                <version>${docker-java.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -378,7 +405,7 @@
             <dependency>
                 <groupId>io.modelcontextprotocol.sdk</groupId>
                 <artifactId>mcp-bom</artifactId>
-                <version>${mcp.version}</version>
+                <version>${mcp.sdk.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -389,8 +416,25 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>org.jspecify</groupId>
+                <artifactId>jspecify</artifactId>
+                <version>${jspecify.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>json-schema-validator</artifactId>
+                <version>${json-schema-validator.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+        </dependency>
+    </dependencies>
 
     <repositories>
         <repository>
@@ -492,14 +536,54 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>maven-enforcer</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <!-- Make sure we run with a JDK that supports the
+                    error_prone + nullaway tools correctly. An alternative
+                    would have been to use fork=true at the compiler plugin
+                    level, but this is more efficient in this big project.
+                    See also .mvn/jvm.config -->
+                                <requireJavaVersion>
+                                    <version>${compiler.jdk.version}</version>
+                                </requireJavaVersion>
+                                <banDuplicatePomDependencyVersions></banDuplicatePomDependencyVersions>
+                                <!-- TODO <dependencyConvergence /> -->
+                                <requireMavenVersion>
+                                    <version>[3.9.1,)</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <release>${java.version}</release>
                     <compilerArgs>
-                        <compilerArg>-parameters</compilerArg>
+                        <arg>-parameters</arg>
                     </compilerArgs>
                     <annotationProcessorPaths>
+                        <path>
+                            <groupId>com.google.errorprone</groupId>
+                            <artifactId>error_prone_core</artifactId>
+                            <version>${error-prone.version}</version>
+                        </path>
+                        <path>
+                            <groupId>com.uber.nullaway</groupId>
+                            <artifactId>nullaway</artifactId>
+                            <version>${nullaway.version}</version>
+                        </path>
                         <path>
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-configuration-processor</artifactId>
@@ -524,6 +608,15 @@
                             <goal>compile</goal>
                         </goals>
                         <phase>compile</phase>
+                        <configuration>
+                            <compilerArgs>
+                                <arg>-XDcompilePolicy=simple</arg>
+                                <!-- The following arg won't be necessary with JDK25+ -->
+                                <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
+                                <arg>--should-stop=ifError=FLOW</arg>
+                                <arg>-Xplugin:ErrorProne -XepDisableAllChecks -Xep:NullAway:ERROR -XepOpt:NullAway:OnlyNullMarked -XepOpt:NullAway:JSpecifyMode=true</arg>
+                            </compilerArgs>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>java-test-compile</id>

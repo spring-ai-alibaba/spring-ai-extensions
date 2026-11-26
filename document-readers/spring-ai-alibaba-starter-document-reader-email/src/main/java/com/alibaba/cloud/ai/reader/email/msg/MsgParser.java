@@ -150,12 +150,12 @@ public class MsgParser {
 				if (htmlBody != null) {
 					email.setContentType("text/html");
 					// Parse HTML content using BsHtmlDocumentParser
-					BsHtmlDocumentParser htmlParser = new BsHtmlDocumentParser();
-					try (InputStream htmlStream = new ByteArrayInputStream(htmlBody.getBytes(StandardCharsets.UTF_8))) {
-						List<Document> parsedDocs = htmlParser.parse(htmlStream);
-						if (!parsedDocs.isEmpty()) {
-							email.setContent(parsedDocs.get(0).getText());
-						}
+						BsHtmlDocumentParser htmlParser = new BsHtmlDocumentParser();
+						try (InputStream htmlStream = new ByteArrayInputStream(htmlBody.getBytes(StandardCharsets.UTF_8))) {
+							List<Document> parsedDocs = htmlParser.parse(htmlStream);
+							if (!parsedDocs.isEmpty()) {
+								email.setContent(parsedDocs.get(0).getText() != null ? parsedDocs.get(0).getText() : htmlBody);
+							}
 						else {
 							email.setContent(htmlBody); // Fallback to original HTML if
 														// parsing fails

@@ -18,7 +18,6 @@ package com.alibaba.cloud.ai.toolcalling.jsonprocessor;
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,13 +40,7 @@ public class JsonProcessorParseService implements Function<JsonProcessorParseSer
 	public Object apply(JsonParseRequest request) {
 		String content = request.content;
 		String field = request.field;
-		try {
-			return jsonParseTool.getFieldValueAsText(content, field);
-		}
-		catch (JsonProcessingException e) {
-			logger.error("Error occurred while json processing: {}", e.getMessage());
-			throw new RuntimeException(e);
-		}
+        return jsonParseTool.getFieldValueAsText(content, field);
 	}
 
 	@JsonClassDescription("JsonProcessorParseService request")

@@ -17,7 +17,7 @@ package com.alibaba.cloud.ai.toolcalling.toutiaonews;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +80,7 @@ public class ToutiaoNewsSearchHotEventsService
 			if (!itemNode.has("Title")) {
 				continue;
 			}
-			String title = itemNode.get("Title").asText();
+			String title = itemNode.get("Title").asString();
 			hotEvents.add(new HotEvent(title));
 		}
 

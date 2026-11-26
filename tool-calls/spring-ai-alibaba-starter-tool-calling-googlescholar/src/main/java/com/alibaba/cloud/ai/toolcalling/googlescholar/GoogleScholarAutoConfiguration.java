@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.toolcalling.googlescholar;
 
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -33,6 +35,15 @@ public class GoogleScholarAutoConfiguration {
 	@Description("Google Scholar Academic Search Service")
 	public GoogleScholarService googleScholarService(GoogleScholarProperties properties) {
 		return new GoogleScholarService(properties);
+	}
+
+	@Bean(name = "googleScholarServiceToolCallback")
+	@ConditionalOnMissingBean(name = "googleScholarServiceToolCallback")
+	public ToolCallback googleScholarServiceToolCallback(GoogleScholarService googleScholarService) {
+		return FunctionToolCallback.builder(GoogleScholarConstants.TOOL_NAME, googleScholarService)
+			.description("Google Scholar Academic Search Service")
+			.inputType(GoogleScholarService.Request.class)
+			.build();
 	}
 
 }

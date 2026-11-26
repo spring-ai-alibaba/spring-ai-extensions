@@ -17,18 +17,16 @@
 package com.alibaba.cloud.ai.toolcalling.jsonprocessor;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 
-import static com.fasterxml.jackson.databind.node.BooleanNode.TRUE;
+import static tools.jackson.databind.node.BooleanNode.TRUE;
 
 /**
  * JsonInsertService Test Class
@@ -39,28 +37,27 @@ public class JsonProcessorInsertServiceTest {
 
 	private String jsonContent;
 
-	private ObjectMapper objectMapper;
+	private JsonMapper jsonMapper;
 
 	@BeforeEach
 	void setUp() {
-		objectMapper = new ObjectMapper().registerModule(new JavaTimeModule())
-			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-		JsonParseTool jsonParseTool = new JsonParseTool(objectMapper);
+        jsonMapper = JsonMapper.shared();
+		JsonParseTool jsonParseTool = new JsonParseTool(jsonMapper);
 		jsonProcessorInsertService = new JsonProcessorInsertService(jsonParseTool);
 		jsonContent = "{\"name\":\"John\",\"age\":30}";
 	}
 
 	@Test
 	void testInsertStringValue() {
-		JsonNode newValue = new TextNode("Beijing");
+		JsonNode newValue = new StringNode("Beijing");
 		JsonProcessorInsertService.JsonInsertRequest request = new JsonProcessorInsertService.JsonInsertRequest(
 				jsonContent, "city", newValue);
 
 		JsonNode result = (JsonNode) jsonProcessorInsertService.apply(request);
 
-		Assertions.assertEquals("John", result.get("name").asText());
+		Assertions.assertEquals("John", result.get("name").asString());
 		Assertions.assertEquals(30, result.get("age").asInt());
-		Assertions.assertEquals("Beijing", result.get("city").asText());
+		Assertions.assertEquals("Beijing", result.get("city").asString());
 	}
 
 	@Test
@@ -71,14 +68,14 @@ public class JsonProcessorInsertServiceTest {
 
 		JsonNode result = (JsonNode) jsonProcessorInsertService.apply(request);
 
-		Assertions.assertEquals("John", result.get("name").asText());
+		Assertions.assertEquals("John", result.get("name").asString());
 		Assertions.assertEquals(30, result.get("age").asInt());
 		Assertions.assertTrue(result.get("isActive").asBoolean());
 	}
 
 	@Test
 	void testInsertJsonObjectValue() {
-		ObjectNode addressObject = objectMapper.createObjectNode();
+		ObjectNode addressObject = jsonMapper.createObjectNode();
 		addressObject.put("street", "Chang'an Street");
 		addressObject.put("zipCode", "100000");
 
@@ -87,15 +84,15 @@ public class JsonProcessorInsertServiceTest {
 
 		JsonNode result = (JsonNode) jsonProcessorInsertService.apply(request);
 
-		Assertions.assertEquals("John", result.get("name").asText());
+		Assertions.assertEquals("John", result.get("name").asString());
 		Assertions.assertEquals(30, result.get("age").asInt());
-		Assertions.assertEquals("Chang'an Street", result.get("address").get("street").asText());
-		Assertions.assertEquals("100000", result.get("address").get("zipCode").asText());
+		Assertions.assertEquals("Chang'an Street", result.get("address").get("street").asString());
+		Assertions.assertEquals("100000", result.get("address").get("zipCode").asString());
 	}
 
 	@Test
 	void testInsertJsonArrayValue() {
-		ArrayNode hobbiesArray = objectMapper.createArrayNode();
+		ArrayNode hobbiesArray = jsonMapper.createArrayNode();
 		hobbiesArray.add("Reading");
 		hobbiesArray.add("Traveling");
 		hobbiesArray.add("Programming");
@@ -105,17 +102,17 @@ public class JsonProcessorInsertServiceTest {
 
 		JsonNode result = (JsonNode) jsonProcessorInsertService.apply(request);
 
-		Assertions.assertEquals("John", result.get("name").asText());
+		Assertions.assertEquals("John", result.get("name").asString());
 		Assertions.assertEquals(30, result.get("age").asInt());
 		Assertions.assertEquals(3, result.get("hobbies").size());
-		Assertions.assertEquals("Reading", result.get("hobbies").get(0).asText());
-		Assertions.assertEquals("Traveling", result.get("hobbies").get(1).asText());
-		Assertions.assertEquals("Programming", result.get("hobbies").get(2).asText());
+		Assertions.assertEquals("Reading", result.get("hobbies").get(0).asString());
+		Assertions.assertEquals("Traveling", result.get("hobbies").get(1).asString());
+		Assertions.assertEquals("Programming", result.get("hobbies").get(2).asString());
 	}
 
 	@Test
 	void testNullField() {
-		JsonNode newValue = new TextNode("Beijing");
+		JsonNode newValue = new StringNode("Beijing");
 		JsonProcessorInsertService.JsonInsertRequest request = new JsonProcessorInsertService.JsonInsertRequest(
 				jsonContent, null, newValue);
 
@@ -136,13 +133,13 @@ public class JsonProcessorInsertServiceTest {
 
 	@Test
 	void testOverwriteExistingField() {
-		JsonNode newValue = new TextNode("David");
+		JsonNode newValue = new StringNode("David");
 		JsonProcessorInsertService.JsonInsertRequest request = new JsonProcessorInsertService.JsonInsertRequest(
 				jsonContent, "name", newValue);
 
 		JsonNode result = (JsonNode) jsonProcessorInsertService.apply(request);
 
-		Assertions.assertEquals("David", result.get("name").asText());
+		Assertions.assertEquals("David", result.get("name").asString());
 		Assertions.assertEquals(30, result.get("age").asInt());
 	}
 

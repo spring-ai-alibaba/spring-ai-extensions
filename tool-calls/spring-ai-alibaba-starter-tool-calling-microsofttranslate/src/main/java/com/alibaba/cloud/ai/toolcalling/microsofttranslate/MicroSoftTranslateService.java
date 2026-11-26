@@ -20,8 +20,8 @@ import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -30,10 +30,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class MicroSoftTranslateService
-		implements Function<MicroSoftTranslateService.Request, MicroSoftTranslateService.Response> {
+		implements Function<MicroSoftTranslateService.@Nullable Request, MicroSoftTranslateService.@Nullable Response> {
 
 	private static final Logger logger = LoggerFactory.getLogger(MicroSoftTranslateService.class);
 
@@ -49,11 +50,11 @@ public class MicroSoftTranslateService
 	}
 
 	@Override
-	public Response apply(Request request) {
+	public @Nullable Response apply(@Nullable Request request) {
 		if (request == null || !StringUtils.hasText(request.text) || !StringUtils.hasText(request.targetLanguage)) {
 			return null;
 		}
-		String uri = UriComponentsBuilder.fromHttpUrl(TRANSLATE_PATH)
+		String uri = UriComponentsBuilder.fromPath(TRANSLATE_PATH)
 			.queryParam("to", request.targetLanguage)
 			.toUriString();
 		logger.info("Request uri: {}", uri);
@@ -61,13 +62,13 @@ public class MicroSoftTranslateService
 			String body = constructRequestBody(request);
 			logger.info("Request body: {}", body);
 
-			String responseData = webClientTool.getWebClient()
+			String responseData = Objects.requireNonNull(webClientTool.getWebClient()
 				.post()
 				.uri(uri)
 				.bodyValue(body)
 				.retrieve()
 				.bodyToMono(String.class)
-				.block();
+				.block(), "Microsoft translate API returned empty response");
 
 			logger.info("Translation request: {}, response: {}", request.text, responseData);
 			return parseResponse(responseData);
@@ -83,27 +84,19 @@ public class MicroSoftTranslateService
 	}
 
 	private Response parseResponse(String responseData) {
-		try {
-			Map<String, String> translations = new HashMap<>();
+        Map<String, String> translations = new HashMap<>();
 
-			String firstElement = jsonParseTool.getFirstElementFromJsonArrayString(responseData);
-			if (firstElement != null) {
-				List<Map<String, Object>> translationsList = jsonParseTool.getFieldValue(firstElement,
-						new TypeReference<List<Map<String, Object>>>() {
-						}, "translations");
-				for (Map<String, Object> translation : translationsList) {
-					String to = (String) translation.get("to");
-					String translatedText = (String) translation.get("text");
-					translations.put(to, translatedText);
-					logger.info("Translated text to {}: {}", to, translatedText);
-				}
-			}
-			return new Response(translations);
-		}
-		catch (JsonProcessingException e) {
-			logger.error("Failed to parse response JSON: {}", responseData, e);
-			throw new RuntimeException("JSON parsing failed", e);
-		}
+        String firstElement = jsonParseTool.getFirstElementFromJsonArrayString(responseData);
+        if (firstElement != null) {
+            List<Map<String, Object>> translationsList = jsonParseTool.getFieldValue(firstElement, new TypeReference<List<Map<String, Object>>>() {}, "translations");
+            for (Map<String, Object> translation : translationsList) {
+                String to = (String) translation.get("to");
+                String translatedText = (String) translation.get("text");
+                translations.put(to, translatedText);
+                logger.info("Translated text to {}: {}", to, translatedText);
+            }
+        }
+        return new Response(translations);
 	}
 
 	@JsonClassDescription("Request to microsofttranslate text to a target language")

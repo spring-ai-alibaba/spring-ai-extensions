@@ -17,6 +17,7 @@
 package com.alibaba.cloud.ai.toolcalling.sensitivefilter;
 
 import com.alibaba.cloud.ai.toolcalling.common.CommonToolCallProperties;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.ArrayList;
@@ -50,35 +51,35 @@ public class SensitiveFilterProperties extends CommonToolCallProperties {
 	 */
 	public static class CustomPattern {
 
-		private String name;
+		private @Nullable String name;
 
-		private String pattern;
+		private @Nullable String pattern;
 
-		private String replacement;
+		private @Nullable String replacement;
 
 		private boolean enabled = true;
 
-		public String getName() {
+		public @Nullable String getName() {
 			return name;
 		}
 
-		public void setName(String name) {
+		public void setName(@Nullable String name) {
 			this.name = name;
 		}
 
-		public String getPattern() {
+		public @Nullable String getPattern() {
 			return pattern;
 		}
 
-		public void setPattern(String pattern) {
+		public void setPattern(@Nullable String pattern) {
 			this.pattern = pattern;
 		}
 
-		public String getReplacement() {
+		public @Nullable String getReplacement() {
 			return replacement;
 		}
 
-		public void setReplacement(String replacement) {
+		public void setReplacement(@Nullable String replacement) {
 			this.replacement = replacement;
 		}
 

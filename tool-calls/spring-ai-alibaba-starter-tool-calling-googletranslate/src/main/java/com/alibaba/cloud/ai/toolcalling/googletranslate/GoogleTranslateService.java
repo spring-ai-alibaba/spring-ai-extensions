@@ -21,7 +21,8 @@ import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.MultiValueMap;
@@ -36,7 +37,7 @@ import java.util.function.Function;
  * @author erasernoob
  */
 public class GoogleTranslateService
-		implements Function<GoogleTranslateService.Request, GoogleTranslateService.Response> {
+		implements Function<GoogleTranslateService.@Nullable Request, GoogleTranslateService.@Nullable Response> {
 
 	private static final Logger log = LoggerFactory.getLogger(GoogleTranslateService.class);
 
@@ -55,8 +56,8 @@ public class GoogleTranslateService
 	}
 
 	@Override
-	public Response apply(Request request) {
-		if (CommonToolCallUtils.isInvalidateRequestParams(request, request.text, request.targetLanguage)) {
+	public @Nullable Response apply(@Nullable Request request) {
+		if (request == null || CommonToolCallUtils.isInvalidateRequestParams(request.text, request.targetLanguage)) {
 			return null;
 		}
 
@@ -78,7 +79,7 @@ public class GoogleTranslateService
 		}, log);
 	}
 
-	private Response parseResponseData(String responseData, List<String> query) {
+	private @Nullable Response parseResponseData(String responseData, List<String> query) {
 		Map<String, String> translationResult = new HashMap<>();
 		try {
 			String translationStr = jsonPraseTool.getDepthFieldValueAsString(responseData, "data", "translations");
@@ -97,8 +98,8 @@ public class GoogleTranslateService
 	}
 
 	private void translateFailed(JsonNode rootNode) {
-		String errorMessage = rootNode.path("error").path("message").asText();
-		String code = rootNode.path("error").path("code").asText();
+		String errorMessage = rootNode.path("error").path("message").asString();
+		String code = rootNode.path("error").path("code").asString();
 		log.info("Translate Text Failed. message:{} code:{}", errorMessage, code);
 	}
 

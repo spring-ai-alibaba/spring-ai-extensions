@@ -28,12 +28,13 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * @author YunLong
@@ -85,19 +86,19 @@ public class YuQueResource implements Resource {
 			HttpResponse<String> response = this.httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 			String body = response.body();
 			// Parse the JSON response using Jackson
-			ObjectMapper objectMapper = new ObjectMapper();
-			JsonNode jsonObject = objectMapper.readTree(body);
+			JsonMapper jsonMapper = JsonMapper.shared();
+			JsonNode jsonObject = jsonMapper.readTree(body);
 			JsonNode dataObject = jsonObject.get("data");
 
 			if (dataObject == null || !dataObject.isObject()) {
 				throw new RuntimeException("Invalid response format: 'data' is not an object");
 			}
 
-			if (!Objects.equals(dataObject.get("type").asText(), SUPPORT_TYPE)) {
+			if (!Objects.equals(dataObject.get("type").asString(), SUPPORT_TYPE)) {
 				throw new RuntimeException("Unsupported resource type, only support " + SUPPORT_TYPE);
 			}
 
-			inputStream = new ByteArrayInputStream(dataObject.get("body_html").asText().getBytes());
+			inputStream = new ByteArrayInputStream(dataObject.get("body_html").asString().getBytes());
 			uri = URI.create(resourcePath);
 
 		}
@@ -154,25 +155,26 @@ public class YuQueResource implements Resource {
 
 	public static class Builder {
 
-		private String yuQueToken;
+			private @Nullable String yuQueToken;
 
-		private String resourcePath;
+			private @Nullable String resourcePath;
 
-		public Builder yuQueToken(String yuQueToken) {
-			this.yuQueToken = yuQueToken;
-			return this;
-		}
+			public Builder yuQueToken(@Nullable String yuQueToken) {
+				this.yuQueToken = yuQueToken;
+				return this;
+			}
 
-		public Builder resourcePath(String resourcePath) {
-			this.resourcePath = resourcePath;
-			return this;
-		}
+			public Builder resourcePath(@Nullable String resourcePath) {
+				this.resourcePath = resourcePath;
+				return this;
+			}
 
-		public YuQueResource build() {
-			Assert.notNull(yuQueToken, "YuQueToken must not be null");
-			Assert.notNull(resourcePath, "ResourcePath must not be null");
-			return new YuQueResource(yuQueToken, resourcePath);
-		}
+			public YuQueResource build() {
+				Assert.notNull(yuQueToken, "YuQueToken must not be null");
+				Assert.notNull(resourcePath, "ResourcePath must not be null");
+				return new YuQueResource(Objects.requireNonNull(yuQueToken, "YuQueToken must not be null"),
+						Objects.requireNonNull(resourcePath, "ResourcePath must not be null"));
+			}
 
 	}
 
@@ -187,7 +189,7 @@ public class YuQueResource implements Resource {
 
 	@Override
 	public URL getURL() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("YuQueResource does not expose a direct URL");
 	}
 
 	@Override
@@ -197,7 +199,7 @@ public class YuQueResource implements Resource {
 
 	@Override
 	public File getFile() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("YuQueResource does not expose a local file");
 	}
 
 	@Override
@@ -212,7 +214,7 @@ public class YuQueResource implements Resource {
 
 	@Override
 	public Resource createRelative(String relativePath) throws IOException {
-		return null;
+		throw new UnsupportedOperationException("YuQueResource does not support createRelative");
 	}
 
 	@Override

@@ -1,0 +1,2 @@
+This document is a test fixture for the DashScope file analysis advisor.
+It describes how the integration test uploads a document and passes its file ID to the chat model.

@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.toolcalling.regex;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 import java.util.Collection;
@@ -58,7 +59,7 @@ public final class RegexUtils {
 	 * @param collection collection to store results
 	 * @return collection with results
 	 */
-	public static <T extends Collection<String>> T findAll(Pattern pattern, CharSequence content, int group,
+	public static <T extends Collection<String>> @Nullable T findAll(Pattern pattern, CharSequence content, int group,
 			T collection) {
 		if (null == pattern || null == content) {
 			return null;

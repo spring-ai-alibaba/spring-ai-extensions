@@ -17,12 +17,16 @@ package com.alibaba.cloud.ai.toolcalling.googletranslate;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Description;
+
+import java.util.function.Function;
 
 /**
  * @author erasernoob
@@ -41,6 +45,17 @@ public class GoogleTranslateAutoConfiguration {
 				WebClientTool.builder(jsonParseTool, properties).httpHeadersConsumer(headers -> {
 					headers.add("Content-Type", "application/json");
 				}).build(), jsonParseTool);
+	}
+
+	@Bean(name = "googleTranslateToolCallback")
+	@ConditionalOnMissingBean(name = "googleTranslateToolCallback")
+	public ToolCallback googleTranslateToolCallback(GoogleTranslateService googleTranslate) {
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		Function<GoogleTranslateService.Request, Object> googleTranslateFunction = (Function) googleTranslate;
+		return FunctionToolCallback.builder(GoogleTranslateConstants.TOOL_NAME, googleTranslateFunction)
+			.description("Implement natural language translation capabilities.")
+			.inputType(GoogleTranslateService.Request.class)
+			.build();
 	}
 
 }

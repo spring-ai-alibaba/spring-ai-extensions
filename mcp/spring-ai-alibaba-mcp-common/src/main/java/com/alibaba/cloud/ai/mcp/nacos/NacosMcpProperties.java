@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.mcp.nacos;
 import com.alibaba.nacos.api.PropertyKeyConst;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,18 +54,25 @@ public class NacosMcpProperties {
 
 	String namespace = "public";
 
+	@Nullable
 	String serverAddr;
 
+	@Nullable
 	String username;
 
+	@Nullable
 	String password;
 
+	@Nullable
 	String accessKey;
 
+	@Nullable
 	String secretKey;
 
+	@Nullable
 	String endpoint;
 
+	@Nullable
 	String ip;
 
 	@Autowired
@@ -79,59 +87,59 @@ public class NacosMcpProperties {
 		this.namespace = namespace;
 	}
 
-	public String getUsername() {
+	public @Nullable String getUsername() {
 		return username;
 	}
 
-	public void setUsername(String username) {
+	public void setUsername(@Nullable String username) {
 		this.username = username;
 	}
 
-	public String getPassword() {
+	public @Nullable String getPassword() {
 		return password;
 	}
 
-	public void setPassword(String password) {
+	public void setPassword(@Nullable String password) {
 		this.password = password;
 	}
 
-	public String getAccessKey() {
+	public @Nullable String getAccessKey() {
 		return accessKey;
 	}
 
-	public void setAccessKey(String accessKey) {
+	public void setAccessKey(@Nullable String accessKey) {
 		this.accessKey = accessKey;
 	}
 
-	public String getSecretKey() {
+	public @Nullable String getSecretKey() {
 		return secretKey;
 	}
 
-	public void setSecretKey(String secretKey) {
+	public void setSecretKey(@Nullable String secretKey) {
 		this.secretKey = secretKey;
 	}
 
-	public String getIp() {
+	public @Nullable String getIp() {
 		return ip;
 	}
 
-	public void setIp(String ip) {
+	public void setIp(@Nullable String ip) {
 		this.ip = ip;
 	}
 
-	public String getEndpoint() {
+	public @Nullable String getEndpoint() {
 		return endpoint;
 	}
 
-	public void setEndpoint(String endpoint) {
+	public void setEndpoint(@Nullable String endpoint) {
 		this.endpoint = endpoint;
 	}
 
-	public String getServerAddr() {
+	public @Nullable String getServerAddr() {
 		return serverAddr;
 	}
 
-	void setServerAddr(String serverAddr) {
+	void setServerAddr(@Nullable String serverAddr) {
 		this.serverAddr = serverAddr;
 	}
 

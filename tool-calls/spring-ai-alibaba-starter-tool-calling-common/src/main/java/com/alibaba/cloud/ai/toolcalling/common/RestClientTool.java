@@ -15,7 +15,6 @@
  */
 package com.alibaba.cloud.ai.toolcalling.common;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -30,6 +29,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -70,10 +70,10 @@ public class RestClientTool {
 	}
 
 	public String get(String uri, MultiValueMap<String, String> params, Map<String, ?> variables) {
-		return restClient.get()
+		return Objects.requireNonNull(restClient.get()
 			.uri(uriBuilder -> uriBuilder.path(uri).queryParams(params).build(variables))
 			.retrieve()
-			.body(String.class);
+			.body(String.class), "Response body must not be null");
 	}
 
 	public String get(String uri, MultiValueMap<String, String> params) {
@@ -90,21 +90,16 @@ public class RestClientTool {
 
 	public <T> String post(String uri, MultiValueMap<String, String> params, Map<String, ?> variables, T value,
 			MediaType mediaType) {
-		return restClient.post()
+		return Objects.requireNonNull(restClient.post()
 			.uri(uriBuilder -> uriBuilder.path(uri).queryParams(params).build(variables))
 			.contentType(mediaType)
 			.body(value)
 			.retrieve()
-			.body(String.class);
+			.body(String.class), "Response body must not be null");
 	}
 
 	public <T> String post(String uri, MultiValueMap<String, String> params, Map<String, ?> variables, T value) {
-		try {
-			return this.post(uri, params, variables, jsonParseTool.objectToJson(value), MediaType.APPLICATION_JSON);
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException("Serialization failed", e);
-		}
+        return this.post(uri, params, variables, jsonParseTool.objectToJson(value), MediaType.APPLICATION_JSON);
 	}
 
 	/**

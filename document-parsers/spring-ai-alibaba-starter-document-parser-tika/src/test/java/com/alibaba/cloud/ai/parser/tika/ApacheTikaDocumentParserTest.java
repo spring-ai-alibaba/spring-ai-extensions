@@ -22,7 +22,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.document.Document;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,6 +34,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author brianxiadong
  */
 class ApacheTikaDocumentParserTest {
+
+	@Test
+	void enforcesConfiguredExtractionLimitAndCanParseTheNextInput() {
+		var parser = new TikaDocumentParser(128);
+		var longText = new ByteArrayInputStream("Document text. ".repeat(24).getBytes(StandardCharsets.UTF_8));
+		assertThatThrownBy(() -> parser.parse(longText))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessageContaining("extracted character limit");
+		var shortText = new ByteArrayInputStream("Short document".getBytes(StandardCharsets.UTF_8));
+		assertThat(parser.parse(shortText)).singleElement().satisfies(document ->
+			assertThat(document.getText()).contains("Short document"));
+	}
 
 	@ParameterizedTest
 	@ValueSource(strings = { "test-file.doc", "test-file.docx", "test-file.ppt", "test-file.pptx", "test-file.pdf" })

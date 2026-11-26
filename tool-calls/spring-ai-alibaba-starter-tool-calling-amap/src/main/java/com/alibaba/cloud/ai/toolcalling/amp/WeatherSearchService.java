@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.springframework.util.MultiValueMap;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -50,10 +51,10 @@ public class WeatherSearchService implements Function<WeatherSearchService.Reque
 	 */
 	private String getAddressCityCode(String address) {
 		try {
-			return webClientTool
+			return Objects.requireNonNull(webClientTool
 				.get("/geocode/geo",
 						MultiValueMap.fromSingleValue(Map.of("key", amapProperties.getApiKey(), "address", address)))
-				.block();
+				.block(), "AMap geocode response must not be null");
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to get address city code", e);
@@ -67,11 +68,11 @@ public class WeatherSearchService implements Function<WeatherSearchService.Reque
 	 */
 	private String getWeather(String cityCode) {
 		try {
-			return webClientTool
+			return Objects.requireNonNull(webClientTool
 				.get("/weather/weatherInfo",
 						MultiValueMap.fromSingleValue(
 								Map.of("key", amapProperties.getApiKey(), "city", cityCode, "extensions", "all")))
-				.block();
+				.block(), "AMap weather response must not be null");
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to get weather information", e);
@@ -84,8 +85,11 @@ public class WeatherSearchService implements Function<WeatherSearchService.Reque
 		String responseBody = this.getAddressCityCode(request.address);
 		try {
 			String arrayString = jsonParseTool.getFieldValueAsString(responseBody, "geocodes");
-			String firstElement = jsonParseTool.getFirstElementFromJsonArrayString(arrayString);
-			return new Response(this.getWeather(jsonParseTool.getFieldValue(firstElement, String.class, "adcode")));
+			String firstElement = Objects.requireNonNull(jsonParseTool.getFirstElementFromJsonArrayString(arrayString),
+					"No geocode result found");
+			String adcode = Objects.requireNonNull(jsonParseTool.getFieldValue(firstElement, String.class, "adcode"),
+					"No adcode found");
+			return new Response(this.getWeather(adcode));
 		}
 		catch (Exception e) {
 			return new Response("Error occurred while processing the request.");

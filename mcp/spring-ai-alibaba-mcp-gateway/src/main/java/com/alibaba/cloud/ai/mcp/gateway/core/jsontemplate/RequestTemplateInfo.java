@@ -16,7 +16,7 @@
 
 package com.alibaba.cloud.ai.mcp.gateway.core.jsontemplate;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 /**
  * @author Sunrisea

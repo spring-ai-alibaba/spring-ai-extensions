@@ -21,7 +21,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.function.Function;
+import org.springframework.util.StringUtils;
 
 /**
  * @author hiriki
@@ -42,17 +44,18 @@ public class YuqueCreateDocService
 
 	@Override
 	public CreateDocResponse apply(CreateDocRequest request) {
-		if (request.bookId == null || request.body == null) {
-			return null;
+		if (request == null || !StringUtils.hasText(request.bookId) || !StringUtils.hasText(request.body)) {
+			throw new IllegalArgumentException("Yuque create doc request bookId and body must not be empty");
 		}
 		String uri = "/repos/" + request.bookId + "/docs";
 		try {
-			String json = webClientTool.post(uri, request).block();
+			String json = Objects.requireNonNull(webClientTool.post(uri, request).block(),
+					"Yuque create doc API returned empty response");
 			return jsonParseTool.jsonToObject(json, CreateDocResponse.class);
 		}
 		catch (Exception e) {
 			logger.error("Failed to create the Yuque document.", e);
-			return null;
+			throw new RuntimeException("Failed to create the Yuque document", e);
 		}
 	}
 

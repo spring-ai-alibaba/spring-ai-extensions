@@ -17,6 +17,7 @@
 package com.alibaba.cloud.ai.mcp.gateway.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.tool.definition.ToolDefinition;
 
 /**
@@ -25,17 +26,17 @@ import org.springframework.ai.tool.definition.ToolDefinition;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class McpGatewayToolDefinition implements ToolDefinition {
 
-	protected String name;
+	protected @Nullable String name;
 
-	protected String description;
+	protected @Nullable String description;
 
-	protected String version;
+	protected @Nullable String version;
 
-	protected String protocol;
+	protected @Nullable String protocol;
 
-	protected Boolean enabled;
+	protected @Nullable Boolean enabled;
 
-	protected Object inputSchema;
+	protected @Nullable Object inputSchema;
 
 	public McpGatewayToolDefinition() {
 	}
@@ -50,51 +51,51 @@ public abstract class McpGatewayToolDefinition implements ToolDefinition {
 		this.enabled = enabled;
 	}
 
-	public String getName() {
+	public @Nullable String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public void setName(@Nullable String name) {
 		this.name = name;
 	}
 
-	public String getDescription() {
+	public @Nullable String getDescription() {
 		return description;
 	}
 
-	public void setDescription(String description) {
+	public void setDescription(@Nullable String description) {
 		this.description = description;
 	}
 
-	public String getVersion() {
+	public @Nullable String getVersion() {
 		return version;
 	}
 
-	public void setVersion(String version) {
+	public void setVersion(@Nullable String version) {
 		this.version = version;
 	}
 
-	public String getProtocol() {
+	public @Nullable String getProtocol() {
 		return protocol;
 	}
 
-	public void setProtocol(String protocol) {
+	public void setProtocol(@Nullable String protocol) {
 		this.protocol = protocol;
 	}
 
-	public Boolean getEnabled() {
+	public @Nullable Boolean getEnabled() {
 		return enabled;
 	}
 
-	public void setEnabled(Boolean enabled) {
+	public void setEnabled(@Nullable Boolean enabled) {
 		this.enabled = enabled;
 	}
 
-	public Object getInputSchema() {
+	public @Nullable Object getInputSchema() {
 		return inputSchema;
 	}
 
-	public void setInputSchema(Object inputSchema) {
+	public void setInputSchema(@Nullable Object inputSchema) {
 		this.inputSchema = inputSchema;
 	}
 

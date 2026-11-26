@@ -21,6 +21,7 @@ import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayToolManager;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.definition.NacosMcpGatewayToolDefinition;
 import com.alibaba.cloud.ai.mcp.gateway.nacos.properties.NacosMcpGatewayProperties;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
+import com.alibaba.cloud.ai.mcp.utils.NacosMcpProtocol;
 import com.alibaba.nacos.api.ai.model.mcp.McpServerDetailInfo;
 import com.alibaba.nacos.api.ai.model.mcp.McpServerRemoteServiceConfig;
 import com.alibaba.nacos.api.ai.model.mcp.McpServiceRef;
@@ -30,6 +31,7 @@ import com.alibaba.nacos.api.ai.model.mcp.McpToolSpecification;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.JacksonUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +39,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -76,6 +79,10 @@ public class NacosMcpGatewayToolsWatcher extends AbstractMcpGatewayToolsWatcher 
 		// 移除过期服务的所有工具
 		for (String staleService : staleServices) {
 			McpServerDetailInfo staleServerDetail = serviceDetailInfoCache.get(staleService);
+			if (staleServerDetail == null) {
+				serviceDetailInfoCache.remove(staleService);
+				continue;
+			}
 			McpToolSpecification mcpToolSpec = staleServerDetail.getToolSpec();
 			if (mcpToolSpec != null) {
 				List<McpTool> toolsToRemove = mcpToolSpec.getTools();
@@ -117,7 +124,7 @@ public class NacosMcpGatewayToolsWatcher extends AbstractMcpGatewayToolsWatcher 
 		cleanupStaleServices(currentServices);
 	}
 
-	private void compareToolsChange(McpServerDetailInfo oldMcpServerDetail, McpServerDetailInfo mcpServerDetail,
+	private void compareToolsChange(@Nullable McpServerDetailInfo oldMcpServerDetail, McpServerDetailInfo mcpServerDetail,
 			Set<String> needToDeleteTools, Set<String> needToUpdateTools) {
 		boolean isHaveOldTools = true;
 		boolean isHaveNewTools = true;
@@ -133,16 +140,16 @@ public class NacosMcpGatewayToolsWatcher extends AbstractMcpGatewayToolsWatcher 
 		}
 		String oldProtocol = null;
 		if (oldMcpServerDetail != null) {
-			oldProtocol = oldMcpServerDetail.getProtocol();
+			oldProtocol = NacosMcpProtocol.resolve(oldMcpServerDetail);
 		}
 		if (!StringUtils.equals(oldProtocol, "http") && !StringUtils.equals(oldProtocol, "https")
-				&& !StringUtils.equals(oldProtocol, "mcp-sse") && !StringUtils.equals(oldProtocol, "mcp-streamable")) {
+				&& !StringUtils.equals(oldProtocol, "mcp-sse") && !NacosMcpProtocol.isStreamable(oldProtocol)) {
 			isHaveOldTools = false;
 		}
-		String newProtocol = mcpServerDetail.getProtocol();
+		String newProtocol = NacosMcpProtocol.resolve(mcpServerDetail);
 
 		if (!StringUtils.equals(newProtocol, "http") && !StringUtils.equals(newProtocol, "https")
-				&& !StringUtils.equals(newProtocol, "mcp-sse") && !StringUtils.equals(newProtocol, "mcp-streamable")) {
+				&& !StringUtils.equals(newProtocol, "mcp-sse") && !NacosMcpProtocol.isStreamable(newProtocol)) {
 			isHaveNewTools = false;
 		}
 
@@ -158,8 +165,10 @@ public class NacosMcpGatewayToolsWatcher extends AbstractMcpGatewayToolsWatcher 
 			return;
 		}
 		if (isHaveOldTools && !isHaveNewTools) {
-			List<McpTool> tools = oldMcpServerDetail.getToolSpec().getTools();
-			Map<String, McpToolMeta> toolsMeta = oldMcpServerDetail.getToolSpec().getToolsMeta();
+			McpServerDetailInfo previousServerDetail = Objects.requireNonNull(oldMcpServerDetail,
+					"oldMcpServerDetail cannot be null");
+			List<McpTool> tools = previousServerDetail.getToolSpec().getTools();
+			Map<String, McpToolMeta> toolsMeta = previousServerDetail.getToolSpec().getToolsMeta();
 			for (McpTool tool : tools) {
 				String toolName = tool.getName();
 				if (toolsMeta != null && toolsMeta.get(toolName) != null && toolsMeta.get(toolName).isEnabled()) {
@@ -172,10 +181,12 @@ public class NacosMcpGatewayToolsWatcher extends AbstractMcpGatewayToolsWatcher 
 			return;
 		}
 
-		List<McpTool> oldTools = oldMcpServerDetail.getToolSpec().getTools();
+		McpServerDetailInfo previousServerDetail = Objects.requireNonNull(oldMcpServerDetail,
+				"oldMcpServerDetail cannot be null");
+		List<McpTool> oldTools = previousServerDetail.getToolSpec().getTools();
 		List<McpTool> newTools = mcpServerDetail.getToolSpec().getTools();
 
-		Map<String, McpToolMeta> oldToolsMeta = oldMcpServerDetail.getToolSpec().getToolsMeta();
+		Map<String, McpToolMeta> oldToolsMeta = previousServerDetail.getToolSpec().getToolsMeta();
 		Map<String, McpToolMeta> newToolsMeta = mcpServerDetail.getToolSpec().getToolsMeta();
 
 		Map<String, McpTool> oldAvailableToolMap = new HashMap<>();
@@ -245,17 +256,25 @@ public class NacosMcpGatewayToolsWatcher extends AbstractMcpGatewayToolsWatcher 
 			}
 			McpToolSpecification toolSpec = mcpServerDetail.getToolSpec();
 			McpServerRemoteServiceConfig remoteServerConfig = mcpServerDetail.getRemoteServerConfig();
-			String protocol = mcpServerDetail.getProtocol();
+			String protocol = NacosMcpProtocol.resolve(mcpServerDetail);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Need to update tools (name {}): {}", mcpName, JacksonUtils.toJson(needToUpdateTools));
-				logger.debug("Need to delete tools (name {}): {}", mcpName, JacksonUtils.toJson(needToUpdateTools));
+				logger.debug("Need to delete tools (name {}): {}", mcpName, JacksonUtils.toJson(needToDeleteTools));
 			}
 			if (!needToUpdateTools.isEmpty()) {
+				if (toolSpec == null || remoteServerConfig == null) {
+					logger.warn("Missing toolSpec or remoteServerConfig for service: {}, skip update", mcpName);
+					return;
+				}
 				List<McpTool> tools = toolSpec.getTools();
 				Map<String, McpToolMeta> toolsMeta = toolSpec.getToolsMeta();
+				if (tools == null || toolsMeta == null) {
+					logger.warn("Missing tools or toolsMeta for service: {}, skip update", mcpName);
+					return;
+				}
 				for (McpTool tool : tools) {
 					if (!needToUpdateTools.contains(tool.getName())) {
-						return;
+						continue;
 					}
 					String toolName = tool.getName();
 					String toolDescription = tool.getDescription();
@@ -263,6 +282,7 @@ public class NacosMcpGatewayToolsWatcher extends AbstractMcpGatewayToolsWatcher 
 					McpToolMeta metaInfo = toolsMeta.get(toolName);
 					NacosMcpGatewayToolDefinition toolDefinition = NacosMcpGatewayToolDefinition.builder()
 						.name(mcpServerDetail.getName() + "_tools_" + toolName)
+						.remoteToolName(toolName)
 						.description(toolDescription)
 						.inputSchema(inputSchema)
 						.protocol(protocol)

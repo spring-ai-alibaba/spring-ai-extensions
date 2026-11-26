@@ -22,6 +22,7 @@ import com.lark.oapi.core.utils.Jsons;
 import com.lark.oapi.service.docx.v1.model.*;
 import com.lark.oapi.service.drive.v1.model.ListFileReq;
 import com.lark.oapi.service.drive.v1.model.ListFileResp;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
@@ -45,31 +46,32 @@ public class FeiShuDocumentReader implements DocumentReader {
 
 	private final Client client;
 
-	private String documentId;
+	private @Nullable String documentId;
 
-	private String userAccessToken;
+	private @Nullable String userAccessToken;
 
-	private String tenantAccessToken;
+	private @Nullable String tenantAccessToken;
 
 	public FeiShuDocumentReader(FeiShuResource feiShuResource) {
 		this.feiShuResource = feiShuResource;
 		this.client = feiShuResource.buildDefaultFeiShuClient();
 	}
 
-	public FeiShuDocumentReader(FeiShuResource feiShuResource, String documentId, String userAccessToken,
-			String tenantAccessToken) {
+	public FeiShuDocumentReader(FeiShuResource feiShuResource, @Nullable String documentId,
+			@Nullable String userAccessToken, @Nullable String tenantAccessToken) {
 		this(feiShuResource);
 		this.documentId = documentId;
 		this.userAccessToken = userAccessToken;
 		this.tenantAccessToken = tenantAccessToken;
 	}
 
-	public FeiShuDocumentReader(FeiShuResource feiShuResource, String userAccessToken) {
+	public FeiShuDocumentReader(FeiShuResource feiShuResource, @Nullable String userAccessToken) {
 		this(feiShuResource);
 		this.userAccessToken = userAccessToken;
 	}
 
-	public FeiShuDocumentReader(FeiShuResource feiShuResource, String userAccessToken, String documentId) {
+	public FeiShuDocumentReader(FeiShuResource feiShuResource, @Nullable String userAccessToken,
+			@Nullable String documentId) {
 		this(feiShuResource);
 		this.userAccessToken = userAccessToken;
 		this.documentId = documentId;

@@ -1,0 +1,191 @@
+/*
+ * Copyright 2024-2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.alibaba.cloud.ai.memory.redis.serializer;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.ToolResponseMessage;
+import org.springframework.ai.chat.messages.UserMessage;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.json.JsonMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Custom JSON deserializer for Message objects
+ *
+ * @author Jast
+ * @author yingzi
+ * @author benym
+ */
+public class MessageDeserializer extends ValueDeserializer<Message> {
+
+	private static final Logger logger = LoggerFactory.getLogger(MessageDeserializer.class);
+
+	private static final Map<String, MessageFactory> MESSAGE_FACTORIES = new ConcurrentHashMap<>();
+
+    private static final JsonMapper JSON_MAPPER = JsonMapper.builder()
+            .changeDefaultVisibility(vc -> vc.withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withFieldVisibility(JsonAutoDetect.Visibility.ANY))
+            .build();
+
+	static {
+		MESSAGE_FACTORIES.put("USER",
+				((textContent, metadata, toolCalls, toolResponses) -> UserMessage.builder()
+					.text(textContent)
+					.metadata(CollectionUtils.isEmpty(metadata) ? Map.of() : metadata)
+					.build()));
+		MESSAGE_FACTORIES.put("ASSISTANT",
+				((textContent, metadata, toolCalls, toolResponses) -> AssistantMessage.builder()
+					.content(textContent)
+					.properties(CollectionUtils.isEmpty(metadata) ? Map.of() : metadata)
+					.toolCalls(CollectionUtils.isEmpty(toolCalls) ? List.of() : toolCalls)
+					.build()));
+		MESSAGE_FACTORIES.put("SYSTEM",
+				((textContent, metadata, toolCalls, toolResponses) -> SystemMessage.builder()
+					.text(textContent)
+					.metadata(CollectionUtils.isEmpty(metadata) ? Map.of() : metadata)
+					.build()));
+		MESSAGE_FACTORIES.put("TOOL",
+				((textContent, metadata, toolCalls, toolResponses) -> ToolResponseMessage.builder()
+					.responses(toolResponses)
+					.metadata(CollectionUtils.isEmpty(metadata) ? Map.of() : metadata)
+					.build()));
+	}
+
+	@Override
+	public Message deserialize(JsonParser p, DeserializationContext ctxt) {
+		JsonNode node = ctxt.readTree(p);
+
+		logger.debug("Deserializing message: {}", node);
+
+		// If node is plain text, create a UserMessage by default
+		if (node.isString()) {
+			return new UserMessage(node.asString());
+		}
+
+		// Extract message type
+		String type = extractMessageType(node);
+
+		// Extract content
+		String content = extractContent(node);
+
+		// Extract metadata
+		Map<String, Object> metadata = extractMetadata(node);
+
+		// Extract tool calls for AssistantMessage
+		List<AssistantMessage.ToolCall> toolCalls = extractToolCalls(node);
+
+		// Extract tool responses for ToolResponseMessage
+		List<ToolResponseMessage.ToolResponse> toolResponses = extractToolResponses(node);
+
+		// Create corresponding message object based on type
+		return Optional.ofNullable(type).map(String::toUpperCase).map(MESSAGE_FACTORIES::get).orElseGet(() -> {
+			if (type == null) {
+				logger.warn("Message type not found, defaulting to USER");
+			}
+			else {
+				logger.warn("Unknown message type: {}, defaulting to USER", type);
+			}
+			return MESSAGE_FACTORIES.get("USER");
+		}).create(content, metadata, toolCalls, toolResponses);
+	}
+
+	/**
+	 * Extract message type from JsonNode
+	 */
+	private String extractMessageType(JsonNode node) {
+		return Optional.ofNullable(node.get("messageType"))
+			.map(JsonNode::asText)
+			.orElseGet(() -> Optional.ofNullable(node.get("type"))
+				.map(JsonNode::asText)
+				.orElseGet(
+						() -> Optional.ofNullable(node.get("role")).map(n -> n.asString().toUpperCase()).orElse(null)));
+	}
+
+	/**
+	 * Extract message content from JsonNode
+	 */
+	private String extractContent(JsonNode node) {
+		return Optional.ofNullable(node.get("content"))
+			.map(JsonNode::asText)
+			.orElseGet(
+					() -> Optional.ofNullable(node.get("textContent")).map(JsonNode::asText).orElseGet(node::toString));
+	}
+
+	/**
+	 * Extract metadata from JsonNode
+	 */
+	private Map<String, Object> extractMetadata(JsonNode node) {
+		return Optional.ofNullable(node.get("metadata")).map(metadataNode -> {
+			try {
+				return JSON_MAPPER.convertValue(metadataNode, new TypeReference<>() {
+				});
+			}
+			catch (IllegalArgumentException e) {
+				logger.warn("Failed to deserialize metadata: {}", e.getMessage());
+				return Collections.<String, Object>emptyMap();
+			}
+		}).orElseGet(Collections::emptyMap);
+	}
+
+	/**
+	 * Extract tool calls from JsonNode
+	 */
+	private List<AssistantMessage.ToolCall> extractToolCalls(JsonNode node) {
+		return Optional.ofNullable(node.get("toolCalls")).filter(JsonNode::isArray).map(toolCallNode -> {
+			try {
+				return JSON_MAPPER.convertValue(toolCallNode, new TypeReference<>() {
+				});
+			}
+			catch (IllegalArgumentException e) {
+				logger.warn("Failed to deserialize toolCalls: {}", e.getMessage());
+				return Collections.<AssistantMessage.ToolCall>emptyList();
+			}
+		}).orElseGet(Collections::emptyList);
+	}
+
+	/**
+	 * Extract tool responses from JsonNode
+	 */
+	private List<ToolResponseMessage.ToolResponse> extractToolResponses(JsonNode node) {
+		return Optional.ofNullable(node.get("responses")).filter(JsonNode::isArray).map(toolResponsesNode -> {
+			try {
+				return JSON_MAPPER.convertValue(toolResponsesNode, new TypeReference<>() {
+				});
+			}
+			catch (IllegalArgumentException e) {
+				logger.warn("Failed to deserialize toolResponses: {}", e.getMessage());
+				return Collections.<ToolResponseMessage.ToolResponse>emptyList();
+			}
+		}).orElseGet(Collections::emptyList);
+	}
+
+}

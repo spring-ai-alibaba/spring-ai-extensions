@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.aliyunaisearch;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -40,6 +42,15 @@ public class AliyunAiSearchAutoConfiguration {
 					httpHeaders.add("Content-Type", "application/json");
 					httpHeaders.add("Authorization", "Bearer " + properties.getApiKey());
 				}).build(), jsonParseTool, properties);
+	}
+
+	@Bean(name = "aliyunAiSearchToolCallback")
+	@ConditionalOnMissingBean(name = "aliyunAiSearchToolCallback")
+	public ToolCallback aliyunAiSearchToolCallback(AliyunAiSearchService aliyunAiSearchService) {
+		return FunctionToolCallback.builder(AliyunAiSearchConstants.TOOL_NAME, aliyunAiSearchService)
+			.description("Aliyun AI Web Search Service")
+			.inputType(AliyunAiSearchService.Request.class)
+			.build();
 	}
 
 }

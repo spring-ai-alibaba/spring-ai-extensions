@@ -24,6 +24,7 @@ import com.lark.oapi.service.docx.v1.model.RawContentDocumentReq;
 import com.lark.oapi.service.docx.v1.model.RawContentDocumentResp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.ObjectUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
@@ -53,6 +54,11 @@ public class LarkSuiteGetDocContentService
 		String userAccessToken = request.userAccessToken;
 		int lang = request.lang;
 
+		if (ObjectUtils.isEmpty(larkSuiteProperties.getAppId())
+				|| ObjectUtils.isEmpty(larkSuiteProperties.getAppSecret())) {
+			throw new IllegalArgumentException("current spring.ai.plugin.tool.larksuite must not be null.");
+		}
+
 		Client client = Client.newBuilder(larkSuiteProperties.getAppId(), larkSuiteProperties.getAppSecret()).build();
 
 		RawContentDocumentReq req = RawContentDocumentReq.newBuilder().documentId(documentId).lang(lang).build();
@@ -72,10 +78,9 @@ public class LarkSuiteGetDocContentService
 			return Jsons.DEFAULT.toJson(resp.getData());
 		}
 		catch (Exception e) {
-			logger.error("获取文档异常");
+			logger.error("获取文档异常", e);
+			throw new RuntimeException("获取飞书文档内容失败", e);
 		}
-
-		return resp;
 	}
 
 	record GetDocContentRequest(@JsonProperty("documentId") String documentId,

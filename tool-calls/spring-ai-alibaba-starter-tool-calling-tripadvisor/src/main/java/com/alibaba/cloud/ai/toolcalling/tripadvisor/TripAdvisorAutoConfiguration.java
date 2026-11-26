@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.tripadvisor;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -51,6 +53,15 @@ public class TripAdvisorAutoConfiguration {
 			})
 			.build();
 		return new TripAdvisorService(jsonParseTool, webClientTool, properties);
+	}
+
+	@Bean(name = "tripAdvisorToolCallback")
+	@ConditionalOnMissingBean(name = "tripAdvisorToolCallback")
+	public ToolCallback tripAdvisorToolCallback(TripAdvisorService tripAdvisor) {
+		return FunctionToolCallback.builder(TripAdvisorConstants.TOOL_NAME, tripAdvisor)
+			.description("Provides a TripAdvisorService bean for accessing TripAdvisor Content API for location details and search.")
+			.inputType(TripAdvisorService.Request.class)
+			.build();
 	}
 
 }

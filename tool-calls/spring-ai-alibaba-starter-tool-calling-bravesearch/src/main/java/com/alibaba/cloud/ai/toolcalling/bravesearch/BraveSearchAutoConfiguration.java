@@ -18,6 +18,8 @@ package com.alibaba.cloud.ai.toolcalling.bravesearch;
 import com.alibaba.cloud.ai.toolcalling.common.CommonToolCallConstants;
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -51,6 +53,15 @@ public class BraveSearchAutoConfiguration {
 		};
 		return new BraveSearchService(
 				WebClientTool.builder(jsonParseTool, properties).httpHeadersConsumer(consumer).build(), jsonParseTool);
+	}
+
+	@Bean(name = "braveSearchToolCallback")
+	@ConditionalOnMissingBean(name = "braveSearchToolCallback")
+	public ToolCallback braveSearchToolCallback(BraveSearchService braveSearch) {
+		return FunctionToolCallback.builder(BraveSearchConstants.TOOL_NAME, braveSearch)
+			.description("Use brave search engine to query.")
+			.inputType(BraveSearchService.Request.class)
+			.build();
 	}
 
 }

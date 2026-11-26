@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.toolcalling.toolsearch;
 
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -67,6 +69,15 @@ public class ToolSearchAutoConfiguration {
 			matchIfMissing = true)
 	public ToolIndexer toolIndexer(ToolSearcher toolSearcher, ToolSearchProperties properties) {
 		return new ToolIndexer(toolSearcher, properties);
+	}
+
+	@Bean(name = "toolSearchServiceToolCallback")
+	@ConditionalOnMissingBean(name = "toolSearchServiceToolCallback")
+	public ToolCallback toolSearchServiceToolCallback(ToolSearchService toolSearchService) {
+		return FunctionToolCallback.builder(ToolSearchConstants.TOOL_NAME, toolSearchService)
+			.description("Search and discover available tools dynamically based on query keywords. " + "Dynamically search and discover available tools using keywords.")
+			.inputType(ToolSearchService.Request.class)
+			.build();
 	}
 
 }

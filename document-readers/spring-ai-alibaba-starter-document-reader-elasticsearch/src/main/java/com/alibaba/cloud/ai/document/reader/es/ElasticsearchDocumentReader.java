@@ -20,15 +20,16 @@ import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.elasticsearch.client.RestClient;
+import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 import org.springframework.util.CollectionUtils;
@@ -42,6 +43,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A DocumentReader implementation that reads documents from Elasticsearch. Supports basic
@@ -74,10 +76,10 @@ public class ElasticsearchDocumentReader implements DocumentReader {
 	@Override
 	public List<Document> get() {
 		try {
+			String index = getRequiredIndex();
 			// Get all documents
-			SearchResponse<Map> response = client.search(
-					s -> s.index(config.getIndex()).query(q -> q.matchAll(m -> m)).size(config.getMaxResults()),
-					Map.class);
+			SearchResponse<Map> response = client
+				.search(s -> s.index(index).query(q -> q.matchAll(m -> m)).size(config.getMaxResults()), Map.class);
 
 			return getDocuments(response);
 		}
@@ -103,9 +105,9 @@ public class ElasticsearchDocumentReader implements DocumentReader {
 	 * @param id The document ID
 	 * @return The document if found, null otherwise
 	 */
-	public Document getById(String id) {
+	public @Nullable Document getById(String id) {
 		try {
-			var response = client.get(g -> g.index(config.getIndex()).id(id), Map.class);
+			var response = client.get(g -> g.index(getRequiredIndex()).id(id), Map.class);
 
 			if (!response.found() || response.source() == null) {
 				return null;
@@ -126,8 +128,9 @@ public class ElasticsearchDocumentReader implements DocumentReader {
 	 */
 	public List<Document> readWithQuery(String query) {
 		try {
+			String index = getRequiredIndex();
 			// Build the search request with query
-			SearchResponse<Map> response = client.search(s -> s.index(config.getIndex())
+			SearchResponse<Map> response = client.search(s -> s.index(index)
 				.query(q -> q.match(new MatchQuery.Builder().field(config.getQueryField()).query(query).build()))
 				.size(config.getMaxResults()), Map.class);
 
@@ -145,21 +148,21 @@ public class ElasticsearchDocumentReader implements DocumentReader {
 		if (!CollectionUtils.isEmpty(config.getNodes())) {
 			httpHosts = config.getNodes().stream().map(node -> {
 				String[] parts = node.split(":");
-				return new HttpHost(parts[0], Integer.parseInt(parts[1]), config.getScheme());
+				return new HttpHost(config.getScheme(), parts[0], Integer.parseInt(parts[1]));
 			}).toArray(HttpHost[]::new);
 		}
 		else {
 			// Fallback to single node configuration
-			httpHosts = new HttpHost[] { new HttpHost(config.getHost(), config.getPort(), config.getScheme()) };
+			httpHosts = new HttpHost[] { new HttpHost(config.getScheme(), config.getHost(), config.getPort()) };
 		}
 
-		var restClientBuilder = RestClient.builder(httpHosts);
+		var restClientBuilder = Rest5Client.builder(httpHosts);
 
 		// Add authentication if credentials are provided
 		if (StringUtils.hasText(config.getUsername()) && StringUtils.hasText(config.getPassword())) {
-			CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-			credentialsProvider.setCredentials(AuthScope.ANY,
-					new UsernamePasswordCredentials(config.getUsername(), config.getPassword()));
+            BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+			credentialsProvider.setCredentials(new AuthScope(null, -1),
+					new UsernamePasswordCredentials(config.getUsername(), config.getPassword().toCharArray()));
 
 			// Create SSL context if using HTTPS
 			if ("https".equalsIgnoreCase(config.getScheme())) {
@@ -167,10 +170,11 @@ public class ElasticsearchDocumentReader implements DocumentReader {
 					.loadTrustMaterial(null, (chains, authType) -> true)
 					.build();
 
-				restClientBuilder.setHttpClientConfigCallback(
-						httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider)
-							.setSSLContext(sslContext)
-							.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE));
+                restClientBuilder.setHttpClientConfigCallback(
+                        httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider))
+                        .setConnectionManagerCallback(
+                                connectionManager -> connectionManager.setTlsStrategy(
+                                        new DefaultClientTlsStrategy(sslContext, NoopHostnameVerifier.INSTANCE)));
 			}
 			else {
 				restClientBuilder.setHttpClientConfigCallback(
@@ -178,9 +182,13 @@ public class ElasticsearchDocumentReader implements DocumentReader {
 			}
 		}
 
-		// Create the transport and client
-		ElasticsearchTransport transport = new RestClientTransport(restClientBuilder.build(), new JacksonJsonpMapper());
-		return new ElasticsearchClient(transport);
+			// Create the transport and client
+			ElasticsearchTransport transport = new Rest5ClientTransport(restClientBuilder.build(), new JacksonJsonpMapper());
+			return new ElasticsearchClient(transport);
+	}
+
+	private String getRequiredIndex() {
+		return Objects.requireNonNull(config.getIndex(), "Elasticsearch index must not be null");
 	}
 
 }

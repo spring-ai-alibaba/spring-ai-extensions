@@ -21,7 +21,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.function.Function;
+import org.springframework.util.StringUtils;
 
 /**
  * @author 北极星
@@ -42,17 +44,19 @@ public class YuqueUpdateDocService
 
 	@Override
 	public updateDocResponse apply(updateDocRequest updateDocRequest) {
-		if (updateDocRequest.bookId == null || updateDocRequest.id == null) {
-			return null;
+		if (updateDocRequest == null || !StringUtils.hasText(updateDocRequest.bookId)
+				|| !StringUtils.hasText(updateDocRequest.id)) {
+			throw new IllegalArgumentException("Yuque update doc request bookId and id must not be empty");
 		}
 		String uri = "/repos/" + updateDocRequest.bookId + "/docs/" + updateDocRequest.id;
 		try {
-			String json = webClientTool.put(uri, updateDocRequest).block();
+			String json = Objects.requireNonNull(webClientTool.put(uri, updateDocRequest).block(),
+					"Yuque update doc API returned empty response");
 			return jsonParseTool.jsonToObject(json, updateDocResponse.class);
 		}
 		catch (Exception e) {
 			logger.error("Failed to update the Yuque document.", e);
-			return null;
+			throw new RuntimeException("Failed to update the Yuque document", e);
 		}
 	}
 

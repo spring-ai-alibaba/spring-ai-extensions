@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.ToolCallback;
@@ -100,7 +101,7 @@ public class ToolSearchService implements Function<ToolSearchService.Request, To
 
 			@JsonProperty(value = "total") @JsonPropertyDescription("Total number of tools found") int total,
 
-			@JsonProperty(value = "error") @JsonPropertyDescription("Error message if any") String error) {
+			@JsonProperty(value = "error") @JsonPropertyDescription("Error message if any") @Nullable String error) {
 	}
 
 	/**

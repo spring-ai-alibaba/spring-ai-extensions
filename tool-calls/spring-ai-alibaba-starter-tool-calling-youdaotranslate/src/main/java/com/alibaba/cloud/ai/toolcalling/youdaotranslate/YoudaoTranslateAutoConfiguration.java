@@ -17,6 +17,8 @@ package com.alibaba.cloud.ai.toolcalling.youdaotranslate;
 
 import com.alibaba.cloud.ai.toolcalling.common.JsonParseTool;
 import com.alibaba.cloud.ai.toolcalling.common.WebClientTool;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -41,6 +43,15 @@ public class YoudaoTranslateAutoConfiguration {
 	public YoudaoTranslateService youdaoTranslate(YoudaoTranslateProperties properties, JsonParseTool jsonParseTool) {
 		WebClientTool webClientTool = WebClientTool.builder(jsonParseTool, properties).build();
 		return new YoudaoTranslateService(properties, jsonParseTool, webClientTool);
+	}
+
+	@Bean(name = "youdaoTranslateToolCallback")
+	@ConditionalOnMissingBean(name = "youdaoTranslateToolCallback")
+	public ToolCallback youdaoTranslateToolCallback(YoudaoTranslateService youdaoTranslate) {
+		return FunctionToolCallback.builder(YoudaoTranslateConstants.TOOL_NAME, youdaoTranslate)
+			.description("use youdao translation to achieve translation")
+			.inputType(YoudaoTranslateService.Request.class)
+			.build();
 	}
 
 }

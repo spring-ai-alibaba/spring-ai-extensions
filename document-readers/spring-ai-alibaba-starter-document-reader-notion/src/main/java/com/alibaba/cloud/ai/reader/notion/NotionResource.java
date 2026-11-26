@@ -25,12 +25,14 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Iterator;
+import java.util.Objects;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Notion Resource class Supports accessing Notion pages and databases
@@ -134,8 +136,8 @@ public class NotionResource implements Resource {
 			Assert.isTrue(pageResponse.statusCode() == 200, "Failed to fetch page content");
 
 			// 2. Parse page content
-			ObjectMapper objectMapper = new ObjectMapper();
-			JsonNode pageJson = objectMapper.readTree(pageResponse.body());
+            JsonMapper jsonMapper = JsonMapper.shared();
+			JsonNode pageJson = jsonMapper.readTree(pageResponse.body());
 			StringBuilder content = new StringBuilder();
 
 			// Extract page title
@@ -145,7 +147,7 @@ public class NotionResource implements Resource {
 				JsonNode titleArray = titleProp.get("title");
 				if (titleArray != null && titleArray.isArray()) {
 					for (JsonNode titleNode : titleArray) {
-						content.append(titleNode.get("plain_text").asText());
+						content.append(titleNode.get("plain_text").asString());
 					}
 					content.append("\n\n");
 				}
@@ -165,19 +167,19 @@ public class NotionResource implements Resource {
 			Assert.isTrue(blocksResponse.statusCode() == 200, "Failed to fetch page blocks");
 
 			// 4. Parse block content
-			JsonNode blocksJson = objectMapper.readTree(blocksResponse.body());
+			JsonNode blocksJson = jsonMapper.readTree(blocksResponse.body());
 			JsonNode blocks = blocksJson.get("results");
 
 			// 5. Extract text content
 			if (blocks != null && blocks.isArray()) {
 				for (JsonNode block : blocks) {
-					String type = block.get("type").asText();
+					String type = block.get("type").asString();
 					if (block.has(type)) {
 						JsonNode typeObj = block.get(type);
 						if (typeObj.has("rich_text")) {
 							JsonNode richText = typeObj.get("rich_text");
 							for (JsonNode textNode : richText) {
-								content.append(textNode.get("plain_text").asText());
+								content.append(textNode.get("plain_text").asString());
 							}
 							content.append("\n");
 						}
@@ -210,8 +212,8 @@ public class NotionResource implements Resource {
 			Assert.isTrue(response.statusCode() == 200, "Failed to fetch database content");
 
 			// 2. Parse database content
-			ObjectMapper objectMapper = new ObjectMapper();
-			JsonNode jsonResponse = objectMapper.readTree(response.body());
+            JsonMapper jsonMapper = JsonMapper.shared();
+			JsonNode jsonResponse = jsonMapper.readTree(response.body());
 			JsonNode results = jsonResponse.get("results");
 
 			// 3. Extract property values
@@ -220,10 +222,10 @@ public class NotionResource implements Resource {
 				for (JsonNode row : results) {
 					JsonNode properties = row.get("properties");
 
-					for (Iterator<String> it = properties.fieldNames(); it.hasNext();) {
+					for (Iterator<String> it = properties.propertyNames().iterator(); it.hasNext();) {
 						String propertyName = it.next();
 						JsonNode property = properties.get(propertyName);
-						String type = property.get("type").asText();
+						String type = property.get("type").asString();
 
 						if (property.has(type)) {
 							JsonNode value = property.get(type);
@@ -232,7 +234,7 @@ public class NotionResource implements Resource {
 									if (item.has("plain_text")) {
 										content.append(propertyName)
 											.append(": ")
-											.append(item.get("plain_text").asText())
+											.append(item.get("plain_text").asString())
 											.append("\n");
 									}
 								}
@@ -270,8 +272,8 @@ public class NotionResource implements Resource {
 			HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 			Assert.isTrue(response.statusCode() == 200, "Failed to fetch resource metadata");
 
-			ObjectMapper objectMapper = new ObjectMapper();
-			return objectMapper.readTree(response.body());
+            JsonMapper jsonMapper = JsonMapper.shared();
+			return jsonMapper.readTree(response.body());
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Failed to get resource metadata", e);
@@ -291,32 +293,31 @@ public class NotionResource implements Resource {
 
 	public static class Builder {
 
-		private String notionToken;
+		private @Nullable String notionToken;
 
-		private String resourceId;
+		private @Nullable String resourceId;
 
-		private ResourceType resourceType;
+		private @Nullable ResourceType resourceType;
 
-		public Builder notionToken(String notionToken) {
+		public Builder notionToken(@Nullable String notionToken) {
 			this.notionToken = notionToken;
 			return this;
 		}
 
-		public Builder resourceId(String resourceId) {
+		public Builder resourceId(@Nullable String resourceId) {
 			this.resourceId = resourceId;
 			return this;
 		}
 
-		public Builder resourceType(ResourceType resourceType) {
+		public Builder resourceType(@Nullable ResourceType resourceType) {
 			this.resourceType = resourceType;
 			return this;
 		}
 
 		public NotionResource build() {
-			Assert.notNull(notionToken, "NotionToken must not be null");
-			Assert.notNull(resourceId, "ResourceId must not be null");
-			Assert.notNull(resourceType, "ResourceType must not be null");
-			return new NotionResource(notionToken, resourceId, resourceType);
+			return new NotionResource(Objects.requireNonNull(notionToken, "NotionToken must not be null"),
+					Objects.requireNonNull(resourceId, "ResourceId must not be null"),
+					Objects.requireNonNull(resourceType, "ResourceType must not be null"));
 		}
 
 	}
@@ -328,7 +329,7 @@ public class NotionResource implements Resource {
 
 	@Override
 	public URL getURL() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("NotionResource does not expose a URL");
 	}
 
 	@Override
@@ -338,7 +339,7 @@ public class NotionResource implements Resource {
 
 	@Override
 	public File getFile() throws IOException {
-		return null;
+		throw new UnsupportedOperationException("NotionResource is not backed by a local file");
 	}
 
 	@Override
@@ -353,7 +354,7 @@ public class NotionResource implements Resource {
 
 	@Override
 	public Resource createRelative(String relativePath) throws IOException {
-		return null;
+		throw new UnsupportedOperationException("NotionResource does not support relative resources");
 	}
 
 	@Override

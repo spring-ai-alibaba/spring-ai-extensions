@@ -21,6 +21,7 @@ package com.alibaba.cloud.ai.parser.directory;
  */
 
 import com.alibaba.cloud.ai.document.DocumentParser;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 
 import java.io.FileInputStream;
@@ -57,14 +58,14 @@ public class DocumentDirectoryParser implements DocumentParser {
 
 	private final boolean randomizeSample;
 
-	private final Integer sampleSeed;
+	private final @Nullable Integer sampleSeed;
 
 	private DocumentDirectoryParser(Builder builder) {
 		this.path = builder.path;
 		this.globPatterns = builder.globPatterns;
 		this.excludePatterns = builder.excludePatterns;
 		this.loadHidden = builder.loadHidden;
-		this.documentParser = builder.documentParser;
+		this.documentParser = Objects.requireNonNull(builder.documentParser, "documentParser cannot be null");
 		this.recursive = builder.recursive;
 		this.sampleSize = builder.sampleSize;
 		this.randomizeSample = builder.randomizeSample;
@@ -167,7 +168,7 @@ public class DocumentDirectoryParser implements DocumentParser {
 
 		private boolean loadHidden = false;
 
-		private DocumentParser documentParser;
+		private @Nullable DocumentParser documentParser;
 
 		private boolean recursive = false;
 
@@ -175,7 +176,7 @@ public class DocumentDirectoryParser implements DocumentParser {
 
 		private boolean randomizeSample = false;
 
-		private Integer sampleSeed = null;
+		private @Nullable Integer sampleSeed = null;
 
 		public Builder(String path) {
 			this.path = path;
@@ -206,7 +207,7 @@ public class DocumentDirectoryParser implements DocumentParser {
 			return this;
 		}
 
-		public Builder sample(int size, boolean randomize, Integer seed) {
+		public Builder sample(int size, boolean randomize, @Nullable Integer seed) {
 			this.sampleSize = size;
 			this.randomizeSample = randomize;
 			this.sampleSeed = seed;

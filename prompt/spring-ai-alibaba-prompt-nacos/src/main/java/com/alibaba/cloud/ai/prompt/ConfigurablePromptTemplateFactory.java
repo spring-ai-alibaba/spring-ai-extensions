@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.prompt;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,11 +86,11 @@ public class ConfigurablePromptTemplateFactory {
 		}
 	}
 
-	public ConfigurablePromptTemplate getTemplate(String name) {
+	public @Nullable ConfigurablePromptTemplate getTemplate(String name) {
 		return templates.get(name);
 	}
 
-	public record ConfigurablePromptTemplateModel(String name, String template, Map<String, Object> model) {
+	public record ConfigurablePromptTemplateModel(String name, String template, @Nullable Map<String, Object> model) {
 
 	}
 

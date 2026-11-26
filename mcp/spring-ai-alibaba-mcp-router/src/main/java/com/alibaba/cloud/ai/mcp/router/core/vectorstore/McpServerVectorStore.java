@@ -18,6 +18,7 @@
 package com.alibaba.cloud.ai.mcp.router.core.vectorstore;
 
 import com.alibaba.cloud.ai.mcp.router.model.McpServerInfo;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -45,6 +46,7 @@ public interface McpServerVectorStore {
 	 * @param serviceName 服务名
 	 * @return 服务信息
 	 */
+	@Nullable
 	McpServerInfo getServer(String serviceName);
 
 	/**

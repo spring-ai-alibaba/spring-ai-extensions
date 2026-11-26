@@ -1,0 +1,393 @@
+/*
+ * Copyright 2024-2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.alibaba.cloud.ai.dashscope.sdk.image;
+
+import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeImageApiConstants;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageApiSpec.InvokeMode;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;
+import com.alibaba.cloud.ai.dashscope.image.DashScopeImageOptions;
+import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkMediaConnection;
+import org.springframework.web.client.RestClient;
+
+import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException;
+import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisParam;
+import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisResult;
+import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisUsage;
+import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
+import org.springframework.ai.image.Image;
+import org.springframework.ai.image.ImageGeneration;
+import org.springframework.ai.image.ImageModel;
+import org.springframework.ai.image.ImagePrompt;
+import org.springframework.ai.image.ImageResponse;
+import org.springframework.ai.image.ImageResponseMetadata;
+import org.springframework.ai.image.observation.DefaultImageModelObservationConvention;
+import org.springframework.ai.image.observation.ImageModelObservationContext;
+import org.springframework.ai.image.observation.ImageModelObservationConvention;
+import org.springframework.ai.image.observation.ImageModelObservationDocumentation;
+import org.springframework.ai.retry.RetryUtils;
+import org.springframework.core.retry.RetryTemplate;
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * {@link ImageModel} implementation backed by DashScope Java SDK.
+ */
+public class DashScopeSdkImageModel implements ImageModel {
+
+	private static final ImageModelObservationConvention DEFAULT_OBSERVATION_CONVENTION =
+			new DefaultImageModelObservationConvention();
+
+	public static final String PROVIDER_NAME = "dashscope-sdk";
+
+	public static final String DEFAULT_MODEL_NAME = "wanx-v1";
+
+	private final DashScopeSdkImageSynthesisClient imageClient;
+
+	private final DashScopeSdkImageOptions defaultOptions;
+
+	private final RetryTemplate retryTemplate;
+
+	private final ObservationRegistry observationRegistry;
+
+	private final @Nullable String apiKey;
+
+	private final @Nullable String workspaceId;
+
+	private final Map<String, String> connectionHeaders;
+
+	private ImageModelObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
+
+	public DashScopeSdkImageModel(DashScopeSdkImageSynthesisClient imageClient, DashScopeSdkImageOptions defaultOptions,
+                                  RetryTemplate retryTemplate, ObservationRegistry observationRegistry, @Nullable String apiKey,
+                                  @Nullable String workspaceId,
+                                  Map<String, String> connectionHeaders) {
+
+		Assert.notNull(imageClient, "imageClient cannot be null");
+		Assert.notNull(defaultOptions, "defaultOptions cannot be null");
+		Assert.notNull(retryTemplate, "retryTemplate cannot be null");
+		Assert.notNull(observationRegistry, "observationRegistry cannot be null");
+		Assert.notNull(connectionHeaders, "connectionHeaders cannot be null");
+
+		this.imageClient = imageClient;
+		this.defaultOptions = defaultOptions;
+		this.retryTemplate = retryTemplate;
+		this.observationRegistry = observationRegistry;
+		this.apiKey = apiKey;
+		this.workspaceId = workspaceId;
+		this.connectionHeaders = connectionHeaders;
+	}
+
+	@Override
+	public ImageResponse call(ImagePrompt request) {
+		Assert.notNull(request, "Prompt must not be null");
+		Assert.isTrue(!CollectionUtils.isEmpty(request.getInstructions()), "Prompt messages must not be empty");
+
+        // Merge request options with default options
+		DashScopeSdkImageOptions options = DashScopeSdkImageOptions.builder()
+                .from(this.defaultOptions)
+                .merge(request.getOptions())
+                .build();
+		String model = Objects.requireNonNull(options.getModel(), "An image model is required");
+		if (DashScopeImageApiConstants.isCurrentQwenImage(model)) {
+			return callQwenImage(request, options, model);
+		}
+		ImageSynthesisParam sdkRequest = createRequest(request, options);
+
+		ImageModelObservationContext observationContext = ImageModelObservationContext.builder()
+			.imagePrompt(request)
+			.provider(PROVIDER_NAME)
+			.build();
+
+		return ImageModelObservationDocumentation.IMAGE_MODEL_OPERATION
+			.observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> observationContext,
+					this.observationRegistry)
+			.observe(() -> {
+				ImageSynthesisResult submitResult = RetryUtils.execute(this.retryTemplate, () -> executeSubmit(sdkRequest, options));
+				ImageSynthesisResult finalResult = resolveFinalResult(submitResult, options);
+				ImageResponse response = toImageResponse(finalResult);
+				observationContext.setResponse(response);
+				return response;
+			});
+	}
+
+	private ImageResponse callQwenImage(ImagePrompt prompt, DashScopeSdkImageOptions options, String model) {
+		RestClient.Builder rest = RestClient.builder().defaultHeaders(headers ->
+				mergeHeaders(options.getHttpHeaders()).forEach((name, value) -> headers.set(name, value.toString())));
+		var api = DashScopeImageApi.builder()
+			.baseUrl(DashScopeSdkMediaConnection.baseUrl(this.workspaceId)).workSpaceId(this.workspaceId)
+			.apiKey(DashScopeSdkMediaConnection.apiKey(this.apiKey)).restClientBuilder(rest).build();
+		var requestOptions = DashScopeImageOptions.builder().model(model).n(options.getN()).size(options.getSize())
+			.width(options.getWidth()).height(options.getHeight()).seed(options.getSeed())
+			.negativePrompt(options.getNegativePrompt()).baseImageUrl(options.getRefImage())
+			.responseFormat(options.getResponseFormat())
+			.invokeMode(Boolean.TRUE.equals(options.getAsync()) ? InvokeMode.ASYNC : InvokeMode.SYNC);
+		if (options.getExtraBody() != null) {
+			for (var parameter : options.getExtraBody().entrySet()) {
+				switch (parameter.getKey()) {
+					case "prompt_extend" -> requestOptions.promptExtend((Boolean) parameter.getValue());
+					case "prompt_extend_mode" -> requestOptions.promptExtendMode((String) parameter.getValue());
+					case "enable_thinking" -> requestOptions.enableThinking((Boolean) parameter.getValue());
+					case "watermark" -> requestOptions.watermark((Boolean) parameter.getValue());
+					default -> throw new IllegalArgumentException("Unsupported Qwen image parameter " + parameter.getKey());
+				}
+			}
+		}
+		return DashScopeImageModel.builder().dashScopeApi(api).retryTemplate(this.retryTemplate)
+			.observationRegistry(this.observationRegistry).defaultOptions(requestOptions.build()).build()
+			.call(new ImagePrompt(prompt.getInstructions()));
+	}
+
+	private ImageSynthesisParam createRequest(ImagePrompt request, DashScopeSdkImageOptions options) {
+		String model = Objects.requireNonNull(options.getModel(),
+				"DashScopeSdkImageOptions model cannot be null");
+		ImageSynthesisParam.ImageSynthesisParamBuilder<?, ?> builder = ImageSynthesisParam.builder()
+			.model(model)
+			.prompt(request.getInstructions().get(0).getText());
+
+		if (options.getN() != null) {
+			builder.n(options.getN());
+		}
+		if (options.getSize() != null) {
+			builder.size(options.getSize());
+		}
+		if (options.getStyle() != null) {
+			builder.style(options.getStyle());
+		}
+		if (options.getSeed() != null) {
+			builder.seed(options.getSeed());
+		}
+		if (options.getNegativePrompt() != null) {
+			builder.negativePrompt(options.getNegativePrompt());
+		}
+		if (options.getRefImage() != null) {
+			builder.refImage(options.getRefImage());
+		}
+
+		if (StringUtils.hasText(this.apiKey)) {
+			builder.apiKey(this.apiKey);
+		}
+		if (StringUtils.hasText(this.workspaceId)) {
+			builder.workspace(this.workspaceId);
+		}
+
+		Map<String, Object> headers = mergeHeaders(options.getHttpHeaders());
+		if (!CollectionUtils.isEmpty(headers)) {
+			builder.headers(headers);
+		}
+
+		if (StringUtils.hasText(options.getResponseFormat())) {
+			builder.parameter("response_format", options.getResponseFormat());
+		}
+		if (!CollectionUtils.isEmpty(options.getExtraBody())) {
+			builder.parameters(options.getExtraBody());
+		}
+
+		return builder.build();
+	}
+
+	private ImageSynthesisResult executeSubmit(ImageSynthesisParam request, DashScopeSdkImageOptions options) {
+		try {
+			if (Boolean.FALSE.equals(options.getAsync())) {
+				return this.imageClient.call(request);
+			}
+			return this.imageClient.asyncCall(request);
+		}
+		catch (Exception ex) {
+			throw new DashScopeSdkException("Failed to submit DashScope SDK image request", ex);
+		}
+	}
+
+	private ImageSynthesisResult resolveFinalResult(ImageSynthesisResult submitResult, DashScopeSdkImageOptions options) {
+		if (submitResult == null || submitResult.getOutput() == null || Boolean.FALSE.equals(options.getAsync())) {
+			return submitResult;
+		}
+
+		String status = submitResult.getOutput().getTaskStatus();
+		if ("SUCCEEDED".equalsIgnoreCase(status) || "FAILED".equalsIgnoreCase(status)
+				|| "CANCELED".equalsIgnoreCase(status)) {
+			return submitResult;
+		}
+
+		try {
+            return RetryUtils.execute(this.retryTemplate, () -> this.imageClient.wait(submitResult,
+                    String.valueOf(options.getPollIntervalMs() == null ? 1000 : options.getPollIntervalMs())));
+		}
+		catch (Exception ex) {
+			throw new DashScopeSdkException("Failed to fetch DashScope SDK image task result", ex);
+		}
+	}
+
+	private ImageResponse toImageResponse(ImageSynthesisResult result) {
+		if (result == null || result.getOutput() == null) {
+			return new ImageResponse(List.of(), new ImageResponseMetadata());
+		}
+
+		List<ImageGeneration> generations = new ArrayList<>();
+		if (!CollectionUtils.isEmpty(result.getOutput().getResults())) {
+			for (Map<String, String> item : result.getOutput().getResults()) {
+				String url = item.getOrDefault("url", item.get("image_url"));
+				String b64 = item.getOrDefault("b64_json", item.get("image"));
+				if (!StringUtils.hasText(url) && !StringUtils.hasText(b64)) {
+					continue;
+				}
+				generations.add(new ImageGeneration(new Image(url, b64)));
+			}
+		}
+
+		ImageResponseMetadata metadata = new ImageResponseMetadata();
+		if (StringUtils.hasText(result.getRequestId())) {
+			metadata.put("requestId", result.getRequestId());
+		}
+		if (StringUtils.hasText(result.getOutput().getTaskId())) {
+			metadata.put("taskId", result.getOutput().getTaskId());
+		}
+		if (StringUtils.hasText(result.getOutput().getTaskStatus())) {
+			metadata.put("taskStatus", result.getOutput().getTaskStatus());
+		}
+		if (StringUtils.hasText(result.getOutput().getCode())) {
+			metadata.put("code", result.getOutput().getCode());
+		}
+		if (StringUtils.hasText(result.getOutput().getMessage())) {
+			metadata.put("message", result.getOutput().getMessage());
+		}
+		ImageSynthesisUsage usage = result.getUsage();
+		if (usage != null && usage.getImageCount() != null) {
+			metadata.put("imageCount", usage.getImageCount());
+		}
+
+		return new ImageResponse(generations, metadata);
+	}
+
+	private Map<String, Object> mergeHeaders(@Nullable Map<String, String> runtimeHeaders) {
+		Map<String, Object> headers = new HashMap<>();
+		headers.putAll(this.connectionHeaders);
+		if (!CollectionUtils.isEmpty(runtimeHeaders)) {
+			headers.putAll(runtimeHeaders);
+		}
+		return headers;
+	}
+
+    /**
+     * Gets the image options for this model.
+     * @return the image options
+     */
+	public DashScopeSdkImageOptions getOptions() {
+		return this.defaultOptions;
+	}
+
+	public void setObservationConvention(ImageModelObservationConvention observationConvention) {
+		Assert.notNull(observationConvention, "observationConvention cannot be null");
+		this.observationConvention = observationConvention;
+	}
+
+	public Builder mutate() {
+		return new Builder(this);
+	}
+
+	@Override
+	public DashScopeSdkImageModel clone() {
+		return this.mutate().build();
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static final class Builder {
+
+		private DashScopeSdkImageSynthesisClient imageClient = new DefaultDashScopeSdkImageSynthesisClient();
+
+		private DashScopeSdkImageOptions defaultOptions = DashScopeSdkImageOptions.builder()
+			.model(DEFAULT_MODEL_NAME)
+			.n(1)
+			.build();
+
+		private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
+
+		private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
+
+		private @Nullable String apiKey;
+
+		private @Nullable String workspaceId;
+
+		private Map<String, String> connectionHeaders = new HashMap<>();
+
+		private Builder() {
+		}
+
+		private Builder(DashScopeSdkImageModel imageModel) {
+			this.imageClient = imageModel.imageClient;
+			this.defaultOptions = imageModel.defaultOptions;
+			this.retryTemplate = imageModel.retryTemplate;
+			this.observationRegistry = imageModel.observationRegistry;
+			this.apiKey = imageModel.apiKey;
+			this.workspaceId = imageModel.workspaceId;
+			this.connectionHeaders = new HashMap<>(imageModel.connectionHeaders);
+		}
+
+		public Builder imageClient(DashScopeSdkImageSynthesisClient imageClient) {
+			this.imageClient = imageClient;
+			return this;
+		}
+
+		public Builder defaultOptions(DashScopeSdkImageOptions defaultOptions) {
+			this.defaultOptions = defaultOptions;
+			return this;
+		}
+
+		public Builder retryTemplate(RetryTemplate retryTemplate) {
+			this.retryTemplate = retryTemplate;
+			return this;
+		}
+
+		public Builder observationRegistry(ObservationRegistry observationRegistry) {
+			this.observationRegistry = observationRegistry;
+			return this;
+		}
+
+		public Builder apiKey(@Nullable String apiKey) {
+			this.apiKey = apiKey;
+			return this;
+		}
+
+		public Builder workspaceId(@Nullable String workspaceId) {
+			this.workspaceId = workspaceId;
+			return this;
+		}
+
+		public Builder connectionHeaders(Map<String, String> connectionHeaders) {
+			this.connectionHeaders = connectionHeaders == null ? new HashMap<>() : new HashMap<>(connectionHeaders);
+			return this;
+		}
+
+		public DashScopeSdkImageModel build() {
+			return new DashScopeSdkImageModel(this.imageClient, this.defaultOptions, this.retryTemplate,
+					this.observationRegistry, this.apiKey, this.workspaceId, this.connectionHeaders);
+		}
+
+	}
+
+}

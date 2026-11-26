@@ -30,11 +30,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Document reader for loading exported ChatGPT conversation data
@@ -47,7 +47,7 @@ public class ChatGptDataDocumentReader implements DocumentReader {
 
 	private final int numLogs;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final JsonMapper jsonMapper = JsonMapper.shared();;
 
 	/**
 	 * Constructor with file path and limit
@@ -78,13 +78,13 @@ public class ChatGptDataDocumentReader implements DocumentReader {
 			return "";
 		}
 
-		String role = messageNode.get("role").asText();
+		String role = messageNode.get("role").asString();
 
 		JsonNode content = messageNode.get("content");
 		JsonNode parts = content.get("parts");
-		String text = parts.get(0).asText();
+		String text = parts.get(0).asString();
 
-		String createTimeStr = messageNode.get("create_time").asText();
+		String createTimeStr = messageNode.get("create_time").asString();
 		LocalDateTime dateTime = LocalDateTime.parse(createTimeStr, DateTimeFormatter.ISO_DATE_TIME);
 		String formattedDate = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
@@ -95,7 +95,7 @@ public class ChatGptDataDocumentReader implements DocumentReader {
 	public List<Document> get() {
 		try {
 			String jsonContent = Files.readString(Paths.get(logFilePath), StandardCharsets.UTF_8);
-			JsonNode data = objectMapper.readTree(jsonContent);
+			JsonNode data = jsonMapper.readTree(jsonContent);
 
 			// Determine how many conversations to process
 			int limit = numLogs > 0 ? Math.min(numLogs, data.size()) : data.size();
@@ -103,7 +103,7 @@ public class ChatGptDataDocumentReader implements DocumentReader {
 			// Process each conversation
 			return IntStream.range(0, limit).mapToObj(i -> {
 				JsonNode conversation = data.get(i);
-				String title = conversation.get("title").asText();
+				String title = conversation.get("title").asString();
 				JsonNode mapping = conversation.get("mapping");
 
 				// Build the conversation text by processing each message
@@ -111,7 +111,7 @@ public class ChatGptDataDocumentReader implements DocumentReader {
 
 				// Iterate through all messages in the mapping
 				StreamSupport
-					.stream(Spliterators.spliteratorUnknownSize(mapping.fieldNames(), Spliterator.ORDERED), false)
+					.stream(Spliterators.spliteratorUnknownSize(mapping.propertyNames().iterator(), Spliterator.ORDERED), false)
 					.forEach(key -> {
 						JsonNode messageNode = mapping.get(key);
 						String messageText = processMessage(messageNode, title);
@@ -124,8 +124,8 @@ public class ChatGptDataDocumentReader implements DocumentReader {
 				Map<String, Object> metadata = new HashMap<>();
 				metadata.put("source", logFilePath);
 				metadata.put("title", title);
-				metadata.put("id", conversation.get("id").asText());
-				metadata.put("create_time", conversation.get("create_time").asText());
+				metadata.put("id", conversation.get("id").asString());
+				metadata.put("create_time", conversation.get("create_time").asString());
 
 				// Return new Document object
 				return new Document(conversationText.toString(), metadata);

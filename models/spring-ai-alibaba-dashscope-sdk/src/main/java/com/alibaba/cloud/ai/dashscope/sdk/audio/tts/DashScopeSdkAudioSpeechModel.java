@@ -1,0 +1,343 @@
+/*
+ * Copyright 2024-2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.alibaba.cloud.ai.dashscope.sdk.audio.tts;
+
+import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechModel;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechOptions;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
+import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkMediaConnection;
+import org.springframework.ai.model.SimpleApiKey;
+import org.springframework.http.HttpHeaders;
+
+import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException;
+import com.alibaba.dashscope.audio.tts.SpeechSynthesisAudioFormat;
+import com.alibaba.dashscope.audio.tts.SpeechSynthesisParam;
+import com.alibaba.dashscope.audio.tts.SpeechSynthesisResult;
+import com.alibaba.dashscope.audio.tts.SpeechSynthesisTextType;
+import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
+import org.jspecify.annotations.Nullable;
+import org.springframework.ai.audio.tts.Speech;
+import org.springframework.ai.audio.tts.TextToSpeechModel;
+import org.springframework.ai.audio.tts.TextToSpeechPrompt;
+import org.springframework.ai.audio.tts.TextToSpeechResponse;
+import org.springframework.ai.audio.tts.TextToSpeechResponseMetadata;
+import org.springframework.ai.retry.RetryUtils;
+import org.springframework.core.retry.RetryTemplate;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+import reactor.core.publisher.Flux;
+
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * {@link TextToSpeechModel} implementation backed by DashScope Java SDK.
+ */
+public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
+
+	public static final String DEFAULT_MODEL_NAME = "sambert-zhichu-v1";
+
+	private final DashScopeSdkSpeechSynthesisClient speechClient;
+
+	private final DashScopeSdkAudioSpeechOptions defaultOptions;
+
+	private final RetryTemplate retryTemplate;
+
+	private final @Nullable String apiKey;
+
+	private final @Nullable String workspaceId;
+
+	private final Map<String, String> connectionHeaders;
+
+	public DashScopeSdkAudioSpeechModel(DashScopeSdkSpeechSynthesisClient speechClient,
+			DashScopeSdkAudioSpeechOptions defaultOptions, RetryTemplate retryTemplate, @Nullable String apiKey,
+			@Nullable String workspaceId, Map<String, String> connectionHeaders) {
+		this.speechClient = speechClient;
+		this.defaultOptions = defaultOptions;
+		this.retryTemplate = retryTemplate;
+		this.apiKey = apiKey;
+		this.workspaceId = workspaceId;
+		this.connectionHeaders = connectionHeaders;
+	}
+
+	@Override
+	public TextToSpeechResponse call(TextToSpeechPrompt prompt) {
+		var options = resolveOptions(prompt);
+		String model = Objects.requireNonNull(options.getModel());
+		if (DashScopeAudioApiConstants.isQwenTTSModel(model)) {
+			return mediaSpeechModel(options).call(new TextToSpeechPrompt(prompt.getInstructions().getText()));
+		}
+		SpeechSynthesisParam request = createRequest(prompt, options, false);
+		ByteBuffer data = RetryUtils.execute(this.retryTemplate, () -> executeCall(request));
+		byte[] bytes = toBytes(data);
+		TextToSpeechResponseMetadata metadata = new TextToSpeechResponseMetadata();
+		metadata.put("model", request.getModel());
+		return new TextToSpeechResponse(List.of(new Speech(bytes)), metadata);
+	}
+
+	@Override
+	public Flux<TextToSpeechResponse> stream(TextToSpeechPrompt prompt) {
+		var options = resolveOptions(prompt);
+		String model = Objects.requireNonNull(options.getModel());
+		if (DashScopeAudioApiConstants.isQwenTTSModel(model) || DashScopeAudioApiConstants.isCosyVoiceModel(model)
+				|| DashScopeAudioApiConstants.isQwenTTSRealtimeModel(model)) {
+			return mediaSpeechModel(options).stream(new TextToSpeechPrompt(prompt.getInstructions().getText()));
+		}
+		SpeechSynthesisParam request = createRequest(prompt, options, true);
+		Flowable<SpeechSynthesisResult> streamResult = RetryUtils.execute(this.retryTemplate, () -> executeStream(request));
+		return flowableToFlux(streamResult)
+			.map(this::toTextToSpeechResponse)
+			.filter(response -> !CollectionUtils.isEmpty(response.getResults())
+					&& response.getResult().getOutput().length > 0);
+	}
+
+	private DashScopeSdkAudioSpeechOptions resolveOptions(TextToSpeechPrompt prompt) {
+		return DashScopeSdkAudioSpeechOptions.builder().from(this.defaultOptions).merge(prompt.getOptions()).build();
+	}
+
+	private DashScopeAudioSpeechModel mediaSpeechModel(DashScopeSdkAudioSpeechOptions sdkOptions) {
+		HttpHeaders headers = new HttpHeaders();
+		mergeHeaders(sdkOptions.getHttpHeaders()).forEach((name, value) -> headers.set(name, value.toString()));
+		String baseUrl = DashScopeSdkMediaConnection.baseUrl(this.workspaceId);
+		var api = DashScopeAudioSpeechApi.builder()
+			.apiKey(new SimpleApiKey(DashScopeSdkMediaConnection.apiKey(this.apiKey)))
+			.baseUrl(baseUrl).websocketUrl(baseUrl.replaceFirst("^https://", "wss://") + "/api-ws/v1/inference")
+			.workSpaceId(this.workspaceId).headers(headers).build();
+		var options = DashScopeAudioSpeechOptions.builder().model(sdkOptions.getModel()).voice(sdkOptions.getVoice())
+			.format(sdkOptions.getFormat()).textType(sdkOptions.getTextType()).sampleRate(sdkOptions.getSampleRate())
+			.volume(sdkOptions.getVolume()).rate(sdkOptions.getRate()).pitch(sdkOptions.getPitch())
+			.wordTimestampEnabled(sdkOptions.getWordTimestampEnabled())
+			.phonemeTimestampEnabled(sdkOptions.getPhonemeTimestampEnabled()).build();
+		return new DashScopeAudioSpeechModel(api, options, this.retryTemplate);
+	}
+
+	private SpeechSynthesisParam createRequest(TextToSpeechPrompt prompt, DashScopeSdkAudioSpeechOptions options,
+			boolean stream) {
+		String model = Objects.requireNonNull(options.getModel(),
+				"DashScopeSdkAudioSpeechOptions model cannot be null");
+
+		SpeechSynthesisParam.SpeechSynthesisParamBuilder<?, ?> builder = SpeechSynthesisParam.builder()
+			.model(model)
+			.text(prompt.getInstructions().getText());
+
+		if (StringUtils.hasText(options.getTextType())) {
+			builder.textType(toTextType(options.getTextType()));
+		}
+		if (StringUtils.hasText(options.getFormat())) {
+			builder.format(toAudioFormat(options.getFormat()));
+		}
+		if (options.getSampleRate() != null) {
+			builder.sampleRate(options.getSampleRate());
+		}
+		if (options.getVolume() != null) {
+			builder.volume(options.getVolume());
+		}
+		if (options.getRate() != null) {
+			builder.rate(options.getRate());
+		}
+		if (options.getPitch() != null) {
+			builder.pitch(options.getPitch());
+		}
+		if (options.getWordTimestampEnabled() != null) {
+			builder.enableWordTimestamp(options.getWordTimestampEnabled());
+		}
+		if (options.getPhonemeTimestampEnabled() != null) {
+			builder.enablePhonemeTimestamp(options.getPhonemeTimestampEnabled());
+		}
+
+		if (StringUtils.hasText(options.getVoice())) {
+			builder.parameter("voice", options.getVoice());
+		}
+		if (options.getSpeed() != null) {
+			builder.parameter("speed", options.getSpeed());
+		}
+		if (stream) {
+			builder.parameter("stream", true);
+		}
+
+		if (StringUtils.hasText(this.apiKey)) {
+			builder.apiKey(this.apiKey);
+		}
+		if (StringUtils.hasText(this.workspaceId)) {
+			builder.workspace(this.workspaceId);
+		}
+
+		Map<String, Object> headers = mergeHeaders(options.getHttpHeaders());
+		if (!CollectionUtils.isEmpty(headers)) {
+			builder.headers(headers);
+		}
+
+		return builder.build();
+	}
+
+	private ByteBuffer executeCall(SpeechSynthesisParam request) {
+		try {
+			return this.speechClient.call(request);
+		}
+		catch (Exception ex) {
+			throw new DashScopeSdkException("Failed to call DashScope SDK speech API", ex);
+		}
+	}
+
+	private Flowable<SpeechSynthesisResult> executeStream(SpeechSynthesisParam request) {
+		try {
+			return this.speechClient.streamCall(request);
+		}
+		catch (Exception ex) {
+			throw new DashScopeSdkException("Failed to stream DashScope SDK speech API", ex);
+		}
+	}
+
+	private Flux<SpeechSynthesisResult> flowableToFlux(Flowable<SpeechSynthesisResult> flowable) {
+		return Flux.create(sink -> {
+			Disposable disposable = flowable.subscribe(sink::next, sink::error, sink::complete);
+			sink.onDispose(disposable::dispose);
+		});
+	}
+
+	private TextToSpeechResponse toTextToSpeechResponse(SpeechSynthesisResult result) {
+		byte[] bytes = result == null ? new byte[0] : toBytes(result.getAudioFrame());
+		TextToSpeechResponseMetadata metadata = new TextToSpeechResponseMetadata();
+		if (result != null) {
+			if (StringUtils.hasText(result.getRequestId())) {
+				metadata.put("requestId", result.getRequestId());
+			}
+			if (result.getUsage() != null && result.getUsage().getCharacters() != null) {
+				metadata.put("characters", result.getUsage().getCharacters());
+			}
+		}
+		return new TextToSpeechResponse(List.of(new Speech(bytes)), metadata);
+	}
+
+	private byte[] toBytes(ByteBuffer byteBuffer) {
+		if (byteBuffer == null) {
+			return new byte[0];
+		}
+		ByteBuffer duplicate = byteBuffer.asReadOnlyBuffer();
+		byte[] data = new byte[duplicate.remaining()];
+		duplicate.get(data);
+		return data;
+	}
+
+	private SpeechSynthesisTextType toTextType(String textType) {
+		String normalized = textType.trim().toUpperCase().replace('-', '_');
+		return SpeechSynthesisTextType.valueOf(normalized);
+	}
+
+	private SpeechSynthesisAudioFormat toAudioFormat(String format) {
+		String normalized = format.trim().toUpperCase().replace('-', '_');
+		return SpeechSynthesisAudioFormat.valueOf(normalized);
+	}
+
+	private Map<String, Object> mergeHeaders(@Nullable Map<String, String> runtimeHeaders) {
+		Map<String, Object> headers = new HashMap<>();
+		headers.putAll(this.connectionHeaders);
+		if (!CollectionUtils.isEmpty(runtimeHeaders)) {
+			headers.putAll(runtimeHeaders);
+		}
+		return headers;
+	}
+
+	@Override
+	public DashScopeSdkAudioSpeechOptions getOptions() {
+		return this.defaultOptions;
+	}
+
+	public Builder mutate() {
+		return new Builder(this);
+	}
+
+	@Override
+	public DashScopeSdkAudioSpeechModel clone() {
+		return this.mutate().build();
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static final class Builder {
+
+		private DashScopeSdkSpeechSynthesisClient speechClient = new DefaultDashScopeSdkSpeechSynthesisClient();
+
+		private DashScopeSdkAudioSpeechOptions defaultOptions = DashScopeSdkAudioSpeechOptions.builder()
+			.model(DEFAULT_MODEL_NAME)
+			.build();
+
+		private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
+
+		private @Nullable String apiKey;
+
+		private @Nullable String workspaceId;
+
+		private Map<String, String> connectionHeaders = new HashMap<>();
+
+		private Builder() {
+		}
+
+		private Builder(DashScopeSdkAudioSpeechModel model) {
+			this.speechClient = model.speechClient;
+			this.defaultOptions = model.defaultOptions;
+			this.retryTemplate = model.retryTemplate;
+			this.apiKey = model.apiKey;
+			this.workspaceId = model.workspaceId;
+			this.connectionHeaders = new HashMap<>(model.connectionHeaders);
+		}
+
+		public Builder speechClient(DashScopeSdkSpeechSynthesisClient speechClient) {
+			this.speechClient = speechClient;
+			return this;
+		}
+
+		public Builder defaultOptions(DashScopeSdkAudioSpeechOptions defaultOptions) {
+			this.defaultOptions = defaultOptions;
+			return this;
+		}
+
+		public Builder retryTemplate(RetryTemplate retryTemplate) {
+			this.retryTemplate = retryTemplate;
+			return this;
+		}
+
+		public Builder apiKey(@Nullable String apiKey) {
+			this.apiKey = apiKey;
+			return this;
+		}
+
+		public Builder workspaceId(@Nullable String workspaceId) {
+			this.workspaceId = workspaceId;
+			return this;
+		}
+
+		public Builder connectionHeaders(Map<String, String> connectionHeaders) {
+			this.connectionHeaders = connectionHeaders == null ? new HashMap<>() : new HashMap<>(connectionHeaders);
+			return this;
+		}
+
+		public DashScopeSdkAudioSpeechModel build() {
+			return new DashScopeSdkAudioSpeechModel(this.speechClient, this.defaultOptions, this.retryTemplate,
+					this.apiKey, this.workspaceId, this.connectionHeaders);
+		}
+
+	}
+
+}

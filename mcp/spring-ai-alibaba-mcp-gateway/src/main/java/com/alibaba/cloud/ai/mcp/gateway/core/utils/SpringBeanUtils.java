@@ -17,11 +17,13 @@
 package com.alibaba.cloud.ai.mcp.gateway.core.utils;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.util.Assert;
 
 /**
  * SpringBeanUtils.
@@ -30,7 +32,7 @@ public final class SpringBeanUtils {
 
 	private static final SpringBeanUtils INSTANCE = new SpringBeanUtils();
 
-	private ApplicationContext applicationContext;
+	private @Nullable ApplicationContext applicationContext;
 
 	private SpringBeanUtils() {
 	}
@@ -50,7 +52,7 @@ public final class SpringBeanUtils {
 	 * @return bean bean
 	 */
 	public <T> T getBean(final Class<T> type) {
-		return applicationContext.getBean(type);
+		return getRequiredApplicationContext().getBean(type);
 	}
 
 	/**
@@ -61,7 +63,7 @@ public final class SpringBeanUtils {
 	 */
 	@SuppressWarnings("all")
 	public <T> T getBean(final String beanName) {
-		return (T) applicationContext.getBean(beanName);
+		return (T) getRequiredApplicationContext().getBean(beanName);
 	}
 
 	/**
@@ -76,7 +78,7 @@ public final class SpringBeanUtils {
 			throw new NullPointerException("beanDefinition.beanClassName is null");
 		}
 		String beanName = getBeanName(beanClassName);
-		DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) applicationContext
+		DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) getRequiredApplicationContext()
 			.getAutowireCapableBeanFactory();
 		beanFactory.setBeanClassLoader(classLoader);
 		beanFactory.registerBeanDefinition(beanName, beanDefinition);
@@ -91,7 +93,7 @@ public final class SpringBeanUtils {
 	 */
 	public boolean existBean(final String className) {
 		String beanName = this.getBeanName(className);
-		return this.applicationContext.containsBean(beanName);
+		return getRequiredApplicationContext().containsBean(beanName);
 	}
 
 	/**
@@ -102,7 +104,7 @@ public final class SpringBeanUtils {
 	 * @return boolean bean by class name
 	 */
 	@SuppressWarnings("all")
-	public <T> T getBeanByClassName(final String className) {
+	public <T> @Nullable T getBeanByClassName(final String className) {
 		String beanName = this.getBeanName(className);
 		try {
 			return this.getBean(beanName);
@@ -126,8 +128,14 @@ public final class SpringBeanUtils {
 	}
 
 	private DefaultListableBeanFactory getBeanFactory() {
-		ConfigurableApplicationContext configurableApplicationContext = (ConfigurableApplicationContext) applicationContext;
+		ConfigurableApplicationContext configurableApplicationContext = (ConfigurableApplicationContext) getRequiredApplicationContext();
 		return (DefaultListableBeanFactory) configurableApplicationContext.getBeanFactory();
+	}
+
+	private ApplicationContext getRequiredApplicationContext() {
+		ApplicationContext currentApplicationContext = this.applicationContext;
+		Assert.notNull(currentApplicationContext, "ApplicationContext has not been initialized");
+		return currentApplicationContext;
 	}
 
 	private String getBeanName(final String className) {
@@ -145,7 +153,7 @@ public final class SpringBeanUtils {
 		this.applicationContext = applicationContext;
 	}
 
-	public ApplicationContext getApplicationContext() {
+	public @Nullable ApplicationContext getApplicationContext() {
 		return applicationContext;
 	}
 

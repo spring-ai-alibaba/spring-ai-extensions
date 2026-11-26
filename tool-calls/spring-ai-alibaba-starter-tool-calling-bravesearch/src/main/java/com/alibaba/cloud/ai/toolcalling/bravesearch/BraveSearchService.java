@@ -22,10 +22,10 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.MultiValueMap;
+import tools.jackson.core.type.TypeReference;
 
 import java.util.List;
 import java.util.Map;
@@ -61,7 +61,7 @@ public class BraveSearchService
 		try {
 			String responseStr = webClientTool.get("/", MultiValueMap.fromSingleValue(Map.of("q", request.query())))
 				.block();
-			return jsonParseTool.jsonToObject(responseStr, new TypeReference<BraveSearchService.Response>() {
+			return jsonParseTool.jsonToObject(responseStr, new TypeReference<Response>() {
 			});
 		}
 		catch (Exception e) {

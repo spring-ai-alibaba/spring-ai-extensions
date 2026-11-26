@@ -15,6 +15,8 @@
  */
 package com.alibaba.cloud.ai.toolcalling.dingtalk;
 
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -36,6 +38,15 @@ public class DingTalkAutoConfiguration {
 	@Description("Send DingTalk group chat messages using a custom robot")
 	public DingTalkRobotService dingTalkGroupSendMessageByCustomRobot(DingTalkProperties dingTalkProperties) {
 		return new DingTalkRobotService(dingTalkProperties);
+	}
+
+	@Bean(name = "dingTalkGroupSendMessageByCustomRobotToolCallback")
+	@ConditionalOnMissingBean(name = "dingTalkGroupSendMessageByCustomRobotToolCallback")
+	public ToolCallback dingTalkGroupSendMessageByCustomRobotToolCallback(DingTalkRobotService dingTalkGroupSendMessageByCustomRobot) {
+		return FunctionToolCallback.builder(DingTalkConstants.TOOL_NAME, dingTalkGroupSendMessageByCustomRobot)
+			.description("Send DingTalk group chat messages using a custom robot")
+			.inputType(DingTalkRobotService.Request.class)
+			.build();
 	}
 
 }

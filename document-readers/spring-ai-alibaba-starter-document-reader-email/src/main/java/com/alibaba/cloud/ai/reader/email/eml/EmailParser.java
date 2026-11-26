@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -313,8 +314,8 @@ public class EmailParser {
     try (InputStream is = new ByteArrayInputStream(htmlContent.getBytes(StandardCharsets.UTF_8))) {
       List<Document> docs = htmlParser.parse(is);
       if (!docs.isEmpty()) {
-        return docs.get(0).getText();
-      }
+	        return Objects.requireNonNullElse(docs.get(0).getText(), htmlContent);
+	      }
     }
     return htmlContent;
   }

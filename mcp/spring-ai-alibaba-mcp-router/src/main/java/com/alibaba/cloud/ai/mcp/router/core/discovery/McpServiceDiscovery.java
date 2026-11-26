@@ -18,9 +18,11 @@
 package com.alibaba.cloud.ai.mcp.router.core.discovery;
 
 import com.alibaba.cloud.ai.mcp.router.model.McpServerInfo;
+import org.jspecify.annotations.Nullable;
 
 public interface McpServiceDiscovery {
 
+	@Nullable
 	McpServerInfo getService(String serviceName);
 
 }

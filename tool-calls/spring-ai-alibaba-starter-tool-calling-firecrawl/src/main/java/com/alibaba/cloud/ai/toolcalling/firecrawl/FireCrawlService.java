@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class FireCrawlService implements Function<FireCrawlService.Request, FireCrawlService.Response> {
@@ -55,9 +56,9 @@ public class FireCrawlService implements Function<FireCrawlService.Request, Fire
 			throw new RuntimeException("Target URL is not valid");
 		}
 		try {
-			return new Response(
-					webClientTool.post("/".concat(properties.getMode().toString()), getRequestBody(request.url))
-						.block());
+			return new Response(Objects.requireNonNull(
+					webClientTool.post("/".concat(properties.getMode().toString()), getRequestBody(request.url)).block(),
+					"FireCrawl response must not be null"));
 		}
 		catch (Exception e) {
 			log.error("Exception occurred when calling FireCrawl API", e);
