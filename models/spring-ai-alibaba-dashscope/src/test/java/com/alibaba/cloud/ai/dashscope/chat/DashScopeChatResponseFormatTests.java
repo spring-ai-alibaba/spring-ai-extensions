@@ -17,19 +17,24 @@ package com.alibaba.cloud.ai.dashscope.chat;
 
 import java.util.Map;
 
+import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.ResponseFormat;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.ResponseFormat.JsonSchemaConfig;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.ResponseFormat.Type;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.converter.BeanOutputConverter;
+import org.springframework.ai.model.tool.StructuredOutputChatOptions;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -40,6 +45,37 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author xuguan
  */
 class DashScopeChatResponseFormatTests {
+
+	@Test
+	void sendsNativeOutputSchemaThroughChatOptions() {
+		String schema = """
+				{"type":"object","properties":{"name":{"type":"string"}},"required":["name"],"additionalProperties":false}
+				""";
+		var model = DashScopeChatModel.builder().dashScopeApi(DashScopeApi.builder().apiKey("fixture").build()).build();
+		StructuredOutputChatOptions defaults = DashScopeChatOptions.builder().model("qwen-plus").build();
+		var options = defaults.mutate().outputSchema(schema).build();
+		var request = model.createRequest(new Prompt("Extract the name", options));
+		var mapper = JsonMapper.shared();
+		var responseFormat = mapper.valueToTree(request).path("parameters").path("response_format");
+
+		assertEquals("qwen-plus", request.model());
+		assertEquals(mapper.readTree(schema), mapper.readTree(((StructuredOutputChatOptions) options).getOutputSchema()));
+		assertEquals("json_schema", responseFormat.path("type").asText());
+		assertTrue(responseFormat.path("json_schema").path("strict").asBoolean());
+		assertEquals(mapper.readTree(schema), responseFormat.path("json_schema").path("schema"));
+
+		var cleared = model.createRequest(new Prompt("Extract the name",
+				((StructuredOutputChatOptions) options).mutate().outputSchema(null).build()));
+		assertNull(cleared.parameters().responseFormat());
+	}
+
+	@Test
+	void clearingTheOutputSchemaPreservesJsonObjectMode() {
+		var options = DashScopeChatOptions.builder().responseFormat(ResponseFormat.builder().type(Type.JSON_OBJECT).build())
+				.build();
+		assertNull(options.getOutputSchema());
+		assertEquals(Type.JSON_OBJECT, options.mutate().outputSchema(null).build().getResponseFormat().getType());
+	}
 
 	@Test
 	void testTextType() {

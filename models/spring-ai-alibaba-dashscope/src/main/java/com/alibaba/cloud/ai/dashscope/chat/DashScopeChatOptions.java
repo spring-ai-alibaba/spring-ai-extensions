@@ -23,15 +23,19 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.ResponseFormat;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.ResponseFormat.JsonSchemaConfig;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.ResponseFormat.Type;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.SearchOptions;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.Skill;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.Tool;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.jspecify.annotations.Nullable;
+import tools.jackson.databind.json.JsonMapper;
 
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.model.tool.DefaultToolCallingChatOptions;
+import org.springframework.ai.model.tool.StructuredOutputChatOptions;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 
@@ -43,7 +47,7 @@ import org.springframework.ai.tool.ToolCallback;
  * @author yingzi
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DashScopeChatOptions implements ToolCallingChatOptions {
+public class DashScopeChatOptions implements ToolCallingChatOptions, StructuredOutputChatOptions {
 
 	private final @Nullable String model;
 
@@ -276,6 +280,15 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		return this.responseFormat;
 	}
 
+	@Override
+	@JsonIgnore
+	public @Nullable String getOutputSchema() {
+		var config = this.responseFormat != null && this.responseFormat.getType() == Type.JSON_SCHEMA
+				? this.responseFormat.getJsonScheme() : null;
+		var schema = config == null ? null : config.getSchema();
+		return schema == null ? null : JsonMapper.shared().writeValueAsString(schema);
+	}
+
 	public @Nullable String getResultFormat() {
 		return this.resultFormat;
 	}
@@ -491,7 +504,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 	}
 
 	protected abstract static class AbstractBuilder<B extends AbstractBuilder<B>>
-			extends DefaultToolCallingChatOptions.Builder<B> {
+			extends DefaultToolCallingChatOptions.Builder<B> implements StructuredOutputChatOptions.Builder<B> {
 
 		protected @Nullable Boolean stream;
 
@@ -635,6 +648,19 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
 		public B responseFormat(@Nullable ResponseFormat responseFormat) {
 			this.responseFormat = responseFormat;
+			return self();
+		}
+
+		@Override
+		public B outputSchema(@Nullable String outputSchema) {
+			if (outputSchema != null) {
+				var schema = JsonMapper.shared().readTree(outputSchema);
+				var config = JsonSchemaConfig.builder().name("json_schema").schema(schema).strict(true).build();
+				return responseFormat(ResponseFormat.builder().type(Type.JSON_SCHEMA).jsonScheme(config).build());
+			}
+			if (this.responseFormat != null && this.responseFormat.getType() == Type.JSON_SCHEMA) {
+				this.responseFormat = null;
+			}
 			return self();
 		}
 
