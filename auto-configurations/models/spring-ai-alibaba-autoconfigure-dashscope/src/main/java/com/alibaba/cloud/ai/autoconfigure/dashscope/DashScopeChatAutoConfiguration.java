@@ -15,7 +15,10 @@
  */
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
+import java.time.Duration;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.api.DashScopeHttpTransport;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
 import io.micrometer.observation.ObservationRegistry;
@@ -34,7 +37,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.restclient.autoconfigure.RestClientAutoConfiguration;
 import org.springframework.boot.webclient.autoconfigure.WebClientAutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.retry.RetryTemplate;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -55,13 +57,19 @@ import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUt
 @ConditionalOnClass(DashScopeApi.class)
 @ConditionalOnProperty(name = SpringAIModelProperties.CHAT_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
 		matchIfMissing = true)
-@EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeChatProperties.class})
+@EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeChatProperties.class,
+        DashScopeChatHttpProperties.class })
 public class DashScopeChatAutoConfiguration {
+
+		@Bean(destroyMethod = "close")
+		@ConditionalOnMissingBean(DashScopeHttpTransport.class)
+		DashScopeHttpTransport dashScopeChatHttpTransport(DashScopeChatHttpProperties properties) {
+			return new DashScopeHttpTransport(properties.settings());
+		}
 
 		@Bean
 		@ConditionalOnMissingBean
 		public DashScopeChatModel dashScopeChatModel(
-				ObjectProvider<RetryTemplate> retryTemplate,
 				ToolCallingManager toolCallingManager,
 				DashScopeChatProperties chatProperties,
 				ObjectProvider<ResponseErrorHandler> responseErrorHandler,
@@ -69,22 +77,23 @@ public class DashScopeChatAutoConfiguration {
 				ObjectProvider<ObservationRegistry> observationRegistry,
 				ObjectProvider<WebClient.Builder> webClientBuilderProvider,
 				ObjectProvider<RestClient.Builder> restClientBuilderProvider,
+				DashScopeHttpTransport transport,
 				ObjectProvider<ChatModelObservationConvention> observationConvention
 		) {
 
 			var dashscopeApi = dashscopeChatApi(
 					commonProperties,
 					chatProperties,
-					restClientBuilderProvider.getIfAvailable(RestClient::builder),
-					webClientBuilderProvider.getIfAvailable(WebClient::builder),
+					transport.restClient(restClientBuilderProvider.getIfAvailable(RestClient::builder),
+							Duration.ofSeconds(commonProperties.getReadTimeout())),
+					transport.webClient(webClientBuilderProvider.getIfAvailable(WebClient::builder)),
 					responseErrorHandler.getIfAvailable(() -> RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER),
-					"chat"
+					transport
 			);
 
 			var dashscopeModel = DashScopeChatModel.builder()
 					.dashScopeApi(dashscopeApi)
                     .toolCallingManager(toolCallingManager)
-					.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
 					.defaultOptions(chatProperties.toOptions())
 					.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
 					.build();
@@ -100,13 +109,13 @@ public class DashScopeChatAutoConfiguration {
 				RestClient.Builder restClientBuilder,
 				WebClient.Builder webClientBuilder,
 				ResponseErrorHandler responseErrorHandler,
-				String modelType
+				DashScopeHttpTransport transport
 		) {
 
 			ResolvedConnectionProperties resolved = resolveConnectionProperties(
 					commonProperties,
 					chatProperties,
-					modelType
+					"chat"
 			);
 
 			return DashScopeApi.builder()
@@ -117,6 +126,8 @@ public class DashScopeChatAutoConfiguration {
 					.completionsPath(chatProperties.getCompletionsPath())
 					.webClientBuilder(webClientBuilder)
 					.restClientBuilder(restClientBuilder)
+					.streamRequestTimeout(transport.requestTimeout())
+					.streamFirstChunkTimeout(transport.firstChunkTimeout())
 					.responseErrorHandler(responseErrorHandler)
 					.build();
 		}

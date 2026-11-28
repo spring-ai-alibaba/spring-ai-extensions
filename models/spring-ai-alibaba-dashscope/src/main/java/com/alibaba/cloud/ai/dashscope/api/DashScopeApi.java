@@ -20,6 +20,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -56,8 +57,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -65,6 +64,7 @@ import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
+import tools.jackson.databind.JsonNode;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -127,6 +127,9 @@ public class DashScopeApi {
 
 	private final JsonHelper jsonHelper;
 
+	private final Duration streamRequestTimeout;
+	private final Duration streamFirstChunkTimeout;
+
     @Override
     public DashScopeApi clone() {
         return mutate().build();
@@ -170,6 +173,25 @@ public class DashScopeApi {
 			WebClient.Builder webClientBuilder,
 			ResponseErrorHandler responseErrorHandler
 	) {
+		this(baseUrl, apiKey, header, workSpaceId, completionsPath, embeddingsPath, rerankPath, restClientBuilder,
+				webClientBuilder, responseErrorHandler, DashScopeHttpTransport.Settings.defaults().requestTimeout(),
+				DashScopeHttpTransport.Settings.defaults().firstChunkTimeout());
+	}
+
+	private DashScopeApi(
+			String baseUrl,
+			ApiKey apiKey,
+			HttpHeaders header,
+			@Nullable String workSpaceId,
+			String completionsPath,
+			String embeddingsPath,
+			String rerankPath,
+			RestClient.Builder restClientBuilder,
+			WebClient.Builder webClientBuilder,
+			ResponseErrorHandler responseErrorHandler,
+			Duration streamRequestTimeout,
+			Duration streamFirstChunkTimeout
+	) {
 
 		this.baseUrl = baseUrl;
 		this.apiKey = apiKey;
@@ -180,6 +202,8 @@ public class DashScopeApi {
         this.rerankPath = rerankPath;
 		this.responseErrorHandler = responseErrorHandler;
         this.jsonHelper = new JsonHelper();
+		this.streamRequestTimeout = streamRequestTimeout;
+		this.streamFirstChunkTimeout = streamFirstChunkTimeout;
 
 		// For DashScope API, the workspace ID is passed in the headers.
 		if (StringUtils.hasText(workSpaceId)) {
@@ -298,7 +322,7 @@ public class DashScopeApi {
         } else {
             chatCompletionUri = this.completionsPath;
         }
-        return this.webClient.post()
+        var data = this.webClient.post()
                 .uri(chatCompletionUri)
                 .headers(headers -> {
                     if (additionalHttpHeader != null) {
@@ -310,8 +334,16 @@ public class DashScopeApi {
                 })
                 .body(Mono.just(chatRequest), DashScopeChatApiSpec.ChatCompletionRequest.class)
                 .retrieve()
-                .bodyToFlux(String.class)
-                .takeUntil(SSE_DONE_PREDICATE)
+                .bodyToFlux(String.class);
+        var chunks = Flux.defer(() -> {
+            var choices = new HashMap<Integer, Boolean>();
+            var done = new AtomicBoolean();
+            return data.takeUntil(SSE_DONE_PREDICATE)
+                .doOnNext(frame -> {
+                    if (SSE_DONE_PREDICATE.test(frame)) {
+                        done.set(true);
+                    }
+                })
                 .filter(SSE_DONE_PREDICATE.negate())
                 .map(content -> {
                     DashScopeApiSpec.DashScopeErrorResponse error = jsonHelper.fromJson(content,
@@ -324,8 +356,30 @@ public class DashScopeApi {
                     if (chunk == null) {
                         throw new DashScopeException("Failed to parse DashScope response chunk");
                     }
+                    if (chunk.output() != null && chunk.output().choices() != null) {
+                        var received = chunk.output().choices();
+                        for (int i = 0; i < received.size(); i++) {
+                            var choice = received.get(i);
+                            int index = choice.index() == null ? i : choice.index();
+                            var reason = choice.finishReason();
+                            boolean finished = reason != null && reason != DashScopeChatApiSpec.ChatCompletionFinishReason.NULL;
+                            choices.merge(index, finished, Boolean::logicalOr);
+                        }
+                    }
+                    if (chunk.output() != null && chunk.output().text() != null
+                            && CollectionUtils.isEmpty(chunk.output().choices())) {
+                        var output = Objects.requireNonNull(jsonHelper.fromJson(content, JsonNode.class)).path("output");
+                        String reason = output.path("finish_reason").asText("");
+                        choices.merge(-1, StringUtils.hasText(reason) && !"null".equals(reason), Boolean::logicalOr);
+                    }
                     return chunk;
-                });
+                }).concatWith(Flux.defer(() -> !choices.isEmpty()
+                        && (done.get() || choices.values().stream().allMatch(Boolean::booleanValue))
+                                ? Flux.empty()
+                                : Flux.error(new DashScopeStreamTruncatedException(
+                                        "DashScope chat stream ended without a model completion"))));
+        });
+        return DashScopeHttpTransport.withDeadline(chunks, this.streamRequestTimeout, this.streamFirstChunkTimeout);
     }
 
 	/*******************************************
@@ -706,76 +760,24 @@ public class DashScopeApi {
 
         private String rerankPath = TEXT_RERANK_RESTFUL_URL;
 
-        private RestClient.Builder restClientBuilder = createDefaultRestClientBuilder();
+        private RestClient.@Nullable Builder restClientBuilder;
 
-        private WebClient.Builder webClientBuilder = createDefaultWebClientBuilder();
+        private WebClient.@Nullable Builder webClientBuilder;
+
+        private Duration streamRequestTimeout = DashScopeHttpTransport.Settings.defaults().requestTimeout();
+
+        private Duration streamFirstChunkTimeout = DashScopeHttpTransport.Settings.defaults().firstChunkTimeout();
 
         private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
 
 		public Builder() {
 		}
 
-		/**
-		 * Creates a default RestClient.Builder with configured request factory.
-		 */
-		private static RestClient.Builder createDefaultRestClientBuilder() {
-			SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-			requestFactory.setConnectTimeout(60 * 1000);
-			requestFactory.setReadTimeout(3 * 60 * 1000);
-			return RestClient.builder().requestFactory(requestFactory);
-		}
+		private static final class DefaultTransport {
 
-		/**
-		 * Creates a default WebClient.Builder with configured Reactor Netty connection pool.
-		 * Falls back to simple WebClient.builder() if Reactor Netty classes are not available.
-		 */
-		private static WebClient.Builder createDefaultWebClientBuilder() {
-			try {
-				// Try to use Reactor Netty connection pool if available
-				Class<?> connectionProviderClass = Class.forName("reactor.netty.resources.ConnectionProvider");
-				Class<?> httpClientClass = Class.forName("reactor.netty.http.client.HttpClient");
-				Class<?> reactorConnectorClass = Class.forName("org.springframework.http.client.reactive.ReactorClientHttpConnector");
+			private static final DashScopeHttpTransport INSTANCE =
+					new DashScopeHttpTransport(DashScopeHttpTransport.Settings.defaults());
 
-				// Build ConnectionProvider
-				Object providerBuilder = connectionProviderClass.getMethod("builder", String.class)
-						.invoke(null, "dashscope-connection-provider");
-				// Actively close connections after 45 seconds of idle time to avoid reusing connections that have been closed by the server
-				providerBuilder = providerBuilder.getClass().getMethod("maxConnections", int.class)
-						.invoke(providerBuilder, 500);
-				providerBuilder = providerBuilder.getClass().getMethod("maxIdleTime", Duration.class)
-						.invoke(providerBuilder, Duration.ofSeconds(45));
-				providerBuilder = providerBuilder.getClass().getMethod("maxLifeTime", Duration.class)
-						.invoke(providerBuilder, Duration.ofMinutes(10));
-				providerBuilder = providerBuilder.getClass().getMethod("pendingAcquireTimeout", Duration.class)
-						.invoke(providerBuilder, Duration.ofSeconds(60));
-				providerBuilder = providerBuilder.getClass().getMethod("evictInBackground", Duration.class)
-						.invoke(providerBuilder, Duration.ofSeconds(30));
-				Object provider = providerBuilder.getClass().getMethod("build").invoke(providerBuilder);
-
-				// Build HttpClient
-				Object httpClient = httpClientClass.getMethod("create", connectionProviderClass)
-						.invoke(null, provider);
-				httpClient = httpClientClass.getMethod("compress", boolean.class).invoke(httpClient, true);
-				httpClient = httpClientClass.getMethod("keepAlive", boolean.class).invoke(httpClient, true);
-				httpClient = httpClientClass.getMethod("responseTimeout", Duration.class)
-						.invoke(httpClient, Duration.ofSeconds(60));
-
-				// Create ReactorClientHttpConnector
-				Object connector = reactorConnectorClass.getConstructor(httpClientClass)
-						.newInstance(httpClient);
-
-				// Build WebClient with connector
-				return WebClient.builder()
-						.clientConnector((ClientHttpConnector) connector);
-			}
-			catch (ClassNotFoundException | NoClassDefFoundError e) {
-				// Reactor Netty classes not available, fall back to simple builder
-				return WebClient.builder();
-			}
-			catch (Exception e) {
-				// Any other exception, fall back to simple builder
-				return WebClient.builder();
-			}
 		}
 
 		// Copy constructor for mutate()
@@ -790,6 +792,8 @@ public class DashScopeApi {
 			this.restClientBuilder = api.restClient != null ? api.restClient.mutate() : RestClient.builder();
 			this.webClientBuilder = api.webClient != null ? api.webClient.mutate() : WebClient.builder();
 			this.responseErrorHandler = api.getResponseErrorHandler();
+			this.streamRequestTimeout = api.streamRequestTimeout;
+			this.streamFirstChunkTimeout = api.streamFirstChunkTimeout;
 		}
 
 		public Builder baseUrl(String baseUrl) {
@@ -850,6 +854,21 @@ public class DashScopeApi {
 			return this;
 		}
 
+		/** Upper time bound for the complete streaming request, including queue time. */
+		public Builder streamRequestTimeout(Duration timeout) {
+			Assert.isTrue(timeout != null && timeout.toMillis() > 0, "Stream request timeout must be positive");
+			timeout.toNanos();
+			this.streamRequestTimeout = timeout;
+			return this;
+		}
+
+		/** Time allowed for the first decoded model chunk. */
+		public Builder streamFirstChunkTimeout(Duration timeout) {
+			Assert.isTrue(timeout != null && timeout.toMillis() > 0, "First chunk timeout must be positive");
+			this.streamFirstChunkTimeout = timeout;
+			return this;
+		}
+
 		public Builder responseErrorHandler(ResponseErrorHandler responseErrorHandler) {
 			Assert.notNull(responseErrorHandler, "Response error handler cannot be null");
 			this.responseErrorHandler = responseErrorHandler;
@@ -860,9 +879,15 @@ public class DashScopeApi {
 
 				ApiKey apiKey = Objects.requireNonNull(this.apiKey, "API key cannot be null");
 
+				var rest = this.restClientBuilder == null
+						? DefaultTransport.INSTANCE.restClient(RestClient.builder(), Duration.ofMinutes(3))
+						: this.restClientBuilder;
+				var web = this.webClientBuilder == null
+						? DefaultTransport.INSTANCE.webClient(WebClient.builder())
+						: this.webClientBuilder;
 				return new DashScopeApi(this.baseUrl, apiKey, this.headers, this.workSpaceId,
                     this.completionsPath, this.embeddingsPath, this.rerankPath,
-                    this.restClientBuilder, this.webClientBuilder, this.responseErrorHandler);
+                    rest, web, this.responseErrorHandler, this.streamRequestTimeout, this.streamFirstChunkTimeout);
 			}
 
 	}

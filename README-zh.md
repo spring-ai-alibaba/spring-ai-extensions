@@ -88,6 +88,31 @@ public class HelloworldController {
 
 // 待补充
 
+### DashScope 聊天连接
+
+DashScope starter 为同步和流式聊天管理有界连接池。可通过 `spring.ai.dashscope.chat.http` 配置以下参数。
+
+| 参数 | 默认值 |
+| --- | --- |
+| `max-connections`、`pending-acquire-max-count` | 各 64 |
+| `acquire-timeout`、`connect-timeout` | 2 秒、10 秒 |
+| `max-idle-time`、`max-life-time`、`eviction-interval` | 30 秒、10 分钟、15 秒 |
+| `first-chunk-timeout`、`stream-read-timeout`、`request-timeout` | 60 秒、60 秒、5 分钟 |
+
+流式请求总超时覆盖连接排队和整个响应。原生同步客户端的读取超时由 `spring.ai.dashscope.read-timeout` 设置，单位为秒。聊天客户端默认每次尝试发送一个 POST。以编程方式创建原生模型时，可以显式为同步调用传入 `RetryTemplate`。
+
+使用 DashScope 的 OpenAI 兼容 **Chat Completions** 端点时，添加 `org.springframework.ai:spring-ai-openai` 依赖并显式选用连接管理实现。
+
+```java
+var transport = new DashScopeHttpTransport(DashScopeHttpTransport.Settings.defaults());
+var options = OpenAiChatOptions.builder().apiKey(apiKey)
+        .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
+        .model("qwen-plus").build();
+var model = DashScopeCompatibleChatModel.builder(options, transport).build();
+```
+
+跨调用复用模型和连接池，在应用关闭时关闭 `transport`。取消流式订阅会关闭对应的 HTTP 订阅，缺少 `[DONE]` 的流会报告截断。调用方可以传入自己的 `WebClient.Builder` 保留过滤器和观测配置。
+
 ### DashScope 模型选路与推理
 
 HTTP 和 SDK starter 会为已知模型选择 DashScope 原生端点。`qwen4-max`、
