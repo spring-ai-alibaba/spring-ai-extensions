@@ -88,6 +88,31 @@ Please check [Quick Start](https://java2ai.com/docs/1.0.0.2/get-started/chatbot)
 
 // TBD
 
+### DashScope chat connections
+
+The DashScope starter manages a bounded pool for blocking and streaming chat. Configure the following properties under `spring.ai.dashscope.chat.http`.
+
+| Property | Default |
+| --- | --- |
+| `max-connections`, `pending-acquire-max-count` | 64 each |
+| `acquire-timeout`, `connect-timeout` | 2 s, 10 s |
+| `max-idle-time`, `max-life-time`, `eviction-interval` | 30 s, 10 min, 15 s |
+| `first-chunk-timeout`, `stream-read-timeout`, `request-timeout` | 60 s, 60 s, 5 min |
+
+The streaming request timeout includes time in the connection queue and covers the full response. The blocking native client's read timeout is `spring.ai.dashscope.read-timeout` in seconds. The default chat client sends one POST per attempt. Programmatic native chat clients can explicitly supply a `RetryTemplate` for blocking calls.
+
+For the DashScope OpenAI-compatible **Chat Completions** endpoint, add `org.springframework.ai:spring-ai-openai` and opt into the managed transport:
+
+```java
+var transport = new DashScopeHttpTransport(DashScopeHttpTransport.Settings.defaults());
+var options = OpenAiChatOptions.builder().apiKey(apiKey)
+        .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
+        .model("qwen-plus").build();
+var model = DashScopeCompatibleChatModel.builder(options, transport).build();
+```
+
+Reuse the model and transport across calls and close the transport at application shutdown. This transport cancels the HTTP subscription and treats a missing `[DONE]` as an incomplete stream. A caller can supply its own `WebClient.Builder` for filters and observations.
+
 ### DashScope model routing and reasoning
 
 The HTTP and SDK chat starters select the native generation endpoint for known models.

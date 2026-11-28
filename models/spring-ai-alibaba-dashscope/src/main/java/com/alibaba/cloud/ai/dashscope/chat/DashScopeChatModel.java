@@ -85,6 +85,7 @@ import org.springframework.ai.support.UsageCalculator;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.util.JsonHelper;
 import org.springframework.core.retry.RetryTemplate;
+import org.springframework.core.retry.RetryPolicy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
@@ -211,9 +212,8 @@ public final class DashScopeChatModel implements ChatModel {
 		return Flux.deferContextual(contextView -> {
 			Prompt streamPrompt = withStreamDefaults(prompt);
 			ChatCompletionRequest request = createRequest(streamPrompt);
-			Flux<ChatCompletionChunk> completionChunks = RetryUtils.execute(this.retryTemplate,
-					() -> this.dashscopeApi.chatCompletionStreamDeltas(request, getAdditionalHttpHeaders(streamPrompt),
-							isMultiModel(streamPrompt.getOptions())));
+			Flux<ChatCompletionChunk> completionChunks = this.dashscopeApi.chatCompletionStreamDeltas(
+					request, getAdditionalHttpHeaders(streamPrompt), isMultiModel(streamPrompt.getOptions()));
 
 			ConcurrentHashMap<String, String> roleMap = new ConcurrentHashMap<>();
 			Map<Integer, StreamChoice> streamChoices = new HashMap<>();
@@ -717,7 +717,7 @@ public final class DashScopeChatModel implements ChatModel {
 
 		private DashScopeChatOptions defaultOptions = DashScopeChatOptions.builder().model(DEFAULT_MODEL_NAME).build();
 
-		private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
+		private RetryTemplate retryTemplate = new RetryTemplate(RetryPolicy.builder().maxRetries(0).build());
 
 		private ToolCallingManager toolCallingManager = ToolCallingManager.builder().build();
 
