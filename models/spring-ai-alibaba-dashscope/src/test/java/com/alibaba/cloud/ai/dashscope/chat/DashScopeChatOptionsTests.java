@@ -270,4 +270,54 @@ class DashScopeChatOptionsTests {
                 .contains("enableCodeInterpreter")
                 .contains(TEST_TEMPERATURE.toString());
     }
+    @Test
+    void copiesAllSupportedOptions() {
+        DashScopeChatOptions original = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
+                .temperature(TEST_TEMPERATURE)
+                .topP(TEST_TOP_P)
+                .topK(TEST_TOP_K)
+                .enableThinking(true)
+                .preserveThinking(true)
+                .thinkingBudget(TEST_THINKING_BUDGET)
+                .reasoningEffort("high")
+                .toolStream(true)
+                .enableCodeInterpreter(true)
+                .repetitionPenalty(TEST_REPETITION_PENALTY)
+                .vlHighResolutionImages(true)
+                .vlEnableImageHwOutput(true)
+                .maxCompletionTokens(4096)
+                .seed(TEST_SEED)
+                .incrementalOutput(true)
+                .resultFormat("message")
+                .logprobs(true)
+                .topLogprobs(3)
+                .n(2)
+                .toolChoice(Map.of("type", "auto"))
+                .parallelToolCalls(false)
+                .enableSearch(true)
+                .dataInspection("enabled")
+                .extraBody(Map.of("custom_parameter", "custom-value"))
+                .httpHeaders(Map.of("X-Test", "header-value"))
+                .toolContext(Map.of("context", "preserved"))
+                .build();
+
+        DashScopeChatOptions copy = original.copy();
+        assertThat(copy).isNotSameAs(original);
+        assertThat(copy).usingRecursiveComparison().isEqualTo(original);
+        assertThat(copy).isEqualTo(original);
+        assertThat(copy.hashCode()).isEqualTo(original.hashCode());
+    }
+
+    @Test
+    void equalityIncludesDashScopeSpecificOptions() {
+        DashScopeChatOptions baseline = DashScopeChatOptions.builder().build();
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder().thinkingBudget(1).build());
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder().maxCompletionTokens(1).build());
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder()
+                .toolChoice(Map.of("type", "auto")).build());
+        assertThat(baseline).isNotEqualTo(DashScopeChatOptions.builder()
+                .extraBody(Map.of("custom_parameter", "custom-value")).build());
+    }
+
 }
